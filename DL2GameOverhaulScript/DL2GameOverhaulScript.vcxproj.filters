@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="source\memory.cpp" />
+    <ClCompile Include="source\core.cpp" />
+    <ClCompile Include="source\dllmain.cpp" />
+    <ClCompile Include="source\print.cpp" />
+    <ClCompile Include="source\kiero.cpp" />
+    <ClCompile Include="source\ImGui\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imgui_demo.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imgui_tables.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imgui_widgets.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\backends\imgui_impl_dx11.cpp">
+      <Filter>ImGui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\backends\imgui_impl_dx12.cpp">
+      <Filter>ImGui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\backends\imgui_impl_win32.cpp">
+      <Filter>ImGui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\impl\d3d11_impl.cpp">
+      <Filter>ImGui\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\impl\shared.cpp">
+      <Filter>ImGui\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\impl\win32_impl.cpp">
+      <Filter>ImGui\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menu\camera.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menu\menu.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\game_classes.cpp" />
+    <ClCompile Include="source\hook.cpp" />
+    <ClCompile Include="source\utils.cpp" />
+    <ClCompile Include="source\sigscan\sigscan.cpp">
+      <Filter>sigscan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menu\player.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\memory.h" />
+    <ClInclude Include="source\ini.h" />
+    <ClInclude Include="source\game_classes.h" />
+    <ClInclude Include="source\print.h" />
+    <ClInclude Include="source\time_tools.h" />
+    <ClInclude Include="source\vtablehook.h" />
+    <ClInclude Include="source\kiero.h" />
+    <ClInclude Include="source\MinHook\include\MinHook.h">
+      <Filter>MinHook\include</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\imconfig.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\imstb_rectpack.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\imstb_textedit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\imstb_truetype.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\backends\imgui_impl_dx11.h">
+      <Filter>ImGui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\backends\imgui_impl_dx12.h">
+      <Filter>ImGui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\backends\imgui_impl_win32.h">
+      <Filter>ImGui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\impl\d3d11_impl.h">
+      <Filter>ImGui\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\impl\shared.h">
+      <Filter>ImGui\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\impl\win32_impl.h">
+      <Filter>ImGui\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\camera.h">
+      <Filter>menu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\menu.h">
+      <Filter>menu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\hook.h" />
+    <ClInclude Include="source\utils.h" />
+    <ClInclude Include="source\sigscan\sigscan.h">
+      <Filter>sigscan</Filter>
+    </ClInclude>
+    <ClInclude Include="source\sigscan\offsets.h">
+      <Filter>sigscan</Filter>
+    </ClInclude>
+    <ClInclude Include="source\core.h" />
+    <ClInclude Include="source\menu\player.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="MinHook">
+      <UniqueIdentifier>{794284a1-160f-4b62-bfd0-d160dbb38e40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MinHook\include">
+      <UniqueIdentifier>{e697e380-6df5-4cfc-861e-e2b77ce03d39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{8b35dc3d-fbec-4ae6-af90-4b9cc2b758e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\backends">
+      <UniqueIdentifier>{70e27b28-a2be-49e4-a4a1-5ed696079ee0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\impl">
+      <UniqueIdentifier>{28cd5a16-84b1-4a9e-96a4-79fc75982912}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="menu">
+      <UniqueIdentifier>{775559c7-e9f6-49d5-a2d4-6458b99e8cd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sigscan">
+      <UniqueIdentifier>{525740fe-17a7-431f-b020-720a1dc32e07}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
