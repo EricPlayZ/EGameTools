@@ -42,8 +42,8 @@ namespace GamePH {
 		static bool hooked;
 		static void RunHooks();
 
-		static const DWORD64 GetFloatPlayerVariableVT();
-		static const DWORD64 GetBoolPlayerVariableVT();
+		static DWORD64 GetFloatPlayerVariableVT();
+		static DWORD64 GetBoolPlayerVariableVT();
 		static void GetPlayerVars();
 
 		static PlayerVariables* Get();

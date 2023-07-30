@@ -1,10 +1,9 @@
 #include <Windows.h>
 #include <Psapi.h>
-#include <string_view>
 
 namespace Memory {
-	const MODULEINFO GetModuleInfo(const std::string_view szModule) {
-		const HMODULE hModule = GetModuleHandle(szModule.data());
+	MODULEINFO GetModuleInfo(const char* szModule) {
+		const HMODULE hModule = GetModuleHandle(szModule);
 		if (hModule == 0)
 			return MODULEINFO();
 
@@ -13,8 +12,8 @@ namespace Memory {
 		return moduleInfo;
 	}
 
-	const bool IsAddressValidMod(const DWORD64 ptr, const std::string_view moduleName) {
-		const MODULEINFO moduleInf = GetModuleInfo(moduleName);
+	bool IsAddressValidMod(const DWORD64 ptr, const char* moduleName) {
+		MODULEINFO moduleInf = GetModuleInfo(moduleName);
 
 		const DWORD64 moduleEntryPoint = reinterpret_cast<DWORD64>(moduleInf.EntryPoint);
 		const DWORD64 moduleEndPoint = moduleEntryPoint + moduleInf.SizeOfImage;

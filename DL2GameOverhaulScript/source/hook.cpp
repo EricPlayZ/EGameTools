@@ -5,7 +5,7 @@
 
 namespace Hook {
 	// VTable hooking
-	static const int VTHookUnprotect(LPVOID region) {
+	static int VTHookUnprotect(LPVOID region) {
 		MEMORY_BASIC_INFORMATION mbi{};
 		VirtualQuery(static_cast<LPCVOID>(region), &mbi, sizeof(mbi));
 		VirtualProtect(mbi.BaseAddress, mbi.RegionSize, PAGE_READWRITE, &mbi.Protect);
@@ -28,7 +28,7 @@ namespace Hook {
 	}
 
 	// Trampoline hooking
-	const DETOUR_INFO MidFuncHook(DWORD64* pTarget, DWORD64* pHookedFunc, const size_t nops, const size_t bytesToSkip) {
+	DETOUR_INFO MidFuncHook(DWORD64* pTarget, DWORD64* pHookedFunc, const size_t nops, const size_t bytesToSkip) {
 		DWORD dwOldProtect, dwBkup{};
 
 		const size_t finalHookSize = 13 + nops;

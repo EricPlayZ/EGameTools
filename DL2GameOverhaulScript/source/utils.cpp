@@ -2,7 +2,7 @@
 #include <Windows.h>
 
 namespace Utils {
-    const WindowsVersion GetWindowsVersion() {
+    WindowsVersion GetWindowsVersion() {
         OSVERSIONINFOEX info{};
         DWORDLONG dwlConditionMask = 0;
 

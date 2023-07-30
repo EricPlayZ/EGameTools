@@ -90,7 +90,7 @@ namespace GamePH {
 		hooked = true;
 	}
 
-	const DWORD64 PlayerVariables::GetFloatPlayerVariableVT() {
+	DWORD64 PlayerVariables::GetFloatPlayerVariableVT() {
 		if (FloatPlayerVariableVT != NULL)
 			return FloatPlayerVariableVT;
 		if (Offsets::Get_InitializePlayerVariablesOffset() == NULL)
@@ -102,7 +102,7 @@ namespace GamePH {
 
 		return FloatPlayerVariableVT = offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset;
 	}
-	const DWORD64 PlayerVariables::GetBoolPlayerVariableVT() {
+	DWORD64 PlayerVariables::GetBoolPlayerVariableVT() {
 		if (BoolPlayerVariableVT != NULL)
 			return BoolPlayerVariableVT;
 		if (Offsets::Get_InitializePlayerVariablesOffset() == NULL)

@@ -6,5 +6,5 @@ enum class WindowsVersion {
 };
 
 namespace Utils {
-	extern const WindowsVersion GetWindowsVersion();
+	extern WindowsVersion GetWindowsVersion();
 }

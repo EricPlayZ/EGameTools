@@ -20,7 +20,7 @@ namespace Hook {
 
 	extern void VTHook(LPVOID instance, LPVOID pDetour, LPVOID* ppOriginal, const DWORD offset);
 
-	extern const DETOUR_INFO MidFuncHook(DWORD64* pTarget, DWORD64* hookedFunc, const size_t nops = 0, const size_t bytesToSkip = 0);
+	extern DETOUR_INFO MidFuncHook(DWORD64* pTarget, DWORD64* hookedFunc, const size_t nops = 0, const size_t bytesToSkip = 0);
 
 	class BreakpointHook {
 	private:
