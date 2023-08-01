@@ -17,7 +17,28 @@ struct Vector3 {
 	float X;
 	float Y;
 	float Z;
+
+	Vector3() {
+		X = 0.0f;
+		Y = 0.0f;
+		Z = 0.0f;
+	}
+
+	bool isDefault() {
+		return X == 0.0f && Y == 0.0f && Z == 0.0f;
+	}
 };
+namespace EWeather {
+	enum TYPE {
+		Default = 0,
+		Foggy = 1,
+		Clear = 2,
+		Overcast = 3,
+		Cloudy = 4,
+		Rainy = 5,
+		Stormy = 6
+	};
+}
 
 // Forward decl
 namespace Engine {
@@ -25,15 +46,18 @@ namespace Engine {
 }
 
 namespace GamePH {
+	extern void LoopHookCreatePlayerHealthModule();
 	extern void LoopHookOnUpdate();
 	extern void LoopHookCalculateFreeCamCollision();
+	extern void LoopHookLifeSetHealth();
 
 	class PlayerVariables {
 	private:
-		static DWORD64 FloatPlayerVariableVT;
-		static DWORD64 BoolPlayerVariableVT;
+		static PDWORD64 FloatPlayerVariableVT;
+		static PDWORD64 BoolPlayerVariableVT;
 	public:
-		static std::vector<std::pair<std::string_view, std::pair<DWORD64, std::string_view>>> unorderedPlayerVars;
+		static std::vector<std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> unorderedPlayerVars;
+		static std::vector<std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> unorderedPlayerVarsDefault;
 		static bool gotPlayerVars;
 
 		static std::unique_ptr<Hook::BreakpointHook> loadPlayerFloatVarBpHook;
@@ -42,8 +66,8 @@ namespace GamePH {
 		static bool hooked;
 		static void RunHooks();
 
-		static DWORD64 GetFloatPlayerVariableVT();
-		static DWORD64 GetBoolPlayerVariableVT();
+		static PDWORD64 GetFloatPlayerVariableVT();
+		static PDWORD64 GetBoolPlayerVariableVT();
 		static void GetPlayerVars();
 
 		static PlayerVariables* Get();
@@ -58,16 +82,57 @@ namespace GamePH {
 		static PlayerState* Get();
 	};
 
+	class PlayerHealthModule {
+	public:
+		union {
+			DEFINE_MEMBER_N(float, health, 0x2C);
+		};
+
+		static PlayerHealthModule* pPlayerHealthModule;
+		static PlayerHealthModule* Get();
+	};
+
+	class CameraFPPDI {
+	public:
+		static CameraFPPDI* Get();
+	};
+
 	class FreeCamera {
 	public:
+		Vector3* GetPosition(Vector3* posIN);
 		void AllowCameraMovement(int mode = 2);
 
 		static FreeCamera* Get();
 	};
 
+	class DayNightCycle {
+	public:
+		union {
+			DEFINE_MEMBER_N(float, time1, 0x10);
+			DEFINE_MEMBER_N(float, time2, 0x20);
+			DEFINE_MEMBER_N(float, time3, 0x5C);
+		};
+
+		void SetDaytime(float time);
+
+		static DayNightCycle* Get();
+	};
+
+	namespace TimeWeather {
+		class CSystem {
+		public:
+			void SetForcedWeather(int weather);
+			int GetCurrentWeather();
+
+			static CSystem* Get();
+		};
+	}
+
 	class LevelDI {
 	public:
 		float GetTimePlayed();
+		LPVOID GetViewCamera();
+		TimeWeather::CSystem* GetTimeWeatherSystem();
 
 		static LevelDI* Get();
 	};
@@ -79,7 +144,7 @@ namespace GamePH {
 
 	class GameDI_PH {
 	public:
-		DWORD64* GetLocalPlayerEntity();
+		PDWORD64 GetLocalPlayerEntity();
 		INT64 GetCurrentGameVersion();
 		void TogglePhotoMode(bool doNothing = false, bool setAsOptionalCamera = false);
 
@@ -106,20 +171,10 @@ namespace Engine {
 		static CVideoSettings* Get();
 	};
 
-	class CBaseCamera {
-	public:
-		union {
-			DEFINE_MEMBER_N(GamePH::FreeCamera*, pFreeCamera, 0x20);
-		};
-
-		static CBaseCamera* Get();
-	};
-
 	class CLevel {
 	public:
 		union {
 			DEFINE_MEMBER_N(GamePH::LevelDI*, pLevelDI, 0x20);
-			DEFINE_MEMBER_N(CBaseCamera*, pCBaseCamera, 0x28);
 		};
 
 		static CLevel* Get();
@@ -147,7 +202,16 @@ namespace Engine {
 
 	class CBulletPhysicsCharacter {
 	public:
-		float* MoveCharacter(Vector3* pos);
+		union {
+			DEFINE_MEMBER_N(Vector3, playerPos2, 0x87C);
+			DEFINE_MEMBER_N(Vector3, playerPos, 0x894);
+			DEFINE_MEMBER_N(float, playerDownwardVelocity, 0xC28);
+		};
+
+		static Vector3 posBeforeFreeze;
+
+		void FreezeCharacter();
+		void MoveCharacter(const Vector3& pos);
 
 		static CBulletPhysicsCharacter* Get();
 	};

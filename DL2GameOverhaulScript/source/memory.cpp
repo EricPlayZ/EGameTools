@@ -17,6 +17,6 @@ namespace Memory {
 
 		const DWORD64 moduleEntryPoint = reinterpret_cast<DWORD64>(moduleInf.EntryPoint);
 		const DWORD64 moduleEndPoint = moduleEntryPoint + moduleInf.SizeOfImage;
-		return ptr != NULL && (ptr <= moduleEndPoint && ptr >= moduleEntryPoint);
+		return ptr && (ptr <= moduleEndPoint && ptr >= moduleEntryPoint);
 	}
 }

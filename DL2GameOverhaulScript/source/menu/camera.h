@@ -8,7 +8,9 @@ namespace Menu {
 
 		extern bool freeCamEnabled;
 		extern SMART_BOOL disablePhotoModeLimitsEnabled;
+		extern bool teleportPlayerToCameraEnabled;
 
+		extern void Update();
 		extern void Render();
 	}
 }

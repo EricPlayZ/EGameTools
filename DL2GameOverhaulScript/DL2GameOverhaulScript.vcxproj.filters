@@ -52,6 +52,7 @@
       <Filter>sigscan</Filter>
     </ClCompile>
     <ClCompile Include="source\menu\player.cpp" />
+    <ClCompile Include="source\menu\world.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\memory.h" />
@@ -116,6 +117,7 @@
     </ClInclude>
     <ClInclude Include="source\core.h" />
     <ClInclude Include="source\menu\player.h" />
+    <ClInclude Include="source\menu\world.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">

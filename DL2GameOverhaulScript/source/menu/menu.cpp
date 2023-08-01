@@ -1,6 +1,7 @@
 #include "..\ImGui\imgui.h"
 #include "camera.h"
 #include "player.h"
+#include "world.h"
 
 namespace Menu {
 	static const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
@@ -19,6 +20,7 @@ namespace Menu {
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("World")) {
+                    Menu::World::Render();
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();

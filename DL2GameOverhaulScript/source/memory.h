@@ -14,7 +14,7 @@ namespace Memory {
 
 	template<typename ptrT = LPVOID>
 	bool IsValidPtrMod(ptrT ptr, const char* moduleName, const bool checkForVT = true) {
-		return IsValidPtr<ptrT>(ptr) && IsAddressValidMod(checkForVT ? *(DWORD64*)(ptr) : (DWORD64)(ptr), moduleName);
+		return IsValidPtr<ptrT>(ptr) && IsAddressValidMod(checkForVT ? *(PDWORD64)(ptr) : (DWORD64)(ptr), moduleName);
 	}
 
 	template <std::size_t Index, typename ReturnType = void, typename... Args> __forceinline ReturnType CallVT(LPVOID instance, Args... args) {

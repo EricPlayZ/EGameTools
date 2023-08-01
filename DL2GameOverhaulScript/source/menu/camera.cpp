@@ -1,6 +1,7 @@
 #include "..\ImGui\imgui.h"
 #include "..\game_classes.h"
 #include "..\core.h"
+#include "menu.h"
 
 namespace Menu {
 	namespace Camera {
@@ -9,39 +10,101 @@ namespace Menu {
 
 		bool freeCamEnabled = false;
 		SMART_BOOL disablePhotoModeLimitsEnabled{};
+		bool teleportPlayerToCameraEnabled = false;
 
-		static void ToggleFreeCam() {
+		static void UpdateFOVWhileMenuClosed() {
+			if (Menu::isOpen)
+				return;
+
+			Engine::CVideoSettings* videoSettings = Engine::CVideoSettings::Get();
+			if (!videoSettings)
+				return;
+
+			Menu::Camera::FOV = static_cast<int>(videoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
+		}
+		static void FreeCamUpdate() {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel)
+				return;
+			LPVOID viewCam = iLevel->GetViewCamera();
+			if (!viewCam)
+				return;
 			GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
-			GamePH::FreeCamera* pFreeCamera = GamePH::FreeCamera::Get();
-
 			if (!pGameDI_PH)
 				return;
-			if (!pFreeCamera)
+			GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
+			if (!pFreeCam)
 				return;
 
-			GamePH::GameDI_PH::Get()->TogglePhotoMode();
-			GamePH::FreeCamera::Get()->AllowCameraMovement(freeCamEnabled ? 2 : 0);
+			if (freeCamEnabled) {
+				if (viewCam == pFreeCam)
+					return;
+
+				GamePH::GameDI_PH::Get()->TogglePhotoMode();
+				GamePH::FreeCamera::Get()->AllowCameraMovement(2);
+			} else {
+				GamePH::CameraFPPDI* pPlayerCam = GamePH::CameraFPPDI::Get();
+				if (!pPlayerCam || viewCam == pPlayerCam)
+					return;
+
+				GamePH::GameDI_PH::Get()->TogglePhotoMode();
+				GamePH::FreeCamera::Get()->AllowCameraMovement(0);
+			}
 		}
 
-		void Render() {
-			if (ImGui::Checkbox("FreeCam", &freeCamEnabled))
-				ToggleFreeCam();
-			ImGui::SameLine();
-			ImGui::BeginDisabled(freeCamEnabled); {
-				if (freeCamEnabled)
-					disablePhotoModeLimitsEnabled.Change(true);
-				else
-					disablePhotoModeLimitsEnabled.Restore();
+		void Update() {
+			if (freeCamEnabled)
+				disablePhotoModeLimitsEnabled.Change(true);
+			else
+				disablePhotoModeLimitsEnabled.Restore();
 
-				ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
+			UpdateFOVWhileMenuClosed();
+			FreeCamUpdate();
+		}
+
+		static bool GetFreeCamDisabledFlag() {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel)
+				return true;
+			LPVOID viewCam = iLevel->GetViewCamera();
+			if (!viewCam)
+				return true;
+			GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
+			if (!pFreeCam)
+				return true;
+
+			GamePH::CameraFPPDI* pPlayerCam = GamePH::CameraFPPDI::Get();
+			if (!pPlayerCam)
+				return false;
+
+			DWORD64 viewCamVT = *reinterpret_cast<DWORD64*>(viewCam);
+			DWORD64 freeCamVT = *reinterpret_cast<DWORD64*>(pFreeCam);
+			DWORD64 playerCamVT = *reinterpret_cast<DWORD64*>(pPlayerCam);
+			if (viewCamVT != freeCamVT && viewCamVT != playerCamVT)
+				return true;
+			
+			return false;
+		}
+		void Render() {
+			ImGui::BeginDisabled(GetFreeCamDisabledFlag()); {
+				ImGui::Checkbox("FreeCam", &freeCamEnabled);
+				ImGui::SameLine();
+				ImGui::BeginDisabled(freeCamEnabled); {
+					ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
+					ImGui::EndDisabled();
+				}
+				ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
 				ImGui::EndDisabled();
 			}
-
+			
 			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();
-			if (ImGui::SliderInt("FOV", &FOV, 20, 160) && pCVideoSettings) {
-				pCVideoSettings->ExtraFOV = static_cast<float>(FOV - BaseFOV);
-			} else if (pCVideoSettings)
-				FOV = static_cast<int>(pCVideoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
+			ImGui::BeginDisabled(!pCVideoSettings); {
+				if (ImGui::SliderInt("FOV", &FOV, 20, 160) && pCVideoSettings)
+					pCVideoSettings->ExtraFOV = static_cast<float>(FOV - BaseFOV);
+				else if (pCVideoSettings)
+					FOV = static_cast<int>(pCVideoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
+				ImGui::EndDisabled();
+			}
 		}
 	}
 }

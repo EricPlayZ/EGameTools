@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string_view>
+#include <thread>
 #include "MinHook\include\MinHook.h"
 #include "sigscan\offsets.h"
+#include "menu\player.h"
 #include "menu\camera.h"
 #include "game_classes.h"
 #include "memory.h"
@@ -10,9 +12,32 @@ namespace Core {
 	extern void OnPostUpdate();
 }
 
+#pragma region GamePH
 namespace GamePH {
-	#pragma region Misc
-	void(*oOnPostUpdate)(LPVOID pGameDI_PH2) = nullptr;
+	#pragma region Hooks
+	#pragma region CreatePlayerHealthModule
+	static DWORD64(*pCreatePlayerHealthModule)(DWORD64 playerHealthModule) = nullptr;
+	static DWORD64(*oCreatePlayerHealthModule)(DWORD64 playerHealthModule) = nullptr;
+	DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule) {
+		PlayerHealthModule::pPlayerHealthModule = reinterpret_cast<PlayerHealthModule*>(playerHealthModule);
+		return oCreatePlayerHealthModule(playerHealthModule);
+	}
+	void LoopHookCreatePlayerHealthModule() {
+		while (true) {
+			Sleep(250);
+
+			if (!pCreatePlayerHealthModule)
+				pCreatePlayerHealthModule = (decltype(pCreatePlayerHealthModule))Offsets::Get_CreatePlayerHealthModuleOffset();
+			else if (!oCreatePlayerHealthModule && MH_CreateHook(pCreatePlayerHealthModule, &detourCreatePlayerHealthModule, reinterpret_cast<LPVOID*>(&oCreatePlayerHealthModule)) == MH_OK) {
+				MH_EnableHook(pCreatePlayerHealthModule);
+				break;
+			}
+		}
+	}
+	#pragma endregion
+
+	#pragma region OnPostUpdate
+	static void(*oOnPostUpdate)(LPVOID pGameDI_PH2) = nullptr;
 	void detourOnPostUpdate(LPVOID pGameDI_PH2) {
 		oOnPostUpdate(pGameDI_PH2);
 		Core::OnPostUpdate();
@@ -32,9 +57,11 @@ namespace GamePH {
 				break;
 		}
 	}
+	#pragma endregion
 
-	DWORD64(*pCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
-	DWORD64(*oCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
+	#pragma region CalculateFreeCamCollision
+	static DWORD64(*pCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
+	static DWORD64(*oCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
 		if (!Menu::Camera::freeCamEnabled && !Menu::Camera::disablePhotoModeLimitsEnabled.value)
 			return oCalculateFreeCamCollision(pFreeCamera, finalPos);
@@ -45,21 +72,48 @@ namespace GamePH {
 		while (true) {
 			Sleep(250);
 
-			if (!GamePH::pCalculateFreeCamCollision)
-				GamePH::pCalculateFreeCamCollision = (decltype(GamePH::pCalculateFreeCamCollision))Offsets::Get_CalculateFreeCamCollisionOffset();
-			else if (!GamePH::oCalculateFreeCamCollision && MH_CreateHook(GamePH::pCalculateFreeCamCollision, &GamePH::detourCalculateFreeCamCollision, reinterpret_cast<LPVOID*>(&GamePH::oCalculateFreeCamCollision)) == MH_OK) {
-				MH_EnableHook(GamePH::pCalculateFreeCamCollision);
+			if (!pCalculateFreeCamCollision)
+				pCalculateFreeCamCollision = (decltype(pCalculateFreeCamCollision))Offsets::Get_CalculateFreeCamCollisionOffset();
+			else if (!oCalculateFreeCamCollision && MH_CreateHook(pCalculateFreeCamCollision, &detourCalculateFreeCamCollision, reinterpret_cast<LPVOID*>(&oCalculateFreeCamCollision)) == MH_OK) {
+				MH_EnableHook(pCalculateFreeCamCollision);
 				break;
 			}
 		}
 	}
 	#pragma endregion
 
-	#pragma region PlayerVariables
-	DWORD64 PlayerVariables::FloatPlayerVariableVT;
-	DWORD64 PlayerVariables::BoolPlayerVariableVT;
+	#pragma region LifeSetHealth
+	static void(*pLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
+	static void(*oLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
+	void detourLifeSetHealth(float* pLifeHealth, float health) {
+		if (Menu::Player::godModeEnabled.value) {
+			GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
+			if (playerHealthModule && (pLifeHealth + 1) == &playerHealthModule->health && playerHealthModule->health != 0)
+				return;
+		}
+		oLifeSetHealth(pLifeHealth, health);
+	}
+	void LoopHookLifeSetHealth() {
+		while (true) {
+			Sleep(250);
 
-	std::vector <std::pair<std::string_view, std::pair<DWORD64, std::string_view>>> PlayerVariables::unorderedPlayerVars;
+			if (!pLifeSetHealth)
+				pLifeSetHealth = (decltype(pLifeSetHealth))Offsets::Get_LifeSetHealth();
+			else if (!oLifeSetHealth && MH_CreateHook(pLifeSetHealth, &detourLifeSetHealth, reinterpret_cast<LPVOID*>(&oLifeSetHealth)) == MH_OK) {
+				MH_EnableHook(pLifeSetHealth);
+				break;
+			}
+		}
+	}
+	#pragma endregion
+	#pragma endregion
+
+	#pragma region PlayerVariables
+	PDWORD64 PlayerVariables::FloatPlayerVariableVT;
+	PDWORD64 PlayerVariables::BoolPlayerVariableVT;
+
+	std::vector <std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> PlayerVariables::unorderedPlayerVars;
+	std::vector <std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> PlayerVariables::unorderedPlayerVarsDefault;
 	bool PlayerVariables::gotPlayerVars = false;
 
 	std::unique_ptr<Hook::BreakpointHook> PlayerVariables::loadPlayerFloatVarBpHook = nullptr;
@@ -69,50 +123,50 @@ namespace GamePH {
 	void PlayerVariables::RunHooks() {
 		if (hooked)
 			return;
-		if (Offsets::Get_LoadPlayerFloatVariableOffset() == NULL)
+		if (!Offsets::Get_LoadPlayerFloatVariableOffset())
 			return;
-		if (Offsets::Get_LoadPlayerBoolVariableOffset() == NULL)
+		if (!Offsets::Get_LoadPlayerBoolVariableOffset())
 			return;
 
 		loadPlayerFloatVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerFloatVariableOffset(), [&](PEXCEPTION_POINTERS info) -> void {
 			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
 			const std::string_view name = tempName;
 
-			PlayerVariables::unorderedPlayerVars.emplace_back(name, std::make_pair(0x0, "float"));
+			PlayerVariables::unorderedPlayerVars.emplace_back(name, std::make_pair(nullptr, "float"));
+			PlayerVariables::unorderedPlayerVarsDefault.emplace_back(name, std::make_pair(nullptr, "float"));
 		});
 		loadPlayerBoolVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerBoolVariableOffset(), [&](PEXCEPTION_POINTERS info) -> void {
 			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
 			const std::string_view name = tempName;
 
-			PlayerVariables::unorderedPlayerVars.emplace_back(name, std::make_pair(0x0, "bool"));
+			PlayerVariables::unorderedPlayerVars.emplace_back(name, std::make_pair(nullptr, "bool"));
+			PlayerVariables::unorderedPlayerVarsDefault.emplace_back(name, std::make_pair(nullptr, "bool"));
 		});
 
 		hooked = true;
 	}
 
-	DWORD64 PlayerVariables::GetFloatPlayerVariableVT() {
-		if (FloatPlayerVariableVT != NULL)
+	PDWORD64 PlayerVariables::GetFloatPlayerVariableVT() {
+		if (FloatPlayerVariableVT)
 			return FloatPlayerVariableVT;
-		if (Offsets::Get_InitializePlayerVariablesOffset() == NULL)
-			return NULL;
+		if (!Offsets::Get_InitializePlayerVariablesOffset())
+			return nullptr;
 
-		const DWORD64 pInitializePlayerVariables = Offsets::Get_InitializePlayerVariablesOffset();
-		const DWORD64 offsetToInstr = pInitializePlayerVariables + Offsets::Get_initPlayerFloatVarsInstrOffset() + 0x3; // 0x3 is instruction size
+		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariablesOffset() + Offsets::Get_initPlayerFloatVarsInstrOffset() + 0x3; // 0x3 is instruction size
 		const DWORD floatPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
 
-		return FloatPlayerVariableVT = offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset;
+		return FloatPlayerVariableVT = reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset);
 	}
-	DWORD64 PlayerVariables::GetBoolPlayerVariableVT() {
-		if (BoolPlayerVariableVT != NULL)
+	PDWORD64 PlayerVariables::GetBoolPlayerVariableVT() {
+		if (BoolPlayerVariableVT)
 			return BoolPlayerVariableVT;
-		if (Offsets::Get_InitializePlayerVariablesOffset() == NULL)
-			return NULL;
+		if (!Offsets::Get_InitializePlayerVariablesOffset())
+			return nullptr;
 
-		const DWORD64 pInitializePlayerVariables = Offsets::Get_InitializePlayerVariablesOffset();
-		const DWORD64 offsetToInstr = pInitializePlayerVariables + Offsets::Get_initPlayerBoolVarsInstrOffset() + 0x3; // 0x3 is instruction size
+		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariablesOffset() + Offsets::Get_initPlayerBoolVarsInstrOffset() + 0x3; // 0x3 is instruction size
 		const DWORD boolPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
 
-		return BoolPlayerVariableVT = offsetToInstr + sizeof(DWORD) + boolPlayerVariableVTOffset;
+		return BoolPlayerVariableVT = reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + boolPlayerVariableVTOffset);
 	}
 	void PlayerVariables::GetPlayerVars() {
 		if (gotPlayerVars)
@@ -126,23 +180,18 @@ namespace GamePH {
 		if (!GetBoolPlayerVariableVT())
 			return;
 
-		DWORD64** playerVars = reinterpret_cast<DWORD64**>(Get());
+		PDWORD64* playerVars = reinterpret_cast<PDWORD64*>(Get());
+		bool isFloatPlayerVar = false;
+		bool isBoolPlayerVar = false;
 
 		for (auto it = unorderedPlayerVars.begin(); it != unorderedPlayerVars.end(); ++it) {
 			while (true) {
-				DWORD64 variableAddr = NULL;
+				isFloatPlayerVar = *playerVars == GetFloatPlayerVariableVT();
+				isBoolPlayerVar = *playerVars == GetBoolPlayerVariableVT();
 
-				if (reinterpret_cast<DWORD64>(*playerVars) == GetFloatPlayerVariableVT()) {
-					variableAddr = reinterpret_cast<DWORD64>(playerVars + 1);
-					it->second.first = variableAddr;
-
-					playerVars += 3;
-					break;
-				} else if (reinterpret_cast<DWORD64>(*playerVars) == GetBoolPlayerVariableVT()) {
-					variableAddr = reinterpret_cast<DWORD64>(playerVars + 1);
-					it->second.first = variableAddr;
-
-					playerVars += 2;
+				if (isFloatPlayerVar || isBoolPlayerVar) {
+					it->second.first = playerVars + 1;
+					playerVars += isFloatPlayerVar ? 3 : 2;
 					break;
 				} else
 					playerVars += 1;
@@ -174,7 +223,7 @@ namespace GamePH {
 	#pragma region PlayerState
 	PlayerState* PlayerState::Get() {
 		__try {
-			if (Offsets::Get_PlayerStateOffset() == NULL)
+			if (!Offsets::Get_PlayerStateOffset())
 				return nullptr;
 
 			PlayerState* ptr = *reinterpret_cast<PlayerState**>(Offsets::Get_PlayerStateOffset());
@@ -188,18 +237,21 @@ namespace GamePH {
 	}
 	#pragma endregion
 
-	#pragma region FreeCamera
-	void FreeCamera::AllowCameraMovement(int mode) {
-		Memory::CallVT<203>(this, mode);
+	#pragma region PlayerHealthModule
+	PlayerHealthModule* PlayerHealthModule::pPlayerHealthModule = nullptr;
+	PlayerHealthModule* PlayerHealthModule::Get() {
+		return pPlayerHealthModule;
 	}
+	#pragma endregion
 
-	FreeCamera* FreeCamera::Get() {
+	#pragma region CameraFPPDI
+	CameraFPPDI* CameraFPPDI::Get() {
 		__try {
-			Engine::CBaseCamera* pCBaseCamera = Engine::CBaseCamera::Get();
-			if (!pCBaseCamera)
+			PDWORD64 pg_CameraFPPDI = Offsets::Get_g_CameraFPPDI();
+			if (!pg_CameraFPPDI)
 				return nullptr;
 
-			FreeCamera* ptr = pCBaseCamera->pFreeCamera;
+			CameraFPPDI* ptr = reinterpret_cast<CameraFPPDI*>(*pg_CameraFPPDI);
 
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
@@ -210,9 +262,125 @@ namespace GamePH {
 	}
 	#pragma endregion
 
+	#pragma region FreeCamera
+	Vector3* FreeCamera::GetPosition(Vector3* posIN) {
+		return Memory::CallVT<198, Vector3*>(this, posIN);
+	}
+	void FreeCamera::AllowCameraMovement(int mode) {
+		Memory::CallVT<203>(this, mode);
+	}
+
+	FreeCamera* FreeCamera::Get() {
+		__try {
+			PDWORD64 pg_FreeCamera = Offsets::Get_g_FreeCamera();
+			if (!pg_FreeCamera)
+				return nullptr;
+
+			FreeCamera* ptr = reinterpret_cast<FreeCamera*>(*pg_FreeCamera);
+
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	#pragma endregion
+
+	#pragma region DayNightCycle
+	void DayNightCycle::SetDaytime(float time) {
+		time /= 24;
+		time1 = time;
+		time2 = time;
+		time3 = time;
+	}
+
+	DayNightCycle* DayNightCycle::Get() {
+		__try {
+			if (!Offsets::Get_g_DayNightCycle())
+				return nullptr;
+
+			DayNightCycle* ptr = *reinterpret_cast<DayNightCycle**>(Offsets::Get_g_DayNightCycle());
+
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	#pragma endregion
+
+	#pragma region TimeWeather
+	namespace TimeWeather {
+		#pragma region CSystem
+		void CSystem::SetForcedWeather(int weather) {
+			if (!Offsets::Get_SetForcedWeatherOffset())
+				return;
+
+			void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Offsets::Get_SetForcedWeatherOffset();
+
+			if (!pSetForcedWeather)
+				return;
+			pSetForcedWeather(this, weather);
+		}
+		int CSystem::GetCurrentWeather() {
+			if (!Offsets::Get_GetCurrentWeatherOffset())
+				return EWeather::TYPE::Default;
+
+			int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Offsets::Get_GetCurrentWeatherOffset();
+
+			if (!pGetCurrentWeather)
+				return EWeather::TYPE::Default;
+			return pGetCurrentWeather(this);
+		}
+
+		CSystem* CSystem::Get() {
+			__try {
+				LevelDI* pLevelDI = LevelDI::Get();
+				if (!pLevelDI)
+					return nullptr;
+
+				CSystem* ptr = pLevelDI->GetTimeWeatherSystem();
+
+				if (!Memory::IsValidPtr(ptr))
+					return nullptr;
+				return ptr;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return nullptr;
+			}
+		}
+		#pragma endregion
+	}
+	#pragma endregion
+
 	#pragma region LevelDI
 	float LevelDI::GetTimePlayed() {
 		return Memory::CallVT<334, float>(this);
+	}
+	LPVOID LevelDI::GetViewCamera() {
+		if (!Offsets::Get_GetViewCameraOffset())
+			return nullptr;
+
+		LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Offsets::Get_GetViewCameraOffset();
+
+		if (!pGetViewCamera)
+			return nullptr;
+		return pGetViewCamera(this);
+	}
+	TimeWeather::CSystem* LevelDI::GetTimeWeatherSystem() {
+		__try {
+			if (!Offsets::Get_GetTimeWeatherSystemOffset())
+				return nullptr;
+
+			TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Offsets::Get_GetTimeWeatherSystemOffset();
+
+			if (!pGetTimeWeatherSystem)
+				return nullptr;
+			return pGetTimeWeatherSystem(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
 	}
 
 	LevelDI* LevelDI::Get() {
@@ -251,8 +419,8 @@ namespace GamePH {
 	#pragma endregion
 
 	#pragma region GameDI_PH
-	DWORD64* GameDI_PH::GetLocalPlayerEntity() {
-		return Memory::CallVT<135, DWORD64*>(this);
+	PDWORD64 GameDI_PH::GetLocalPlayerEntity() {
+		return Memory::CallVT<135, PDWORD64>(this);
 	}
 	INT64 GameDI_PH::GetCurrentGameVersion() {
 		return Memory::CallVT<218, INT64>(this);
@@ -281,7 +449,7 @@ namespace GamePH {
 	#pragma region PlayerObjProperties
 	PlayerObjProperties* PlayerObjProperties::Get() {
 		__try {
-			if (Offsets::Get_g_PlayerObjProperties() == NULL)
+			if (!Offsets::Get_g_PlayerObjProperties())
 				return nullptr;
 
 			PlayerObjProperties* ptr = *reinterpret_cast<PlayerObjProperties**>(Offsets::Get_g_PlayerObjProperties());
@@ -295,7 +463,9 @@ namespace GamePH {
 	}
 	#pragma endregion
 }
+#pragma endregion
 
+#pragma region Engine
 namespace Engine {
 	#pragma region CVideoSettings
 	CVideoSettings* CVideoSettings::Get() {
@@ -305,24 +475,6 @@ namespace Engine {
 				return nullptr;
 
 			CVideoSettings* ptr = pCGame->pCVideoSettings;
-
-			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
-				return nullptr;
-			return ptr;
-		} __except (EXCEPTION_EXECUTE_HANDLER) {
-			return nullptr;
-		}
-	}
-	#pragma endregion
-
-	#pragma region CBaseCamera
-	CBaseCamera* CBaseCamera::Get() {
-		__try {
-			CLevel* pCLevel = CLevel::Get();
-			if (!pCLevel)
-				return nullptr;
-
-			CBaseCamera* ptr = pCLevel->pCBaseCamera;
 
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
@@ -372,7 +524,7 @@ namespace Engine {
 	#pragma region CLobbySteam
 	CLobbySteam* CLobbySteam::Get() {
 		__try {
-			if (Offsets::Get_CLobbySteamOffset() == NULL)
+			if (!Offsets::Get_CLobbySteamOffset())
 				return nullptr;
 
 			CLobbySteam* ptr = *reinterpret_cast<CLobbySteam**>(Offsets::Get_CLobbySteamOffset());
@@ -387,12 +539,15 @@ namespace Engine {
 	#pragma endregion
 
 	#pragma region CBulletPhysicsCharacter
-	float* CBulletPhysicsCharacter::MoveCharacter(Vector3* pos) {
-		float*(*MoveCharacter)(LPVOID, float*) = (decltype(MoveCharacter))Offsets::Get_MoveCharacterOffset();
-		if (!MoveCharacter)
-			return nullptr;
+	Vector3 CBulletPhysicsCharacter::posBeforeFreeze{};
 
-		return MoveCharacter(this, reinterpret_cast<float*>(pos));
+	void CBulletPhysicsCharacter::FreezeCharacter() {
+		MoveCharacter(posBeforeFreeze);
+	}
+	void CBulletPhysicsCharacter::MoveCharacter(const Vector3& pos) {
+		playerDownwardVelocity = 0.0f;
+		playerPos = pos;
+		playerPos2 = pos;
 	}
 
 	CBulletPhysicsCharacter* CBulletPhysicsCharacter::Get() {
@@ -430,3 +585,4 @@ namespace Engine {
 	}
 	#pragma endregion
 }
+#pragma endregion

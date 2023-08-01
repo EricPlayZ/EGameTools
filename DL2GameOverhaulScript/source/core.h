@@ -12,22 +12,25 @@ struct SMART_BOOL {
 		value = false;
 	}
 
-	void Change(bool newValue) {
+	bool Change(bool newValue) {
 		if (changed && newValue == value)
-			return;
+			return false;
+
+		if (!changed)
+			previousValue = value;
 
 		changed = true;
-
-		previousValue = value;
 		value = newValue;
+		return true;
 	}
-	void Restore() {
+	bool Restore() {
 		if (!changed)
-			return;
+			return false;
 
 		changed = false;
 
 		value = previousValue;
+		return true;
 	}
 
 private:

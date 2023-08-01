@@ -31,6 +31,7 @@
     <ClCompile Include="source\menu\camera.cpp" />
     <ClCompile Include="source\menu\menu.cpp" />
     <ClCompile Include="source\menu\player.cpp" />
+    <ClCompile Include="source\menu\world.cpp" />
     <ClCompile Include="source\print.cpp" />
     <ClCompile Include="source\sigscan\sigscan.cpp" />
     <ClCompile Include="source\utils.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="source\menu\camera.h" />
     <ClInclude Include="source\menu\menu.h" />
     <ClInclude Include="source\menu\player.h" />
+    <ClInclude Include="source\menu\world.h" />
     <ClInclude Include="source\MinHook\include\MinHook.h" />
     <ClInclude Include="source\print.h" />
     <ClInclude Include="source\sigscan\offsets.h" />

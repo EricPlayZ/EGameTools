@@ -7,6 +7,7 @@
 #include "ImGui\impl\d3d11_impl.h"
 #include "MinHook\include\MinHook.h"
 #include "menu\menu.h"
+#include "menu\player.h"
 #include "menu\camera.h"
 #include "game_classes.h"
 #include "sigscan\offsets.h"
@@ -57,7 +58,7 @@ namespace Core {
 	static std::unique_ptr<Hook::BreakpointHook> ldrpRoutineBpHook = nullptr;
 	static void HookLdrpInitRoutine() {
 		const WindowsVersion winVer = Utils::GetWindowsVersion();
-		DWORD64 pLdrpRoutineFunc = NULL;
+		PDWORD64 pLdrpRoutineFunc = nullptr;
 
 		if (winVer != WindowsVersion::Windows7)
 			pLdrpRoutineFunc = Offsets::Get_LdrpCallInitRoutineOffset();
@@ -77,27 +78,25 @@ namespace Core {
 		});
 	}
 
+	static void OnUpdateFreeCam() {
+
+	}
+
 	void OnPostUpdate() {
 		if (!GamePH::PlayerVariables::gotPlayerVars)
 			GamePH::PlayerVariables::GetPlayerVars();
 
-		Engine::CVideoSettings* videoSettings = Engine::CVideoSettings::Get();
-		if (!Menu::isOpen && videoSettings)
-			Menu::Camera::FOV = static_cast<int>(videoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
+		Menu::Player::Update();
+		Menu::Camera::Update();
 
 		//if (GamePH::GameDI_PH::Get()) {
-			//	INT64 gameVer = GamePH::GameDI_PH::Get()->GetCurrentGameVersion();
-			//	std::cout << "Game Version:" << gameVer << std::endl;
-			//}
-			//if (GamePH::LevelDI::Get()) {
-			//	float timePlayed = GamePH::LevelDI::Get()->GetTimePlayed();
-			//	std::cout << "Time Played: " << timePlayed << std::endl;
-			//}
-		Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
-		if (playerCharacter) {
-			Vector3 pos{ 600.0f, 40.0f, -600.0f };
-			float* result = playerCharacter->MoveCharacter(&pos);
-		}
+		//	INT64 gameVer = GamePH::GameDI_PH::Get()->GetCurrentGameVersion();
+		//	std::cout << "Game Version:" << gameVer << std::endl;
+		//}
+		//if (GamePH::LevelDI::Get()) {
+		//	float timePlayed = GamePH::LevelDI::Get()->GetTimePlayed();
+		//	std::cout << "Time Played: " << timePlayed << std::endl;
+		//}
 	}
 
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
@@ -110,8 +109,10 @@ namespace Core {
 		// Hook renderer for ImGui
 		std::thread(HookRendererThread).detach();
 
+		GamePH::LoopHookCreatePlayerHealthModule();
 		GamePH::LoopHookOnUpdate();
 		GamePH::LoopHookCalculateFreeCamCollision();
+		GamePH::LoopHookLifeSetHealth();
 
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);
