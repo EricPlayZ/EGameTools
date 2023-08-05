@@ -11,6 +11,8 @@ namespace Menu {
 		extern SMART_BOOL disablePhotoModeLimitsEnabled;
 		extern bool teleportPlayerToCameraEnabled;
 
+		extern SMART_BOOL disableSafezoneFOVReductionEnabled;
+
 		extern void Update();
 		extern void Render();
 	}

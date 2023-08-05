@@ -39,5 +39,9 @@ private:
 
 namespace Core {
 	extern void DisableConsole();
+
+	extern bool exiting;
 	extern DWORD64 WINAPI MainThread(HMODULE hModule);
+
+	extern void Cleanup();
 }

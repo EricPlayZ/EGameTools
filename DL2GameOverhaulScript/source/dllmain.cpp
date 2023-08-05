@@ -7,12 +7,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD64 ul_reason_for_call, LPVOID lpRese
     case DLL_PROCESS_ATTACH: {
         DisableThreadLibraryCalls(hModule);
         hMainThread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)Core::MainThread, hModule, 0, nullptr);
+
         if (!hMainThread)
             return FALSE;
         break;
     }
     case DLL_PROCESS_DETACH:
+        Core::Cleanup();
         Core::DisableConsole();
+
         if (hMainThread)
             CloseHandle(hMainThread);
         FreeLibraryAndExitThread(hModule, 0);

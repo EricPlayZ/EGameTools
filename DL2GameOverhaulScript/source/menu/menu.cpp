@@ -12,7 +12,7 @@ namespace Menu {
 
 	void Render() {
         ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
-		ImGui::Begin("Game Overhaul", &Menu::isOpen, windowFlags); {
+		ImGui::Begin("EGameTools", &Menu::isOpen, windowFlags); {
             if (ImGui::BeginTabBar("##MainTabBar")) {
                 if (ImGui::BeginTabItem("Player")) {
                     Menu::Player::Render();

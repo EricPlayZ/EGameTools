@@ -224,7 +224,7 @@ namespace inih {
 
         template <typename T>
         T Get(const std::string& section, const std::string& name,
-            T&& default_v) const;
+            T&& default_v);
 
         template <typename T = std::string>
         std::vector<T> GetVector(const std::string& section,
@@ -350,8 +350,17 @@ namespace inih {
     }
 
     template <typename T>
-    inline T INIReader::Get(const std::string& section, const std::string& name,
-        T&& default_v) const {
+    inline T INIReader::Get(const std::string& section, const std::string& name, T&& default_v) {
+        try {
+            auto const _section = Get(section);
+            auto const _value = _section.find(name);
+            if (_value == _section.end())
+                InsertEntry(section, name, default_v);
+        } catch (std::runtime_error& e) {
+            UNREFERENCED_PARAMETER(e);
+            InsertEntry(section, name, default_v);
+        }
+
         try {
             return Get<T>(section, name);
         } catch (std::runtime_error& e) {
@@ -394,7 +403,7 @@ namespace inih {
     template <typename T>
     inline void INIReader::InsertEntry(const std::string& section,
         const std::string& name, const T& v) {
-        if (_values[section][name].size() > 0) {
+        if (_values[section].count(name) > 0) {
             throw std::runtime_error("duplicate key '" + std::string(name) +
                 "' in section '" + section + "'.");
         }
@@ -405,7 +414,7 @@ namespace inih {
     inline void INIReader::InsertEntry(const std::string& section,
         const std::string& name,
         const std::vector<T>& vs) {
-        if (_values[section][name].size() > 0) {
+        if (_values[section].count(name) > 0) {
             throw std::runtime_error("duplicate key '" + std::string(name) +
                 "' in section '" + section + "'.");
         }
@@ -415,9 +424,9 @@ namespace inih {
     template <typename T>
     inline void INIReader::UpdateEntry(const std::string& section,
         const std::string& name, const T& v) {
-        if (!_values[section][name].size()) {
-            throw std::runtime_error("key '" + std::string(name) +
-                "' not exist in section '" + section + "'.");
+        if (!_values[section].count(name)) {
+            InsertEntry(section, name, v);
+            //throw std::runtime_error("key '" + std::string(name) + "' not exist in section '" + section + "'.");
         }
         _values[section][name] = V2String(v);
     }
@@ -426,9 +435,9 @@ namespace inih {
     inline void INIReader::UpdateEntry(const std::string& section,
         const std::string& name,
         const std::vector<T>& vs) {
-        if (!_values[section][name].size()) {
-            throw std::runtime_error("key '" + std::string(name) +
-                "' not exist in section '" + section + "'.");
+        if (!_values[section].count(name)) {
+            InsertEntry(section, name, vs);
+            //throw std::runtime_error("key '" + std::string(name) + "' not exist in section '" + section + "'.");
         }
         _values[section][name] = Vec2String(vs);
     }
@@ -500,9 +509,9 @@ namespace inih {
         };
         inline static void write(const std::string& filepath,
             const INIReader& reader) {
-            if (struct stat buf; stat(filepath.c_str(), &buf) == 0) {
+            /*if (struct stat buf; stat(filepath.c_str(), &buf) == 0) {
                 throw std::runtime_error("file: " + filepath + " already exist.");
-            }
+            }*/
             std::ofstream out;
             out.open(filepath);
             if (!out.is_open()) {

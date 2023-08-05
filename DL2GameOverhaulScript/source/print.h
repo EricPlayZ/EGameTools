@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <string>
+#include "config\time_tools.h"
 
 enum ConsoleColors {
 	c_black,
@@ -21,49 +22,81 @@ enum ConsoleColors {
 	c_brightwhite
 };
 
-template<typename... Args> void PrintError(std::string f, Args... args) {
-	f.insert(0, "[!] ");
+template<typename... Args> std::string PrintError(std::string f, Args... args) {
 	f.append("\n");
+	std::ostringstream oss = GetTimestamp();
+	oss << f;
+	const std::string ossStr = oss.str();
 
 	const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsole, c_red);
-	printf(f.c_str(), args...);
+	printf(ossStr.c_str(), args...);
 	SetConsoleTextAttribute(hConsole, c_white);
+
+	return oss.str();
 }
-template<typename... Args> void PrintWaiting(std::string f, Args... args) {
-	f.insert(0, "[...] ");
+template<typename... Args> std::string PrintWarning(std::string f, Args... args) {
 	f.append("\n");
+	std::ostringstream oss = GetTimestamp();
+	oss << f;
+	const std::string ossStr = oss.str();
 
 	const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsole, c_gray);
-	printf(f.c_str(), args...);
+	SetConsoleTextAttribute(hConsole, c_yellow);
+	printf(ossStr.c_str(), args...);
 	SetConsoleTextAttribute(hConsole, c_white);
-}
-template<typename... Args> void PrintInfo(std::string f, Args... args) {
-	f.insert(0, "[.] ");
-	f.append("\n");
 
-	const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsole, c_brightwhite);
-	printf(f.c_str(), args...);
-	SetConsoleTextAttribute(hConsole, c_white);
+	return oss.str();
 }
-template<typename... Args> void PrintSuccess(std::string f, Args... args) {
-	f.insert(0, "[!] ");
+template<typename... Args> std::string PrintSuccess(std::string f, Args... args) {
 	f.append("\n");
+	std::ostringstream oss = GetTimestamp();
+	oss << f;
+	const std::string ossStr = oss.str();
 
 	const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsole, c_green);
-	printf(f.c_str(), args...);
+	printf(ossStr.c_str(), args...);
 	SetConsoleTextAttribute(hConsole, c_white);
+
+	return oss.str();
 }
-template<typename... Args> void PrintCustom(const std::string& f, const ConsoleColors& color, Args... args) {
+template<typename... Args> std::string PrintInfo(std::string f, Args... args) {
+	f.append("\n");
+	std::ostringstream oss = GetTimestamp();
+	oss << f;
+	const std::string ossStr = oss.str();
+
+	const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, c_brightwhite);
+	printf(ossStr.c_str(), args...);
+	SetConsoleTextAttribute(hConsole, c_white);
+
+	return oss.str();
+}
+template<typename... Args> std::string PrintWaiting(std::string f, Args... args) {
+	f.append("\n");
+	std::ostringstream oss = GetTimestamp();
+	oss << f;
+	const std::string ossStr = oss.str();
+
+	const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, c_gray);
+	printf(ossStr.c_str(), args...);
+	SetConsoleTextAttribute(hConsole, c_white);
+
+	return oss.str();
+}
+template<typename... Args> std::string PrintCustom(std::string f, const ConsoleColors color, Args... args) {
+	f.append("\n");
+	std::ostringstream oss = GetTimestamp();
+	oss << f;
+	const std::string ossStr = oss.str();
+
 	const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsole, color);
-	printf(f.c_str(), args...);
-	SetConsoleTextAttribute(hConsole, c_white); // White
+	printf(ossStr.c_str(), args...);
+	SetConsoleTextAttribute(hConsole, c_white);
+
+	return oss.str();
 }
-
-extern const int refreshConsoleIntervalMs;
-
-extern void DrawConsoleOut();

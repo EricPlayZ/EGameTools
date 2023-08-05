@@ -284,7 +284,17 @@ namespace GamePH {
 	#pragma region PlayerHealthModule
 	PlayerHealthModule* PlayerHealthModule::pPlayerHealthModule = nullptr;
 	PlayerHealthModule* PlayerHealthModule::Get() {
-		return pPlayerHealthModule;
+		__try {
+			if (!pPlayerHealthModule)
+				return nullptr;
+			if (!*reinterpret_cast<PDWORD64*>(pPlayerHealthModule))
+				return nullptr;
+
+			return pPlayerHealthModule;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			pPlayerHealthModule = nullptr;
+			return nullptr;
+		}
 	}
 	#pragma endregion
 

@@ -13,6 +13,9 @@ namespace Menu {
 		SMART_BOOL disablePhotoModeLimitsEnabled{};
 		bool teleportPlayerToCameraEnabled = false;
 
+		SMART_BOOL disableSafezoneFOVReductionEnabled{};
+		static float previousSafezoneFOVReductionVal = -50.0f;
+
 		static void UpdateFOVWhileMenuClosed() {
 			if (Menu::isOpen)
 				return;
@@ -79,6 +82,36 @@ namespace Menu {
 			return false;
 		}
 
+		static void UpdatePlayerVars() {
+			if (disableSafezoneFOVReductionEnabled.value) {
+				auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [](const auto& pair) {
+					return pair.first == "CameraDefaultFOVReduction";
+				});
+
+				if (it != GamePH::PlayerVariables::playerVars.end()) {
+					float* value = reinterpret_cast<float*>(it->second.first);
+
+					if (disableSafezoneFOVReductionEnabled.previousValue != disableSafezoneFOVReductionEnabled.value)
+						previousSafezoneFOVReductionVal = *value;
+
+					*value = 0.0f;
+					*(value + 1) = 0.0f;
+				}
+				disableSafezoneFOVReductionEnabled.previousValue = true;
+			} else if (disableSafezoneFOVReductionEnabled.previousValue != disableSafezoneFOVReductionEnabled.value) {
+				disableSafezoneFOVReductionEnabled.previousValue = false;
+				auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [](const auto& pair) {
+					return pair.first == "CameraDefaultFOVReduction";
+				});
+
+				if (it != GamePH::PlayerVariables::playerVars.end()) {
+					float* value = reinterpret_cast<float*>(it->second.first);
+					*value = previousSafezoneFOVReductionVal;
+					*(value + 1) = previousSafezoneFOVReductionVal;
+				}
+			}
+		}
+
 		void Update() {
 			if (photoModeEnabled)
 				freeCamEnabled.Change(false);
@@ -92,6 +125,7 @@ namespace Menu {
 
 			UpdateFOVWhileMenuClosed();
 			FreeCamUpdate();
+			UpdatePlayerVars();
 		}
 
 		void Render() {
@@ -118,6 +152,11 @@ namespace Menu {
 					pCVideoSettings->ExtraFOV = static_cast<float>(FOV - BaseFOV);
 				else if (pCVideoSettings)
 					FOV = static_cast<int>(pCVideoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
+				ImGui::EndDisabled();
+			}
+
+			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
+				ImGui::Checkbox("Disabled Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
 				ImGui::EndDisabled();
 			}
 		}

@@ -2,8 +2,6 @@
 #include <iostream>
 #include <thread>
 #include <MinHook.h>
-#include "utils.h"
-#include "ini.h"
 #include "kiero.h"
 #include "ImGui\impl\d3d11_impl.h"
 #include "ImGui\impl\d3d12_impl.h"
@@ -12,7 +10,9 @@
 #include "menu\camera.h"
 #include "game_classes.h"
 #include "sigscan\offsets.h"
+#include "config\config.h"
 #include "hook.h"
+#include "utils.h"
 
 namespace Core {
 	// Console stuff
@@ -26,19 +26,30 @@ namespace Core {
 	static FILE* f = nullptr;
 	static void EnableConsole() {
 		AllocConsole();
-		SetConsoleTitle("Debug Tools");
+		SetConsoleTitle("EGameTools");
 		freopen_s(&f, "CONOUT$", "w", stdout);
 		DisableConsoleQuickEdit();
 	}
 	void DisableConsole() {
-		if (f) fclose(f);
+		if (f)
+			fclose(f);
 		FreeConsole();
 	}
 
 	// Core
+	bool exiting = false;
+	static bool createdConfigThread = false;
+
+	std::thread hookRendererThread{};
+	std::thread configLoopThread{};
+	std::thread configSaveLoopThread{};
+
 	static std::string_view rendererAPI{};
-	static void HookRendererThread() {
+	static void LoopHookRenderer() {
 		while (true) {
+			if (exiting)
+				return;
+
 			Sleep(1000);
 
 			if (rendererAPI.empty())
@@ -112,6 +123,15 @@ namespace Core {
 	#pragma endregion
 
 	void OnPostUpdate() {
+		if (!createdConfigThread) {
+			configLoopThread = std::thread(Config::ConfigLoop);
+			configLoopThread.detach();
+			configSaveLoopThread = std::thread(Config::ConfigSaveLoop);
+			configSaveLoopThread.detach();
+
+			createdConfigThread = true;
+		}
+
 		if (!GamePH::PlayerVariables::gotPlayerVars)
 			GamePH::PlayerVariables::GetPlayerVars();
 
@@ -133,11 +153,13 @@ namespace Core {
 		
 		HookLdrpInitRoutine();
 
+		Config::InitConfig();
+
 		MH_Initialize();
 		LoopHookReadVideoSettings();
 
-		// Hook renderer for ImGui
-		std::thread(HookRendererThread).detach();
+		hookRendererThread = std::thread(LoopHookRenderer);
+		hookRendererThread.detach();
 
 		GamePH::LoopHookCreatePlayerHealthModule();
 		GamePH::LoopHookOnUpdate();
@@ -149,5 +171,18 @@ namespace Core {
 		WaitForSingleObject(proc, INFINITE);
 
 		return TRUE;
+	}
+
+	void Cleanup() {
+		exiting = true;
+
+		Config::SaveConfig();
+
+		MH_DisableHook(MH_ALL_HOOKS);
+		MH_Uninitialize();
+
+		configSaveLoopThread.join();
+		configLoopThread.join();
+		hookRendererThread.join();
 	}
 }

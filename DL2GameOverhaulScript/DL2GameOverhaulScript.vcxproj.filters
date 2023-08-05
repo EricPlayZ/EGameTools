@@ -4,7 +4,6 @@
     <ClCompile Include="source\memory.cpp" />
     <ClCompile Include="source\core.cpp" />
     <ClCompile Include="source\dllmain.cpp" />
-    <ClCompile Include="source\print.cpp" />
     <ClCompile Include="source\kiero.cpp" />
     <ClCompile Include="source\ImGui\imgui.cpp">
       <Filter>ImGui</Filter>
@@ -48,21 +47,26 @@
     <ClCompile Include="source\sigscan\sigscan.cpp">
       <Filter>sigscan</Filter>
     </ClCompile>
-    <ClCompile Include="source\menu\player.cpp" />
-    <ClCompile Include="source\menu\world.cpp" />
     <ClCompile Include="source\ImGuiFileDialog\ImGuiFileDialog.cpp">
       <Filter>ImGuiFileDialog</Filter>
     </ClCompile>
     <ClCompile Include="source\ImGui\impl\d3d12_impl.cpp">
       <Filter>ImGui\impl</Filter>
     </ClCompile>
+    <ClCompile Include="source\config\config.cpp">
+      <Filter>config</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menu\player.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menu\world.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\memory.h" />
-    <ClInclude Include="source\ini.h" />
     <ClInclude Include="source\game_classes.h" />
     <ClInclude Include="source\print.h" />
-    <ClInclude Include="source\time_tools.h" />
     <ClInclude Include="source\kiero.h" />
     <ClInclude Include="source\MinHook\include\MinHook.h">
       <Filter>MinHook\include</Filter>
@@ -115,8 +119,6 @@
       <Filter>sigscan</Filter>
     </ClInclude>
     <ClInclude Include="source\core.h" />
-    <ClInclude Include="source\menu\player.h" />
-    <ClInclude Include="source\menu\world.h" />
     <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialog.h">
       <Filter>ImGuiFileDialog</Filter>
     </ClInclude>
@@ -134,6 +136,21 @@
     </ClInclude>
     <ClInclude Include="source\ImGui\impl\d3d12_impl.h">
       <Filter>ImGui\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="source\config\ini.h">
+      <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="source\config\time_tools.h">
+      <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="source\config\config.h">
+      <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\player.h">
+      <Filter>menu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\world.h">
+      <Filter>menu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +183,9 @@
     </Filter>
     <Filter Include="ImGuiFileDialog\stb">
       <UniqueIdentifier>{fc7f7021-7f6b-46f0-af79-efe792ae05a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="config">
+      <UniqueIdentifier>{50f832bc-5ff2-45db-8d20-e8f458c78596}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

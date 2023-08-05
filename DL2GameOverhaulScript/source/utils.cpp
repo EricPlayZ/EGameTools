@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <shlobj.h>
 #include "utils.h"
 
 namespace Utils {
@@ -11,6 +12,13 @@ namespace Utils {
         return true;
     }
 
+    std::string_view GetDesktopDir() {
+        char path[MAX_PATH + 1];
+        if (!SHGetSpecialFolderPathA(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE))
+            return {};
+
+        return path;
+    }
     WindowsVersion GetWindowsVersion() {
         OSVERSIONINFOEX info{};
         DWORDLONG dwlConditionMask = 0;

@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\config\config.cpp" />
     <ClCompile Include="source\core.cpp" />
     <ClCompile Include="source\dllmain.cpp" />
     <ClCompile Include="source\game_classes.cpp" />
@@ -33,11 +34,13 @@
     <ClCompile Include="source\menu\menu.cpp" />
     <ClCompile Include="source\menu\player.cpp" />
     <ClCompile Include="source\menu\world.cpp" />
-    <ClCompile Include="source\print.cpp" />
     <ClCompile Include="source\sigscan\sigscan.cpp" />
     <ClCompile Include="source\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\config\config.h" />
+    <ClInclude Include="source\config\ini.h" />
+    <ClInclude Include="source\config\time_tools.h" />
     <ClInclude Include="source\core.h" />
     <ClInclude Include="source\game_classes.h" />
     <ClInclude Include="source\hook.h" />
@@ -58,7 +61,6 @@
     <ClInclude Include="source\ImGui\imstb_rectpack.h" />
     <ClInclude Include="source\ImGui\imstb_textedit.h" />
     <ClInclude Include="source\ImGui\imstb_truetype.h" />
-    <ClInclude Include="source\ini.h" />
     <ClInclude Include="source\kiero.h" />
     <ClInclude Include="source\memory.h" />
     <ClInclude Include="source\menu\camera.h" />
@@ -69,7 +71,6 @@
     <ClInclude Include="source\print.h" />
     <ClInclude Include="source\sigscan\offsets.h" />
     <ClInclude Include="source\sigscan\sigscan.h" />
-    <ClInclude Include="source\time_tools.h" />
     <ClInclude Include="source\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -107,13 +108,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetExt>.asi</TargetExt>
-    <TargetName>GameOverhaul</TargetName>
+    <TargetName>EGameTools</TargetName>
     <GenerateManifest>false</GenerateManifest>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>GameOverhaul</TargetName>
+    <TargetName>EGameTools</TargetName>
     <TargetExt>.asi</TargetExt>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -156,7 +157,7 @@
       <AdditionalLibraryDirectories>source\MinHook\lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\FOVOverhaul.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\FOVOverhaul.ini"</Command>
+      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
       <Message>Copying the default config file to the debug build directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -184,7 +185,7 @@
       <AdditionalDependencies>libMinHook-x64-v141-mtd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\FOVOverhaul.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\FOVOverhaul.ini"</Command>
+      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying the default config file to the release build directory</Message>

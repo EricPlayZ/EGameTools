@@ -5688,8 +5688,8 @@ namespace Menu {
 		SMART_BOOL godModeEnabled{};
 		SMART_BOOL freezePlayerEnabled{};
 
-		static std::string saveSCRPath{};
-		static std::string loadSCRFilePath{};
+		std::string saveSCRPath{};
+		std::string loadSCRFilePath{};
 
 		static char playerVarsSearchFilter[64];
 
