@@ -63,7 +63,7 @@ namespace GamePH {
 	static DWORD64(*pCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	static DWORD64(*oCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
-		if (!Menu::Camera::freeCamEnabled && !Menu::Camera::disablePhotoModeLimitsEnabled.value)
+		if (!Menu::Camera::freeCamEnabled.value && !Menu::Camera::disablePhotoModeLimitsEnabled.value)
 			return oCalculateFreeCamCollision(pFreeCamera, finalPos);
 
 		return NULL;
@@ -106,14 +106,46 @@ namespace GamePH {
 		}
 	}
 	#pragma endregion
+
+	#pragma region TogglePhotoMode
+	static void(*pTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
+	static void(*oTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
+	void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
+		Menu::Camera::photoModeEnabled = enabled;
+		if (Menu::Camera::freeCamEnabled.value) {
+			GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
+			if (pGameDI_PH) {
+				GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
+				if (pFreeCam) {
+					pGameDI_PH->TogglePhotoMode();
+					pFreeCam->AllowCameraMovement(0);
+				}
+			}
+		}
+
+		oTogglePhotoMode(guiPhotoModeData, enabled);
+	}
+	void LoopHookTogglePhotoMode() {
+		while (true) {
+			Sleep(250);
+
+			if (!pTogglePhotoMode)
+				pTogglePhotoMode = (decltype(pTogglePhotoMode))Offsets::Get_TogglePhotoMode();
+			else if (!oTogglePhotoMode && MH_CreateHook(pTogglePhotoMode, &detourTogglePhotoMode, reinterpret_cast<LPVOID*>(&oTogglePhotoMode)) == MH_OK) {
+				MH_EnableHook(pTogglePhotoMode);
+				break;
+			}
+		}
+	}
+	#pragma endregion
 	#pragma endregion
 
 	#pragma region PlayerVariables
 	PDWORD64 PlayerVariables::FloatPlayerVariableVT;
 	PDWORD64 PlayerVariables::BoolPlayerVariableVT;
 
-	std::vector <std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> PlayerVariables::unorderedPlayerVars;
-	std::vector <std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> PlayerVariables::unorderedPlayerVarsDefault;
+	std::vector <std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> PlayerVariables::playerVars;
+	std::vector <std::pair<std::string_view, std::pair<std::any, std::string_view>>> PlayerVariables::playerVarsDefault;
 	bool PlayerVariables::gotPlayerVars = false;
 
 	std::unique_ptr<Hook::BreakpointHook> PlayerVariables::loadPlayerFloatVarBpHook = nullptr;
@@ -132,15 +164,15 @@ namespace GamePH {
 			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
 			const std::string_view name = tempName;
 
-			PlayerVariables::unorderedPlayerVars.emplace_back(name, std::make_pair(nullptr, "float"));
-			PlayerVariables::unorderedPlayerVarsDefault.emplace_back(name, std::make_pair(nullptr, "float"));
+			PlayerVariables::playerVars.emplace_back(name, std::make_pair(nullptr, "float"));
+			PlayerVariables::playerVarsDefault.emplace_back(name, std::make_pair(0.0f, "float"));
 		});
 		loadPlayerBoolVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerBoolVariableOffset(), [&](PEXCEPTION_POINTERS info) -> void {
 			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
 			const std::string_view name = tempName;
 
-			PlayerVariables::unorderedPlayerVars.emplace_back(name, std::make_pair(nullptr, "bool"));
-			PlayerVariables::unorderedPlayerVarsDefault.emplace_back(name, std::make_pair(nullptr, "bool"));
+			PlayerVariables::playerVars.emplace_back(name, std::make_pair(nullptr, "bool"));
+			PlayerVariables::playerVarsDefault.emplace_back(name, std::make_pair(false, "bool"));
 		});
 
 		hooked = true;
@@ -173,28 +205,40 @@ namespace GamePH {
 			return;
 		if (!Get())
 			return;
-		if (unorderedPlayerVars.empty())
+		if (playerVars.empty())
 			return;
 		if (!GetFloatPlayerVariableVT())
 			return;
 		if (!GetBoolPlayerVariableVT())
 			return;
 
-		PDWORD64* playerVars = reinterpret_cast<PDWORD64*>(Get());
+		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());
 		bool isFloatPlayerVar = false;
 		bool isBoolPlayerVar = false;
 
-		for (auto it = unorderedPlayerVars.begin(); it != unorderedPlayerVars.end(); ++it) {
+		for (auto it = playerVars.begin(); it != playerVars.end(); ++it) {
 			while (true) {
-				isFloatPlayerVar = *playerVars == GetFloatPlayerVariableVT();
-				isBoolPlayerVar = *playerVars == GetBoolPlayerVariableVT();
+				isFloatPlayerVar = *playerVarsMem == GetFloatPlayerVariableVT();
+				isBoolPlayerVar = *playerVarsMem == GetBoolPlayerVariableVT();
 
 				if (isFloatPlayerVar || isBoolPlayerVar) {
-					it->second.first = playerVars + 1;
-					playerVars += isFloatPlayerVar ? 3 : 2;
+					it->second.first = playerVarsMem + 1;
+					const std::string_view varName = it->first;
+
+					auto itDef = std::find_if(GamePH::PlayerVariables::playerVarsDefault.begin(), GamePH::PlayerVariables::playerVarsDefault.end(), [&varName](const auto& pair) {
+						return pair.first == varName;
+					});
+					if (itDef != GamePH::PlayerVariables::playerVarsDefault.end()) {
+						if (isFloatPlayerVar)
+							itDef->second.first = *reinterpret_cast<float*>(it->second.first);
+						else
+							itDef->second.first = *reinterpret_cast<bool*>(it->second.first);
+					}
+
+					playerVarsMem += isFloatPlayerVar ? 3 : 2;
 					break;
 				} else
-					playerVars += 1;
+					playerVarsMem += 1;
 			}
 		}
 
@@ -528,6 +572,30 @@ namespace Engine {
 				return nullptr;
 
 			CLobbySteam* ptr = *reinterpret_cast<CLobbySteam**>(Offsets::Get_CLobbySteamOffset());
+
+			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
+				return nullptr;
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	#pragma endregion
+
+	#pragma region CInput
+	DWORD64 CInput::BlockGameInput() {
+		return Memory::CallVT<2, DWORD64>(this);
+	}
+	void CInput::UnlockGameInput() {
+		Memory::CallVT<1>(this);
+	}
+
+	CInput* CInput::Get() {
+		__try {
+			if (!Offsets::Get_g_CInput())
+				return nullptr;
+
+			CInput* ptr = *reinterpret_cast<CInput**>(Offsets::Get_g_CInput());
 
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;

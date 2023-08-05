@@ -1,17 +1,12 @@
 ﻿#include <d3d11.h>
 #include <assert.h>
-#include "../../kiero.h"
-#include "../imgui.h"
-#include "../backends/imgui_impl_win32.h"
-#include "../backends/imgui_impl_dx11.h"
+#include <imgui.h>
+#include <backends\imgui_impl_win32.h>
+#include <backends\imgui_impl_dx11.h>
+#include "..\..\menu\menu.h"
+#include "..\..\kiero.h"
 #include "d3d11_impl.h"
 #include "win32_impl.h"
-#include "../../menu/menu.h"
-
-/*void SetStyle() {
-	ImGuiStyle* style = &ImGui::GetStyle();
-	style->Colors[ImGuiCol_WindowBg] = ImVec4(style->Colors[ImGuiCol_WindowBg].x, style->Colors[ImGuiCol_WindowBg].y, style->Colors[ImGuiCol_WindowBg].z, 0.98f);
-}*/
 
 HRESULT(__stdcall* oPresent)(IDXGISwapChain*, UINT, UINT);
 HRESULT __stdcall hkPresent11(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
@@ -19,7 +14,7 @@ HRESULT __stdcall hkPresent11(IDXGISwapChain* pSwapChain, UINT SyncInterval, UIN
 
 	if (!init)
 	{
-		DXGI_SWAP_CHAIN_DESC desc;
+		DXGI_SWAP_CHAIN_DESC desc{};
 		pSwapChain->GetDesc(&desc);
 
 		ID3D11Device* device = nullptr;
@@ -31,10 +26,10 @@ HRESULT __stdcall hkPresent11(IDXGISwapChain* pSwapChain, UINT SyncInterval, UIN
 		impl::win32::init(desc.OutputWindow);
 
 		ImGui::CreateContext();
+		ImGui::GetIO().IniFilename = nullptr;
+
 		ImGui_ImplWin32_Init(desc.OutputWindow);
 		ImGui_ImplDX11_Init(device, context);
-
-		//SetStyle();
 
 		init = true;
 	}
@@ -54,5 +49,5 @@ HRESULT __stdcall hkPresent11(IDXGISwapChain* pSwapChain, UINT SyncInterval, UIN
 }
 
 void impl::d3d11::init() {
-	assert(kiero::bind(8, (void**)&oPresent, hkPresent11) == kiero::Status::Success);
+	assert(kiero::bind(8, (LPVOID*)&oPresent, hkPresent11) == kiero::Status::Success);
 }

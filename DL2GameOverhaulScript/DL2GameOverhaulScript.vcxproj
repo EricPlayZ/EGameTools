@@ -15,6 +15,7 @@
     <ClCompile Include="source\dllmain.cpp" />
     <ClCompile Include="source\game_classes.cpp" />
     <ClCompile Include="source\hook.cpp" />
+    <ClCompile Include="source\ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\ImGui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="source\ImGui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="source\ImGui\backends\imgui_impl_win32.cpp" />
@@ -24,7 +25,7 @@
     <ClCompile Include="source\ImGui\imgui_tables.cpp" />
     <ClCompile Include="source\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="source\ImGui\impl\d3d11_impl.cpp" />
-    <ClCompile Include="source\ImGui\impl\shared.cpp" />
+    <ClCompile Include="source\ImGui\impl\d3d12_impl.cpp" />
     <ClCompile Include="source\ImGui\impl\win32_impl.cpp" />
     <ClCompile Include="source\kiero.cpp" />
     <ClCompile Include="source\memory.cpp" />
@@ -40,6 +41,11 @@
     <ClInclude Include="source\core.h" />
     <ClInclude Include="source\game_classes.h" />
     <ClInclude Include="source\hook.h" />
+    <ClInclude Include="source\ImGuiFileDialog\dirent\dirent.h" />
+    <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
+    <ClInclude Include="source\ImGuiFileDialog\stb\stb_image.h" />
+    <ClInclude Include="source\ImGuiFileDialog\stb\stb_image_resize.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_dx12.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_win32.h" />
@@ -47,7 +53,7 @@
     <ClInclude Include="source\ImGui\imgui.h" />
     <ClInclude Include="source\ImGui\imgui_internal.h" />
     <ClInclude Include="source\ImGui\impl\d3d11_impl.h" />
-    <ClInclude Include="source\ImGui\impl\shared.h" />
+    <ClInclude Include="source\ImGui\impl\d3d12_impl.h" />
     <ClInclude Include="source\ImGui\impl\win32_impl.h" />
     <ClInclude Include="source\ImGui\imstb_rectpack.h" />
     <ClInclude Include="source\ImGui\imstb_textedit.h" />
@@ -65,7 +71,6 @@
     <ClInclude Include="source\sigscan\sigscan.h" />
     <ClInclude Include="source\time_tools.h" />
     <ClInclude Include="source\utils.h" />
-    <ClInclude Include="source\vtablehook.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -104,12 +109,13 @@
     <TargetExt>.asi</TargetExt>
     <TargetName>GameOverhaul</TargetName>
     <GenerateManifest>false</GenerateManifest>
-    <LibraryPath>source\MinHook\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>GameOverhaul</TargetName>
     <TargetExt>.asi</TargetExt>
-    <LibraryPath>source\MinHook\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <VcpkgUseStatic>true</VcpkgUseStatic>
@@ -136,8 +142,7 @@
       </Optimization>
       <IntrinsicFunctions>
       </IntrinsicFunctions>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>source\ImGui;source\ImGuiFileDialog;source\MinHook\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,6 +153,7 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
+      <AdditionalLibraryDirectories>source\MinHook\lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\FOVOverhaul.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\FOVOverhaul.ini"</Command>
@@ -165,7 +171,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>source\ImGui;source\ImGuiFileDialog;source\MinHook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -174,7 +180,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>source\MinHook\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libMinHook-x64-v141-mtd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>

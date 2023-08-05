@@ -11,7 +11,7 @@
 // Read online: https://github.com/ocornut/imgui/tree/master/docs
 
 #pragma once
-#include "../imgui.h"      // IMGUI_IMPL_API
+#include <imgui.h> // IMGUI_IMPL_API
 #ifndef IMGUI_DISABLE
 
 struct ID3D11Device;

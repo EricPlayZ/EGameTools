@@ -4,6 +4,7 @@
 #include <vector>
 #include <string_view>
 #include <memory>
+#include <any>
 #include "hook.h"
 
 #define STR_MERGE_IMPL(a, b) a##b
@@ -50,14 +51,15 @@ namespace GamePH {
 	extern void LoopHookOnUpdate();
 	extern void LoopHookCalculateFreeCamCollision();
 	extern void LoopHookLifeSetHealth();
+	extern void LoopHookTogglePhotoMode();
 
 	class PlayerVariables {
 	private:
 		static PDWORD64 FloatPlayerVariableVT;
 		static PDWORD64 BoolPlayerVariableVT;
 	public:
-		static std::vector<std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> unorderedPlayerVars;
-		static std::vector<std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> unorderedPlayerVarsDefault;
+		static std::vector<std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> playerVars;
+		static std::vector<std::pair<std::string_view, std::pair<std::any, std::string_view>>> playerVarsDefault;
 		static bool gotPlayerVars;
 
 		static std::unique_ptr<Hook::BreakpointHook> loadPlayerFloatVarBpHook;
@@ -198,6 +200,14 @@ namespace Engine {
 		};
 
 		static CLobbySteam* Get();
+	};
+
+	class CInput {
+	public:
+		DWORD64 BlockGameInput();
+		void UnlockGameInput();
+
+		static CInput* Get();
 	};
 
 	class CBulletPhysicsCharacter {

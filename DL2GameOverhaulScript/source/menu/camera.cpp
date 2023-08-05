@@ -1,4 +1,4 @@
-#include "..\ImGui\imgui.h"
+#include <imgui.h>
 #include "..\game_classes.h"
 #include "..\core.h"
 #include "menu.h"
@@ -8,7 +8,8 @@ namespace Menu {
 		extern const int BaseFOV = 57;
 		int FOV = 57;
 
-		bool freeCamEnabled = false;
+		bool photoModeEnabled = false;
+		SMART_BOOL freeCamEnabled{};
 		SMART_BOOL disablePhotoModeLimitsEnabled{};
 		bool teleportPlayerToCameraEnabled = false;
 
@@ -23,6 +24,8 @@ namespace Menu {
 			Menu::Camera::FOV = static_cast<int>(videoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
 		}
 		static void FreeCamUpdate() {
+			if (photoModeEnabled)
+				return;
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			if (!iLevel)
 				return;
@@ -36,33 +39,23 @@ namespace Menu {
 			if (!pFreeCam)
 				return;
 
-			if (freeCamEnabled) {
+			if (freeCamEnabled.value) {
 				if (viewCam == pFreeCam)
 					return;
 
-				GamePH::GameDI_PH::Get()->TogglePhotoMode();
-				GamePH::FreeCamera::Get()->AllowCameraMovement(2);
+				pGameDI_PH->TogglePhotoMode();
+				pFreeCam->AllowCameraMovement(2);
 			} else {
 				GamePH::CameraFPPDI* pPlayerCam = GamePH::CameraFPPDI::Get();
 				if (!pPlayerCam || viewCam == pPlayerCam)
 					return;
 
-				GamePH::GameDI_PH::Get()->TogglePhotoMode();
-				GamePH::FreeCamera::Get()->AllowCameraMovement(0);
+				pGameDI_PH->TogglePhotoMode();
+				pFreeCam->AllowCameraMovement(0);
 			}
 		}
 
-		void Update() {
-			if (freeCamEnabled)
-				disablePhotoModeLimitsEnabled.Change(true);
-			else
-				disablePhotoModeLimitsEnabled.Restore();
-
-			UpdateFOVWhileMenuClosed();
-			FreeCamUpdate();
-		}
-
-		static bool GetFreeCamDisabledFlag() {
+		static bool GetCamDisabledFlag() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			if (!iLevel)
 				return true;
@@ -85,15 +78,37 @@ namespace Menu {
 			
 			return false;
 		}
+
+		void Update() {
+			if (photoModeEnabled)
+				freeCamEnabled.Change(false);
+			else
+				freeCamEnabled.Restore();
+
+			if (freeCamEnabled.value)
+				disablePhotoModeLimitsEnabled.Change(true);
+			else
+				disablePhotoModeLimitsEnabled.Restore();
+
+			UpdateFOVWhileMenuClosed();
+			FreeCamUpdate();
+		}
+
 		void Render() {
-			ImGui::BeginDisabled(GetFreeCamDisabledFlag()); {
-				ImGui::Checkbox("FreeCam", &freeCamEnabled);
+			ImGui::BeginDisabled(GetCamDisabledFlag()); {
+				ImGui::BeginDisabled(photoModeEnabled); {
+					ImGui::Checkbox("FreeCam", &freeCamEnabled.value);
+					ImGui::EndDisabled();
+				}
 				ImGui::SameLine();
-				ImGui::BeginDisabled(freeCamEnabled); {
+				ImGui::BeginDisabled(freeCamEnabled.value); {
 					ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
 					ImGui::EndDisabled();
 				}
-				ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
+				ImGui::BeginDisabled(photoModeEnabled); {
+					ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
+					ImGui::EndDisabled();
+				}
 				ImGui::EndDisabled();
 			}
 			

@@ -1,6 +1,6 @@
 #pragma once
 namespace impl {
-	namespace d3d11 {
+	namespace d3d12 {
 		void init();
 	}
 }

@@ -1,11 +1,12 @@
 #include <Windows.h>
 #include <iostream>
 #include <thread>
+#include <MinHook.h>
 #include "utils.h"
 #include "ini.h"
 #include "kiero.h"
 #include "ImGui\impl\d3d11_impl.h"
-#include "MinHook\include\MinHook.h"
+#include "ImGui\impl\d3d12_impl.h"
 #include "menu\menu.h"
 #include "menu\player.h"
 #include "menu\camera.h"
@@ -25,6 +26,7 @@ namespace Core {
 	static FILE* f = nullptr;
 	static void EnableConsole() {
 		AllocConsole();
+		SetConsoleTitle("Debug Tools");
 		freopen_s(&f, "CONOUT$", "w", stdout);
 		DisableConsoleQuickEdit();
 	}
@@ -34,11 +36,15 @@ namespace Core {
 	}
 
 	// Core
+	static std::string_view rendererAPI{};
 	static void HookRendererThread() {
 		while (true) {
 			Sleep(1000);
 
-			if (kiero::init(kiero::RenderType::Auto) != kiero::Status::Success)
+			if (rendererAPI.empty())
+				continue;
+
+			if (kiero::init(rendererAPI == "d3d11" ? kiero::RenderType::D3D11 : kiero::RenderType::D3D12) != kiero::Status::Success)
 				continue;
 
 			switch (kiero::getRenderType()) {
@@ -46,6 +52,7 @@ namespace Core {
 				impl::d3d11::init();
 				break;
 			case kiero::RenderType::D3D12:
+				impl::d3d12::init();
 				break;
 			default:
 				break;
@@ -78,9 +85,31 @@ namespace Core {
 		});
 	}
 
-	static void OnUpdateFreeCam() {
+	#pragma region GetRendererAPI
+	static bool(*pReadVideoSettings)(LPVOID instance, LPVOID file, bool flag1) = nullptr;
+	static bool(*oReadVideoSettings)(LPVOID instance, LPVOID file, bool flag1) = nullptr;
+	bool detourReadVideoSettings(LPVOID instance, LPVOID file, bool flag1) {
+		if (!rendererAPI.empty())
+			return oReadVideoSettings(instance, file, flag1);
 
+		DWORD renderer = *reinterpret_cast<PDWORD>(reinterpret_cast<DWORD64>(instance) + 0x78);
+		rendererAPI = !renderer ? "d3d11" : "d3d12";
+		
+		return oReadVideoSettings(instance, file, flag1);
 	}
+	void LoopHookReadVideoSettings() {
+		while (true) {
+			Sleep(250);
+
+			if (!pReadVideoSettings)
+				pReadVideoSettings = (decltype(pReadVideoSettings))Offsets::Get_ReadVideoSettingsOffset();
+			else if (!oReadVideoSettings && MH_CreateHook(pReadVideoSettings, &detourReadVideoSettings, reinterpret_cast<LPVOID*>(&oReadVideoSettings)) == MH_OK) {
+				MH_EnableHook(pReadVideoSettings);
+				break;
+			}
+		}
+	}
+	#pragma endregion
 
 	void OnPostUpdate() {
 		if (!GamePH::PlayerVariables::gotPlayerVars)
@@ -101,10 +130,11 @@ namespace Core {
 
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
-
+		
 		HookLdrpInitRoutine();
 
 		MH_Initialize();
+		LoopHookReadVideoSettings();
 
 		// Hook renderer for ImGui
 		std::thread(HookRendererThread).detach();
@@ -113,6 +143,7 @@ namespace Core {
 		GamePH::LoopHookOnUpdate();
 		GamePH::LoopHookCalculateFreeCamCollision();
 		GamePH::LoopHookLifeSetHealth();
+		GamePH::LoopHookTogglePhotoMode();
 
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);

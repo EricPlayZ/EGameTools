@@ -33,9 +33,6 @@
     <ClCompile Include="source\ImGui\impl\d3d11_impl.cpp">
       <Filter>ImGui\impl</Filter>
     </ClCompile>
-    <ClCompile Include="source\ImGui\impl\shared.cpp">
-      <Filter>ImGui\impl</Filter>
-    </ClCompile>
     <ClCompile Include="source\ImGui\impl\win32_impl.cpp">
       <Filter>ImGui\impl</Filter>
     </ClCompile>
@@ -53,6 +50,12 @@
     </ClCompile>
     <ClCompile Include="source\menu\player.cpp" />
     <ClCompile Include="source\menu\world.cpp" />
+    <ClCompile Include="source\ImGuiFileDialog\ImGuiFileDialog.cpp">
+      <Filter>ImGuiFileDialog</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\impl\d3d12_impl.cpp">
+      <Filter>ImGui\impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\memory.h" />
@@ -60,7 +63,6 @@
     <ClInclude Include="source\game_classes.h" />
     <ClInclude Include="source\print.h" />
     <ClInclude Include="source\time_tools.h" />
-    <ClInclude Include="source\vtablehook.h" />
     <ClInclude Include="source\kiero.h" />
     <ClInclude Include="source\MinHook\include\MinHook.h">
       <Filter>MinHook\include</Filter>
@@ -95,9 +97,6 @@
     <ClInclude Include="source\ImGui\impl\d3d11_impl.h">
       <Filter>ImGui\impl</Filter>
     </ClInclude>
-    <ClInclude Include="source\ImGui\impl\shared.h">
-      <Filter>ImGui\impl</Filter>
-    </ClInclude>
     <ClInclude Include="source\ImGui\impl\win32_impl.h">
       <Filter>ImGui\impl</Filter>
     </ClInclude>
@@ -118,6 +117,24 @@
     <ClInclude Include="source\core.h" />
     <ClInclude Include="source\menu\player.h" />
     <ClInclude Include="source\menu\world.h" />
+    <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialog.h">
+      <Filter>ImGuiFileDialog</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialogConfig.h">
+      <Filter>ImGuiFileDialog</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGuiFileDialog\dirent\dirent.h">
+      <Filter>ImGuiFileDialog\dirent</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGuiFileDialog\stb\stb_image.h">
+      <Filter>ImGuiFileDialog\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGuiFileDialog\stb\stb_image_resize.h">
+      <Filter>ImGuiFileDialog\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGui\impl\d3d12_impl.h">
+      <Filter>ImGui\impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">
@@ -140,6 +157,15 @@
     </Filter>
     <Filter Include="sigscan">
       <UniqueIdentifier>{525740fe-17a7-431f-b020-720a1dc32e07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGuiFileDialog">
+      <UniqueIdentifier>{de465f41-9f72-477f-b27f-b2e79be85aee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGuiFileDialog\dirent">
+      <UniqueIdentifier>{3200ad89-3545-4059-8b77-8dde207ba3a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGuiFileDialog\stb">
+      <UniqueIdentifier>{fc7f7021-7f6b-46f0-af79-efe792ae05a8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

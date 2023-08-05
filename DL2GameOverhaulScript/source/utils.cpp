@@ -1,17 +1,24 @@
-#include "utils.h"
 #include <Windows.h>
+#include "utils.h"
 
 namespace Utils {
+    bool str_replace(std::string& str, const std::string& from, const std::string& to) {
+        const size_t start_pos = str.find(from);
+        if (start_pos == std::string::npos)
+            return false;
+
+        str.replace(start_pos, from.length(), to);
+        return true;
+    }
+
     WindowsVersion GetWindowsVersion() {
         OSVERSIONINFOEX info{};
         DWORDLONG dwlConditionMask = 0;
 
-        // Initialize the OSVERSIONINFOEX structure.
         ZeroMemory(&info, sizeof(OSVERSIONINFOEX));
         info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
         info.dwMajorVersion = 6;
 
-        // Initialize the condition mask.
         VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, VER_EQUAL);
 
         if (VerifyVersionInfo(&info, VER_MAJORVERSION, dwlConditionMask)) {

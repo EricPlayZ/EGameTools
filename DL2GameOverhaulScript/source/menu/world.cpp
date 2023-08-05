@@ -1,4 +1,4 @@
-#include "..\ImGui\imgui.h"
+#include <imgui.h>
 #include "..\game_classes.h"
 
 namespace Menu {

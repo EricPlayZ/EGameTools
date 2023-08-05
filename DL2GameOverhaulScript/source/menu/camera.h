@@ -5,8 +5,9 @@ namespace Menu {
 	namespace Camera {
 		extern const int BaseFOV;
 		extern int FOV;
-
-		extern bool freeCamEnabled;
+		
+		extern bool photoModeEnabled;
+		extern SMART_BOOL freeCamEnabled;
 		extern SMART_BOOL disablePhotoModeLimitsEnabled;
 		extern bool teleportPlayerToCameraEnabled;
 

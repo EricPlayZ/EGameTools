@@ -1,21 +1,16 @@
 ﻿#include <Windows.h>
-
-#include "../../kiero.h"
-#include "../imgui.h"
-#include "../backends/imgui_impl_win32.h"
-
+#include <imgui.h>
+#include <backends\imgui_impl_win32.h>
+#include "..\..\menu\menu.h"
+#include "..\..\sigscan\offsets.h"
+#include "..\..\kiero.h"
+#include "..\..\game_classes.h"
 #include "win32_impl.h"
-
-#include "../../menu/menu.h"
-#include "../../sigscan/offsets.h"
 
 static WNDPROC oWndProc = NULL;
 static bool toggledMenu = false;
+static bool menuMsgSent = false;
 static bool wasMenuKeyPressed = false;
-
-static void(*DoGameWindowStuffOnGainFocus)(LPVOID gui__CActionNode) = nullptr;
-static void(*DoGameWindowStuffOnLostFocus)(LPVOID gui__CActionNode) = nullptr;
-static LPVOID* g_gui__CActionNode = nullptr;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -33,35 +28,22 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 		break;
 	}
 
+	Engine::CInput* pCInput = Engine::CInput::Get();
+	if (!pCInput)
+		return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
+
 	ImGui::GetIO().MouseDrawCursor = Menu::isOpen;
 	ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam);
 
-	if (!DoGameWindowStuffOnGainFocus) {
-		DoGameWindowStuffOnGainFocus = (decltype(DoGameWindowStuffOnGainFocus))Offsets::Get_DoGameWindowStuffOnGainFocusOffset();
-		return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
-	}
-	if (!DoGameWindowStuffOnLostFocus) {
-		DoGameWindowStuffOnLostFocus = (decltype(DoGameWindowStuffOnLostFocus))Offsets::Get_DoGameWindowStuffOnLostFocusOffset();
-		return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
-
-	}
-	if (!g_gui__CActionNode) {
-		g_gui__CActionNode = Offsets::Get_g_gui__CActionNodeOffset();
-		return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
-	}
-
 	if (Menu::isOpen) {
-		// Gain focus to ImGui
-		if (!toggledMenu && DoGameWindowStuffOnLostFocus)
-			DoGameWindowStuffOnLostFocus(g_gui__CActionNode);
+		if (!toggledMenu)
+			pCInput->BlockGameInput();
 
 		toggledMenu = true;
 		return true;
 	} else if (toggledMenu) {
 		toggledMenu = false;
-
-		// Regain focus to game
-		DoGameWindowStuffOnGainFocus(g_gui__CActionNode);
+		pCInput->UnlockGameInput();
 	}
 
 	return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
