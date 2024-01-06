@@ -53,10 +53,15 @@ This mod is supposed to survive game updates, but sometimes it doesn't if there'
 
 ## Credits
 [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader)
+
 [ImGui](https://github.com/ocornut/imgui)
-﻿[ImGuiFileDialog](https://github.com/aiekick/ImGuiFileDialog)
+
+[ImGuiFileDialog](https://github.com/aiekick/ImGuiFileDialog)
+
 [minhook](https://github.com/TsudaKageyu/minhook)
+
 [kiero](https://github.com/Rebzzel/kiero)
+
 [OpenGameCamera](https://github.com/coltonon/OpenGameCamera)
 
 And **@yeeeeeeee.** for helping me with certain issues I encountered <3
