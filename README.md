@@ -43,7 +43,7 @@ A config file `EGameTools.ini` is stored in the same folder as the mod file. In 
 For now, this config file is not very useful for most people as it saves some useless information such as last paths used in the Player Variables saving/loading dialogs, or toggles such as Disable PhotoMode Limits/Safezone FOV Reduction.
 
 ## Bugs/issues
-**Visit EGameTools Trello﻿ to check for bugs/issues currently present in the mod, as well as features that I'm working on or planning to add!**
+**Visit [EGameTools Trello](https://trello.com/b/oRaJQEOi/egametools-dying-light-2)﻿ to check for bugs/issues currently present in the mod, as well as features that I'm working on or planning to add!**
 
 ## Does this work with Multiplayer?
 It should mostly work, but there's some issues with God Mode for example not working properly, the code is made with singleplayer in mind and doesn't care about other players which can cause bugs. If you encounter bugs, please open a bug report, I will gladly take a look at it and see if I can find a workaround for multiplayer too.
