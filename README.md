@@ -27,7 +27,7 @@ World:
 **Check [EGameTools Trello](https://trello.com/b/oRaJQEOi/egametools-dying-light-2)﻿ to see what features or bugfixes I'm working on/planning to add!**
 
 ## Installation
-Download the archive from the [Files](https://www.nexusmods.com/dyinglight2/mods/1098?tab=files) section and extract the files from inside the archive to the game's exe folder (`Dying Light 2\ph\work\bin\x64`).
+Download the latest archive from the [Releases](https://github.com/EricPlayZ/DL2GameOverhaul/releases) page and extract the files from inside the archive to the game's exe folder (`Dying Light 2\ph\work\bin\x64`).
 
 ## Uninstallation
 Delete `winmm.dll`, `EGameTools.asi` and `EGameTools.ini` from the game's exe folder (`Dying Light 2\ph\work\bin\x64`).
