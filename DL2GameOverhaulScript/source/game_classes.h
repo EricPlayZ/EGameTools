@@ -54,22 +54,13 @@ namespace GamePH {
 	extern void LoopHookTogglePhotoMode();
 
 	class PlayerVariables {
-	private:
-		static PDWORD64 FloatPlayerVariableVT;
-		static PDWORD64 BoolPlayerVariableVT;
 	public:
 		static std::vector<std::pair<std::string, std::pair<LPVOID, std::string>>> playerVars;
 		static std::vector<std::pair<std::string, std::pair<std::any, std::string>>> playerVarsDefault;
 		static std::vector<std::pair<std::string, std::pair<std::any, std::string>>> playerCustomVarsDefault;
 		static bool gotPlayerVars;
 
-		static std::unique_ptr<Hook::BreakpointHook> loadPlayerFloatVarBpHook;
-		static std::unique_ptr<Hook::BreakpointHook> loadPlayerBoolVarBpHook;
-
-		static bool hooked;
-		static bool hookedBACKUP;
-		static void RunHooks();
-		static void RunHooksBACKUP();
+		static void SortPlayerVars();
 
 		static PDWORD64 GetFloatPlayerVariableVT();
 		static PDWORD64 GetBoolPlayerVariableVT();

@@ -10,10 +10,6 @@
 #include "memory.h"
 #include "print.h"
 #include "utils.h"
-//#define DEBUGPVARS
-#ifdef DEBUGPVARS
-#include <fstream>
-#endif
 
 namespace Core {
 	extern void OnPostUpdate();
@@ -148,50 +144,13 @@ namespace GamePH {
 	#pragma endregion
 
 	#pragma region PlayerVariables
-	PDWORD64 PlayerVariables::FloatPlayerVariableVT;
-	PDWORD64 PlayerVariables::BoolPlayerVariableVT;
-
 	std::vector <std::pair<std::string, std::pair<LPVOID, std::string>>> PlayerVariables::playerVars;
 	std::vector <std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerVarsDefault;
 	std::vector <std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerCustomVarsDefault;
 	bool PlayerVariables::gotPlayerVars = false;
 
-	std::unique_ptr<Hook::BreakpointHook> PlayerVariables::loadPlayerFloatVarBpHook = nullptr;
-	std::unique_ptr<Hook::BreakpointHook> PlayerVariables::loadPlayerBoolVarBpHook = nullptr;
-
-	bool PlayerVariables::hooked = false;
-	bool PlayerVariables::hookedBACKUP = false;
-	void PlayerVariables::RunHooks() {
-		if (hooked)
-			return;
-		if (!Offsets::Get_LoadPlayerFloatVariableOffset())
-			return;
-
-		loadPlayerFloatVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerFloatVariableOffset(), [&](PEXCEPTION_POINTERS info) -> void {
-			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
-			const std::string name = tempName;
-
-			PlayerVariables::playerVars.emplace_back(name, std::make_pair(nullptr, "float"));
-			PlayerVariables::playerVarsDefault.emplace_back(name, std::make_pair(0.0f, "float"));
-			PlayerVariables::playerCustomVarsDefault.emplace_back(name, std::make_pair(0.0f, "float"));
-		});
-		loadPlayerBoolVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerFloatVariableOffset() - Offsets::Get_LoadPlayerVariableFuncSize(), [&](PEXCEPTION_POINTERS info) -> void {
-			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
-			const std::string name = tempName;
-
-			PlayerVariables::playerVars.emplace_back(name, std::make_pair(nullptr, "bool"));
-			PlayerVariables::playerVarsDefault.emplace_back(name, std::make_pair(false, "bool"));
-			PlayerVariables::playerCustomVarsDefault.emplace_back(name, std::make_pair(false, "bool"));
-		});
-
-		hooked = true;
-	}
-	void PlayerVariables::RunHooksBACKUP() {
-		if (hookedBACKUP)
-			return;
+	void PlayerVariables::SortPlayerVars() {
 		if (!playerVars.empty())
-			return;
-		if (!Offsets::Get_LoadPlayerFloatVariableOffset())
 			return;
 
 		std::stringstream ss(Config::playerVars);
@@ -219,31 +178,25 @@ namespace GamePH {
 			PlayerVariables::playerVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
 			PlayerVariables::playerCustomVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
 		}
-
-		hookedBACKUP = true;
 	}
 
 	PDWORD64 PlayerVariables::GetFloatPlayerVariableVT() {
-		if (FloatPlayerVariableVT)
-			return FloatPlayerVariableVT;
 		if (!Offsets::Get_InitializePlayerVariablesOffset())
 			return nullptr;
 
 		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariablesOffset() + Offsets::Get_initPlayerFloatVarsInstrOffset() + 0x3; // 0x3 is instruction size
 		const DWORD floatPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
 
-		return FloatPlayerVariableVT = reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset);
+		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset);
 	}
 	PDWORD64 PlayerVariables::GetBoolPlayerVariableVT() {
-		if (BoolPlayerVariableVT)
-			return BoolPlayerVariableVT;
 		if (!Offsets::Get_InitializePlayerVariablesOffset())
 			return nullptr;
 
 		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariablesOffset() + Offsets::Get_initPlayerBoolVarsInstrOffset() + 0x3; // 0x3 is instruction size
 		const DWORD boolPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
 
-		return BoolPlayerVariableVT = reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + boolPlayerVariableVTOffset);
+		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + boolPlayerVariableVTOffset);
 	}
 	void PlayerVariables::GetPlayerVars() {
 		if (gotPlayerVars)
@@ -256,21 +209,6 @@ namespace GamePH {
 			return;
 		if (!GetBoolPlayerVariableVT())
 			return;
-
-		#ifdef DEBUGPVARS
-		std::string pVars{};
-
-		for (auto const& [key, val] : GamePH::PlayerVariables::playerVars) {
-			pVars.append(key);
-			pVars.append(":");
-			pVars.append(val.second);
-			pVars.append(",");
-		}
-		pVars.pop_back();
-		std::ofstream out("pvars.txt");
-		out << pVars;
-		out.close();
-		#endif
 
 		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());
 		bool isFloatPlayerVar = false;
@@ -313,10 +251,6 @@ namespace GamePH {
 		}
 
 		gotPlayerVars = true;
-		if (!Menu::Player::useBACKUPPlayerVarsEnabled) {
-			loadPlayerFloatVarBpHook->Disable();
-			loadPlayerBoolVarBpHook->Disable();
-		}
 	}
 
 	PlayerVariables* PlayerVariables::Get() {

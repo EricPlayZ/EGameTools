@@ -5690,8 +5690,6 @@ namespace Menu {
 		SMART_BOOL godModeEnabled{};
 		SMART_BOOL freezePlayerEnabled{};
 
-		bool useBACKUPPlayerVarsEnabled = false;
-
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
 
@@ -5976,8 +5974,6 @@ namespace Menu {
 				ImGui::Checkbox("Freeze Player", &freezePlayerEnabled.value);
 				ImGui::EndDisabled();
 			}
-
-			ImGui::Checkbox("Use BACKUP Player Vars (USE ONLY IF PLAYER VARIABLES IS DISABLED!)", &useBACKUPPlayerVarsEnabled);
 
 			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
 				if (ImGui::CollapsingHeader("Player Variables", ImGuiTreeNodeFlags_None)) {

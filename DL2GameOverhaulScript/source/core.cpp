@@ -73,29 +73,6 @@ namespace Core {
 		}
 	}
 
-	static std::unique_ptr<Hook::BreakpointHook> ldrpRoutineBpHook = nullptr;
-	static void HookLdrpInitRoutine() {
-		const WindowsVersion winVer = Utils::GetWindowsVersion();
-		PDWORD64 pLdrpRoutineFunc = nullptr;
-
-		if (winVer != WindowsVersion::Windows7)
-			pLdrpRoutineFunc = Offsets::Get_LdrpCallInitRoutineOffset();
-		else
-			pLdrpRoutineFunc = Offsets::Get_LdrpRunInitializeRoutinesOffset();
-
-		if (!pLdrpRoutineFunc)
-			return;
-
-		ldrpRoutineBpHook = std::make_unique<Hook::BreakpointHook>(pLdrpRoutineFunc, [&](PEXCEPTION_POINTERS info) -> void {
-			DWORD64 entryPoint = info->ContextRecord->R12;
-
-			if (Memory::IsValidPtrMod(entryPoint, "gamedll_ph_x64_rwdi.dll", false)) {
-				ldrpRoutineBpHook->Disable();
-				GamePH::PlayerVariables::RunHooks();
-			}
-		});
-	}
-
 	#pragma region GetRendererAPI
 	static bool(*pReadVideoSettings)(LPVOID instance, LPVOID file, bool flag1) = nullptr;
 	static bool(*oReadVideoSettings)(LPVOID instance, LPVOID file, bool flag1) = nullptr;
@@ -132,22 +109,11 @@ namespace Core {
 			createdConfigThread = true;
 		}
 
-		if (Menu::Player::useBACKUPPlayerVarsEnabled && GamePH::PlayerVariables::playerVars.empty())
-			GamePH::PlayerVariables::RunHooksBACKUP();
 		if (!GamePH::PlayerVariables::gotPlayerVars)
 			GamePH::PlayerVariables::GetPlayerVars();
 
 		Menu::Player::Update();
 		Menu::Camera::Update();
-
-		//if (GamePH::GameDI_PH::Get()) {
-		//	INT64 gameVer = GamePH::GameDI_PH::Get()->GetCurrentGameVersion();
-		//	std::cout << "Game Version:" << gameVer << std::endl;
-		//}
-		//if (GamePH::LevelDI::Get()) {
-		//	float timePlayed = GamePH::LevelDI::Get()->GetTimePlayed();
-		//	std::cout << "Time Played: " << timePlayed << std::endl;
-		//}
 	}
 
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
@@ -155,8 +121,8 @@ namespace Core {
 
 		Config::InitConfig();
 		
-		if (!Menu::Player::useBACKUPPlayerVarsEnabled)
-			HookLdrpInitRoutine();
+		if (GamePH::PlayerVariables::playerVars.empty())
+			GamePH::PlayerVariables::SortPlayerVars();
 
 		MH_Initialize();
 		LoopHookReadVideoSettings();

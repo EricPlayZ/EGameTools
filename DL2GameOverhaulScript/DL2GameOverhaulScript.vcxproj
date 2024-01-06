@@ -157,9 +157,8 @@
       <AdditionalLibraryDirectories>source\MinHook\lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"
-copy /Y "$(SolutionDir)x64\Debug\EGameTools.asi" "D:\Program Files (x86)\Steam\steamapps\common\Dying Light 2\ph\work\bin\x64\EGameTools.asi"</Command>
-      <Message>Copying the default config file to the debug build directory and the compiled ASI into the game folder</Message>
+      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
+      <Message>Copying the default config file to the debug build directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

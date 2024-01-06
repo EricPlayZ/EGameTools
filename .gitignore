@@ -6,3 +6,8 @@
 /x64
 /DL2GameOverhaulScript/x64
 /DL2GameOverhaulScript/DL2GameOverhaulScript.vcxproj.user
+/Tools/ExtractPlayerVarsFromDecompiledFunc/bin
+/Tools/ExtractPlayerVarsFromDecompiledFunc/.vs
+/Tools/ExtractPlayerVarsFromDecompiledFunc/ExtractPlayerVarsFromDecompiledFunc/bin
+/Tools/ExtractPlayerVarsFromDecompiledFunc/ExtractPlayerVarsFromDecompiledFunc/obj
+/Tools/ExtractPlayerVarsFromDecompiledFunc/ExtractPlayerVarsFromDecompiledFunc/ExtractPlayerVarsFromDecompiledFunc.csproj.user

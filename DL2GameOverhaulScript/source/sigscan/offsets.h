@@ -15,7 +15,6 @@ static DWORD64 Get_## name () {\
 	return name=static_cast<DWORD64>(off);\
 } 
 
-// NEEDS REPLACING SIGNATURES FOR MOST!!!
 struct Offsets {
 	// ntdll.dll
 	AddOffset(LdrpCallInitRoutineOffset, "ntdll.dll", "[48 89 5C 24 08 44 89 44 24 18 48", PatternType::Address, PDWORD64)
@@ -44,8 +43,6 @@ struct Offsets {
 	AddOffset(ReadVideoSettingsOffset, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8D 4C 24 ?? FF 15 ?? ?? ?? ?? 48 C7 C2 ?? ?? ?? ??", PatternType::RelativePointer, LPVOID)
 	AddOffset(CalculateFreeCamCollisionOffset, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B 06 4C 8D 4C 24 ??", PatternType::RelativePointer, LPVOID)
 	AddOffset(GetViewCameraOffset, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 85 C0 74 28 48 8B C8", PatternType::RelativePointer, LPVOID)
-	// NOT USING FOR NOW
-	//AddOffset(MoveCharacterOffset, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 80 BB ?? ?? ?? ?? ?? 74 4E", PatternType::RelativePointer, LPVOID)
 	AddOffset(CreatePlayerHealthModuleOffset, "gamedll_ph_x64_rwdi.dll", "[48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 4C 8B F1 E8 ?? ?? ?? ?? 48 8D 05 ?? ?? ?? ??", PatternType::Address, LPVOID)
 	AddOffset(LifeSetHealth, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 49 8D 4C 24 ?? 49 03 CE", PatternType::RelativePointer, LPVOID)
 	AddOffset(TogglePhotoMode, "gamedll_ph_x64_rwdi.dll", "48 83 EC 48 38 91 ?? ?? ?? ??", PatternType::Address, LPVOID)
