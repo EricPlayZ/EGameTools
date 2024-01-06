@@ -4,6 +4,7 @@
 
 namespace Menu {
 	namespace Player {
+		extern const char playerVarsSCR[];
 		extern SMART_BOOL godModeEnabled;
 		extern SMART_BOOL freezePlayerEnabled;
 
