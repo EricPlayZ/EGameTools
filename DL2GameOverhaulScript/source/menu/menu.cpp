@@ -6,7 +6,7 @@
 namespace Menu {
 	static const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
     static const ImVec2 minWndSize = ImVec2(0.0f, 0.0f);
-    static const ImVec2 maxWndSize = ImVec2(700.0f, 675.0f);
+    static const ImVec2 maxWndSize = ImVec2(900.0f, 675.0f);
 
 	bool isOpen = false;
 

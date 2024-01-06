@@ -1,7 +1,7 @@
-#include "hook.h"
-#include "sigscan\offsets.h"
 #include <cstdint>
 #include <iostream>
+#include "sigscan\offsets.h"
+#include "hook.h"
 
 namespace Hook {
 	// VTable hooking

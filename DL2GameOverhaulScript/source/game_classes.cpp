@@ -1,12 +1,19 @@
 #include <iostream>
-#include <string_view>
+#include <string>
 #include <thread>
 #include "MinHook\include\MinHook.h"
 #include "sigscan\offsets.h"
 #include "menu\player.h"
 #include "menu\camera.h"
+#include "config\config.h"
 #include "game_classes.h"
 #include "memory.h"
+#include "print.h"
+#include "utils.h"
+//#define DEBUGPVARS
+#ifdef DEBUGPVARS
+#include <fstream>
+#endif
 
 namespace Core {
 	extern void OnPostUpdate();
@@ -52,7 +59,7 @@ namespace GamePH {
 			if (!pGameDI_PH2)
 				continue;
 
-			Hook::VTHook(pGameDI_PH2, &detourOnPostUpdate, reinterpret_cast<LPVOID*>(&oOnPostUpdate), 0x368);
+			Hook::VTHook(pGameDI_PH2, &detourOnPostUpdate, reinterpret_cast<LPVOID*>(&oOnPostUpdate), 0x3a8);
 			if (oOnPostUpdate)
 				break;
 		}
@@ -144,38 +151,76 @@ namespace GamePH {
 	PDWORD64 PlayerVariables::FloatPlayerVariableVT;
 	PDWORD64 PlayerVariables::BoolPlayerVariableVT;
 
-	std::vector <std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> PlayerVariables::playerVars;
-	std::vector <std::pair<std::string_view, std::pair<std::any, std::string_view>>> PlayerVariables::playerVarsDefault;
+	std::vector <std::pair<std::string, std::pair<LPVOID, std::string>>> PlayerVariables::playerVars;
+	std::vector <std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerVarsDefault;
+	std::vector <std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerCustomVarsDefault;
 	bool PlayerVariables::gotPlayerVars = false;
 
 	std::unique_ptr<Hook::BreakpointHook> PlayerVariables::loadPlayerFloatVarBpHook = nullptr;
 	std::unique_ptr<Hook::BreakpointHook> PlayerVariables::loadPlayerBoolVarBpHook = nullptr;
 
 	bool PlayerVariables::hooked = false;
+	bool PlayerVariables::hookedBACKUP = false;
 	void PlayerVariables::RunHooks() {
 		if (hooked)
 			return;
 		if (!Offsets::Get_LoadPlayerFloatVariableOffset())
 			return;
-		if (!Offsets::Get_LoadPlayerBoolVariableOffset())
-			return;
 
 		loadPlayerFloatVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerFloatVariableOffset(), [&](PEXCEPTION_POINTERS info) -> void {
 			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
-			const std::string_view name = tempName;
+			const std::string name = tempName;
 
 			PlayerVariables::playerVars.emplace_back(name, std::make_pair(nullptr, "float"));
 			PlayerVariables::playerVarsDefault.emplace_back(name, std::make_pair(0.0f, "float"));
+			PlayerVariables::playerCustomVarsDefault.emplace_back(name, std::make_pair(0.0f, "float"));
 		});
-		loadPlayerBoolVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerBoolVariableOffset(), [&](PEXCEPTION_POINTERS info) -> void {
+		loadPlayerBoolVarBpHook = std::make_unique<Hook::BreakpointHook>(Offsets::Get_LoadPlayerFloatVariableOffset() - Offsets::Get_LoadPlayerVariableFuncSize(), [&](PEXCEPTION_POINTERS info) -> void {
 			const char* tempName = reinterpret_cast<const char*>(info->ContextRecord->R8);
-			const std::string_view name = tempName;
+			const std::string name = tempName;
 
 			PlayerVariables::playerVars.emplace_back(name, std::make_pair(nullptr, "bool"));
 			PlayerVariables::playerVarsDefault.emplace_back(name, std::make_pair(false, "bool"));
+			PlayerVariables::playerCustomVarsDefault.emplace_back(name, std::make_pair(false, "bool"));
 		});
 
 		hooked = true;
+	}
+	void PlayerVariables::RunHooksBACKUP() {
+		if (hookedBACKUP)
+			return;
+		if (!playerVars.empty())
+			return;
+		if (!Offsets::Get_LoadPlayerFloatVariableOffset())
+			return;
+
+		std::stringstream ss(Config::playerVars);
+
+		while (ss.good()) {
+			std::string pVar{};
+			getline(ss, pVar, ',');
+
+			std::stringstream ssPVar(pVar);
+
+			std::string varName{};
+			std::string varType{};
+
+			while (ssPVar.good()) {
+				std::string subStr{};
+				getline(ssPVar, subStr, ':');
+
+				if (subStr != "float" && subStr != "bool")
+					varName = subStr;
+				else
+					varType = subStr;
+			}
+
+			PlayerVariables::playerVars.emplace_back(varName, std::make_pair(nullptr, varType));
+			PlayerVariables::playerVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
+			PlayerVariables::playerCustomVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
+		}
+
+		hookedBACKUP = true;
 	}
 
 	PDWORD64 PlayerVariables::GetFloatPlayerVariableVT() {
@@ -212,6 +257,21 @@ namespace GamePH {
 		if (!GetBoolPlayerVariableVT())
 			return;
 
+		#ifdef DEBUGPVARS
+		std::string pVars{};
+
+		for (auto const& [key, val] : GamePH::PlayerVariables::playerVars) {
+			pVars.append(key);
+			pVars.append(":");
+			pVars.append(val.second);
+			pVars.append(",");
+		}
+		pVars.pop_back();
+		std::ofstream out("pvars.txt");
+		out << pVars;
+		out.close();
+		#endif
+
 		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());
 		bool isFloatPlayerVar = false;
 		bool isBoolPlayerVar = false;
@@ -223,7 +283,7 @@ namespace GamePH {
 
 				if (isFloatPlayerVar || isBoolPlayerVar) {
 					it->second.first = playerVarsMem + 1;
-					const std::string_view varName = it->first;
+					const std::string varName = it->first;
 
 					auto itDef = std::find_if(GamePH::PlayerVariables::playerVarsDefault.begin(), GamePH::PlayerVariables::playerVarsDefault.end(), [&varName](const auto& pair) {
 						return pair.first == varName;
@@ -235,6 +295,16 @@ namespace GamePH {
 							itDef->second.first = *reinterpret_cast<bool*>(it->second.first);
 					}
 
+					auto itCustomDef = std::find_if(GamePH::PlayerVariables::playerCustomVarsDefault.begin(), GamePH::PlayerVariables::playerCustomVarsDefault.end(), [&varName](const auto& pair) {
+						return pair.first == varName;
+					});
+					if (itCustomDef != GamePH::PlayerVariables::playerCustomVarsDefault.end()) {
+						if (isFloatPlayerVar)
+							itCustomDef->second.first = *reinterpret_cast<float*>(it->second.first);
+						else
+							itCustomDef->second.first = *reinterpret_cast<bool*>(it->second.first);
+					}
+
 					playerVarsMem += isFloatPlayerVar ? 3 : 2;
 					break;
 				} else
@@ -243,8 +313,10 @@ namespace GamePH {
 		}
 
 		gotPlayerVars = true;
-		loadPlayerFloatVarBpHook->Disable();
-		loadPlayerBoolVarBpHook->Disable();
+		if (!Menu::Player::useBACKUPPlayerVarsEnabled) {
+			loadPlayerFloatVarBpHook->Disable();
+			loadPlayerBoolVarBpHook->Disable();
+		}
 	}
 
 	PlayerVariables* PlayerVariables::Get() {
@@ -318,10 +390,10 @@ namespace GamePH {
 
 	#pragma region FreeCamera
 	Vector3* FreeCamera::GetPosition(Vector3* posIN) {
-		return Memory::CallVT<198, Vector3*>(this, posIN);
+		return Memory::CallVT<181, Vector3*>(this, posIN);
 	}
 	void FreeCamera::AllowCameraMovement(int mode) {
-		Memory::CallVT<203>(this, mode);
+		Memory::CallVT<187>(this, mode);
 	}
 
 	FreeCamera* FreeCamera::Get() {
@@ -410,7 +482,7 @@ namespace GamePH {
 
 	#pragma region LevelDI
 	float LevelDI::GetTimePlayed() {
-		return Memory::CallVT<334, float>(this);
+		return Memory::CallVT<317, float>(this);
 	}
 	LPVOID LevelDI::GetViewCamera() {
 		if (!Offsets::Get_GetViewCameraOffset())
@@ -461,7 +533,7 @@ namespace GamePH {
 			if (!pGameDI_PH)
 				return nullptr;
 
-			GameDI_PH2* ptr = reinterpret_cast<GameDI_PH2*>(reinterpret_cast<DWORD64>(pGameDI_PH) + Offsets::Get_gameDI_PH2Offset());
+			GameDI_PH2* ptr = reinterpret_cast<GameDI_PH2*>(reinterpret_cast<DWORD64>(pGameDI_PH) + Offsets::Get_gameDI_PH2_offset());
 
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
@@ -473,14 +545,11 @@ namespace GamePH {
 	#pragma endregion
 
 	#pragma region GameDI_PH
-	PDWORD64 GameDI_PH::GetLocalPlayerEntity() {
-		return Memory::CallVT<135, PDWORD64>(this);
-	}
 	INT64 GameDI_PH::GetCurrentGameVersion() {
-		return Memory::CallVT<218, INT64>(this);
+		return Memory::CallVT<225, INT64>(this);
 	}
 	void GameDI_PH::TogglePhotoMode(bool doNothing, bool setAsOptionalCamera) {
-		Memory::CallVT<249>(this, doNothing, setAsOptionalCamera);
+		Memory::CallVT<258>(this, doNothing, setAsOptionalCamera);
 	}
 
 	GameDI_PH* GameDI_PH::Get() {

@@ -103,7 +103,7 @@ namespace Core {
 		if (!rendererAPI.empty())
 			return oReadVideoSettings(instance, file, flag1);
 
-		DWORD renderer = *reinterpret_cast<PDWORD>(reinterpret_cast<DWORD64>(instance) + 0x78);
+		DWORD renderer = *reinterpret_cast<PDWORD>(reinterpret_cast<DWORD64>(instance) + 0x7C);
 		rendererAPI = !renderer ? "d3d11" : "d3d12";
 		
 		return oReadVideoSettings(instance, file, flag1);
@@ -132,6 +132,8 @@ namespace Core {
 			createdConfigThread = true;
 		}
 
+		if (Menu::Player::useBACKUPPlayerVarsEnabled && GamePH::PlayerVariables::playerVars.empty())
+			GamePH::PlayerVariables::RunHooksBACKUP();
 		if (!GamePH::PlayerVariables::gotPlayerVars)
 			GamePH::PlayerVariables::GetPlayerVars();
 
@@ -150,10 +152,11 @@ namespace Core {
 
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
-		
-		HookLdrpInitRoutine();
 
 		Config::InitConfig();
+		
+		if (!Menu::Player::useBACKUPPlayerVarsEnabled)
+			HookLdrpInitRoutine();
 
 		MH_Initialize();
 		LoopHookReadVideoSettings();

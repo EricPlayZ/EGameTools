@@ -5684,16 +5684,22 @@ namespace Menu {
 0x75, 0x65, 0x6E, 0x63, 0x65, 0x22, 0x2C, 0x20, 0x22, 0x31, 0x2E, 0x30, 0x22, 0x29, 0x3B, 0x0D,
 0x0A, 0x7D, 0x0D, 0x0A };
         #pragma endregion
+		
+		static bool debugEnabled = false;
         
 		SMART_BOOL godModeEnabled{};
 		SMART_BOOL freezePlayerEnabled{};
 
+		bool useBACKUPPlayerVarsEnabled = false;
+
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
 
+		bool restoreVarsToSavedVarsEnabled = false;
+
 		static char playerVarsSearchFilter[64];
 
-        static std::string_view getParamName(const std::string_view str) {
+        static std::string getParamName(const std::string str) {
 			size_t firstQuotePos = str.find_first_of("\"");
 			size_t lastQuotePos = firstQuotePos;
 			if (firstQuotePos == std::string::npos)
@@ -5748,7 +5754,7 @@ namespace Menu {
             std::string line{};
             while (std::getline(iss, line)) {
 				const std::string origLine = line;
-                const std::string_view paramName = getParamName(line);
+                const std::string paramName = getParamName(line);
                 if (paramName.empty())
                     continue;
 
@@ -5791,7 +5797,7 @@ namespace Menu {
 
 			std::string line{};
 			while (std::getline(file, line)) {
-				const std::string_view paramName = getParamName(line);
+				const std::string paramName = getParamName(line);
 				if (paramName.empty())
 					continue;
 				const std::string paramValue = getParamValue(line);
@@ -5823,10 +5829,12 @@ namespace Menu {
 			for (auto const& [key, val] : GamePH::PlayerVariables::playerVars) {
 				if (!val.first)
 					continue;
-				auto itDef = std::find_if(GamePH::PlayerVariables::playerVarsDefault.begin(), GamePH::PlayerVariables::playerVarsDefault.end(), [&key](const auto& pair) {
+
+				auto& defVars = restoreVarsToSavedVarsEnabled ? GamePH::PlayerVariables::playerCustomVarsDefault : GamePH::PlayerVariables::playerVarsDefault;
+				auto itDef = std::find_if(defVars.begin(), defVars.end(), [&key](const auto& pair) {
 					return pair.first == key;
 				});
-				if (itDef == GamePH::PlayerVariables::playerVarsDefault.end())
+				if (itDef == defVars.end())
 					continue;
 
 				if (val.second == "float") {
@@ -5842,6 +5850,28 @@ namespace Menu {
 
 			ImGui::OpenPopup("Restored player variables!");
 		}
+		static void SaveVariablesAsDefault() {
+			for (auto const& [key, val] : GamePH::PlayerVariables::playerVars) {
+				if (!val.first)
+					continue;
+
+				auto itCustomDef = std::find_if(GamePH::PlayerVariables::playerCustomVarsDefault.begin(), GamePH::PlayerVariables::playerCustomVarsDefault.end(), [&key](const auto& pair) {
+					return pair.first == key;
+				});
+				if (itCustomDef == GamePH::PlayerVariables::playerCustomVarsDefault.end())
+					continue;
+
+				if (val.second == "float") {
+					float* varAddr = reinterpret_cast<float*>(val.first);
+					itCustomDef->second.first = *varAddr;
+				} else if (val.second == "bool") {
+					bool* varAddr = reinterpret_cast<bool*>(val.first);
+					itCustomDef->second.first = *varAddr;
+				}
+			}
+
+			ImGui::OpenPopup("Saved current player variables!");
+		}
 		static void RestoreVariableToDefault(LPVOID variable) {
 			auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [&variable](const auto& pair) {
 				return pair.second.first == variable;
@@ -5849,10 +5879,11 @@ namespace Menu {
 			if (it == GamePH::PlayerVariables::playerVars.end())
 				return;
 
-			auto itDef = std::find_if(GamePH::PlayerVariables::playerVarsDefault.begin(), GamePH::PlayerVariables::playerVarsDefault.end(), [&it](const auto& pair) {
+			auto& defVars = restoreVarsToSavedVarsEnabled ? GamePH::PlayerVariables::playerCustomVarsDefault : GamePH::PlayerVariables::playerVarsDefault;
+			auto itDef = std::find_if(defVars.begin(), defVars.end(), [&it](const auto& pair) {
 				return pair.first == it->first;
 			});
-			if (itDef == GamePH::PlayerVariables::playerVarsDefault.end())
+			if (itDef == defVars.end())
 				return;
 
 			if (it->second.second == "float") {
@@ -5894,6 +5925,30 @@ namespace Menu {
 				playerCharacter->FreezeCharacter();
 		}
 
+		void UpdatePlayerVars() {
+			auto bgn = GamePH::PlayerVariables::playerVars.begin();
+			for (auto it = bgn; it != GamePH::PlayerVariables::playerVars.end(); ++it) {
+				if (!it->second.first)
+					continue;
+
+				try {
+					auto& valDef = GamePH::PlayerVariables::playerVarsDefault.at(it - bgn);
+
+					if (it->second.second == "float") {
+						float* varAddr = reinterpret_cast<float*>(it->second.first);
+						if (!Utils::are_same(*varAddr, *(varAddr + 1)) && !Utils::are_same(*(varAddr + 1), std::any_cast<float>(valDef.second.first)))
+							*varAddr = *(varAddr + 1);
+					} else if (it->second.second == "bool") {
+						bool* varAddr = reinterpret_cast<bool*>(it->second.first);
+						if (*varAddr != *(varAddr + 1) && *(varAddr + 1) != std::any_cast<bool>(valDef.second.first))
+							*varAddr = *(varAddr + 1);
+					}
+				} catch (std::out_of_range& e) {
+					UNREFERENCED_PARAMETER(e);
+				}
+			}
+		}
+
 		void Update() {
 			if (Menu::Camera::freeCamEnabled.value)
 				godModeEnabled.Change(true);
@@ -5906,9 +5961,12 @@ namespace Menu {
 				freezePlayerEnabled.Restore();
 
 			PlayerPositionUpdate();
+			UpdatePlayerVars();
 		}
 
 		void Render() {
+			ImGui::Checkbox("Debug", &debugEnabled);
+
 			ImGui::BeginDisabled(!GamePH::PlayerHealthModule::Get() || Menu::Camera::freeCamEnabled.value); {
 				ImGui::Checkbox("God Mode", &godModeEnabled.value);
 				ImGui::EndDisabled();
@@ -5918,6 +5976,9 @@ namespace Menu {
 				ImGui::Checkbox("Freeze Player", &freezePlayerEnabled.value);
 				ImGui::EndDisabled();
 			}
+
+			ImGui::Checkbox("Use BACKUP Player Vars (USE ONLY IF PLAYER VARIABLES IS DISABLED!)", &useBACKUPPlayerVarsEnabled);
+
 			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
 				if (ImGui::CollapsingHeader("Player Variables", ImGuiTreeNodeFlags_None)) {
 					ImGui::Indent();
@@ -5926,9 +5987,15 @@ namespace Menu {
 					ImGui::SameLine();
 					if (ImGui::Button("Load variables from file"))
 						ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRLoadPath", "Choose File", ".scr", loadSCRFilePath.empty() ? "." : loadSCRFilePath);
-					ImGui::SameLine();
+
+					ImGui::Checkbox("Restore variables to saved variables", &restoreVarsToSavedVarsEnabled);
+
 					if (ImGui::Button("Restore variables to default"))
 						RestoreVariablesToDefault();
+					ImGui::SameLine();
+					if (ImGui::Button("Save current variables as default"))
+						SaveVariablesAsDefault();
+
 					ImGui::Separator();
 
                     ImGui::InputTextWithHint("##VarsSearch", "Search variables", playerVarsSearchFilter, 64);
@@ -5948,23 +6015,37 @@ namespace Menu {
 						if (val.second == "float") {
 							float* varAddr = reinterpret_cast<float*>(val.first);
 
-							ImGui::InputFloat(key.data(), &*varAddr);
+							float newValue = *varAddr;
+
+							if (ImGui::InputFloat(key.data(), &newValue)) {
+								*varAddr = newValue;
+								*(varAddr + 1) = newValue;
+							}
 							ImGui::SameLine();
 							restoreBtnName = std::string("Restore##") + std::string(key);
 							if (ImGui::Button(restoreBtnName.c_str()))
 								RestoreVariableToDefault(val.first);
-
-							*(varAddr + 1) = *varAddr;
+							if (debugEnabled) {
+								ImGui::SameLine();
+								ImGui::Text("0x%p", varAddr);
+							}
 						} else if (val.second == "bool") {
 							bool* varAddr = reinterpret_cast<bool*>(val.first);
 
-							ImGui::Checkbox(key.data(), &*varAddr);
+							bool newValue = *varAddr;
+
+							if (ImGui::Checkbox(key.data(), &newValue)) {
+								*varAddr = newValue;
+								*(varAddr + 1) = newValue;
+							}
 							ImGui::SameLine();
 							restoreBtnName = std::string("Restore##") + std::string(key);
 							if (ImGui::Button(restoreBtnName.c_str()))
 								RestoreVariableToDefault(val.first);
-
-							*(varAddr + 1) = *varAddr;
+							if (debugEnabled) {
+								ImGui::SameLine();
+								ImGui::Text("0x%p", varAddr);
+							}
 						}
 					}
 					ImGui::Unindent();
@@ -6015,6 +6096,12 @@ namespace Menu {
 			}
 			if (ImGui::BeginPopupModal("Restored player variables!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::Text("All player variables have been restored to default (values from game load)!");
+				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
+					ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+			}
+			if (ImGui::BeginPopupModal("Saved current player variables!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+				ImGui::Text("All current player variables have been stored as default! Now if you have \"Restore variables to saved variables\" enabled, restoring to default will restore player variables to the ones you have saved!");
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();

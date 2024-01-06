@@ -156,7 +156,7 @@ namespace Menu {
 			}
 
 			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
-				ImGui::Checkbox("Disabled Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
+				ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
 				ImGui::EndDisabled();
 			}
 		}

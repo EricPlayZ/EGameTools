@@ -157,8 +157,9 @@
       <AdditionalLibraryDirectories>source\MinHook\lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
-      <Message>Copying the default config file to the debug build directory</Message>
+      <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"
+copy /Y "$(SolutionDir)x64\Debug\EGameTools.asi" "D:\Program Files (x86)\Steam\steamapps\common\Dying Light 2\ph\work\bin\x64\EGameTools.asi"</Command>
+      <Message>Copying the default config file to the debug build directory and the compiled ASI into the game folder</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -167,19 +168,20 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;DL2GameOverhaulScript_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>source\ImGui;source\ImGuiFileDialog;source\MinHook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>source\MinHook\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libMinHook-x64-v141-mtd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>

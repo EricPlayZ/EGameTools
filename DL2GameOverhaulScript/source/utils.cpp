@@ -3,6 +3,10 @@
 #include "utils.h"
 
 namespace Utils {
+    bool are_same(float a, float b) {
+        return abs(a - b) < 0.0001f;
+    }
+
     bool str_replace(std::string& str, const std::string& from, const std::string& to) {
         const size_t start_pos = str.find(from);
         if (start_pos == std::string::npos)

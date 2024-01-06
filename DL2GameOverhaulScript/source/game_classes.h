@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <map>
 #include <vector>
-#include <string_view>
+#include <string>
 #include <memory>
 #include <any>
 #include "hook.h"
@@ -58,15 +58,18 @@ namespace GamePH {
 		static PDWORD64 FloatPlayerVariableVT;
 		static PDWORD64 BoolPlayerVariableVT;
 	public:
-		static std::vector<std::pair<std::string_view, std::pair<LPVOID, std::string_view>>> playerVars;
-		static std::vector<std::pair<std::string_view, std::pair<std::any, std::string_view>>> playerVarsDefault;
+		static std::vector<std::pair<std::string, std::pair<LPVOID, std::string>>> playerVars;
+		static std::vector<std::pair<std::string, std::pair<std::any, std::string>>> playerVarsDefault;
+		static std::vector<std::pair<std::string, std::pair<std::any, std::string>>> playerCustomVarsDefault;
 		static bool gotPlayerVars;
 
 		static std::unique_ptr<Hook::BreakpointHook> loadPlayerFloatVarBpHook;
 		static std::unique_ptr<Hook::BreakpointHook> loadPlayerBoolVarBpHook;
 
 		static bool hooked;
+		static bool hookedBACKUP;
 		static void RunHooks();
+		static void RunHooksBACKUP();
 
 		static PDWORD64 GetFloatPlayerVariableVT();
 		static PDWORD64 GetBoolPlayerVariableVT();
@@ -78,7 +81,7 @@ namespace GamePH {
 	class PlayerState {
 	public:
 		union {
-			DEFINE_MEMBER_N(PlayerVariables*, playerVars, 0x278);
+			DEFINE_MEMBER_N(PlayerVariables*, playerVars, 0x290);
 		};
 
 		static PlayerState* Get();
@@ -146,7 +149,6 @@ namespace GamePH {
 
 	class GameDI_PH {
 	public:
-		PDWORD64 GetLocalPlayerEntity();
 		INT64 GetCurrentGameVersion();
 		void TogglePhotoMode(bool doNothing = false, bool setAsOptionalCamera = false);
 
@@ -156,7 +158,7 @@ namespace GamePH {
 	class PlayerObjProperties {
 	public:
 		union {
-			DEFINE_MEMBER_N(Engine::CoPhysicsProperty*, pCoPhysicsProperty, 0xE8);
+			DEFINE_MEMBER_N(Engine::CoPhysicsProperty*, pCoPhysicsProperty, 0xF0);
 		};
 
 		static PlayerObjProperties* Get();
@@ -167,7 +169,7 @@ namespace Engine {
 	class CVideoSettings {
 	public:
 		union {
-			DEFINE_MEMBER_N(float, ExtraFOV, 0x78);
+			DEFINE_MEMBER_N(float, ExtraFOV, 0x7C);
 		};
 
 		static CVideoSettings* Get();
@@ -187,7 +189,7 @@ namespace Engine {
 		union {
 			DEFINE_MEMBER_N(GamePH::GameDI_PH*, pGameDI_PH, 0x8);
 			DEFINE_MEMBER_N(CVideoSettings*, pCVideoSettings, 0x28);
-			DEFINE_MEMBER_N(CLevel*, pCLevel, 0x370);
+			DEFINE_MEMBER_N(CLevel*, pCLevel, 0x380);
 		};
 
 		static CGame* Get();
@@ -213,9 +215,9 @@ namespace Engine {
 	class CBulletPhysicsCharacter {
 	public:
 		union {
-			DEFINE_MEMBER_N(Vector3, playerPos2, 0x87C);
-			DEFINE_MEMBER_N(Vector3, playerPos, 0x894);
-			DEFINE_MEMBER_N(float, playerDownwardVelocity, 0xC28);
+			DEFINE_MEMBER_N(Vector3, playerPos2, 0x8A0);
+			DEFINE_MEMBER_N(Vector3, playerPos, 0x8B8);
+			DEFINE_MEMBER_N(float, playerDownwardVelocity, 0xC38);
 		};
 
 		static Vector3 posBeforeFreeze;
