@@ -141,6 +141,29 @@ namespace GamePH {
 		}
 	}
 	#pragma endregion
+
+	#pragma region MoveCamera
+	static void(*pMoveCamera)(LPVOID pCBaseCamera, DWORD* pos, float* a3, float* a4) = nullptr;
+	static void(*oMoveCamera)(LPVOID pCBaseCamera, DWORD* pos, float* a3, float* a4) = nullptr;
+	void detourMoveCamera(LPVOID pCBaseCamera, DWORD* pos, float* a3, float* a4) {
+		if (Menu::Camera::freeCamEnabled.value)
+			return;
+
+		oMoveCamera(pCBaseCamera, pos, a3, a4);
+	}
+	void LoopHookMoveCamera() {
+		while (true) {
+			Sleep(250);
+
+			if (!pMoveCamera)
+				pMoveCamera = (decltype(pMoveCamera))Offsets::Get_MoveCamera();
+			else if (!oMoveCamera && MH_CreateHook(pMoveCamera, &detourMoveCamera, reinterpret_cast<LPVOID*>(&oMoveCamera)) == MH_OK) {
+				MH_EnableHook(pMoveCamera);
+				break;
+			}
+		}
+	}
+	#pragma endregion
 	#pragma endregion
 
 	#pragma region PlayerVariables

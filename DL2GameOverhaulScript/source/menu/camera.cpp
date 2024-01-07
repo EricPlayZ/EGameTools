@@ -7,6 +7,7 @@ namespace Menu {
 	namespace Camera {
 		extern const int BaseFOV = 57;
 		int FOV = 57;
+		float FreeCamSpeed = 1.0f;
 
 		bool photoModeEnabled = false;
 		SMART_BOOL freeCamEnabled{};
@@ -43,12 +44,23 @@ namespace Menu {
 				return;
 
 			if (freeCamEnabled.value) {
-				if (viewCam == pFreeCam)
+				if (viewCam == pFreeCam) {
+					if (!pFreeCam->enableSpeedMultiplier1)
+						pFreeCam->enableSpeedMultiplier1 = true;
+					if (pFreeCam->speedMultiplier != FreeCamSpeed)
+						pFreeCam->speedMultiplier = FreeCamSpeed;
+
 					return;
+				}
 
 				pGameDI_PH->TogglePhotoMode();
 				pFreeCam->AllowCameraMovement(2);
 			} else {
+				if (freeCamEnabled.previousValue) {
+					pFreeCam->enableSpeedMultiplier1 = false;
+					pFreeCam->speedMultiplier = 0.1f;
+				}
+
 				GamePH::CameraFPPDI* pPlayerCam = GamePH::CameraFPPDI::Get();
 				if (!pPlayerCam || viewCam == pPlayerCam)
 					return;
@@ -134,11 +146,16 @@ namespace Menu {
 					ImGui::Checkbox("FreeCam", &freeCamEnabled.value);
 					ImGui::EndDisabled();
 				}
-				ImGui::SameLine();
+				ImGui::EndDisabled();
+			}
+			ImGui::SameLine();
+			ImGui::SliderFloat("FreeCam Speed", &FreeCamSpeed, 0.0f, 100.0f);
+			ImGui::BeginDisabled(GetCamDisabledFlag()); {
 				ImGui::BeginDisabled(freeCamEnabled.value); {
 					ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
 					ImGui::EndDisabled();
 				}
+				ImGui::SameLine();
 				ImGui::BeginDisabled(photoModeEnabled); {
 					ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
 					ImGui::EndDisabled();

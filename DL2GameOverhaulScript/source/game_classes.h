@@ -43,6 +43,7 @@ namespace EWeather {
 
 // Forward decl
 namespace Engine {
+	class CBaseCamera;
 	class CoPhysicsProperty;
 }
 
@@ -52,6 +53,7 @@ namespace GamePH {
 	extern void LoopHookCalculateFreeCamCollision();
 	extern void LoopHookLifeSetHealth();
 	extern void LoopHookTogglePhotoMode();
+	extern void LoopHookMoveCamera();
 
 	class PlayerVariables {
 	public:
@@ -95,6 +97,13 @@ namespace GamePH {
 
 	class FreeCamera {
 	public:
+		union {
+			DEFINE_MEMBER_N(Engine::CBaseCamera*, pCBaseCamera, 0x38);
+			DEFINE_MEMBER_N(bool, enableSpeedMultiplier1, 0x42);
+			DEFINE_MEMBER_N(bool, enableSpeedMultiplier2, 0x43);
+			DEFINE_MEMBER_N(float, speedMultiplier, 0x1CC);
+		};
+
 		Vector3* GetPosition(Vector3* posIN);
 		void AllowCameraMovement(int mode = 2);
 
@@ -201,6 +210,17 @@ namespace Engine {
 		void UnlockGameInput();
 
 		static CInput* Get();
+	};
+
+	class CBaseCamera {
+	public:
+		union {
+			DEFINE_MEMBER_N(float, yaw, 0x48);
+			DEFINE_MEMBER_N(float, x, 0x4C);
+			DEFINE_MEMBER_N(float, pitch, 0x58);
+			DEFINE_MEMBER_N(float, y, 0x5C);
+			DEFINE_MEMBER_N(float, z, 0x6C);
+		};
 	};
 
 	class CBulletPhysicsCharacter {

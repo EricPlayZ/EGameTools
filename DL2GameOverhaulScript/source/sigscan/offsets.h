@@ -49,6 +49,7 @@ struct Offsets {
 	AddOffset(GetTimeWeatherSystemOffset, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 49 8D 4F 38", PatternType::RelativePointer, LPVOID)
 	AddOffset(SetForcedWeatherOffset, "engine_x64_rwdi.dll", "89 51 68 C3 CC CC CC CC CC CC CC CC CC CC CC CC", PatternType::Address, LPVOID)
 	AddOffset(GetCurrentWeatherOffset, "engine_x64_rwdi.dll", "48 8B 41 78 48 85 C0 75 0F", PatternType::Address, LPVOID)
+	AddOffset(MoveCamera, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 41 8D 45 D6", PatternType::Address, LPVOID)
 };
 
 #undef AddOffset
