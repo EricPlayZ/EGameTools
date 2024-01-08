@@ -7,10 +7,15 @@ namespace Menu {
 	namespace Camera {
 		extern const int BaseFOV = 57;
 		int FOV = 57;
-		float FreeCamSpeed = 1.0f;
 
 		bool photoModeEnabled = false;
 		SMART_BOOL freeCamEnabled{};
+		float FreeCamSpeed = 2.0f;
+
+		bool thirdPersonCameraEnabled = false;
+		float DistanceBehindPlayer = 2.0f;
+		float HeightAbovePlayer = 1.35f;
+
 		SMART_BOOL disablePhotoModeLimitsEnabled{};
 		bool teleportPlayerToCameraEnabled = false;
 
@@ -61,8 +66,8 @@ namespace Menu {
 					pFreeCam->speedMultiplier = 0.1f;
 				}
 
-				GamePH::CameraFPPDI* pPlayerCam = GamePH::CameraFPPDI::Get();
-				if (!pPlayerCam || viewCam == pPlayerCam)
+				GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
+				if (!pFreeCam || viewCam != pFreeCam)
 					return;
 
 				pGameDI_PH->TogglePhotoMode();
@@ -141,28 +146,35 @@ namespace Menu {
 		}
 
 		void Render() {
+			ImGui::SeparatorText("FreeCam");
 			ImGui::BeginDisabled(GetCamDisabledFlag()); {
 				ImGui::BeginDisabled(photoModeEnabled); {
-					ImGui::Checkbox("FreeCam", &freeCamEnabled.value);
+					ImGui::Checkbox("Enabled##FreeCam", &freeCamEnabled.value);
 					ImGui::EndDisabled();
 				}
 				ImGui::EndDisabled();
 			}
-			ImGui::SameLine();
-			ImGui::SliderFloat("FreeCam Speed", &FreeCamSpeed, 0.0f, 100.0f);
+			ImGui::SliderFloat("Speed##FreeCam", &FreeCamSpeed, 0.0f, 100.0f);
 			ImGui::BeginDisabled(GetCamDisabledFlag()); {
-				ImGui::BeginDisabled(freeCamEnabled.value); {
-					ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
-					ImGui::EndDisabled();
-				}
-				ImGui::SameLine();
 				ImGui::BeginDisabled(photoModeEnabled); {
 					ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
 					ImGui::EndDisabled();
 				}
 				ImGui::EndDisabled();
 			}
-			
+
+			ImGui::SeparatorText("Third Person");
+			ImGui::BeginDisabled(GetCamDisabledFlag()); {
+				ImGui::BeginDisabled(freeCamEnabled.value); {
+					ImGui::Checkbox("Enabled##ThirdPerson", &thirdPersonCameraEnabled);
+					ImGui::EndDisabled();
+				}
+				ImGui::SliderFloat("Distance behind player", &DistanceBehindPlayer, 1.0f, 10.0f);
+				ImGui::SliderFloat("Height above player", &HeightAbovePlayer, 1.0f, 3.0f);
+				ImGui::EndDisabled();
+			}
+
+			ImGui::SeparatorText("Misc");
 			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();
 			ImGui::BeginDisabled(!pCVideoSettings); {
 				if (ImGui::SliderInt("FOV", &FOV, 20, 160) && pCVideoSettings)
@@ -171,7 +183,13 @@ namespace Menu {
 					FOV = static_cast<int>(pCVideoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
 				ImGui::EndDisabled();
 			}
-
+			ImGui::BeginDisabled(GetCamDisabledFlag()); {
+				ImGui::BeginDisabled(freeCamEnabled.value); {
+					ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
+					ImGui::EndDisabled();
+				}
+				ImGui::EndDisabled();
+			}
 			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
 				ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
 				ImGui::EndDisabled();

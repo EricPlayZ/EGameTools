@@ -6001,6 +6001,7 @@ namespace Menu {
         
 		SMART_BOOL godModeEnabled{};
 		SMART_BOOL freezePlayerEnabled{};
+		bool playerVariablesEnabled = false;
 
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
@@ -6271,12 +6272,12 @@ namespace Menu {
 				freezePlayerEnabled.Restore();
 
 			PlayerPositionUpdate();
-			UpdatePlayerVars();
+			if (playerVariablesEnabled)
+				UpdatePlayerVars();
 		}
 
 		void Render() {
-			ImGui::Checkbox("Debug", &debugEnabled);
-
+			ImGui::SeparatorText("Misc");
 			ImGui::BeginDisabled(!GamePH::PlayerHealthModule::Get() || Menu::Camera::freeCamEnabled.value); {
 				ImGui::Checkbox("God Mode", &godModeEnabled.value);
 				ImGui::EndDisabled();
@@ -6287,8 +6288,10 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 
-			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
-				if (ImGui::CollapsingHeader("Player Variables", ImGuiTreeNodeFlags_None)) {
+			ImGui::SeparatorText("Player Variables");
+			ImGui::Checkbox("Enabled##PlayerVars", &playerVariablesEnabled);
+			ImGui::BeginDisabled(!playerVariablesEnabled || !GamePH::PlayerVariables::gotPlayerVars); {
+				if (ImGui::CollapsingHeader("Player variables list", ImGuiTreeNodeFlags_None)) {
 					ImGui::Indent();
 					if (ImGui::Button("Save variables to file"))
 						ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRPath", "Choose Folder", nullptr, saveSCRPath.empty() ? "." : saveSCRPath);
@@ -6297,6 +6300,7 @@ namespace Menu {
 						ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRLoadPath", "Choose File", ".scr", loadSCRFilePath.empty() ? "." : loadSCRFilePath);
 
 					ImGui::Checkbox("Restore variables to saved variables", &restoreVarsToSavedVarsEnabled);
+					ImGui::Checkbox("Debug (show memory addresses)", &debugEnabled);
 
 					if (ImGui::Button("Restore variables to default"))
 						RestoreVariablesToDefault();

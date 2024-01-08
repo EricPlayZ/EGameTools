@@ -7,6 +7,7 @@ namespace Menu {
 		extern const char playerVarsSCR[];
 		extern SMART_BOOL godModeEnabled;
 		extern SMART_BOOL freezePlayerEnabled;
+		extern bool playerVariablesEnabled;
 
 		extern std::string saveSCRPath;
 		extern std::string loadSCRFilePath;

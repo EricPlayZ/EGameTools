@@ -135,7 +135,7 @@ namespace Core {
 		GamePH::LoopHookCalculateFreeCamCollision();
 		GamePH::LoopHookLifeSetHealth();
 		GamePH::LoopHookTogglePhotoMode();
-		//GamePH::LoopHookMoveCamera();
+		GamePH::LoopHookMoveCamera();
 
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);

@@ -8,6 +8,12 @@ namespace Menu {
 		
 		extern bool photoModeEnabled;
 		extern SMART_BOOL freeCamEnabled;
+		extern float FreeCamSpeed;
+
+		extern bool thirdPersonCameraEnabled;
+		extern float DistanceBehindPlayer;
+		extern float HeightAbovePlayer;
+
 		extern SMART_BOOL disablePhotoModeLimitsEnabled;
 		extern bool teleportPlayerToCameraEnabled;
 

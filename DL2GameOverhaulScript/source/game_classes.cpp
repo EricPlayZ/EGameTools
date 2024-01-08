@@ -143,11 +143,31 @@ namespace GamePH {
 	#pragma endregion
 
 	#pragma region MoveCamera
-	static void(*pMoveCamera)(LPVOID pCBaseCamera, DWORD* pos, float* a3, float* a4) = nullptr;
-	static void(*oMoveCamera)(LPVOID pCBaseCamera, DWORD* pos, float* a3, float* a4) = nullptr;
-	void detourMoveCamera(LPVOID pCBaseCamera, DWORD* pos, float* a3, float* a4) {
-		if (Menu::Camera::freeCamEnabled.value)
-			return;
+	static void(*pMoveCamera)(LPVOID pCBaseCamera, Vector3* pos, float* a3, float* a4) = nullptr;
+	static void(*oMoveCamera)(LPVOID pCBaseCamera, Vector3* pos, float* a3, float* a4) = nullptr;
+	void detourMoveCamera(LPVOID pCBaseCamera, Vector3* pos, float* a3, float* a4) {
+		if (Menu::Camera::thirdPersonCameraEnabled && !Menu::Camera::freeCamEnabled.value) {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel) {
+				oMoveCamera(pCBaseCamera, pos, a3, a4);
+				return;
+			}
+			CameraFPPDI* viewCam = static_cast<CameraFPPDI*>(iLevel->GetViewCamera());
+			if (!viewCam) {
+				oMoveCamera(pCBaseCamera, pos, a3, a4);
+				return;
+			}
+			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
+
+			Vector3 forwardVec{};
+			viewCam->GetForwardVector(&forwardVec);
+			const Vector3 normForwardVec = forwardVec.normalize();
+
+			Vector3 newCamPos = (!playerCharacter ? *pos : playerCharacter->playerPos) - normForwardVec * -Menu::Camera::DistanceBehindPlayer;
+			newCamPos.Y += Menu::Camera::HeightAbovePlayer - (!playerCharacter ? 1.0f : 0.0f);
+
+			*pos = newCamPos;
+		}
 
 		oMoveCamera(pCBaseCamera, pos, a3, a4);
 	}
@@ -327,7 +347,27 @@ namespace GamePH {
 	}
 	#pragma endregion
 
+	Vector3* (*pGetForwardVector)(LPVOID viewCam, Vector3* outForwardVec) = nullptr;
+	Vector3* (*pGetUpVector)(LPVOID viewCam, Vector3* outUpVec) = nullptr;
 	#pragma region CameraFPPDI
+	Vector3* CameraFPPDI::GetForwardVector(Vector3* outForwardVec) {
+		if (!pGetForwardVector) {
+			pGetForwardVector = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+			return nullptr;
+		}
+		return pGetForwardVector(this, outForwardVec);
+	}
+	Vector3* CameraFPPDI::GetUpVector(Vector3* outUpVec) {
+		if (!pGetUpVector) {
+			pGetUpVector = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
+			return nullptr;
+		}
+		return pGetUpVector(this, outUpVec);
+	}
+	Vector3* CameraFPPDI::GetPosition(Vector3* posIN) {
+		return Memory::CallVT<181, Vector3*>(this, posIN);
+	}
+
 	CameraFPPDI* CameraFPPDI::Get() {
 		__try {
 			PDWORD64 pg_CameraFPPDI = Offsets::Get_g_CameraFPPDI();
@@ -346,6 +386,20 @@ namespace GamePH {
 	#pragma endregion
 
 	#pragma region FreeCamera
+	Vector3* FreeCamera::GetForwardVector(Vector3* outForwardVec) {
+		if (!pGetForwardVector) {
+			pGetForwardVector = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+			return nullptr;
+		}
+		return pGetForwardVector(this, outForwardVec);
+	}
+	Vector3* FreeCamera::GetUpVector(Vector3* outUpVec) {
+		if (!pGetUpVector) {
+			pGetUpVector = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
+			return nullptr;
+		}
+		return pGetUpVector(this, outUpVec);
+	}
 	Vector3* FreeCamera::GetPosition(Vector3* posIN) {
 		return Memory::CallVT<181, Vector3*>(this, posIN);
 	}

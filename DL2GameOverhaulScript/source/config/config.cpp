@@ -1,4 +1,5 @@
 #include <filesystem>
+#include "..\menu\menu.h"
 #include "..\menu\player.h"
 #include "..\menu\camera.h"
 #include "..\utils.h"
@@ -4075,26 +4076,29 @@ namespace Config {
 	static void LoadDefaultConfig() {
 		reader = inih::INIReader();
 
+		reader.InsertEntry("Menu", "Transparency", 99.5f);
 		reader.InsertEntry("Menu:Keybinds", "ToggleKey", "VK_F5");
 		menuToggleKey = VK_F5;
 
-		reader.InsertEntry("Player:PlayerVariables", "UseBACKUPPlayerVars", false);
-
+		reader.InsertEntry("Player:Misc", "GodMode", false);
+		reader.InsertEntry("Player:PlayerVariables", "Enabled", false);
 		const std::filesystem::path desktopPath = Utils::GetDesktopDir();
 		std::string desktopPathStr = desktopPath.string();
 		if (!desktopPath.empty() && !(std::filesystem::is_directory(desktopPath.parent_path()) && std::filesystem::is_directory(desktopPath)))
 			desktopPathStr = {};
-
 		reader.InsertEntry("Player:PlayerVariables", "LastSaveSCRPath", desktopPathStr);
 		Menu::Player::saveSCRPath = desktopPathStr;
-
 		const std::string loadSCRFilePath = desktopPathStr.empty() ? "" : desktopPathStr + "\\player_variables.scr";
-
 		reader.InsertEntry("Player:PlayerVariables", "LastLoadSCRFilePath", loadSCRFilePath);
 		Menu::Player::loadSCRFilePath = loadSCRFilePath;
 
-		reader.InsertEntry("Camera", "DisablePhotoModeLimits", true);
-		reader.InsertEntry("Camera", "DisableSafezoneFOVReduction", true);
+		reader.InsertEntry("Camera:FreeCam", "Speed", 2.0f);
+		reader.InsertEntry("Camera:FreeCam", "TeleportPlayerToCamera", false);
+		reader.InsertEntry("Camera:ThirdPerson", "Enabled", false);
+		reader.InsertEntry("Camera:ThirdPerson", "DistanceBehindPlayer", 2.0f);
+		reader.InsertEntry("Camera:ThirdPerson", "HeightAbovePlayer", 1.35f);
+		reader.InsertEntry("Camera:Misc", "DisablePhotoModeLimits", true);
+		reader.InsertEntry("Camera:Misc", "DisableSafezoneFOVReduction", true);
 	}
 	static void LoadAndWriteDefaultConfig() {
 		LoadDefaultConfig();
@@ -4116,12 +4120,18 @@ namespace Config {
 	static void ReadConfig(const bool configUpdate = false) {
 		try {
 			reader = inih::INIReader(configFileName);
+
+			Menu::transparency = reader.Get<float>("Menu", "Transparency", 99.5f);
+
 			const std::string toggleKey = reader.Get<std::string>("Menu:Keybinds", "ToggleKey");
 			auto it = virtualKeyCodes.find(toggleKey);
 			if (it != virtualKeyCodes.end())
 				menuToggleKey = it->second;
 			else
 				menuToggleKey = VK_F5;
+
+			Menu::Player::godModeEnabled.value = reader.Get<bool>("Player:Misc", "GodMode", false);
+			Menu::Player::playerVariablesEnabled = reader.Get<bool>("Player:PlayerVariables", "Enabled", false);
 
 			const std::filesystem::path desktopPath = Utils::GetDesktopDir();
 			std::string desktopPathStr = desktopPath.string();
@@ -4146,8 +4156,13 @@ namespace Config {
 			if (!loadSCRFilePath.empty() && !std::filesystem::is_directory(loadSCRFilePath.parent_path()))
 				Menu::Player::loadSCRFilePath = {};
 
-			Menu::Camera::disablePhotoModeLimitsEnabled.value = reader.Get<bool>("Camera", "DisablePhotoModeLimits", true);
-			Menu::Camera::disableSafezoneFOVReductionEnabled.value = reader.Get<bool>("Camera", "DisableSafezoneFOVReduction", true);
+			Menu::Camera::FreeCamSpeed = reader.Get<float>("Camera:FreeCam", "Speed", 2.0f);
+			Menu::Camera::teleportPlayerToCameraEnabled = reader.Get<bool>("Camera:FreeCam", "TeleportPlayerToCamera", false);
+			Menu::Camera::thirdPersonCameraEnabled = reader.Get<bool>("Camera:ThirdPerson", "Enabled", false);
+			Menu::Camera::DistanceBehindPlayer = reader.Get<float>("Camera:ThirdPerson", "DistanceBehindPlayer", 2.0f);
+			Menu::Camera::HeightAbovePlayer = reader.Get<float>("Camera:ThirdPerson", "HeightAbovePlayer", 1.35f);
+			Menu::Camera::disablePhotoModeLimitsEnabled.value = reader.Get<bool>("Camera:Misc", "DisablePhotoModeLimits", true);
+			Menu::Camera::disableSafezoneFOVReductionEnabled.value = reader.Get<bool>("Camera:Misc", "DisableSafezoneFOVReduction", true);
 
 			configStatus = PrintSuccess(configUpdate ? "Successfully read updated config!" : "Successfully read config!");
 		} catch (const std::runtime_error& e) {
@@ -4158,11 +4173,19 @@ namespace Config {
 	}
 
 	void SaveConfig() {
+		reader.UpdateEntry("Menu", "Transparency", Menu::transparency);
+		reader.UpdateEntry("Player:Misc", "GodMode", Menu::Player::godModeEnabled.value);
+		reader.UpdateEntry("Player:PlayerVariables", "Enabled", Menu::Player::playerVariablesEnabled);
 		reader.UpdateEntry("Player:PlayerVariables", "LastSaveSCRPath", Menu::Player::saveSCRPath);
 		reader.UpdateEntry("Player:PlayerVariables", "LastLoadSCRFilePath", Menu::Player::loadSCRFilePath);
 
-		reader.UpdateEntry("Camera", "DisablePhotoModeLimits", Menu::Camera::disablePhotoModeLimitsEnabled.value);
-		reader.UpdateEntry("Camera", "DisableSafezoneFOVReduction", Menu::Camera::disableSafezoneFOVReductionEnabled.value);
+		reader.UpdateEntry("Camera:FreeCam", "Speed", Menu::Camera::FreeCamSpeed);
+		reader.UpdateEntry("Camera:FreeCam", "TeleportPlayerToCamera", Menu::Camera::teleportPlayerToCameraEnabled);
+		reader.UpdateEntry("Camera:ThirdPerson", "Enabled", Menu::Camera::thirdPersonCameraEnabled);
+		reader.UpdateEntry("Camera:ThirdPerson", "DistanceBehindPlayer", Menu::Camera::DistanceBehindPlayer);
+		reader.UpdateEntry("Camera:ThirdPerson", "HeightAbovePlayer", Menu::Camera::HeightAbovePlayer);
+		reader.UpdateEntry("Camera:Misc", "DisablePhotoModeLimits", Menu::Camera::disablePhotoModeLimitsEnabled.value);
+		reader.UpdateEntry("Camera:Misc", "DisableSafezoneFOVReduction", Menu::Camera::disableSafezoneFOVReductionEnabled.value);
 
 		try {
 			inih::INIWriter writer{};

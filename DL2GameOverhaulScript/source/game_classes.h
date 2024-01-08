@@ -15,17 +15,46 @@
 
 // Game structs
 struct Vector3 {
-	float X;
-	float Y;
-	float Z;
+	float X, Y, Z;
 
-	Vector3() {
-		X = 0.0f;
-		Y = 0.0f;
-		Z = 0.0f;
+	Vector3& operator+=(const Vector3& v) {
+		X += v.X;
+		Y += v.Y;
+		Z += v.Z;
+		return *this;
+	}
+	Vector3& operator-=(const Vector3& v) {
+		X -= v.X;
+		Y -= v.Y;
+		Z -= v.Z;
+		return *this;
+	}
+	Vector3 operator+(const Vector3& v) const {
+		return { X + v.X, Y + v.Y, Z + v.Z };
+	}
+	Vector3 operator-(const Vector3& v) const {
+		return { X - v.X, Y - v.Y, Z - v.Z };
+	}
+	Vector3 operator*(float scalar) const {
+		return { X * scalar, Y * scalar, Z * scalar };
+	}
+	Vector3 operator/(float scalar) const {
+		return { X / scalar, Y / scalar, Z / scalar };
 	}
 
-	bool isDefault() {
+	Vector3 normalize() {
+		float length = std::sqrt(X * X + Y * Y + Z * Z);
+		return { X / length, Y / length, Z / length };
+	}
+	Vector3 cross(const Vector3& v) const {
+		return {
+			Y * v.Z - Z * v.Y,
+			Z * v.X - X * v.Z,
+			X * v.Y - Y * v.X
+		};
+	}
+
+	bool isDefault() const {
 		return X == 0.0f && Y == 0.0f && Z == 0.0f;
 	}
 };
@@ -92,6 +121,14 @@ namespace GamePH {
 
 	class CameraFPPDI {
 	public:
+		union {
+			DEFINE_MEMBER_N(Engine::CBaseCamera*, pCBaseCamera, 0x38);
+		};
+
+		Vector3* GetForwardVector(Vector3* outForwardVec);
+		Vector3* GetUpVector(Vector3* outUpVec);
+		Vector3* GetPosition(Vector3* posIN);
+
 		static CameraFPPDI* Get();
 	};
 
@@ -104,6 +141,8 @@ namespace GamePH {
 			DEFINE_MEMBER_N(float, speedMultiplier, 0x1CC);
 		};
 
+		Vector3* GetForwardVector(Vector3* outForwardVec);
+		Vector3* GetUpVector(Vector3* outUpVec);
 		Vector3* GetPosition(Vector3* posIN);
 		void AllowCameraMovement(int mode = 2);
 

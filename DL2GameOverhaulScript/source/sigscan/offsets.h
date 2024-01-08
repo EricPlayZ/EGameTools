@@ -17,8 +17,8 @@ static DWORD64 Get_## name () {\
 
 struct Offsets {
 	// ntdll.dll
-	AddOffset(LdrpCallInitRoutineOffset, "ntdll.dll", "[48 89 5C 24 08 44 89 44 24 18 48", PatternType::Address, PDWORD64)
-	AddOffset(LdrpRunInitializeRoutinesOffset, "ntdll.dll", "[48 89 4C 24 08 53 56 57 41 54 41 55 41 56 41 57 48 81 EC 90", PatternType::Address, PDWORD64) // for win7
+	//AddOffset(LdrpCallInitRoutineOffset, "ntdll.dll", "[48 89 5C 24 08 44 89 44 24 18 48", PatternType::Address, PDWORD64)
+	//AddOffset(LdrpRunInitializeRoutinesOffset, "ntdll.dll", "[48 89 4C 24 08 53 56 57 41 54 41 55 41 56 41 57 48 81 EC 90", PatternType::Address, PDWORD64) // for win7
 
 	// Input related
 	AddOffset(g_CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 0F 48 8B 01 84 D2", PatternType::RelativePointer, PDWORD64*)
@@ -43,13 +43,15 @@ struct Offsets {
 	AddOffset(ReadVideoSettingsOffset, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8D 4C 24 ?? FF 15 ?? ?? ?? ?? 48 C7 C2 ?? ?? ?? ??", PatternType::RelativePointer, LPVOID)
 	AddOffset(CalculateFreeCamCollisionOffset, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B 06 4C 8D 4C 24 ??", PatternType::RelativePointer, LPVOID)
 	AddOffset(GetViewCameraOffset, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 85 C0 74 28 48 8B C8", PatternType::RelativePointer, LPVOID)
-	AddOffset(CreatePlayerHealthModuleOffset, "gamedll_ph_x64_rwdi.dll", "[48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 4C 8B F1 E8 ?? ?? ?? ?? 48 8D 05 ?? ?? ?? ??", PatternType::Address, LPVOID)
+	AddOffset(CreatePlayerHealthModuleOffset, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 4C 8B F1 E8 ?? ?? ?? ?? 48 8D 05 ?? ?? ?? ??", PatternType::Address, LPVOID)
 	AddOffset(LifeSetHealth, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 49 8D 4C 24 ?? 49 03 CE", PatternType::RelativePointer, LPVOID)
 	AddOffset(TogglePhotoMode, "gamedll_ph_x64_rwdi.dll", "48 83 EC 48 38 91 ?? ?? ?? ??", PatternType::Address, LPVOID)
 	AddOffset(GetTimeWeatherSystemOffset, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 49 8D 4F 38", PatternType::RelativePointer, LPVOID)
 	AddOffset(SetForcedWeatherOffset, "engine_x64_rwdi.dll", "89 51 68 C3 CC CC CC CC CC CC CC CC CC CC CC CC", PatternType::Address, LPVOID)
 	AddOffset(GetCurrentWeatherOffset, "engine_x64_rwdi.dll", "48 8B 41 78 48 85 C0 75 0F", PatternType::Address, LPVOID)
-	AddOffset(MoveCamera, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 41 8D 45 D6", PatternType::Address, LPVOID)
+	AddOffset(MoveCamera, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 41 8D 45 D6", PatternType::RelativePointer, LPVOID)
+	AddOffset(GetForwardVector, "engine_x64_rwdi.dll", "4C 8B 41 38 41 8B 40 48", PatternType::Address, LPVOID)
+	AddOffset(GetUpVector, "engine_x64_rwdi.dll", "4C 8B 41 38 41 8B 40 44", PatternType::Address, LPVOID)
 };
 
 #undef AddOffset
