@@ -15,9 +15,10 @@ Player:
 
 Camera:
 - FreeCam
-- Disable PhotoMode Limits
 - Teleport Player to Camera
+﻿- Third Person Mode
 - FOV slider
+- Disable PhotoMode Limits
 - Disable Safezone FOV Reduction
 
 World:
