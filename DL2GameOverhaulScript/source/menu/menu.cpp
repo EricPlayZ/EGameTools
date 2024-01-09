@@ -9,7 +9,7 @@ namespace Menu {
     static const ImVec2 maxWndSize = ImVec2(900.0f, 675.0f);
 
 	bool isOpen = false;
-    float transparency = 99.5f;
+    float transparency = 99.0f;
 
 	void Render() {
         ImGuiStyle* style = &ImGui::GetStyle();

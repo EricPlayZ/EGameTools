@@ -18,6 +18,7 @@ namespace Menu {
 
 		void Render() {
 			GamePH::DayNightCycle* dayNightCycle = GamePH::DayNightCycle::Get();
+			ImGui::SeparatorText("Misc##World");
 			ImGui::BeginDisabled(!Engine::CBulletPhysicsCharacter::Get() || !dayNightCycle || dayNightCycle->time1 == 0.0f); {
 				if (ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp) && dayNightCycle)
 					dayNightCycle->SetDaytime(time);
@@ -28,12 +29,13 @@ namespace Menu {
 
 			GamePH::TimeWeather::CSystem* timeWeatherSystem = GamePH::TimeWeather::CSystem::Get();
 			const bool weatherDisabledFlag = !Engine::CBulletPhysicsCharacter::Get() || !timeWeatherSystem;
-			ImGui::BeginDisabled(weatherDisabledFlag); {
-				ImGui::Text("Setting weather to: %s", !weatherDisabledFlag ? weatherItems[weather] : "");
-				ImGui::Text("Current weather: %s", !weatherDisabledFlag ? weatherItems[timeWeatherSystem->GetCurrentWeather() + 1] : "");
 
+			ImGui::SeparatorText("Weather");
+			ImGui::BeginDisabled(weatherDisabledFlag); {
 				if (ImGui::Combo("Weather", reinterpret_cast<int*>(&weather), weatherItems, IM_ARRAYSIZE(weatherItems)) && timeWeatherSystem)
 					timeWeatherSystem->SetForcedWeather(static_cast<EWeather::TYPE>(weather - 1));
+				ImGui::Text("Setting weather to: %s", !weatherDisabledFlag ? weatherItems[weather] : "");
+				ImGui::Text("Current weather: %s", !weatherDisabledFlag ? weatherItems[timeWeatherSystem->GetCurrentWeather() + 1] : "");
 				ImGui::EndDisabled();
 			}
 		}

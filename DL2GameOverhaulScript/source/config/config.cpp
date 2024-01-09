@@ -4076,7 +4076,7 @@ namespace Config {
 	static void LoadDefaultConfig() {
 		reader = inih::INIReader();
 
-		reader.InsertEntry("Menu", "Transparency", 99.5f);
+		reader.InsertEntry("Menu", "Transparency", 99.0f);
 		reader.InsertEntry("Menu:Keybinds", "ToggleKey", "VK_F5");
 		menuToggleKey = VK_F5;
 
@@ -4121,7 +4121,7 @@ namespace Config {
 		try {
 			reader = inih::INIReader(configFileName);
 
-			Menu::transparency = reader.Get<float>("Menu", "Transparency", 99.5f);
+			Menu::transparency = reader.Get<float>("Menu", "Transparency", 99.0f);
 
 			const std::string toggleKey = reader.Get<std::string>("Menu:Keybinds", "ToggleKey");
 			auto it = virtualKeyCodes.find(toggleKey);
