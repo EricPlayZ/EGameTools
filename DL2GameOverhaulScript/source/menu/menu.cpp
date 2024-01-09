@@ -35,7 +35,7 @@ namespace Menu {
 
             ImGui::Separator();
 
-            ImGui::SliderFloat("Menu Transparency", &transparency, 0.0f, 100.0f, "%d%%%", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderFloat("Menu Transparency", &transparency, 0.0f, 100.0f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);
             ImGui::End();
         }
 	}

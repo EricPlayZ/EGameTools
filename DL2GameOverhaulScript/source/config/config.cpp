@@ -4211,7 +4211,7 @@ namespace Config {
 
 			if (!ConfigExists()) {
 				CreateConfig();
-				Sleep(200);
+				Sleep(750);
 				configPreviousWriteTime = std::filesystem::last_write_time(configFileName);
 			}
 
@@ -4220,7 +4220,7 @@ namespace Config {
 			if (configLastWriteTime != configPreviousWriteTime && !savedConfig) {
 				configPreviousWriteTime = configLastWriteTime;
 
-				Sleep(200);
+				Sleep(750);
 				ReadConfig(true);
 			} else if (configLastWriteTime != configPreviousWriteTime && savedConfig) {
 				configPreviousWriteTime = configLastWriteTime;
