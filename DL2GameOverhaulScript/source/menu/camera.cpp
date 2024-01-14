@@ -109,7 +109,7 @@ namespace Menu {
 		}
 
 		void Render() {
-			ImGui::SeparatorText("FreeCam");
+			ImGui::SeparatorText("Free Camera");
 			ImGui::BeginDisabled(photoModeEnabled.value); {
 				ImGui::Checkbox("Enabled##FreeCam", &freeCamEnabled.value);
 				ImGui::EndDisabled();
@@ -136,7 +136,7 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 			ImGui::BeginDisabled(freeCamEnabled.value); {
-				ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
+				ImGui::Checkbox("Disable Photo Mode Limits", &disablePhotoModeLimitsEnabled.value);
 				ImGui::EndDisabled();
 			}
 			ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
