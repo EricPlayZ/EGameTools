@@ -3,16 +3,17 @@
 
 namespace Menu {
 	namespace Camera {
-		extern const int BaseFOV;
 		extern int FOV;
 		
-		extern bool photoModeEnabled;
-		extern SMART_BOOL freeCamEnabled;
-		extern float FreeCamSpeed;
+		extern SMART_BOOL photoModeEnabled;
 
-		extern bool thirdPersonCameraEnabled;
-		extern float DistanceBehindPlayer;
-		extern float HeightAbovePlayer;
+		extern SMART_BOOL freeCamEnabled;
+		extern float freeCamSpeed;
+
+		extern SMART_BOOL thirdPersonCameraEnabled;
+		extern SMART_BOOL tpUseTPPModel;
+		extern float tpDistanceBehindPlayer;
+		extern float tpHeightAbovePlayer;
 
 		extern SMART_BOOL disablePhotoModeLimitsEnabled;
 		extern bool teleportPlayerToCameraEnabled;

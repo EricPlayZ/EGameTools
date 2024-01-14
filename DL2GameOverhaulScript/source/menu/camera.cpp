@@ -1,26 +1,31 @@
 #include <imgui.h>
+#include "..\sigscan\offsets.h"
 #include "..\game_classes.h"
 #include "..\core.h"
 #include "menu.h"
 
 namespace Menu {
 	namespace Camera {
-		extern const int BaseFOV = 57;
 		int FOV = 57;
 
-		bool photoModeEnabled = false;
-		SMART_BOOL freeCamEnabled{};
-		float FreeCamSpeed = 2.0f;
+		SMART_BOOL photoModeEnabled;
 
-		bool thirdPersonCameraEnabled = false;
-		float DistanceBehindPlayer = 2.0f;
-		float HeightAbovePlayer = 1.35f;
+		SMART_BOOL freeCamEnabled{};
+		float freeCamSpeed = 2.0f;
+
+		SMART_BOOL thirdPersonCameraEnabled;
+		SMART_BOOL tpUseTPPModel;
+		float tpDistanceBehindPlayer = 2.0f;
+		float tpHeightAbovePlayer = 1.35f;
 
 		SMART_BOOL disablePhotoModeLimitsEnabled{};
 		bool teleportPlayerToCameraEnabled = false;
 
 		SMART_BOOL disableSafezoneFOVReductionEnabled{};
-		static float previousSafezoneFOVReductionVal = -50.0f;
+
+		static const int baseFOV = 57;
+		static const float baseSafezoneFOVReduction = -10.0f;
+		static LPVOID previousViewCam = nullptr;
 
 		static void UpdateFOVWhileMenuClosed() {
 			if (Menu::isOpen)
@@ -30,10 +35,10 @@ namespace Menu {
 			if (!videoSettings)
 				return;
 
-			Menu::Camera::FOV = static_cast<int>(videoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
+			Menu::Camera::FOV = static_cast<int>(videoSettings->extraFOV) + Menu::Camera::baseFOV;
 		}
 		static void FreeCamUpdate() {
-			if (photoModeEnabled)
+			if (photoModeEnabled.value)
 				return;
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			if (!iLevel)
@@ -50,87 +55,45 @@ namespace Menu {
 
 			if (freeCamEnabled.value) {
 				if (viewCam == pFreeCam) {
-					if (!pFreeCam->enableSpeedMultiplier1)
-						pFreeCam->enableSpeedMultiplier1 = true;
-					if (pFreeCam->speedMultiplier != FreeCamSpeed)
-						pFreeCam->speedMultiplier = FreeCamSpeed;
-
+					pFreeCam->enableSpeedMultiplier1 = true;
+					pFreeCam->speedMultiplier = freeCamSpeed;
 					return;
 				}
 
 				pGameDI_PH->TogglePhotoMode();
 				pFreeCam->AllowCameraMovement(2);
+
+				GamePH::ShowTPPModel(true);
 			} else {
 				if (freeCamEnabled.previousValue) {
 					pFreeCam->enableSpeedMultiplier1 = false;
 					pFreeCam->speedMultiplier = 0.1f;
 				}
-
-				GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
-				if (!pFreeCam || viewCam != pFreeCam)
+				if (viewCam != pFreeCam)
 					return;
 
 				pGameDI_PH->TogglePhotoMode();
 				pFreeCam->AllowCameraMovement(0);
+
+				GamePH::ShowTPPModel(false);
 			}
 		}
 
-		static bool GetCamDisabledFlag() {
-			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-			if (!iLevel)
-				return true;
-			LPVOID viewCam = iLevel->GetViewCamera();
-			if (!viewCam)
-				return true;
-			GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
-			if (!pFreeCam)
-				return true;
-
-			GamePH::CameraFPPDI* pPlayerCam = GamePH::CameraFPPDI::Get();
-			if (!pPlayerCam)
-				return false;
-
-			DWORD64 viewCamVT = *reinterpret_cast<DWORD64*>(viewCam);
-			DWORD64 freeCamVT = *reinterpret_cast<DWORD64*>(pFreeCam);
-			DWORD64 playerCamVT = *reinterpret_cast<DWORD64*>(pPlayerCam);
-			if (viewCamVT != freeCamVT && viewCamVT != playerCamVT)
-				return true;
-			
-			return false;
-		}
-
 		static void UpdatePlayerVars() {
+			if (!GamePH::PlayerVariables::gotPlayerVars)
+				return;
+
 			if (disableSafezoneFOVReductionEnabled.value) {
-				auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [](const auto& pair) {
-					return pair.first == "CameraDefaultFOVReduction";
-				});
-
-				if (it != GamePH::PlayerVariables::playerVars.end()) {
-					float* value = reinterpret_cast<float*>(it->second.first);
-
-					if (disableSafezoneFOVReductionEnabled.previousValue != disableSafezoneFOVReductionEnabled.value)
-						previousSafezoneFOVReductionVal = *value;
-
-					*value = 0.0f;
-					*(value + 1) = 0.0f;
-				}
+				GamePH::PlayerVariables::ChangePlayerVar("CameraDefaultFOVReduction", 0.0f);
 				disableSafezoneFOVReductionEnabled.previousValue = true;
 			} else if (disableSafezoneFOVReductionEnabled.previousValue != disableSafezoneFOVReductionEnabled.value) {
 				disableSafezoneFOVReductionEnabled.previousValue = false;
-				auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [](const auto& pair) {
-					return pair.first == "CameraDefaultFOVReduction";
-				});
-
-				if (it != GamePH::PlayerVariables::playerVars.end()) {
-					float* value = reinterpret_cast<float*>(it->second.first);
-					*value = previousSafezoneFOVReductionVal;
-					*(value + 1) = previousSafezoneFOVReductionVal;
-				}
+				GamePH::PlayerVariables::ChangePlayerVar("CameraDefaultFOVReduction", baseSafezoneFOVReduction);
 			}
 		}
 
 		void Update() {
-			if (photoModeEnabled)
+			if (photoModeEnabled.value)
 				freeCamEnabled.Change(false);
 			else
 				freeCamEnabled.Restore();
@@ -147,53 +110,36 @@ namespace Menu {
 
 		void Render() {
 			ImGui::SeparatorText("FreeCam");
-			ImGui::BeginDisabled(GetCamDisabledFlag()); {
-				ImGui::BeginDisabled(photoModeEnabled); {
-					ImGui::Checkbox("Enabled##FreeCam", &freeCamEnabled.value);
-					ImGui::EndDisabled();
-				}
+			ImGui::BeginDisabled(photoModeEnabled.value); {
+				ImGui::Checkbox("Enabled##FreeCam", &freeCamEnabled.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::SliderFloat("Speed##FreeCam", &FreeCamSpeed, 0.0f, 100.0f);
-			ImGui::BeginDisabled(GetCamDisabledFlag()); {
-				ImGui::BeginDisabled(photoModeEnabled); {
-					ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
-					ImGui::EndDisabled();
-				}
-				ImGui::EndDisabled();
-			}
+			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.0f, 100.0f);
+			ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
 
-			ImGui::SeparatorText("Third Person");
-			ImGui::BeginDisabled(GetCamDisabledFlag()); {
-				ImGui::BeginDisabled(freeCamEnabled.value); {
-					ImGui::Checkbox("Enabled##ThirdPerson", &thirdPersonCameraEnabled);
-					ImGui::EndDisabled();
-				}
-				ImGui::SliderFloat("Distance behind player", &DistanceBehindPlayer, 1.0f, 10.0f);
-				ImGui::SliderFloat("Height above player", &HeightAbovePlayer, 1.0f, 3.0f);
+			ImGui::SeparatorText("Third Person Camera");
+			ImGui::BeginDisabled(freeCamEnabled.value || photoModeEnabled.value); {
+				ImGui::Checkbox("Enabled##ThirdPerson", &thirdPersonCameraEnabled.value);
+				ImGui::Checkbox("Use Third Person Player (TPP) Model", &tpUseTPPModel.value);
 				ImGui::EndDisabled();
 			}
+			ImGui::SliderFloat("Distance behind player", &tpDistanceBehindPlayer, 1.0f, 10.0f);
+			ImGui::SliderFloat("Height above player", &tpHeightAbovePlayer, 1.0f, 3.0f);
 
 			ImGui::SeparatorText("Misc");
 			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();
 			ImGui::BeginDisabled(!pCVideoSettings); {
 				if (ImGui::SliderInt("FOV", &FOV, 20, 160) && pCVideoSettings)
-					pCVideoSettings->ExtraFOV = static_cast<float>(FOV - BaseFOV);
+					pCVideoSettings->extraFOV = static_cast<float>(FOV - baseFOV);
 				else if (pCVideoSettings)
-					FOV = static_cast<int>(pCVideoSettings->ExtraFOV) + Menu::Camera::BaseFOV;
+					FOV = static_cast<int>(pCVideoSettings->extraFOV) + Menu::Camera::baseFOV;
 				ImGui::EndDisabled();
 			}
-			ImGui::BeginDisabled(GetCamDisabledFlag()); {
-				ImGui::BeginDisabled(freeCamEnabled.value); {
-					ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
-					ImGui::EndDisabled();
-				}
+			ImGui::BeginDisabled(freeCamEnabled.value); {
+				ImGui::Checkbox("Disable PhotoMode Limits", &disablePhotoModeLimitsEnabled.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
-				ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
-				ImGui::EndDisabled();
-			}
+			ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
 		}
 	}
 }

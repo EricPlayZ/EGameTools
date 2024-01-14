@@ -51,6 +51,6 @@ public:
 	static std::vector<LPVOID> FindPatterns(const std::string_view ModuleName, const Pattern &pattern);
 	static std::vector<LPVOID> FindPatterns(LPVOID startAddress, DWORD64 searchSize, const Pattern &pattern);
 
-	static LPVOID FindPattern(LPVOID startAddress, DWORD64 searchSize, Pattern *patterns, float *ratio = nullptr);
-	static LPVOID FindPattern(const std::string_view ModuleName, Pattern *patterns, float *ratio = nullptr);
+	static LPVOID FindPattern(LPVOID startAddress, DWORD64 searchSize, const Pattern* patterns, float *ratio = nullptr);
+	static LPVOID FindPattern(const std::string_view ModuleName, Pattern* patterns, float *ratio = nullptr);
 };

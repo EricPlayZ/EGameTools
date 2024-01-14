@@ -30,7 +30,7 @@ namespace GamePH {
 			Sleep(250);
 
 			if (!pCreatePlayerHealthModule)
-				pCreatePlayerHealthModule = (decltype(pCreatePlayerHealthModule))Offsets::Get_CreatePlayerHealthModuleOffset();
+				pCreatePlayerHealthModule = (decltype(pCreatePlayerHealthModule))Offsets::Get_CreatePlayerHealthModule();
 			else if (!oCreatePlayerHealthModule && MH_CreateHook(pCreatePlayerHealthModule, &detourCreatePlayerHealthModule, reinterpret_cast<LPVOID*>(&oCreatePlayerHealthModule)) == MH_OK) {
 				MH_EnableHook(pCreatePlayerHealthModule);
 				break;
@@ -60,32 +60,32 @@ namespace GamePH {
 				break;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CalculateFreeCamCollision
+#pragma region CalculateFreeCamCollision
 	static DWORD64(*pCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	static DWORD64(*oCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
 		if (!Menu::Camera::freeCamEnabled.value && !Menu::Camera::disablePhotoModeLimitsEnabled.value)
 			return oCalculateFreeCamCollision(pFreeCamera, finalPos);
 
-		return NULL;
+		return 0;
 	}
 	void LoopHookCalculateFreeCamCollision() {
 		while (true) {
 			Sleep(250);
 
 			if (!pCalculateFreeCamCollision)
-				pCalculateFreeCamCollision = (decltype(pCalculateFreeCamCollision))Offsets::Get_CalculateFreeCamCollisionOffset();
+				pCalculateFreeCamCollision = (decltype(pCalculateFreeCamCollision))Offsets::Get_CalculateFreeCamCollision();
 			else if (!oCalculateFreeCamCollision && MH_CreateHook(pCalculateFreeCamCollision, &detourCalculateFreeCamCollision, reinterpret_cast<LPVOID*>(&oCalculateFreeCamCollision)) == MH_OK) {
 				MH_EnableHook(pCalculateFreeCamCollision);
 				break;
 			}
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region LifeSetHealth
+#pragma region LifeSetHealth
 	static void(*pLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	static void(*oLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	void detourLifeSetHealth(float* pLifeHealth, float health) {
@@ -108,13 +108,13 @@ namespace GamePH {
 			}
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region TogglePhotoMode
+#pragma region TogglePhotoMode
 	static void(*pTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
 	static void(*oTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
 	void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
-		Menu::Camera::photoModeEnabled = enabled;
+		Menu::Camera::photoModeEnabled.value = enabled;
 		if (Menu::Camera::freeCamEnabled.value) {
 			GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
 			if (pGameDI_PH) {
@@ -140,45 +140,79 @@ namespace GamePH {
 			}
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region MoveCamera
-	static void(*pMoveCamera)(LPVOID pCBaseCamera, Vector3* pos, float* a3, float* a4) = nullptr;
-	static void(*oMoveCamera)(LPVOID pCBaseCamera, Vector3* pos, float* a3, float* a4) = nullptr;
-	void detourMoveCamera(LPVOID pCBaseCamera, Vector3* pos, float* a3, float* a4) {
-		if (Menu::Camera::thirdPersonCameraEnabled && !Menu::Camera::freeCamEnabled.value) {
-			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-			if (!iLevel) {
-				oMoveCamera(pCBaseCamera, pos, a3, a4);
-				return;
+#pragma region MoveCameraFromForwardUpPos
+	static void(*pMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
+	static void(*oMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
+	void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) {
+		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
+		if (pgen_TPPModel) {
+			if (Menu::Camera::photoModeEnabled.previousValue != Menu::Camera::photoModeEnabled.value && !Menu::Camera::photoModeEnabled.value) {
+				Menu::Camera::tpUseTPPModel.previousValue = !Menu::Camera::tpUseTPPModel.value;
+				Menu::Camera::thirdPersonCameraEnabled.previousValue = Menu::Camera::thirdPersonCameraEnabled.value;
 			}
-			CameraFPPDI* viewCam = static_cast<CameraFPPDI*>(iLevel->GetViewCamera());
-			if (!viewCam) {
-				oMoveCamera(pCBaseCamera, pos, a3, a4);
-				return;
+
+			if (!Menu::Camera::photoModeEnabled.value && !Menu::Camera::freeCamEnabled.value) {
+				if ((Menu::Camera::tpUseTPPModel.previousValue != Menu::Camera::tpUseTPPModel.value && !Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.value) || (Menu::Camera::thirdPersonCameraEnabled.previousValue != Menu::Camera::thirdPersonCameraEnabled.value && !Menu::Camera::thirdPersonCameraEnabled.value)) {
+					pgen_TPPModel->enableTPPModel2 = true;
+					pgen_TPPModel->enableTPPModel1 = true;
+				}
+				ShowTPPModel(Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.value);
+				if (Menu::Camera::tpUseTPPModel.previousValue == Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.previousValue == Menu::Camera::thirdPersonCameraEnabled.value && (Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.value)) {
+					pgen_TPPModel->enableTPPModel2 = false;
+					pgen_TPPModel->enableTPPModel1 = false;
+				}
+
+				Menu::Camera::tpUseTPPModel.previousValue = Menu::Camera::tpUseTPPModel.value;
+				Menu::Camera::thirdPersonCameraEnabled.previousValue = Menu::Camera::thirdPersonCameraEnabled.value;
 			}
-			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
+			if (Menu::Camera::photoModeEnabled.previousValue != Menu::Camera::photoModeEnabled.value && Menu::Camera::photoModeEnabled.value) {
+				pgen_TPPModel->enableTPPModel2 = false;
+				pgen_TPPModel->enableTPPModel1 = false;
+			}
+			else if (Menu::Camera::photoModeEnabled.previousValue == Menu::Camera::photoModeEnabled.value && Menu::Camera::photoModeEnabled.value) {
+				ShowTPPModel(Menu::Camera::photoModeEnabled.value);
+			}
 
-			Vector3 forwardVec{};
-			viewCam->GetForwardVector(&forwardVec);
-			const Vector3 normForwardVec = forwardVec.normalize();
-
-			Vector3 newCamPos = (!playerCharacter ? *pos : playerCharacter->playerPos) - normForwardVec * -Menu::Camera::DistanceBehindPlayer;
-			newCamPos.Y += Menu::Camera::HeightAbovePlayer - (!playerCharacter ? 1.0f : 0.0f);
-
-			*pos = newCamPos;
+			Menu::Camera::photoModeEnabled.previousValue = Menu::Camera::photoModeEnabled.value;
 		}
 
-		oMoveCamera(pCBaseCamera, pos, a3, a4);
+		if (!Menu::Camera::thirdPersonCameraEnabled.value || Menu::Camera::photoModeEnabled.value || Menu::Camera::freeCamEnabled.value || !pos || !GamePH::PlayerObjProperties::Get()) {
+			oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
+			return;
+		}
+
+		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+		if (!iLevel) {
+			oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
+			return;
+		}
+		CameraFPPDI* viewCam = static_cast<CameraFPPDI*>(iLevel->GetViewCamera());
+		if (!viewCam) {
+			oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
+			return;
+		}
+
+		Vector3 forwardVec{};
+		viewCam->GetForwardVector(&forwardVec);
+		const Vector3 normForwardVec = forwardVec.normalize();
+
+		Vector3 newCamPos = *pos - normForwardVec * -Menu::Camera::tpDistanceBehindPlayer;
+		newCamPos.Y += Menu::Camera::tpHeightAbovePlayer - 1.5f;
+
+		*pos = newCamPos;
+
+		oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
 	}
-	void LoopHookMoveCamera() {
+	void LoopHookMoveCameraFromForwardUpPos() {
 		while (true) {
 			Sleep(250);
 
-			if (!pMoveCamera)
-				pMoveCamera = (decltype(pMoveCamera))Offsets::Get_MoveCamera();
-			else if (!oMoveCamera && MH_CreateHook(pMoveCamera, &detourMoveCamera, reinterpret_cast<LPVOID*>(&oMoveCamera)) == MH_OK) {
-				MH_EnableHook(pMoveCamera);
+			if (!pMoveCameraFromForwardUpPos)
+				pMoveCameraFromForwardUpPos = (decltype(pMoveCameraFromForwardUpPos))Offsets::Get_MoveCameraFromForwardUpPos();
+			else if (!oMoveCameraFromForwardUpPos && MH_CreateHook(pMoveCameraFromForwardUpPos, &detourMoveCameraFromForwardUpPos, reinterpret_cast<LPVOID*>(&oMoveCameraFromForwardUpPos)) == MH_OK) {
+				MH_EnableHook(pMoveCameraFromForwardUpPos);
 				break;
 			}
 		}
@@ -186,12 +220,130 @@ namespace GamePH {
 	#pragma endregion
 	#pragma endregion
 
+	#pragma region OtherFuncs
+	static DWORD64 ShowTPPModelFunc2(LPVOID a1) {
+		DWORD64(*pShowTPPModelFunc2)(LPVOID a1) = (decltype(pShowTPPModelFunc2))Offsets::Get_ShowTPPModelFunc2();
+		if (!pShowTPPModelFunc2)
+			return 0;
+
+		return pShowTPPModelFunc2(a1);
+	}
+	static void ShowTPPModelFunc3(DWORD64 a1, bool showTPPModel) {
+		void(*pShowTPPModelFunc3)(DWORD64 a1, bool showTPPModel) = (decltype(pShowTPPModelFunc3))Offsets::Get_ShowTPPModelFunc3();
+		if (!pShowTPPModelFunc3)
+			return;
+
+		pShowTPPModelFunc3(a1, showTPPModel);
+	}
+	void ShowTPPModel(bool showTPPModel) {
+		GameDI_PH* pGameDI_PH = GameDI_PH::Get();
+		if (!pGameDI_PH)
+			return;
+		DWORD64 tppFunc2Addr = ShowTPPModelFunc2(pGameDI_PH);
+		if (!tppFunc2Addr)
+			return;
+		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
+		if (!pgen_TPPModel)
+			return;
+		
+		ShowTPPModelFunc3(tppFunc2Addr, showTPPModel);
+	}
+	#pragma endregion
+
 	#pragma region PlayerVariables
-	std::vector <std::pair<std::string, std::pair<LPVOID, std::string>>> PlayerVariables::playerVars;
-	std::vector <std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerVarsDefault;
-	std::vector <std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerCustomVarsDefault;
+	static const int FLOAT_VAR_OFFSET = 3;
+	static const int BOOL_VAR_OFFSET = 2;
+	static const int VAR_LOC_OFFSET = 1;
+
+	std::vector<std::pair<std::string, std::pair<LPVOID, std::string>>> PlayerVariables::playerVars;
+	std::vector<std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerVarsDefault;
+	std::vector<std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerCustomVarsDefault;
 	bool PlayerVariables::gotPlayerVars = false;
 
+	static PDWORD64 getFloatPlayerVariableVT() {
+		if (!Offsets::Get_InitializePlayerVariables())
+			return nullptr;
+
+		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariables() + Offsets::Get_initPlayerFloatVarsInstr_offset() + 0x3; // 0x3 is instruction size
+		const DWORD floatPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
+
+		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset);
+	}
+	static PDWORD64 getBoolPlayerVariableVT() {
+		if (!Offsets::Get_InitializePlayerVariables())
+			return nullptr;
+
+		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariables() + Offsets::Get_initPlayerBoolVarsInstr_offset() + 0x3; // 0x3 is instruction size
+		const DWORD boolPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
+
+		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + boolPlayerVariableVTOffset);
+	}
+
+	template <typename T>
+	static void updateDefaultVar(std::vector<std::pair<std::string, std::pair<std::any, std::string>>>& defaultVars, const std::string& varName, T varValue) {
+		static_assert(std::is_same<T, float>::value || std::is_same<T, bool>::value, "Invalid type: value must be float or bool");
+
+		auto it = std::find_if(defaultVars.begin(), defaultVars.end(), [&varName](const auto& pair) {
+			return pair.first == varName;
+		});
+		if (it == defaultVars.end())
+			return;
+
+		it->second.first.emplace<T>(varValue);
+	}
+	static void processPlayerVar(PDWORD64*& playerVarsMem, std::pair<std::string, std::pair<LPVOID, std::string>>& var) {
+		while (true) {
+			const bool isFloatPlayerVar = *playerVarsMem == getFloatPlayerVariableVT();
+			const bool isBoolPlayerVar = *playerVarsMem == getBoolPlayerVariableVT();
+
+			if (isFloatPlayerVar || isBoolPlayerVar) {
+				var.second.first = playerVarsMem + VAR_LOC_OFFSET;
+				const std::string& varName = var.first;
+
+				if (isFloatPlayerVar) {
+					float* varValue = reinterpret_cast<float*>(var.second.first);
+					updateDefaultVar(GamePH::PlayerVariables::playerVarsDefault, varName, *varValue);
+					updateDefaultVar(GamePH::PlayerVariables::playerCustomVarsDefault, varName, *varValue);
+
+					playerVarsMem += FLOAT_VAR_OFFSET;
+				}
+				else {
+					bool* varValue = reinterpret_cast<bool*>(var.second.first);
+					updateDefaultVar(GamePH::PlayerVariables::playerVarsDefault, varName, *varValue);
+					updateDefaultVar(GamePH::PlayerVariables::playerCustomVarsDefault, varName, *varValue);
+
+					playerVarsMem += BOOL_VAR_OFFSET;
+				}
+
+				break;
+			}
+			else
+				playerVarsMem += 1;
+		}
+	}
+
+	void PlayerVariables::GetPlayerVars() {
+		if (gotPlayerVars)
+			return;
+		if (!Get())
+			return;
+		if (playerVars.empty())
+			return;
+		if (!getFloatPlayerVariableVT())
+			return;
+		if (!getBoolPlayerVariableVT())
+			return;
+
+		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());
+		bool isFloatPlayerVar = false;
+		bool isBoolPlayerVar = false;
+
+		for (auto& var : playerVars) {
+			processPlayerVar(playerVarsMem, var);
+		}
+
+		gotPlayerVars = true;
+	}
 	void PlayerVariables::SortPlayerVars() {
 		if (!playerVars.empty())
 			return;
@@ -199,6 +351,7 @@ namespace GamePH {
 		std::stringstream ss(Config::playerVars);
 
 		while (ss.good()) {
+			// separate the string by the , character to get each variable
 			std::string pVar{};
 			getline(ss, pVar, ',');
 
@@ -208,6 +361,7 @@ namespace GamePH {
 			std::string varType{};
 
 			while (ssPVar.good()) {
+				// seperate the string by the : character to get name and type of variable
 				std::string subStr{};
 				getline(ssPVar, subStr, ':');
 
@@ -221,79 +375,6 @@ namespace GamePH {
 			PlayerVariables::playerVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
 			PlayerVariables::playerCustomVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
 		}
-	}
-
-	PDWORD64 PlayerVariables::GetFloatPlayerVariableVT() {
-		if (!Offsets::Get_InitializePlayerVariablesOffset())
-			return nullptr;
-
-		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariablesOffset() + Offsets::Get_initPlayerFloatVarsInstrOffset() + 0x3; // 0x3 is instruction size
-		const DWORD floatPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
-
-		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset);
-	}
-	PDWORD64 PlayerVariables::GetBoolPlayerVariableVT() {
-		if (!Offsets::Get_InitializePlayerVariablesOffset())
-			return nullptr;
-
-		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariablesOffset() + Offsets::Get_initPlayerBoolVarsInstrOffset() + 0x3; // 0x3 is instruction size
-		const DWORD boolPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
-
-		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + boolPlayerVariableVTOffset);
-	}
-	void PlayerVariables::GetPlayerVars() {
-		if (gotPlayerVars)
-			return;
-		if (!Get())
-			return;
-		if (playerVars.empty())
-			return;
-		if (!GetFloatPlayerVariableVT())
-			return;
-		if (!GetBoolPlayerVariableVT())
-			return;
-
-		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());
-		bool isFloatPlayerVar = false;
-		bool isBoolPlayerVar = false;
-
-		for (auto it = playerVars.begin(); it != playerVars.end(); ++it) {
-			while (true) {
-				isFloatPlayerVar = *playerVarsMem == GetFloatPlayerVariableVT();
-				isBoolPlayerVar = *playerVarsMem == GetBoolPlayerVariableVT();
-
-				if (isFloatPlayerVar || isBoolPlayerVar) {
-					it->second.first = playerVarsMem + 1;
-					const std::string varName = it->first;
-
-					auto itDef = std::find_if(GamePH::PlayerVariables::playerVarsDefault.begin(), GamePH::PlayerVariables::playerVarsDefault.end(), [&varName](const auto& pair) {
-						return pair.first == varName;
-					});
-					if (itDef != GamePH::PlayerVariables::playerVarsDefault.end()) {
-						if (isFloatPlayerVar)
-							itDef->second.first = *reinterpret_cast<float*>(it->second.first);
-						else
-							itDef->second.first = *reinterpret_cast<bool*>(it->second.first);
-					}
-
-					auto itCustomDef = std::find_if(GamePH::PlayerVariables::playerCustomVarsDefault.begin(), GamePH::PlayerVariables::playerCustomVarsDefault.end(), [&varName](const auto& pair) {
-						return pair.first == varName;
-					});
-					if (itCustomDef != GamePH::PlayerVariables::playerCustomVarsDefault.end()) {
-						if (isFloatPlayerVar)
-							itCustomDef->second.first = *reinterpret_cast<float*>(it->second.first);
-						else
-							itCustomDef->second.first = *reinterpret_cast<bool*>(it->second.first);
-					}
-
-					playerVarsMem += isFloatPlayerVar ? 3 : 2;
-					break;
-				} else
-					playerVarsMem += 1;
-			}
-		}
-
-		gotPlayerVars = true;
 	}
 
 	PlayerVariables* PlayerVariables::Get() {
@@ -316,10 +397,10 @@ namespace GamePH {
 	#pragma region PlayerState
 	PlayerState* PlayerState::Get() {
 		__try {
-			if (!Offsets::Get_PlayerStateOffset())
+			if (!Offsets::Get_PlayerState())
 				return nullptr;
 
-			PlayerState* ptr = *reinterpret_cast<PlayerState**>(Offsets::Get_PlayerStateOffset());
+			PlayerState* ptr = *reinterpret_cast<PlayerState**>(Offsets::Get_PlayerState());
 
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
@@ -347,28 +428,48 @@ namespace GamePH {
 	}
 	#pragma endregion
 
-	Vector3* (*pGetForwardVector)(LPVOID viewCam, Vector3* outForwardVec) = nullptr;
-	Vector3* (*pGetUpVector)(LPVOID viewCam, Vector3* outUpVec) = nullptr;
-	#pragma region CameraFPPDI
-	Vector3* CameraFPPDI::GetForwardVector(Vector3* outForwardVec) {
-		if (!pGetForwardVector) {
-			pGetForwardVector = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+	#pragma region TPPCameraDI
+	TPPCameraDI* TPPCameraDI::Get() {
+		__try {
+			FreeCamera* pFreeCam = FreeCamera::Get();
+			if (!pFreeCam)
+				return nullptr;
+
+			CoBaseCameraProxy* pCoBaseCameraProxy = pFreeCam->pCoBaseCameraProxy;
+			if (!pCoBaseCameraProxy)
+				return nullptr;
+
+			TPPCameraDI* ptr = pCoBaseCameraProxy->pTPPCameraDI;
+
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}
+	}
+	#pragma endregion
+
+	#pragma region CameraFPPDI
+	Vector3* CameraFPPDI::GetForwardVector(Vector3* outForwardVec) {
+		Vector3* (*pGetForwardVector)(LPVOID pCameraFPPDI, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+		if (!pGetForwardVector)
+			return nullptr;
+
 		return pGetForwardVector(this, outForwardVec);
 	}
 	Vector3* CameraFPPDI::GetUpVector(Vector3* outUpVec) {
-		if (!pGetUpVector) {
-			pGetUpVector = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
+		Vector3* (*pGetUpVector)(LPVOID pCameraFPPDI, Vector3 * outUpVec) = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
+		if (!pGetUpVector)
 			return nullptr;
-		}
+
 		return pGetUpVector(this, outUpVec);
 	}
 	Vector3* CameraFPPDI::GetPosition(Vector3* posIN) {
 		return Memory::CallVT<181, Vector3*>(this, posIN);
 	}
 
-	CameraFPPDI* CameraFPPDI::Get() {
+	/*CameraFPPDI* CameraFPPDI::Get() {
 		__try {
 			PDWORD64 pg_CameraFPPDI = Offsets::Get_g_CameraFPPDI();
 			if (!pg_CameraFPPDI)
@@ -382,22 +483,22 @@ namespace GamePH {
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}
-	}
+	}*/
 	#pragma endregion
 
 	#pragma region FreeCamera
 	Vector3* FreeCamera::GetForwardVector(Vector3* outForwardVec) {
-		if (!pGetForwardVector) {
-			pGetForwardVector = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+		Vector3* (*pGetForwardVector)(LPVOID pFreeCamera, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+		if (!pGetForwardVector)
 			return nullptr;
-		}
+
 		return pGetForwardVector(this, outForwardVec);
 	}
 	Vector3* FreeCamera::GetUpVector(Vector3* outUpVec) {
-		if (!pGetUpVector) {
-			pGetUpVector = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
+		Vector3* (*pGetUpVector)(LPVOID pFreeCamera, Vector3 * outUpVec) = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
+		if (!pGetUpVector)
 			return nullptr;
-		}
+
 		return pGetUpVector(this, outUpVec);
 	}
 	Vector3* FreeCamera::GetPosition(Vector3* posIN) {
@@ -452,20 +553,20 @@ namespace GamePH {
 	namespace TimeWeather {
 		#pragma region CSystem
 		void CSystem::SetForcedWeather(int weather) {
-			if (!Offsets::Get_SetForcedWeatherOffset())
+			if (!Offsets::Get_SetForcedWeather())
 				return;
 
-			void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Offsets::Get_SetForcedWeatherOffset();
+			void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Offsets::Get_SetForcedWeather();
 
 			if (!pSetForcedWeather)
 				return;
 			pSetForcedWeather(this, weather);
 		}
 		int CSystem::GetCurrentWeather() {
-			if (!Offsets::Get_GetCurrentWeatherOffset())
+			if (!Offsets::Get_GetCurrentWeather())
 				return EWeather::TYPE::Default;
 
-			int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Offsets::Get_GetCurrentWeatherOffset();
+			int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Offsets::Get_GetCurrentWeather();
 
 			if (!pGetCurrentWeather)
 				return EWeather::TYPE::Default;
@@ -492,25 +593,38 @@ namespace GamePH {
 	#pragma endregion
 
 	#pragma region LevelDI
-	float LevelDI::GetTimePlayed() {
-		return Memory::CallVT<317, float>(this);
+	bool LevelDI::IsLoading() {
+		if (!Offsets::Get_IsLoading())
+			return true;
+
+		bool(*pIsLoading)(LPVOID iLevel) = (decltype(pIsLoading))Offsets::Get_IsLoading();
+
+		if (!pIsLoading)
+			return true;
+		return pIsLoading(this);
 	}
 	LPVOID LevelDI::GetViewCamera() {
-		if (!Offsets::Get_GetViewCameraOffset())
+		if (!Offsets::Get_GetViewCamera())
 			return nullptr;
 
-		LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Offsets::Get_GetViewCameraOffset();
+		LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Offsets::Get_GetViewCamera();
 
 		if (!pGetViewCamera)
 			return nullptr;
 		return pGetViewCamera(this);
 	}
+	void LevelDI::SetViewCamera(LPVOID viewCam) {
+		Memory::CallVT<289, void>(this, viewCam);
+	}
+	float LevelDI::GetTimePlayed() {
+		return Memory::CallVT<317, float>(this);
+	}
 	TimeWeather::CSystem* LevelDI::GetTimeWeatherSystem() {
 		__try {
-			if (!Offsets::Get_GetTimeWeatherSystemOffset())
+			if (!Offsets::Get_GetTimeWeatherSystem())
 				return nullptr;
 
-			TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Offsets::Get_GetTimeWeatherSystemOffset();
+			TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Offsets::Get_GetTimeWeatherSystem();
 
 			if (!pGetTimeWeatherSystem)
 				return nullptr;
@@ -532,6 +646,63 @@ namespace GamePH {
 				return nullptr;
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	#pragma endregion
+
+	#pragma region gen_TPPModel
+	gen_TPPModel* gen_TPPModel::Get() {
+		__try {
+			LocalClientDI* pLocalClientDI = LocalClientDI::Get();
+			if (!pLocalClientDI)
+				return nullptr;
+
+			gen_TPPModel* ptr = pLocalClientDI->pgen_TPPModel;
+
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			return ptr;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	#pragma endregion
+
+	#pragma region LocalClientDI
+	LocalClientDI* LocalClientDI::Get() {
+		__try {
+			SessionCooperativeDI* pSessionCooperativeDI = SessionCooperativeDI::Get();
+			if (!pSessionCooperativeDI)
+				return nullptr;
+
+			LocalClientDI* ptr = pSessionCooperativeDI->pLocalClientDI;
+
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			return ptr;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	#pragma endregion
+
+	#pragma region SessionCooperativeDI
+	SessionCooperativeDI* SessionCooperativeDI::Get() {
+		__try {
+			GameDI_PH* pGameDI_PH = GameDI_PH::Get();
+			if (!pGameDI_PH)
+				return nullptr;
+
+			SessionCooperativeDI* ptr = pGameDI_PH->pSessionCooperativeDI;
+
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			return ptr;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}
 	}
@@ -658,10 +829,10 @@ namespace Engine {
 	#pragma region CLobbySteam
 	CLobbySteam* CLobbySteam::Get() {
 		__try {
-			if (!Offsets::Get_CLobbySteamOffset())
+			if (!Offsets::Get_CLobbySteam())
 				return nullptr;
 
-			CLobbySteam* ptr = *reinterpret_cast<CLobbySteam**>(Offsets::Get_CLobbySteamOffset());
+			CLobbySteam* ptr = *reinterpret_cast<CLobbySteam**>(Offsets::Get_CLobbySteam());
 
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;

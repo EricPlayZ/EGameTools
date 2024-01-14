@@ -161,7 +161,7 @@ LPVOID PatternScanner::FindPattern(LPVOID startAddress, DWORD64 searchSize, cons
 	return ret;
 }
 
-LPVOID PatternScanner::FindPattern(LPVOID startAddress, DWORD64 searchSize, Pattern *patterns, float *ratio) {
+LPVOID PatternScanner::FindPattern(LPVOID startAddress, DWORD64 searchSize, const Pattern* patterns, float *ratio) {
 	int totalCount = 0;
 	struct result {
 		LPVOID addr;
@@ -184,18 +184,16 @@ LPVOID PatternScanner::FindPattern(LPVOID startAddress, DWORD64 searchSize, Patt
 			continue;
 
 		bool found = false;
-		for (result &res : results) {
-			if (res.addr == addr) {
-				res.count++;
+		auto it = std::find_if(results.begin(), results.end(), [addr](result& res) { return res.addr == addr; });
+		if (it != results.end()) {
+			it->count++;
 
-				if (res.count > bestCount) {
-					ret = addr;
-					bestCount = res.count;
-				}
-
-				found = true;
-				break;
+			if (it->count > bestCount) {
+				ret = addr;
+				bestCount = it->count;
 			}
+
+			found = true;
 		}
 
 		if (!found) {

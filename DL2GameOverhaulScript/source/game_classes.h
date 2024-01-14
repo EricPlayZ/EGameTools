@@ -6,6 +6,7 @@
 #include <memory>
 #include <any>
 #include "hook.h"
+#include "utils.h"
 
 #define STR_MERGE_IMPL(a, b) a##b
 #define STR_MERGE(a, b) STR_MERGE_IMPL(a, b)
@@ -17,6 +18,9 @@
 struct Vector3 {
 	float X, Y, Z;
 
+	bool operator==(const Vector3& v) const {
+		return Utils::are_same(X, v.X) && Utils::are_same(Y, v.Y) && Utils::are_same(Z, v.Z);
+	}
 	Vector3& operator+=(const Vector3& v) {
 		X += v.X;
 		Y += v.Y;
@@ -55,7 +59,7 @@ struct Vector3 {
 	}
 
 	bool isDefault() const {
-		return X == 0.0f && Y == 0.0f && Z == 0.0f;
+		return Utils::are_same(X, 0.0f) && Utils::are_same(Y, 0.0f) && Utils::are_same(Z, 0.0f);
 	}
 };
 namespace EWeather {
@@ -82,7 +86,9 @@ namespace GamePH {
 	extern void LoopHookCalculateFreeCamCollision();
 	extern void LoopHookLifeSetHealth();
 	extern void LoopHookTogglePhotoMode();
-	extern void LoopHookMoveCamera();
+	extern void LoopHookMoveCameraFromForwardUpPos();
+
+	extern void ShowTPPModel(bool showTPPModel);
 
 	class PlayerVariables {
 	public:
@@ -91,11 +97,44 @@ namespace GamePH {
 		static std::vector<std::pair<std::string, std::pair<std::any, std::string>>> playerCustomVarsDefault;
 		static bool gotPlayerVars;
 
+		static void GetPlayerVars();
 		static void SortPlayerVars();
 
-		static PDWORD64 GetFloatPlayerVariableVT();
-		static PDWORD64 GetBoolPlayerVariableVT();
-		static void GetPlayerVars();
+		template <typename T>
+		static void ChangePlayerVar(const std::string& playerVar, const T value) {
+			static_assert(std::is_same<T, bool>::value || std::is_same<T, float>::value || std::is_same<T, std::string>::value, "Invalid type: value must be bool, float or string");
+
+			auto it = std::find_if(PlayerVariables::playerVars.begin(), PlayerVariables::playerVars.end(), [&playerVar](const auto& pair) {
+				return pair.first == playerVar;
+			});
+
+			if (it == PlayerVariables::playerVars.end())
+				return;
+
+			if (std::is_same<T, std::string>::value) {
+				std::string valueStr = Utils::to_string(valueStr);
+				if (it->second.second == "float") {
+					float* const varValue = reinterpret_cast<float*>(it->second.first);
+					const float actualValue = std::stof(valueStr);
+
+					*varValue = actualValue;
+					*(varValue + 1) = actualValue;
+				}
+				else {
+					bool* const varValue = reinterpret_cast<bool*>(it->second.first);
+					const bool actualValue = valueStr == "true";
+
+					*varValue = actualValue;
+					*(varValue + 1) = actualValue;
+				}
+			}
+			else {
+				T* const varValue = reinterpret_cast<T*>(it->second.first);
+
+				*varValue = value;
+				*(varValue + 1) = value;
+			}
+		}
 
 		static PlayerVariables* Get();
 	};
@@ -119,6 +158,11 @@ namespace GamePH {
 		static PlayerHealthModule* Get();
 	};
 
+	class TPPCameraDI {
+	public:
+		static TPPCameraDI* Get();
+	};
+
 	class CameraFPPDI {
 	public:
 		union {
@@ -129,12 +173,20 @@ namespace GamePH {
 		Vector3* GetUpVector(Vector3* outUpVec);
 		Vector3* GetPosition(Vector3* posIN);
 
-		static CameraFPPDI* Get();
+		//static CameraFPPDI* Get();
+	};
+
+	class CoBaseCameraProxy {
+	public:
+		union {
+			DEFINE_MEMBER_N(TPPCameraDI*, pTPPCameraDI, 0xD0);
+		};
 	};
 
 	class FreeCamera {
 	public:
 		union {
+			DEFINE_MEMBER_N(CoBaseCameraProxy*, pCoBaseCameraProxy, 0x18);
 			DEFINE_MEMBER_N(Engine::CBaseCamera*, pCBaseCamera, 0x38);
 			DEFINE_MEMBER_N(bool, enableSpeedMultiplier1, 0x42);
 			DEFINE_MEMBER_N(bool, enableSpeedMultiplier2, 0x43);
@@ -174,11 +226,41 @@ namespace GamePH {
 
 	class LevelDI {
 	public:
-		float GetTimePlayed();
+		bool IsLoading();
 		LPVOID GetViewCamera();
+		void SetViewCamera(LPVOID viewCam);
+		float GetTimePlayed();
 		TimeWeather::CSystem* GetTimeWeatherSystem();
 
 		static LevelDI* Get();
+	};
+
+	class gen_TPPModel {
+	public:
+		union {
+			DEFINE_MEMBER_N(bool, enableTPPModel1, 0x2CF9);
+			DEFINE_MEMBER_N(bool, enableTPPModel2, 0x2CFA);
+		};
+
+		static gen_TPPModel* Get();
+	};
+
+	class LocalClientDI {
+	public:
+		union {
+			DEFINE_MEMBER_N(gen_TPPModel*, pgen_TPPModel, 0x90);
+		};
+
+		static LocalClientDI* Get();
+	};
+
+	class SessionCooperativeDI {
+	public:
+		union {
+			DEFINE_MEMBER_N(LocalClientDI*, pLocalClientDI, 0xE08);
+		};
+
+		static SessionCooperativeDI* Get();
 	};
 
 	class GameDI_PH2 {
@@ -188,6 +270,11 @@ namespace GamePH {
 
 	class GameDI_PH {
 	public:
+		union {
+			DEFINE_MEMBER_N(SessionCooperativeDI*, pSessionCooperativeDI, 0xF0);
+			DEFINE_MEMBER_N(bool, blockPauseGameOnPlayerAfk, 0x830);
+		};
+
 		INT64 GetCurrentGameVersion();
 		void TogglePhotoMode(bool doNothing = false, bool setAsOptionalCamera = false);
 
@@ -208,7 +295,7 @@ namespace Engine {
 	class CVideoSettings {
 	public:
 		union {
-			DEFINE_MEMBER_N(float, ExtraFOV, 0x7C);
+			DEFINE_MEMBER_N(float, extraFOV, 0x7C);
 		};
 
 		static CVideoSettings* Get();
@@ -255,10 +342,10 @@ namespace Engine {
 	public:
 		union {
 			DEFINE_MEMBER_N(float, yaw, 0x48);
-			DEFINE_MEMBER_N(float, x, 0x4C);
+			DEFINE_MEMBER_N(float, X, 0x4C);
 			DEFINE_MEMBER_N(float, pitch, 0x58);
-			DEFINE_MEMBER_N(float, y, 0x5C);
-			DEFINE_MEMBER_N(float, z, 0x6C);
+			DEFINE_MEMBER_N(float, Y, 0x5C);
+			DEFINE_MEMBER_N(float, Z, 0x6C);
 		};
 	};
 

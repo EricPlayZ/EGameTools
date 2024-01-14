@@ -74,16 +74,14 @@ namespace Hook {
 	}
 
 	// Breakpoint hooking
-	static bool s_handlerCreated = false;
 	static std::vector<BreakpointHook*> s_hookList;
 
 	BreakpointHook::BreakpointHook(PDWORD64 addr, std::function<void(PEXCEPTION_POINTERS)> handler) {
 		m_addr = addr;
 		m_handler = handler;
-		m_originalBytes = *(BYTE*)m_addr;
+		m_originalBytes = *reinterpret_cast<BYTE*>(m_addr);
 
-		if (!s_handlerCreated)
-			AddVectoredExceptionHandler(true, (PVECTORED_EXCEPTION_HANDLER)OnException);
+		AddVectoredExceptionHandler(true, (PVECTORED_EXCEPTION_HANDLER)OnException);
 
 		s_hookList.push_back(this);
 
@@ -93,14 +91,14 @@ namespace Hook {
 		DWORD oldProtection = 0;
 
 		VirtualProtect(m_addr, 1, PAGE_EXECUTE_READWRITE, &m_originalProtection);
-		*(BYTE*)m_addr = 0xCC;
+		*reinterpret_cast<BYTE*>(m_addr) = 0xCC;
 		VirtualProtect(m_addr, 1, m_originalProtection, &oldProtection);
 	}
 	void BreakpointHook::Disable() {
 		DWORD oldProtection = 0;
 
 		VirtualProtect(m_addr, 1, PAGE_EXECUTE_READWRITE, &oldProtection);
-		*(BYTE*)m_addr = m_originalBytes;
+		*reinterpret_cast<BYTE*>(m_addr) = m_originalBytes;
 		VirtualProtect(m_addr, 1, m_originalProtection, &oldProtection);
 	}
 	BreakpointHook::~BreakpointHook() {

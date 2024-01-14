@@ -90,7 +90,7 @@ namespace Core {
 			Sleep(250);
 
 			if (!pReadVideoSettings)
-				pReadVideoSettings = (decltype(pReadVideoSettings))Offsets::Get_ReadVideoSettingsOffset();
+				pReadVideoSettings = (decltype(pReadVideoSettings))Offsets::Get_ReadVideoSettings();
 			else if (!oReadVideoSettings && MH_CreateHook(pReadVideoSettings, &detourReadVideoSettings, reinterpret_cast<LPVOID*>(&oReadVideoSettings)) == MH_OK) {
 				MH_EnableHook(pReadVideoSettings);
 				break;
@@ -120,9 +120,7 @@ namespace Core {
 		EnableConsole();
 
 		Config::InitConfig();
-		
-		if (GamePH::PlayerVariables::playerVars.empty())
-			GamePH::PlayerVariables::SortPlayerVars();
+		GamePH::PlayerVariables::SortPlayerVars();
 
 		MH_Initialize();
 		LoopHookReadVideoSettings();
@@ -135,7 +133,7 @@ namespace Core {
 		GamePH::LoopHookCalculateFreeCamCollision();
 		GamePH::LoopHookLifeSetHealth();
 		GamePH::LoopHookTogglePhotoMode();
-		GamePH::LoopHookMoveCamera();
+		GamePH::LoopHookMoveCameraFromForwardUpPos();
 
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);
@@ -150,9 +148,5 @@ namespace Core {
 
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
-
-		configSaveLoopThread.join();
-		configLoopThread.join();
-		hookRendererThread.join();
 	}
 }

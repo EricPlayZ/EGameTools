@@ -4095,6 +4095,7 @@ namespace Config {
 		reader.InsertEntry("Camera:FreeCam", "Speed", 2.0f);
 		reader.InsertEntry("Camera:FreeCam", "TeleportPlayerToCamera", false);
 		reader.InsertEntry("Camera:ThirdPerson", "Enabled", false);
+		reader.InsertEntry("Camera:ThirdPerson", "UseTPPModel", true);
 		reader.InsertEntry("Camera:ThirdPerson", "DistanceBehindPlayer", 2.0f);
 		reader.InsertEntry("Camera:ThirdPerson", "HeightAbovePlayer", 1.35f);
 		reader.InsertEntry("Camera:Misc", "DisablePhotoModeLimits", true);
@@ -4156,11 +4157,12 @@ namespace Config {
 			if (!loadSCRFilePath.empty() && !std::filesystem::is_directory(loadSCRFilePath.parent_path()))
 				Menu::Player::loadSCRFilePath = {};
 
-			Menu::Camera::FreeCamSpeed = reader.Get<float>("Camera:FreeCam", "Speed", 2.0f);
+			Menu::Camera::freeCamSpeed = reader.Get<float>("Camera:FreeCam", "Speed", 2.0f);
 			Menu::Camera::teleportPlayerToCameraEnabled = reader.Get<bool>("Camera:FreeCam", "TeleportPlayerToCamera", false);
-			Menu::Camera::thirdPersonCameraEnabled = reader.Get<bool>("Camera:ThirdPerson", "Enabled", false);
-			Menu::Camera::DistanceBehindPlayer = reader.Get<float>("Camera:ThirdPerson", "DistanceBehindPlayer", 2.0f);
-			Menu::Camera::HeightAbovePlayer = reader.Get<float>("Camera:ThirdPerson", "HeightAbovePlayer", 1.35f);
+			Menu::Camera::thirdPersonCameraEnabled.value = reader.Get<bool>("Camera:ThirdPerson", "Enabled", false);
+			Menu::Camera::tpUseTPPModel.value = reader.Get<bool>("Camera:ThirdPerson", "UseTPPModel", true);
+			Menu::Camera::tpDistanceBehindPlayer = reader.Get<float>("Camera:ThirdPerson", "DistanceBehindPlayer", 2.0f);
+			Menu::Camera::tpHeightAbovePlayer = reader.Get<float>("Camera:ThirdPerson", "HeightAbovePlayer", 1.35f);
 			Menu::Camera::disablePhotoModeLimitsEnabled.value = reader.Get<bool>("Camera:Misc", "DisablePhotoModeLimits", true);
 			Menu::Camera::disableSafezoneFOVReductionEnabled.value = reader.Get<bool>("Camera:Misc", "DisableSafezoneFOVReduction", true);
 
@@ -4179,11 +4181,12 @@ namespace Config {
 		reader.UpdateEntry("Player:PlayerVariables", "LastSaveSCRPath", Menu::Player::saveSCRPath);
 		reader.UpdateEntry("Player:PlayerVariables", "LastLoadSCRFilePath", Menu::Player::loadSCRFilePath);
 
-		reader.UpdateEntry("Camera:FreeCam", "Speed", Menu::Camera::FreeCamSpeed);
+		reader.UpdateEntry("Camera:FreeCam", "Speed", Menu::Camera::freeCamSpeed);
 		reader.UpdateEntry("Camera:FreeCam", "TeleportPlayerToCamera", Menu::Camera::teleportPlayerToCameraEnabled);
-		reader.UpdateEntry("Camera:ThirdPerson", "Enabled", Menu::Camera::thirdPersonCameraEnabled);
-		reader.UpdateEntry("Camera:ThirdPerson", "DistanceBehindPlayer", Menu::Camera::DistanceBehindPlayer);
-		reader.UpdateEntry("Camera:ThirdPerson", "HeightAbovePlayer", Menu::Camera::HeightAbovePlayer);
+		reader.UpdateEntry("Camera:ThirdPerson", "Enabled", Menu::Camera::thirdPersonCameraEnabled.value);
+		reader.UpdateEntry("Camera:ThirdPerson", "UseTPPModel", Menu::Camera::tpUseTPPModel.value);
+		reader.UpdateEntry("Camera:ThirdPerson", "DistanceBehindPlayer", Menu::Camera::tpDistanceBehindPlayer);
+		reader.UpdateEntry("Camera:ThirdPerson", "HeightAbovePlayer", Menu::Camera::tpHeightAbovePlayer);
 		reader.UpdateEntry("Camera:Misc", "DisablePhotoModeLimits", Menu::Camera::disablePhotoModeLimitsEnabled.value);
 		reader.UpdateEntry("Camera:Misc", "DisableSafezoneFOVReduction", Menu::Camera::disableSafezoneFOVReductionEnabled.value);
 

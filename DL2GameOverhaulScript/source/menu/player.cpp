@@ -11,9 +11,7 @@
 
 namespace Menu {
 	namespace Player {
-        #pragma region PlayerVarsSCRString
-		extern const char playerVarsSCR[];
-		const char playerVarsSCR[] = { 0x73, 0x75, 0x62, 0x20, 0x6D, 0x61, 0x69, 0x6E, 0x28, 0x29, 0x0D, 0x0A, 0x7B, 0x0D, 0x0A, 0x09,
+		static const char playerVarsSCR[] = { 0x73, 0x75, 0x62, 0x20, 0x6D, 0x61, 0x69, 0x6E, 0x28, 0x29, 0x0D, 0x0A, 0x7B, 0x0D, 0x0A, 0x09,
 0x50, 0x61, 0x72, 0x61, 0x6D, 0x28, 0x22, 0x41, 0x6E, 0x69, 0x6D, 0x47, 0x72, 0x61, 0x70, 0x68,
 0x5F, 0x42, 0x61, 0x6E, 0x6B, 0x4E, 0x61, 0x6D, 0x65, 0x22, 0x2C, 0x20, 0x22, 0x70, 0x6C, 0x61,
 0x79, 0x65, 0x72, 0x22, 0x29, 0x3B, 0x0D, 0x0A, 0x09, 0x50, 0x61, 0x72, 0x61, 0x6D, 0x28, 0x22,
@@ -5995,9 +5993,6 @@ namespace Menu {
 0x75, 0x72, 0x6E, 0x69, 0x6E, 0x67, 0x57, 0x65, 0x61, 0x70, 0x6F, 0x6E, 0x47, 0x72, 0x69, 0x70,
 0x41, 0x75, 0x64, 0x69, 0x6F, 0x45, 0x76, 0x65, 0x6E, 0x74, 0x44, 0x69, 0x73, 0x74, 0x61, 0x6E,
 0x63, 0x65, 0x22, 0x2C, 0x20, 0x22, 0x38, 0x22, 0x29, 0x3B, 0x0D, 0x0A, 0x7D, 0x0D, 0x0A };
-        #pragma endregion
-		
-		static bool debugEnabled = false;
         
 		SMART_BOOL godModeEnabled{};
 		SMART_BOOL freezePlayerEnabled{};
@@ -6006,45 +6001,33 @@ namespace Menu {
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
 
-		bool restoreVarsToSavedVarsEnabled = false;
-
+		static bool debugEnabled = false;
+		static bool restoreVarsToSavedVarsEnabled = false;
 		static char playerVarsSearchFilter[64];
 
-        static std::string getParamName(const std::string str) {
+        static std::string getParamName(const std::string &str) {
 			size_t firstQuotePos = str.find_first_of("\"");
-			size_t lastQuotePos = firstQuotePos;
 			if (firstQuotePos == std::string::npos)
 				return {};
-
-			bool foundQuote = false;
-			while (!foundQuote) {
-				lastQuotePos++;
-				char chr = str[lastQuotePos];
-
-				if (chr != '\"')
-					continue;
-				foundQuote = true;
-			}
+			size_t lastQuotePos = str.find_first_of("\"", firstQuotePos + 1);
+			if (lastQuotePos == std::string::npos)
+				return {};
 
 			return str.substr(firstQuotePos + 1, lastQuotePos - firstQuotePos - 1);
         }
-		static std::string getParamValue(const std::string str) {
+		static std::string getParamValue(const std::string &str) {
 			size_t firstQuotePos = str.find_first_of("\"");
-			size_t lastQuotePos = firstQuotePos;
 			if (firstQuotePos == std::string::npos)
 				return {};
-
-			int foundQuote = 0;
-			while (foundQuote != 3) {
-				if (foundQuote < 2)
-					firstQuotePos++;
-				lastQuotePos++;
-				char chr = str[foundQuote < 2 ? firstQuotePos : lastQuotePos];
-
-				if (chr != '\"')
-					continue;
-				foundQuote++;
-			}
+			size_t secondQuotePos = str.find_first_of("\"", firstQuotePos + 1);
+			if (secondQuotePos == std::string::npos)
+				return {};
+			size_t thirdQuotePos = str.find_first_of("\"", secondQuotePos + 1);
+			if (thirdQuotePos == std::string::npos)
+				return {};
+			size_t lastQuotePos = str.find_first_of("\"", thirdQuotePos + 1);
+			if (lastQuotePos == std::string::npos)
+				return {};
 
 			return str.substr(firstQuotePos + 1, lastQuotePos - firstQuotePos - 1);
 		}
@@ -6115,21 +6098,7 @@ namespace Menu {
 				if (paramValue.empty())
 					continue;
 
-				auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [&paramName](const auto& pair) {
-					return pair.first == paramName;
-				});
-				if (it == GamePH::PlayerVariables::playerVars.end())
-					continue;
-
-				if (it->second.second == "float") {
-					float* value = reinterpret_cast<float*>(it->second.first);
-					*value = std::stof(paramValue);
-					*(value + 1) = *value;
-				} else {
-					bool* value = reinterpret_cast<bool*>(it->second.first);
-					*value = paramValue == "true";
-					*(value + 1) = *value;
-				}
+				GamePH::PlayerVariables::ChangePlayerVar(paramName, paramValue);
 			}
 			file.close();
 
@@ -6148,15 +6117,10 @@ namespace Menu {
 				if (itDef == defVars.end())
 					continue;
 
-				if (val.second == "float") {
-					float* varAddr = reinterpret_cast<float*>(val.first);
-					*varAddr = std::any_cast<float>(itDef->second.first);
-					*(varAddr + 1) = *varAddr;
-				} else if (val.second == "bool") {
-					bool* varAddr = reinterpret_cast<bool*>(val.first);
-					*varAddr = std::any_cast<bool>(itDef->second.first);
-					*(varAddr + 1) = *varAddr;
-				}
+				if (val.second == "float")
+					GamePH::PlayerVariables::ChangePlayerVar(key, std::any_cast<float>(itDef->second.first));
+				else
+					GamePH::PlayerVariables::ChangePlayerVar(key, std::any_cast<bool>(itDef->second.first));
 			}
 
 			ImGui::OpenPopup("Restored player variables!");
@@ -6173,39 +6137,28 @@ namespace Menu {
 					continue;
 
 				if (val.second == "float") {
-					float* varAddr = reinterpret_cast<float*>(val.first);
+					float* const varAddr = reinterpret_cast<float*>(val.first);
 					itCustomDef->second.first = *varAddr;
 				} else if (val.second == "bool") {
-					bool* varAddr = reinterpret_cast<bool*>(val.first);
+					bool* const varAddr = reinterpret_cast<bool*>(val.first);
 					itCustomDef->second.first = *varAddr;
 				}
 			}
 
 			ImGui::OpenPopup("Saved current player variables!");
 		}
-		static void RestoreVariableToDefault(LPVOID variable) {
-			auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [&variable](const auto& pair) {
-				return pair.second.first == variable;
-			});
-			if (it == GamePH::PlayerVariables::playerVars.end())
-				return;
-
+		static void RestoreVariableToDefault(const std::string& varName) {
 			auto& defVars = restoreVarsToSavedVarsEnabled ? GamePH::PlayerVariables::playerCustomVarsDefault : GamePH::PlayerVariables::playerVarsDefault;
-			auto itDef = std::find_if(defVars.begin(), defVars.end(), [&it](const auto& pair) {
-				return pair.first == it->first;
+			auto itDef = std::find_if(defVars.begin(), defVars.end(), [&varName](const auto& pair) {
+				return pair.first == varName;
 			});
 			if (itDef == defVars.end())
 				return;
 
-			if (it->second.second == "float") {
-				float* varAddr = reinterpret_cast<float*>(it->second.first);
-				*varAddr = std::any_cast<float>(itDef->second.first);
-				*(varAddr + 1) = *varAddr;
-			} else if (it->second.second == "bool") {
-				bool* varAddr = reinterpret_cast<bool*>(it->second.first);
-				*varAddr = std::any_cast<bool>(itDef->second.first);
-				*(varAddr + 1) = *varAddr;
-			}
+			if (itDef->second.second == "float")
+				GamePH::PlayerVariables::ChangePlayerVar(varName, std::any_cast<float>(itDef->second.first));
+			else
+				GamePH::PlayerVariables::ChangePlayerVar(varName, std::any_cast<bool>(itDef->second.first));
 		}
 
 		static void PlayerPositionUpdate() {
@@ -6213,30 +6166,32 @@ namespace Menu {
 			if (!playerCharacter)
 				return;
 
-			if (!Menu::Player::freezePlayerEnabled.value) {
-				Engine::CBulletPhysicsCharacter::posBeforeFreeze = playerCharacter->playerPos;
-
-				if (!Menu::Camera::freeCamEnabled.value)
-					return;
-				if (!Menu::Camera::teleportPlayerToCameraEnabled)
-					return;
-
-				GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
-				if (!freeCam)
-					return;
-
-				Vector3 camPos{};
-				freeCam->GetPosition(&camPos);
-
-				if (camPos.isDefault())
-					return;
-
-				playerCharacter->MoveCharacter(camPos);
-			} else
+			if (Menu::Player::freezePlayerEnabled.value) {
 				playerCharacter->FreezeCharacter();
+				return;
+			}
+
+			Engine::CBulletPhysicsCharacter::posBeforeFreeze = playerCharacter->playerPos;
+
+			if (!Menu::Camera::freeCamEnabled.value || !Menu::Camera::teleportPlayerToCameraEnabled)
+				return;
+
+			GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
+			if (!freeCam)
+				return;
+
+			Vector3 camPos{};
+			freeCam->GetPosition(&camPos);
+			if (camPos.isDefault())
+				return;
+
+			playerCharacter->MoveCharacter(camPos);
 		}
 
-		void UpdatePlayerVars() {
+		static void UpdatePlayerVars() {
+			if (!playerVariablesEnabled)
+				return;
+
 			auto bgn = GamePH::PlayerVariables::playerVars.begin();
 			for (auto it = bgn; it != GamePH::PlayerVariables::playerVars.end(); ++it) {
 				if (!it->second.first)
@@ -6263,17 +6218,16 @@ namespace Menu {
 		void Update() {
 			if (Menu::Camera::freeCamEnabled.value)
 				godModeEnabled.Change(true);
-			else if (!Menu::Camera::freeCamEnabled.value)
+			else
 				godModeEnabled.Restore();
 
 			if (Menu::Camera::freeCamEnabled.value)
 				freezePlayerEnabled.Change(!Menu::Camera::teleportPlayerToCameraEnabled);
-			else if (!Menu::Camera::freeCamEnabled.value)
+			else
 				freezePlayerEnabled.Restore();
 
 			PlayerPositionUpdate();
-			if (playerVariablesEnabled)
-				UpdatePlayerVars();
+			UpdatePlayerVars();
 		}
 
 		void Render() {
@@ -6290,7 +6244,10 @@ namespace Menu {
 
 			ImGui::SeparatorText("Player Variables");
 			ImGui::Checkbox("Enabled##PlayerVars", &playerVariablesEnabled);
-			ImGui::BeginDisabled(!playerVariablesEnabled || !GamePH::PlayerVariables::gotPlayerVars); {
+			if (!playerVariablesEnabled)
+				return;
+
+			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
 				if (ImGui::CollapsingHeader("Player variables list", ImGuiTreeNodeFlags_None)) {
 					ImGui::Indent();
 					if (ImGui::Button("Save variables to file"))
@@ -6336,7 +6293,7 @@ namespace Menu {
 							ImGui::SameLine();
 							restoreBtnName = std::string("Restore##") + std::string(key);
 							if (ImGui::Button(restoreBtnName.c_str()))
-								RestoreVariableToDefault(val.first);
+								RestoreVariableToDefault(key);
 							if (debugEnabled) {
 								ImGui::SameLine();
 								ImGui::Text("0x%p", varAddr);
@@ -6353,7 +6310,7 @@ namespace Menu {
 							ImGui::SameLine();
 							restoreBtnName = std::string("Restore##") + std::string(key);
 							if (ImGui::Button(restoreBtnName.c_str()))
-								RestoreVariableToDefault(val.first);
+								RestoreVariableToDefault(key);
 							if (debugEnabled) {
 								ImGui::SameLine();
 								ImGui::Text("0x%p", varAddr);
