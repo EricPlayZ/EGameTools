@@ -6232,7 +6232,7 @@ namespace Menu {
 
 		void Render() {
 			ImGui::SeparatorText("Misc");
-			ImGui::BeginDisabled(!GamePH::PlayerHealthModule::Get() || Menu::Camera::freeCamEnabled.value); {
+			ImGui::BeginDisabled(Menu::Camera::freeCamEnabled.value); {
 				ImGui::Checkbox("God Mode", &godModeEnabled.value);
 				ImGui::EndDisabled();
 			}

@@ -41,7 +41,7 @@ namespace Menu {
 			if (photoModeEnabled.value)
 				return;
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-			if (!iLevel)
+			if (!iLevel || !iLevel->IsLoaded())
 				return;
 			LPVOID viewCam = iLevel->GetViewCamera();
 			if (!viewCam)
@@ -57,6 +57,11 @@ namespace Menu {
 				if (viewCam == pFreeCam) {
 					pFreeCam->enableSpeedMultiplier1 = true;
 					pFreeCam->speedMultiplier = freeCamSpeed;
+					if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+						pFreeCam->speedMultiplier *= 2.0f;
+					else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt))
+						pFreeCam->speedMultiplier /= 2.0f;
+
 					return;
 				}
 

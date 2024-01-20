@@ -89,11 +89,19 @@ namespace GamePH {
 	static void(*pLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	static void(*oLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	void detourLifeSetHealth(float* pLifeHealth, float health) {
-		if (Menu::Player::godModeEnabled.value) {
-			GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
-			if (playerHealthModule && (pLifeHealth + 1) == &playerHealthModule->health && playerHealthModule->health != 0)
-				return;
-		}
+		if (!Menu::Player::godModeEnabled.value)
+			return oLifeSetHealth(pLifeHealth, health);
+
+		GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
+		if (!playerHealthModule)
+			return oLifeSetHealth(pLifeHealth, health);
+		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+		if (!iLevel || !iLevel->IsLoaded())
+			return oLifeSetHealth(pLifeHealth, health);
+				
+		if (std::abs(reinterpret_cast<LONG64>(playerHealthModule) - reinterpret_cast<LONG64>(pLifeHealth)) < 0x100 && playerHealthModule->health > 0.0f)
+			return;
+
 		oLifeSetHealth(pLifeHealth, health);
 	}
 	void LoopHookLifeSetHealth() {
@@ -115,16 +123,18 @@ namespace GamePH {
 	static void(*oTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
 	void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
 		Menu::Camera::photoModeEnabled.value = enabled;
-		if (Menu::Camera::freeCamEnabled.value) {
-			GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
-			if (pGameDI_PH) {
-				GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
-				if (pFreeCam) {
-					pGameDI_PH->TogglePhotoMode();
-					pFreeCam->AllowCameraMovement(0);
-				}
-			}
-		}
+
+		if (!Menu::Camera::freeCamEnabled.value)
+			return oTogglePhotoMode(guiPhotoModeData, enabled);
+		GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
+		if (!pGameDI_PH)
+			return oTogglePhotoMode(guiPhotoModeData, enabled);
+		GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
+		if (!pFreeCam)
+			return oTogglePhotoMode(guiPhotoModeData, enabled);
+
+		pGameDI_PH->TogglePhotoMode();
+		pFreeCam->AllowCameraMovement(0);
 
 		oTogglePhotoMode(guiPhotoModeData, enabled);
 	}
@@ -146,6 +156,10 @@ namespace GamePH {
 	static void(*pMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
 	static void(*oMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
 	void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) {
+		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+		if (!iLevel || !iLevel->IsLoaded())
+			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
+
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (pgen_TPPModel) {
 			if (Menu::Camera::photoModeEnabled.previousValue != Menu::Camera::photoModeEnabled.value && !Menu::Camera::photoModeEnabled.value) {
@@ -178,21 +192,12 @@ namespace GamePH {
 			Menu::Camera::photoModeEnabled.previousValue = Menu::Camera::photoModeEnabled.value;
 		}
 
-		if (!Menu::Camera::thirdPersonCameraEnabled.value || Menu::Camera::photoModeEnabled.value || Menu::Camera::freeCamEnabled.value || !pos || !GamePH::PlayerObjProperties::Get()) {
-			oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
-			return;
-		}
+		if (!Menu::Camera::thirdPersonCameraEnabled.value || Menu::Camera::photoModeEnabled.value || Menu::Camera::freeCamEnabled.value || !pos)
+			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
 
-		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-		if (!iLevel) {
-			oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
-			return;
-		}
 		CameraFPPDI* viewCam = static_cast<CameraFPPDI*>(iLevel->GetViewCamera());
-		if (!viewCam) {
-			oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
-			return;
-		}
+		if (!viewCam)
+			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
 
 		Vector3 forwardVec{};
 		viewCam->GetForwardVector(&forwardVec);
@@ -384,9 +389,9 @@ namespace GamePH {
 				return nullptr;
 
 			PlayerVariables* ptr = pPlayerState->playerVars;
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -401,9 +406,9 @@ namespace GamePH {
 				return nullptr;
 
 			PlayerState* ptr = *reinterpret_cast<PlayerState**>(Offsets::Get_PlayerState());
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -440,9 +445,9 @@ namespace GamePH {
 				return nullptr;
 
 			TPPCameraDI* ptr = pCoBaseCameraProxy->pTPPCameraDI;
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -515,9 +520,9 @@ namespace GamePH {
 				return nullptr;
 
 			FreeCamera* ptr = reinterpret_cast<FreeCamera*>(*pg_FreeCamera);
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -539,9 +544,9 @@ namespace GamePH {
 				return nullptr;
 
 			DayNightCycle* ptr = *reinterpret_cast<DayNightCycle**>(Offsets::Get_g_DayNightCycle());
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -557,9 +562,9 @@ namespace GamePH {
 				return;
 
 			void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Offsets::Get_SetForcedWeather();
-
 			if (!pSetForcedWeather)
 				return;
+
 			pSetForcedWeather(this, weather);
 		}
 		int CSystem::GetCurrentWeather() {
@@ -567,9 +572,9 @@ namespace GamePH {
 				return EWeather::TYPE::Default;
 
 			int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Offsets::Get_GetCurrentWeather();
-
 			if (!pGetCurrentWeather)
 				return EWeather::TYPE::Default;
+
 			return pGetCurrentWeather(this);
 		}
 
@@ -580,9 +585,9 @@ namespace GamePH {
 					return nullptr;
 
 				CSystem* ptr = pLevelDI->GetTimeWeatherSystem();
-
 				if (!Memory::IsValidPtr(ptr))
 					return nullptr;
+
 				return ptr;
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 				return nullptr;
@@ -598,20 +603,36 @@ namespace GamePH {
 			return true;
 
 		bool(*pIsLoading)(LPVOID iLevel) = (decltype(pIsLoading))Offsets::Get_IsLoading();
-
 		if (!pIsLoading)
 			return true;
+
 		return pIsLoading(this);
+	}
+	bool LevelDI::IsLoaded() {
+		static float loadDeltaTime = 0.0f;
+		if (IsLoading() || !GamePH::PlayerObjProperties::Get()) {
+			loadDeltaTime = 0.0f;
+			return false;
+		}
+
+		loadDeltaTime += GetTimeDelta();
+		if (loadDeltaTime > 3.0f)
+			return true;
+
+		return false;
 	}
 	LPVOID LevelDI::GetViewCamera() {
 		if (!Offsets::Get_GetViewCamera())
 			return nullptr;
 
 		LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Offsets::Get_GetViewCamera();
-
 		if (!pGetViewCamera)
 			return nullptr;
+
 		return pGetViewCamera(this);
+	}
+	float LevelDI::GetTimeDelta() {
+		return Memory::CallVT<176, float>(this);
 	}
 	void LevelDI::SetViewCamera(LPVOID viewCam) {
 		Memory::CallVT<289, void>(this, viewCam);
@@ -625,9 +646,9 @@ namespace GamePH {
 				return nullptr;
 
 			TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Offsets::Get_GetTimeWeatherSystem();
-
 			if (!pGetTimeWeatherSystem)
 				return nullptr;
+
 			return pGetTimeWeatherSystem(this);
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -641,9 +662,9 @@ namespace GamePH {
 				return nullptr;
 
 			LevelDI* ptr = pCLevel->pLevelDI;
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -659,9 +680,9 @@ namespace GamePH {
 				return nullptr;
 
 			gen_TPPModel* ptr = pLocalClientDI->pgen_TPPModel;
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER) {
@@ -678,9 +699,9 @@ namespace GamePH {
 				return nullptr;
 
 			LocalClientDI* ptr = pSessionCooperativeDI->pLocalClientDI;
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER) {
@@ -697,9 +718,9 @@ namespace GamePH {
 				return nullptr;
 
 			SessionCooperativeDI* ptr = pGameDI_PH->pSessionCooperativeDI;
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER) {
@@ -716,9 +737,9 @@ namespace GamePH {
 				return nullptr;
 
 			GameDI_PH2* ptr = reinterpret_cast<GameDI_PH2*>(reinterpret_cast<DWORD64>(pGameDI_PH) + Offsets::Get_gameDI_PH2_offset());
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -727,6 +748,16 @@ namespace GamePH {
 	#pragma endregion
 
 	#pragma region GameDI_PH
+	float GameDI_PH::GetGameTimeDelta() {
+		if (!Offsets::Get_GetGameTimeDelta())
+			return -1.0f;
+
+		float(*pGetGameTimeDelta)(LPVOID pGameDI_PH) = (decltype(pGetGameTimeDelta))Offsets::Get_GetGameTimeDelta();
+		if (!pGetGameTimeDelta)
+			return -1.0f;
+
+		return pGetGameTimeDelta(this);
+	}
 	INT64 GameDI_PH::GetCurrentGameVersion() {
 		return Memory::CallVT<225, INT64>(this);
 	}
@@ -741,9 +772,9 @@ namespace GamePH {
 				return nullptr;
 
 			GameDI_PH* ptr = pCGame->pGameDI_PH;
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -758,11 +789,29 @@ namespace GamePH {
 				return nullptr;
 
 			PlayerObjProperties* ptr = *reinterpret_cast<PlayerObjProperties**>(Offsets::Get_g_PlayerObjProperties());
-
 			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	#pragma endregion
+
+	#pragma region BackgroundModuleScreenController
+	BackgroundModuleScreenController* BackgroundModuleScreenController::Get() {
+		__try {
+			if (!Offsets::Get_g_BackgroundModuleScreenController())
+				return nullptr;
+
+			BackgroundModuleScreenController* ptr = reinterpret_cast<BackgroundModuleScreenController*>(Offsets::Get_g_BackgroundModuleScreenController());
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll")) 
+				return nullptr;
+
+			return ptr;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}
 	}
@@ -780,9 +829,9 @@ namespace Engine {
 				return nullptr;
 
 			CVideoSettings* ptr = pCGame->pCVideoSettings;
-
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -798,9 +847,9 @@ namespace Engine {
 				return nullptr;
 
 			CLevel* ptr = pCGame->pCLevel;
-
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -816,9 +865,9 @@ namespace Engine {
 				return nullptr;
 
 			CGame* ptr = pCLobbySteam->pCGame;
-
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -833,9 +882,9 @@ namespace Engine {
 				return nullptr;
 
 			CLobbySteam* ptr = *reinterpret_cast<CLobbySteam**>(Offsets::Get_CLobbySteam());
-
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -857,9 +906,9 @@ namespace Engine {
 				return nullptr;
 
 			CInput* ptr = *reinterpret_cast<CInput**>(Offsets::Get_g_CInput());
-
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -886,9 +935,9 @@ namespace Engine {
 				return nullptr;
 
 			CBulletPhysicsCharacter* ptr = pCoPhysicsProperty->pCBulletPhysicsCharacter;
-
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
@@ -904,13 +953,39 @@ namespace Engine {
 				return nullptr;
 
 			CoPhysicsProperty* ptr = pPlayerObjProperties->pCoPhysicsProperty;
-
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}
+	}
+	#pragma endregion
+
+	#pragma region CRTTIField
+	DWORD64 CRTTIField::Get_float(CRTTI* crtti, float& out) {
+		if (!Offsets::Get_CRTTIFieldTypedNative_Get_float())
+			return 0;
+
+		DWORD64(*pCRTTIFieldTypedNative_Get_float)(LPVOID pCRTTIFieldTypedNative, CRTTI* crtti, float& out) = (decltype(pCRTTIFieldTypedNative_Get_float))Offsets::Get_CRTTIFieldTypedNative_Get_float();
+		if (!pCRTTIFieldTypedNative_Get_float)
+			return 0;
+
+		return pCRTTIFieldTypedNative_Get_float(this, crtti, out);
+	}
+	#pragma endregion
+
+	#pragma region CRTTI
+	CRTTIField* CRTTI::FindField(const char* name) {
+		if (!Offsets::Get_CRTTI_FindField())
+			return nullptr;
+
+		CRTTIField*(*pCRTTI_FindField)(LPVOID pCRTTI, const char* name) = (decltype(pCRTTI_FindField))Offsets::Get_CRTTI_FindField();
+		if (!pCRTTI_FindField)
+			return nullptr;
+
+		return pCRTTI_FindField(this, name);
 	}
 	#pragma endregion
 }

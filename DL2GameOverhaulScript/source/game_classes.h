@@ -78,6 +78,18 @@ namespace EWeather {
 namespace Engine {
 	class CBaseCamera;
 	class CoPhysicsProperty;
+	class CRTTI;
+
+	// Inheritance classes
+	class CRTTIField {
+	public:
+		DWORD64 Get_float(CRTTI* crtti, float& out);
+	};
+
+	class CRTTI {
+	public:
+		CRTTIField* FindField(char const* name);
+	};
 }
 
 namespace GamePH {
@@ -152,6 +164,7 @@ namespace GamePH {
 	public:
 		union {
 			DEFINE_MEMBER_N(float, health, 0x2C);
+			DEFINE_MEMBER_N(float, maxHealth, 0x3C);
 		};
 
 		static PlayerHealthModule* pPlayerHealthModule;
@@ -227,7 +240,9 @@ namespace GamePH {
 	class LevelDI {
 	public:
 		bool IsLoading();
+		bool IsLoaded();
 		LPVOID GetViewCamera();
+		float GetTimeDelta();
 		void SetViewCamera(LPVOID viewCam);
 		float GetTimePlayed();
 		TimeWeather::CSystem* GetTimeWeatherSystem();
@@ -275,6 +290,7 @@ namespace GamePH {
 			DEFINE_MEMBER_N(bool, blockPauseGameOnPlayerAfk, 0x830);
 		};
 
+		float GetGameTimeDelta();
 		INT64 GetCurrentGameVersion();
 		void TogglePhotoMode(bool doNothing = false, bool setAsOptionalCamera = false);
 
@@ -288,6 +304,11 @@ namespace GamePH {
 		};
 
 		static PlayerObjProperties* Get();
+	};
+
+	class BackgroundModuleScreenController : public Engine::CRTTI {
+	public:
+		static BackgroundModuleScreenController* Get();
 	};
 }
 

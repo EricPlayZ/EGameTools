@@ -114,6 +114,25 @@ namespace Core {
 
 		Menu::Player::Update();
 		Menu::Camera::Update();
+
+		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+		if (!iLevel)
+			return;
+		GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
+		if (!pGameDI_PH)
+			return;
+
+		iLevel->GetTimeDelta();
+		pGameDI_PH->GetGameTimeDelta();
+
+		/*Engine::CRTTI* g_BackgroundModuleScreenController = GamePH::BackgroundModuleScreenController::Get();
+		if (!g_BackgroundModuleScreenController)
+			return;
+
+		Engine::CRTTIField* field = g_BackgroundModuleScreenController->FindField("m_LoadingProgress");
+		if (!field)
+			return;
+		*/
 	}
 
 	DWORD64 WINAPI MainThread(HMODULE hModule) {

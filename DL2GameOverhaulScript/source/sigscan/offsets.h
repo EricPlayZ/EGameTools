@@ -2,17 +2,23 @@
 #include "sigscan.h"
 #include "..\memory.h"
 
-#define AddOffset(name, moduleName, pattern, type, retType) \
+#define AddOffset(name, moduleName, pattern, type, retType)\
 static retType Get_## name () {\
 	static retType name = NULL;\
-	if (Memory::IsValidPtr(name)) return name; \
+	if (Memory::IsValidPtr(name)) return name;\
 	return name=reinterpret_cast<retType>(PatternScanner::FindPattern(moduleName, {pattern, type}));\
 } 
-#define AddStaticOffset(name, off) \
+#define AddStaticOffset(name, off)\
 static DWORD64 Get_## name () {\
 	static DWORD64 name = 0;\
 	if (name) return name; \
 	return name=static_cast<DWORD64>(off);\
+} 
+#define AddStaticOffset2(name, moduleName, off) \
+static DWORD64 Get_## name () {\
+	static DWORD64 name = 0;\
+	if (Memory::IsValidPtr(name)) return name;\
+	return name=reinterpret_cast<DWORD64>(GetModuleHandle(moduleName)) + static_cast<DWORD64>(off);\
 } 
 
 struct Offsets {
@@ -38,6 +44,7 @@ struct Offsets {
 	AddOffset(g_DayNightCycle, "gamedll_ph_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 10 E8 ?? ?? ?? ?? 84 C0 74 07 B0 01 48 83 C4 28 C3 32 C0", PatternType::RelativePointer, LPVOID)
 	//AddOffset(g_CameraFPPDI, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 40 84 FF", PatternType::RelativePointer, PDWORD64)
 	AddOffset(g_FreeCamera, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 48 89 4C 24 ??", PatternType::RelativePointer, PDWORD64)
+	AddStaticOffset2(g_BackgroundModuleScreenController, "gamedll_ph_x64_rwdi.dll", 0x3377760)
 	AddOffset(CameraFPPDI_VT, "gamedll_ph_x64_rwdi.dll", "48 8D 05 [?? ?? ?? ?? 48 89 07 48 8D 4F 60", PatternType::RelativePointer, DWORD64)
 
 	// Functions
@@ -57,7 +64,11 @@ struct Offsets {
 	AddOffset(GetForwardVector, "engine_x64_rwdi.dll", "4C 8B 41 38 41 8B 40 48", PatternType::Address, LPVOID)
 	AddOffset(GetUpVector, "engine_x64_rwdi.dll", "4C 8B 41 38 41 8B 40 44", PatternType::Address, LPVOID)
 	AddOffset(IsLoading, "engine_x64_rwdi.dll", "48 8B 05 ?? ?? ?? ?? 48 8B 51 38", PatternType::Address, LPVOID)
+	AddOffset(GetGameTimeDelta, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? F3 0F 59 05 ?? ?? ?? ?? F3 0F 58 03", PatternType::RelativePointer, LPVOID)
+	AddOffset(CRTTI_FindField, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 85 C0 75 2C", PatternType::RelativePointer, LPVOID)
+	AddOffset(CRTTIFieldTypedNative_Get_float, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC 20 8B 41 14 49 8B F8 4C 8B 02 48 8B D9 C1 E8 11 48 8B CA A8 01 74 06 41 FF 50 30 EB 04 41 FF 50 20 4C 8B C8 48 8B 43 60 48 85 C0 74 13 48 8B D7 49 8B C9 48 8B 5C 24 ?? 48 83 C4 20 5F 48 FF E0 48 63 43 50 48 8B 5C 24 ?? 42 8B 0C 08", PatternType::Address, LPVOID)
 };
 
 #undef AddOffset
 #undef AddStaticOffset
+#undef AddStaticOffset2
