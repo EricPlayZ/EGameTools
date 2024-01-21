@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <chrono>
 
 enum class WindowsVersion {
 	Unknown,
@@ -8,6 +9,19 @@ enum class WindowsVersion {
 };
 
 namespace Utils {
+	class Timer {
+		using clock = std::chrono::system_clock;
+		using time_point_type = std::chrono::time_point<clock, std::chrono::milliseconds>;
+	public:
+		long timeToPass;
+		Timer(long timeMs);
+
+		bool GetTimePassed();
+	private:
+		time_point_type start;
+		bool timePassed;
+	};
+
 	extern bool are_same(float a, float b);
 
 	extern bool str_replace(std::string& str, const std::string& from, const std::string& to);

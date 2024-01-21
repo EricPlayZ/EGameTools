@@ -3,6 +3,21 @@
 #include "utils.h"
 
 namespace Utils {
+    Timer::Timer(long timeMs) : timeToPass(timeMs), timePassed(false) {
+        start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+    }
+    bool Timer::GetTimePassed() {
+        if (timePassed)
+            return timePassed;
+
+        auto end = clock::now();
+        long timePassedMs = static_cast<long>((end - start).count());
+        
+        if (timePassedMs >= timeToPass)
+            timePassed = true;
+        return timePassed;
+    }
+
     bool are_same(float a, float b) {
         return abs(a - b) < 0.0001f;
     }

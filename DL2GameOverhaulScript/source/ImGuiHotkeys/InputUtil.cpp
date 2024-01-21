@@ -3,7 +3,7 @@
 #include <string_view>
 #include <Windows.h>
 
-#include "imgui.h"
+#include <imgui.h>
 
 #include "InputUtil.h"
 
@@ -220,7 +220,7 @@ bool KeyBind::setToPressedKey() noexcept
         }
     }
 
-    for (int i = 0; i < ImGuiKey_COUNT; ++i) {
+    for (int i = 0; i < ImGuiKey_NamedKey_BEGIN; ++i) {
         if (!ImGui::IsKeyPressed(static_cast<ImGuiKey>(i)))
             continue;
 

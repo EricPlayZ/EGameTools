@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <imgui.h>
 #include <ImGuiFileDialog.h>
+#include <Hotkey.h>
 #include "..\game_classes.h"
 #include "..\core.h"
 #include "..\utils.h"
@@ -5995,7 +5996,9 @@ namespace Menu {
 0x63, 0x65, 0x22, 0x2C, 0x20, 0x22, 0x38, 0x22, 0x29, 0x3B, 0x0D, 0x0A, 0x7D, 0x0D, 0x0A };
         
 		SMART_BOOL godModeEnabled{};
+		KeyBindToggle godModeToggleKey = KeyBindToggle(KeyBind::F6);
 		SMART_BOOL freezePlayerEnabled{};
+		KeyBindToggle freezePlayerToggleKey = KeyBindToggle(KeyBind::F7);
 		bool playerVariablesEnabled = false;
 
 		std::string saveSCRPath{};
@@ -6236,11 +6239,13 @@ namespace Menu {
 				ImGui::Checkbox("God Mode", &godModeEnabled.value);
 				ImGui::EndDisabled();
 			}
+			ImGui::Hotkey("##GodModeToggleKey", godModeToggleKey);
 			ImGui::SameLine();
 			ImGui::BeginDisabled(!Engine::CBulletPhysicsCharacter::Get() || Menu::Camera::freeCamEnabled.value); {
 				ImGui::Checkbox("Freeze Player", &freezePlayerEnabled.value);
 				ImGui::EndDisabled();
 			}
+			ImGui::Hotkey("##FreezePlayerToggleKey", freezePlayerToggleKey);
 
 			ImGui::SeparatorText("Player Variables");
 			ImGui::Checkbox("Enabled##PlayerVars", &playerVariablesEnabled);

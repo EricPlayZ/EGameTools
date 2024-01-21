@@ -1,13 +1,11 @@
 #pragma once
 #include <string>
 
-using namespace std;
-
 class KeyBind {
 public:
     KeyBind() : keybind{ "" } {};
-    KeyBind(string _keybind) : keybind{ _keybind } {};
-    string keybind;
+    KeyBind(std::string _keybind) : keybind{ _keybind } {};
+    std::string keybind;
 
     enum KeyCode : unsigned char {
         APOSTROPHE = 0,

@@ -6,8 +6,6 @@
 #include "ImGui\impl\d3d11_impl.h"
 #include "ImGui\impl\d3d12_impl.h"
 #include "menu\menu.h"
-#include "menu\player.h"
-#include "menu\camera.h"
 #include "game_classes.h"
 #include "sigscan\offsets.h"
 #include "config\config.h"
@@ -114,16 +112,6 @@ namespace Core {
 
 		Menu::Player::Update();
 		Menu::Camera::Update();
-
-		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-		if (!iLevel)
-			return;
-		GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
-		if (!pGameDI_PH)
-			return;
-
-		iLevel->GetTimeDelta();
-		pGameDI_PH->GetGameTimeDelta();
 
 		/*Engine::CRTTI* g_BackgroundModuleScreenController = GamePH::BackgroundModuleScreenController::Get();
 		if (!g_BackgroundModuleScreenController)

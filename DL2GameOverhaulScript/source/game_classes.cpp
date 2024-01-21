@@ -163,22 +163,22 @@ namespace GamePH {
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (pgen_TPPModel) {
 			if (Menu::Camera::photoModeEnabled.previousValue != Menu::Camera::photoModeEnabled.value && !Menu::Camera::photoModeEnabled.value) {
-				Menu::Camera::tpUseTPPModel.previousValue = !Menu::Camera::tpUseTPPModel.value;
+				Menu::Camera::tpUseTPPModelEnabled.previousValue = !Menu::Camera::tpUseTPPModelEnabled.value;
 				Menu::Camera::thirdPersonCameraEnabled.previousValue = Menu::Camera::thirdPersonCameraEnabled.value;
 			}
 
 			if (!Menu::Camera::photoModeEnabled.value && !Menu::Camera::freeCamEnabled.value) {
-				if ((Menu::Camera::tpUseTPPModel.previousValue != Menu::Camera::tpUseTPPModel.value && !Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.value) || (Menu::Camera::thirdPersonCameraEnabled.previousValue != Menu::Camera::thirdPersonCameraEnabled.value && !Menu::Camera::thirdPersonCameraEnabled.value)) {
+				if ((Menu::Camera::tpUseTPPModelEnabled.previousValue != Menu::Camera::tpUseTPPModelEnabled.value && !Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.value) || (Menu::Camera::thirdPersonCameraEnabled.previousValue != Menu::Camera::thirdPersonCameraEnabled.value && !Menu::Camera::thirdPersonCameraEnabled.value)) {
 					pgen_TPPModel->enableTPPModel2 = true;
 					pgen_TPPModel->enableTPPModel1 = true;
 				}
-				ShowTPPModel(Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.value);
-				if (Menu::Camera::tpUseTPPModel.previousValue == Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.previousValue == Menu::Camera::thirdPersonCameraEnabled.value && (Menu::Camera::tpUseTPPModel.value && Menu::Camera::thirdPersonCameraEnabled.value)) {
+				ShowTPPModel(Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.value);
+				if (Menu::Camera::tpUseTPPModelEnabled.previousValue == Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.previousValue == Menu::Camera::thirdPersonCameraEnabled.value && (Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.value)) {
 					pgen_TPPModel->enableTPPModel2 = false;
 					pgen_TPPModel->enableTPPModel1 = false;
 				}
 
-				Menu::Camera::tpUseTPPModel.previousValue = Menu::Camera::tpUseTPPModel.value;
+				Menu::Camera::tpUseTPPModelEnabled.previousValue = Menu::Camera::tpUseTPPModelEnabled.value;
 				Menu::Camera::thirdPersonCameraEnabled.previousValue = Menu::Camera::thirdPersonCameraEnabled.value;
 			}
 			if (Menu::Camera::photoModeEnabled.previousValue != Menu::Camera::photoModeEnabled.value && Menu::Camera::photoModeEnabled.value) {

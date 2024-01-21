@@ -146,7 +146,7 @@
       </Optimization>
       <IntrinsicFunctions>
       </IntrinsicFunctions>
-      <AdditionalIncludeDirectories>source\ImGui;source\ImGuiFileDialog;source\MinHook\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -175,7 +175,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>source\ImGui;source\ImGuiFileDialog;source\MinHook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>

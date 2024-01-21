@@ -11,16 +11,19 @@ namespace Menu {
 		SMART_BOOL photoModeEnabled;
 
 		SMART_BOOL freeCamEnabled{};
+		KeyBindToggle freeCamToggleKey = KeyBindToggle(KeyBind::F3);
 		float freeCamSpeed = 2.0f;
+		bool teleportPlayerToCameraEnabled = false;
+		KeyBindToggle teleportPlayerToCameraToggleKey = KeyBindToggle(KeyBind::F4);
 
 		SMART_BOOL thirdPersonCameraEnabled;
-		SMART_BOOL tpUseTPPModel;
+		KeyBindToggle thirdPersonCameraToggleKey = KeyBindToggle(KeyBind::F1);
+		SMART_BOOL tpUseTPPModelEnabled;
+		KeyBindToggle tpUseTPPModelToggleKey = KeyBindToggle(KeyBind::F2);
 		float tpDistanceBehindPlayer = 2.0f;
 		float tpHeightAbovePlayer = 1.35f;
 
 		SMART_BOOL disablePhotoModeLimitsEnabled{};
-		bool teleportPlayerToCameraEnabled = false;
-
 		SMART_BOOL disableSafezoneFOVReductionEnabled{};
 
 		static const int baseFOV = 57;
@@ -119,15 +122,22 @@ namespace Menu {
 				ImGui::Checkbox("Enabled##FreeCam", &freeCamEnabled.value);
 				ImGui::EndDisabled();
 			}
+			ImGui::Hotkey("##FreeCamToggleKey", freeCamToggleKey);
 			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.0f, 100.0f);
 			ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
+			ImGui::Hotkey("##TeleportPlayerToCamToggleKey", teleportPlayerToCameraToggleKey);
 
 			ImGui::SeparatorText("Third Person Camera");
 			ImGui::BeginDisabled(freeCamEnabled.value || photoModeEnabled.value); {
 				ImGui::Checkbox("Enabled##ThirdPerson", &thirdPersonCameraEnabled.value);
-				ImGui::Checkbox("Use Third Person Player (TPP) Model", &tpUseTPPModel.value);
 				ImGui::EndDisabled();
 			}
+			ImGui::Hotkey("##ThirdPersonToggleKey", thirdPersonCameraToggleKey);
+			ImGui::BeginDisabled(freeCamEnabled.value || photoModeEnabled.value); {
+				ImGui::Checkbox("Use Third Person Player (TPP) Model", &tpUseTPPModelEnabled.value);
+				ImGui::EndDisabled();
+			}
+			ImGui::Hotkey("##TPPModelToggleKey", tpUseTPPModelToggleKey);
 			ImGui::SliderFloat("Distance behind player", &tpDistanceBehindPlayer, 1.0f, 10.0f);
 			ImGui::SliderFloat("Height above player", &tpHeightAbovePlayer, 1.0f, 3.0f);
 

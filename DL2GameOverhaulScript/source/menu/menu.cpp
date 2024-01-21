@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include <Hotkey.h>
 #include "camera.h"
 #include "player.h"
 #include "world.h"
@@ -8,7 +9,7 @@ namespace Menu {
     static const ImVec2 minWndSize = ImVec2(0.0f, 0.0f);
     static const ImVec2 maxWndSize = ImVec2(900.0f, 675.0f);
 
-    int toggleKey = VK_F5;
+    KeyBindToggle toggleKey = KeyBindToggle(KeyBind::F5);
 	bool isOpen = false;
     float transparency = 99.0f;
 
@@ -36,6 +37,7 @@ namespace Menu {
 
             ImGui::Separator();
 
+            ImGui::Hotkey("Menu Toggle Key", toggleKey);
             ImGui::SliderFloat("Menu Transparency", &transparency, 0.0f, 100.0f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);
             ImGui::End();
         }
