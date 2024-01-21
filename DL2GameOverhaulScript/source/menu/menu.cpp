@@ -8,6 +8,7 @@ namespace Menu {
     static const ImVec2 minWndSize = ImVec2(0.0f, 0.0f);
     static const ImVec2 maxWndSize = ImVec2(900.0f, 675.0f);
 
+    int toggleKey = VK_F5;
 	bool isOpen = false;
     float transparency = 99.0f;
 

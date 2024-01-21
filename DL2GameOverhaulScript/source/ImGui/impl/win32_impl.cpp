@@ -4,7 +4,6 @@
 #include "..\..\menu\menu.h"
 #include "..\..\sigscan\offsets.h"
 #include "..\..\game_classes.h"
-#include "..\..\config\config.h"
 #include "..\..\kiero.h"
 #include "win32_impl.h"
 
@@ -18,13 +17,13 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) {
 	switch (uMsg) {
 	case WM_KEYDOWN:
-		if (wParam == Config::menuToggleKey && !wasMenuKeyPressed) {
+		if (wParam == Menu::toggleKey && !wasMenuKeyPressed) {
 			wasMenuKeyPressed = true;
 			Menu::isOpen = !Menu::isOpen;
 		}
 		break;
 	case WM_KEYUP:
-		if (wParam == Config::menuToggleKey && wasMenuKeyPressed)
+		if (wParam == Menu::toggleKey && wasMenuKeyPressed)
 			wasMenuKeyPressed = false;
 		break;
 	}
