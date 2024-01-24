@@ -17,6 +17,17 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) {
 	switch (uMsg) {
+	case WM_SYSKEYDOWN:
+		if (ImGui::isAnyHotkeyBtnPressed || !ImGui::timeSinceHotkeyBtnPressed.GetTimePassed() || KeyBindOption::wasAnyKeyPressed)
+			break;
+
+		for (auto& option : KeyBindOption::GetInstances()) {
+			if (wParam == option->GetKeyBind()) {
+				KeyBindOption::wasAnyKeyPressed = true;
+				option->Toggle();
+			}
+		}
+		break;
 	case WM_KEYDOWN:
 		if (ImGui::isAnyHotkeyBtnPressed || !ImGui::timeSinceHotkeyBtnPressed.GetTimePassed() || KeyBindOption::wasAnyKeyPressed)
 			break;
@@ -26,6 +37,15 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 				KeyBindOption::wasAnyKeyPressed = true;
 				option->Toggle();
 			}
+		}
+		break;
+	case WM_SYSKEYUP:
+		if (!KeyBindOption::wasAnyKeyPressed)
+			break;
+
+		for (auto& option : KeyBindOption::GetInstances()) {
+			if (wParam == option->GetKeyBind())
+				KeyBindOption::wasAnyKeyPressed = false;
 		}
 		break;
 	case WM_KEYUP:
