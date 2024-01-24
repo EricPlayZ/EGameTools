@@ -18,7 +18,6 @@
     <ClCompile Include="source\hook.cpp" />
     <ClCompile Include="source\ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\ImGuiHotkeys\Hotkey.cpp" />
-    <ClCompile Include="source\ImGuiHotkeys\InputUtil.cpp" />
     <ClCompile Include="source\ImGui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="source\ImGui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="source\ImGui\backends\imgui_impl_win32.cpp" />
@@ -51,7 +50,6 @@
     <ClInclude Include="source\ImGuiFileDialog\stb\stb_image.h" />
     <ClInclude Include="source\ImGuiFileDialog\stb\stb_image_resize.h" />
     <ClInclude Include="source\ImGuiHotkeys\Hotkey.h" />
-    <ClInclude Include="source\ImGuiHotkeys\InputUtil.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_dx12.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_win32.h" />

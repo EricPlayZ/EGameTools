@@ -1,162 +1,169 @@
 #include <filesystem>
 #include <any>
+#include <array>
 #include <functional>
-#include <Hotkey.h>
+#include "config.h"
 #include "..\menu\menu.h"
 #include "..\utils.h"
 #include "..\print.h"
 #include "ini.h"
 
 namespace Config {
-	static const std::vector<std::pair<std::string_view, KeyBind::KeyCode>> virtualKeyCodes = {
+	struct VKey {
+		constexpr VKey(std::string_view name, int code) : name(name), code(code) {}
+
+		std::string_view name;
+		int code;
+	};
+	static constexpr auto virtualKeyCodes = std::to_array<VKey>({
 		// Function keys
-		{ "VK_F1", KeyBind::F1 },
-		{ "VK_F2", KeyBind::F2 },
-		{ "VK_F3", KeyBind::F3 },
-		{ "VK_F4", KeyBind::F4 },
-		{ "VK_F5", KeyBind::F5 },
-		{ "VK_F6", KeyBind::F6 },
-		{ "VK_F7", KeyBind::F7 },
-		{ "VK_F8", KeyBind::F8 },
-		{ "VK_F9", KeyBind::F9 },
-		{ "VK_F10", KeyBind::F10 },
-		{ "VK_F11", KeyBind::F11 },
-		{ "VK_F12", KeyBind::F12 },
+		{ "VK_F1", VK_F1 },
+		{ "VK_F2", VK_F2 },
+		{ "VK_F3", VK_F3 },
+		{ "VK_F4", VK_F4 },
+		{ "VK_F5", VK_F5 },
+		{ "VK_F6", VK_F6 },
+		{ "VK_F7", VK_F7 },
+		{ "VK_F8", VK_F8 },
+		{ "VK_F9", VK_F9 },
+		{ "VK_F10", VK_F10 },
+		{ "VK_F11", VK_F11 },
+		{ "VK_F12", VK_F12 },
 
 		// Number keys
-		{ "VK_0", KeyBind::KEY_0 },
-		{ "VK_1", KeyBind::KEY_1 },
-		{ "VK_2", KeyBind::KEY_2 },
-		{ "VK_3", KeyBind::KEY_3 },
-		{ "VK_4", KeyBind::KEY_4 },
-		{ "VK_5", KeyBind::KEY_5 },
-		{ "VK_6", KeyBind::KEY_6 },
-		{ "VK_7", KeyBind::KEY_7 },
-		{ "VK_8", KeyBind::KEY_8 },
-		{ "VK_9", KeyBind::KEY_9 },
-		{ "0", KeyBind::KEY_0 },
-		{ "1", KeyBind::KEY_1 },
-		{ "2", KeyBind::KEY_2 },
-		{ "3", KeyBind::KEY_3 },
-		{ "4", KeyBind::KEY_4 },
-		{ "5", KeyBind::KEY_5 },
-		{ "6", KeyBind::KEY_6 },
-		{ "7", KeyBind::KEY_7 },
-		{ "8", KeyBind::KEY_8 },
-		{ "9", KeyBind::KEY_9 },
+		{ "VK_0", '0' },
+		{ "VK_1", '1' },
+		{ "VK_2", '2' },
+		{ "VK_3", '3' },
+		{ "VK_4", '4' },
+		{ "VK_5", '5' },
+		{ "VK_6", '6' },
+		{ "VK_7", '7' },
+		{ "VK_8", '8' },
+		{ "VK_9", '9' },
+		{ "0", '0' },
+		{ "1", '1' },
+		{ "2", '2' },
+		{ "3", '3' },
+		{ "4", '4' },
+		{ "5", '5' },
+		{ "6", '6' },
+		{ "7", '7' },
+		{ "8", '8' },
+		{ "9", '9' },
 
 		// Alphabetic keys
-		{ "VK_A", KeyBind::A },
-		{ "VK_B", KeyBind::B },
-		{ "VK_C", KeyBind::C },
-		{ "VK_D", KeyBind::D },
-		{ "VK_E", KeyBind::E },
-		{ "VK_F", KeyBind::F },
-		{ "VK_G", KeyBind::G },
-		{ "VK_H", KeyBind::H },
-		{ "VK_I", KeyBind::I },
-		{ "VK_J", KeyBind::J },
-		{ "VK_K", KeyBind::K },
-		{ "VK_L", KeyBind::L },
-		{ "VK_M", KeyBind::M },
-		{ "VK_N", KeyBind::N },
-		{ "VK_O", KeyBind::O },
-		{ "VK_P", KeyBind::P },
-		{ "VK_Q", KeyBind::Q },
-		{ "VK_R", KeyBind::R },
-		{ "VK_S", KeyBind::S },
-		{ "VK_T", KeyBind::T },
-		{ "VK_U", KeyBind::U },
-		{ "VK_V", KeyBind::V },
-		{ "VK_W", KeyBind::W },
-		{ "VK_X", KeyBind::X },
-		{ "VK_Y", KeyBind::Y },
-		{ "VK_Z", KeyBind::Z },
-		{ "A", KeyBind::A },
-		{ "B", KeyBind::B },
-		{ "C", KeyBind::C },
-		{ "D", KeyBind::D },
-		{ "E", KeyBind::E },
-		{ "F", KeyBind::F },
-		{ "G", KeyBind::G },
-		{ "H", KeyBind::H },
-		{ "I", KeyBind::I },
-		{ "J", KeyBind::J },
-		{ "K", KeyBind::K },
-		{ "L", KeyBind::L },
-		{ "M", KeyBind::M },
-		{ "N", KeyBind::N },
-		{ "O", KeyBind::O },
-		{ "P", KeyBind::P },
-		{ "Q", KeyBind::Q },
-		{ "R", KeyBind::R },
-		{ "S", KeyBind::S },
-		{ "T", KeyBind::T },
-		{ "U", KeyBind::U },
-		{ "V", KeyBind::V },
-		{ "W", KeyBind::W },
-		{ "X", KeyBind::X },
-		{ "Y", KeyBind::Y },
-		{ "Z", KeyBind::Z },
+		{ "VK_A", 'A' },
+		{ "VK_B", 'B' },
+		{ "VK_C", 'C' },
+		{ "VK_D", 'D' },
+		{ "VK_E", 'E' },
+		{ "VK_F", 'F' },
+		{ "VK_G", 'G' },
+		{ "VK_H", 'H' },
+		{ "VK_I", 'I' },
+		{ "VK_J", 'J' },
+		{ "VK_K", 'K' },
+		{ "VK_L", 'L' },
+		{ "VK_M", 'M' },
+		{ "VK_N", 'N' },
+		{ "VK_O", 'O' },
+		{ "VK_P", 'P' },
+		{ "VK_Q", 'Q' },
+		{ "VK_R", 'R' },
+		{ "VK_S", 'S' },
+		{ "VK_T", 'T' },
+		{ "VK_U", 'U' },
+		{ "VK_V", 'V' },
+		{ "VK_W", 'W' },
+		{ "VK_X", 'X' },
+		{ "VK_Y", 'Y' },
+		{ "VK_Z", 'Z' },
+		{ "A", 'A' },
+		{ "B", 'B' },
+		{ "C", 'C' },
+		{ "D", 'D' },
+		{ "E", 'E' },
+		{ "F", 'F' },
+		{ "G", 'G' },
+		{ "H", 'H' },
+		{ "I", 'I' },
+		{ "J", 'J' },
+		{ "K", 'K' },
+		{ "L", 'L' },
+		{ "M", 'M' },
+		{ "N", 'N' },
+		{ "O", 'O' },
+		{ "P", 'P' },
+		{ "Q", 'Q' },
+		{ "R", 'R' },
+		{ "S", 'S' },
+		{ "T", 'T' },
+		{ "U", 'U' },
+		{ "V", 'V' },
+		{ "W", 'W' },
+		{ "X", 'X' },
+		{ "Y", 'Y' },
+		{ "Z", 'Z' },
 
 		// Special keys
-		{"VK_BACK", KeyBind::BACKSPACE },
-		{"VK_TAB", KeyBind::TAB },
-		{"VK_RETURN", KeyBind::ENTER },
-		{"VK_CAPITAL", KeyBind::CAPSLOCK },
-		{"VK_SPACE", KeyBind::SPACE },
-		{"VK_PRIOR", KeyBind::PAGE_UP },
-		{"VK_NEXT", KeyBind::PAGE_DOWN },
-		{"VK_END", KeyBind::END },
-		{"VK_HOME", KeyBind::HOME },
-		{"VK_LEFT", KeyBind::LEFT },
-		{"VK_UP", KeyBind::UP },
-		{"VK_RIGHT", KeyBind::RIGHT },
-		{"VK_DOWN", KeyBind::DOWN },
-		{"VK_INSERT", KeyBind::INSERT },
-		{"VK_DELETE", KeyBind::DEL },
+		{"VK_BACK", VK_BACK },
+		{"VK_TAB", VK_TAB },
+		{"VK_RETURN", VK_RETURN },
+		{"VK_CAPITAL", VK_CAPITAL },
+		{"VK_SPACE", VK_SPACE },
+		{"VK_PRIOR", VK_PRIOR },
+		{"VK_NEXT", VK_NEXT },
+		{"VK_END", VK_END },
+		{"VK_HOME", VK_HOME },
+		{"VK_LEFT", VK_LEFT },
+		{"VK_UP", VK_UP },
+		{"VK_RIGHT", VK_RIGHT },
+		{"VK_DOWN", VK_DOWN },
+		{"VK_INSERT", VK_INSERT },
+		{"VK_DELETE", VK_DELETE },
 
 		// Numpad keys
-		{ "VK_NUMPAD0", KeyBind::NUMPAD_0 },
-		{ "VK_NUMPAD1", KeyBind::NUMPAD_1 },
-		{ "VK_NUMPAD2", KeyBind::NUMPAD_2 },
-		{ "VK_NUMPAD3", KeyBind::NUMPAD_3 },
-		{ "VK_NUMPAD4", KeyBind::NUMPAD_4 },
-		{ "VK_NUMPAD5", KeyBind::NUMPAD_5 },
-		{ "VK_NUMPAD6", KeyBind::NUMPAD_6 },
-		{ "VK_NUMPAD7", KeyBind::NUMPAD_7 },
-		{ "VK_NUMPAD8", KeyBind::NUMPAD_8 },
-		{ "VK_NUMPAD9", KeyBind::NUMPAD_9 },
-		{ "VK_MULTIPLY", KeyBind::MULTIPLY },
-		{ "VK_ADD", KeyBind::ADD },
-		{ "VK_SUBTRACT", KeyBind::SUBTRACT },
-		{ "VK_DECIMAL", KeyBind::DECIMAL },
-		{ "VK_DIVIDE", KeyBind::DIVIDE },
+		{ "VK_NUMPAD0", VK_NUMPAD0 },
+		{ "VK_NUMPAD1", VK_NUMPAD1 },
+		{ "VK_NUMPAD2", VK_NUMPAD2 },
+		{ "VK_NUMPAD3", VK_NUMPAD3 },
+		{ "VK_NUMPAD4", VK_NUMPAD4 },
+		{ "VK_NUMPAD5", VK_NUMPAD5 },
+		{ "VK_NUMPAD6", VK_NUMPAD6 },
+		{ "VK_NUMPAD7", VK_NUMPAD7 },
+		{ "VK_NUMPAD8", VK_NUMPAD8 },
+		{ "VK_NUMPAD9", VK_NUMPAD9 },
+		{ "VK_MULTIPLY", VK_MULTIPLY },
+		{ "VK_ADD", VK_ADD },
+		{ "VK_SUBTRACT", VK_SUBTRACT },
+		{ "VK_DECIMAL", VK_DECIMAL },
+		{ "VK_DIVIDE", VK_DIVIDE },
 
 		// Modifier keys
-		{ "VK_SHIFT", KeyBind::LSHIFT },
-		{ "VK_LSHIFT", KeyBind::LSHIFT },
-		{ "VK_RSHIFT", KeyBind::RSHIFT },
-		{ "VK_CONTROL", KeyBind::LCTRL },
-		{ "VK_LCONTROL", KeyBind::LCTRL },
-		{ "VK_RCONTROL", KeyBind::RCTRL },
-		{ "VK_MENU", KeyBind::LALT },
-		{ "VK_LMENU", KeyBind::LALT },
-		{ "VK_RMENU", KeyBind::RALT },
+		{ "VK_SHIFT", VK_LSHIFT },
+		{ "VK_LSHIFT", VK_LSHIFT },
+		{ "VK_RSHIFT", VK_RSHIFT },
+		{ "VK_CONTROL", VK_LCONTROL },
+		{ "VK_LCONTROL", VK_LCONTROL },
+		{ "VK_RCONTROL", VK_RCONTROL },
+		{ "VK_MENU", VK_LMENU },
+		{ "VK_LMENU", VK_LMENU },
+		{ "VK_RMENU", VK_RMENU },
 
 		// Other keys
-		{ "VK_OEM_1", KeyBind::SEMICOLON },
-		{ "VK_OEM_PLUS", KeyBind::EQUALS },
-		{ "VK_OEM_COMMA", KeyBind::COMMA },
-		{ "VK_OEM_MINUS", KeyBind::MINUS },
-		{ "VK_OEM_PERIOD", KeyBind::PERIOD },
-		{ "VK_OEM_2", KeyBind::SLASH },
-		{ "VK_OEM_3", KeyBind::BACKTICK },
-		{ "VK_OEM_4", KeyBind::LEFTBRACKET },
-		{ "VK_OEM_5", KeyBind::BACKSLASH },
-		{ "VK_OEM_6", KeyBind::RIGHTBRACKET },
-		{ "VK_OEM_7", KeyBind::APOSTROPHE }
-	};
+		{ "VK_OEM_1", VK_OEM_1 },
+		{ "VK_OEM_PLUS", VK_OEM_PLUS },
+		{ "VK_OEM_COMMA", VK_OEM_COMMA },
+		{ "VK_OEM_MINUS", VK_OEM_MINUS },
+		{ "VK_OEM_PERIOD", VK_OEM_PERIOD },
+		{ "VK_OEM_2", VK_OEM_2 },
+		{ "VK_OEM_3", VK_OEM_3 },
+		{ "VK_OEM_4", VK_OEM_4 },
+		{ "VK_OEM_5", VK_OEM_5 },
+		{ "VK_OEM_6", VK_OEM_6 },
+		{ "VK_OEM_7", VK_OEM_7 }
+	});
 	
 	extern const char playerVars[];
 	const char playerVars[] = { 0x41, 0x67, 0x67, 0x72, 0x65, 0x73, 0x69, 0x6F, 0x6E, 0x50, 0x65, 0x72, 0x48, 0x69, 0x74, 0x3A,
@@ -4001,42 +4008,36 @@ namespace Config {
 		0x3A, 0x66, 0x6C, 0x6F, 0x61, 0x74
 	};
 
-	enum ValueType {
-		Float,
-		Bool,
-		String
-	};
 	struct ConfigEntry {
 		std::string_view section;
 		std::string_view key;
 		std::any value;
-		LPVOID valuePtr;
+		LPVOID optionPtr;
 		ValueType type;
 	};
-
-	static const std::vector<ConfigEntry> configVariablesDefault = {
+	static const auto configVariablesDefault = std::to_array<ConfigEntry>({
 		{ "Menu", "Transparency", 99.0f, &Menu::transparency, Float },
-		{ "Menu:Keybinds", "MenuToggleKey", std::string("VK_F5"), &Menu::toggleKey, String},
-		{ "Menu:Keybinds", "GodModeToggleKey", std::string("VK_F6"), &Menu::Player::godModeToggleKey, String},
-		{ "Menu:Keybinds", "FreezePlayerToggleKey", std::string("VK_F7"), &Menu::Player::freezePlayerToggleKey, String},
-		{ "Menu:Keybinds", "FreeCamToggleKey", std::string("VK_F3"), &Menu::Camera::freeCamToggleKey, String},
-		{ "Menu:Keybinds", "TeleportPlayerToCameraToggleKey", std::string("VK_F4"), &Menu::Camera::teleportPlayerToCameraToggleKey, String},
-		{ "Menu:Keybinds", "ThirdPersonToggleKey", std::string("VK_F1"), &Menu::Camera::thirdPersonCameraToggleKey, String},
-		{ "Menu:Keybinds", "UseTPPModelToggleKey", std::string("VK_F2"), &Menu::Camera::tpUseTPPModelToggleKey, String},
-		{ "Player:Misc", "GodMode", false, &Menu::Player::godModeEnabled.value, Bool },
-		{ "Player:PlayerVariables", "Enabled", false, &Menu::Player::playerVariablesEnabled, Bool },
+		{ "Menu:Keybinds", "MenuToggleKey", std::string("VK_F5"), &Menu::menuToggle, String},
+		{ "Menu:Keybinds", "GodModeToggleKey", std::string("VK_F6"), &Menu::Player::godMode, String},
+		{ "Menu:Keybinds", "FreezePlayerToggleKey", std::string("VK_F7"), &Menu::Player::freezePlayer, String},
+		{ "Menu:Keybinds", "FreeCamToggleKey", std::string("VK_F3"), &Menu::Camera::freeCam, String},
+		{ "Menu:Keybinds", "TeleportPlayerToCameraToggleKey", std::string("VK_F4"), &Menu::Camera::teleportPlayerToCamera, String},
+		{ "Menu:Keybinds", "ThirdPersonToggleKey", std::string("VK_F1"), &Menu::Camera::thirdPersonCamera, String},
+		{ "Menu:Keybinds", "UseTPPModelToggleKey", std::string("VK_F2"), &Menu::Camera::tpUseTPPModel, String},
+		{ "Player:Misc", "GodMode", false, &Menu::Player::godMode, OPTION },
+		{ "Player:PlayerVariables", "Enabled", false, &Menu::Player::playerVariables, OPTION },
 		{ "Player:PlayerVariables", "LastSaveSCRPath", std::string(), &Menu::Player::saveSCRPath, String },
 		{ "Player:PlayerVariables", "LastLoadSCRFilePath", std::string(), &Menu::Player::loadSCRFilePath, String },
 		{ "Camera:FreeCam", "Speed", 2.0f, &Menu::Camera::freeCamSpeed, Float },
-		{ "Camera:FreeCam", "TeleportPlayerToCamera", false, &Menu::Camera::teleportPlayerToCameraEnabled, Bool },
-		{ "Camera:ThirdPerson", "Enabled", false, &Menu::Camera::thirdPersonCameraEnabled.value, Bool },
-		{ "Camera:ThirdPerson", "UseTPPModel", true, &Menu::Camera::tpUseTPPModelEnabled.value, Bool },
+		{ "Camera:FreeCam", "TeleportPlayerToCamera", false, &Menu::Camera::teleportPlayerToCamera, OPTION },
+		{ "Camera:ThirdPerson", "Enabled", false, &Menu::Camera::thirdPersonCamera, OPTION },
+		{ "Camera:ThirdPerson", "UseTPPModel", true, &Menu::Camera::tpUseTPPModel, OPTION },
 		{ "Camera:ThirdPerson", "DistanceBehindPlayer", 2.0f, &Menu::Camera::tpDistanceBehindPlayer, Float },
 		{ "Camera:ThirdPerson", "HeightAbovePlayer", 1.35f, &Menu::Camera::tpHeightAbovePlayer, Float },
-		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimitsEnabled.value, Bool },
-		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReductionEnabled.value, Bool }
-	};
-	std::vector<ConfigEntry> configVariables = configVariablesDefault;
+		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimits, OPTION },
+		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION }
+	});
+	std::vector<ConfigEntry> configVariables(configVariablesDefault.begin(), configVariablesDefault.end());
 	static const char* configFileName = "EGameTools.ini";
 	static std::filesystem::file_time_type configPreviousWriteTime{};
 	static std::filesystem::file_time_type configLastWriteTime{};
@@ -4049,11 +4050,11 @@ namespace Config {
 
 	static void UpdateEntry(const ConfigEntry& entry) {
 		switch (entry.type) {
+		case OPTION:
+			reader.UpdateEntry(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value));
+			break;
 		case Float:
 			reader.UpdateEntry(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
-			break;
-		case Bool:
-			reader.UpdateEntry(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value));
 			break;
 		case String:
 			reader.UpdateEntry(entry.section.data(), entry.key.data(), std::any_cast<std::string>(entry.value));
@@ -4082,17 +4083,16 @@ namespace Config {
 			}
 			else if (entry.section == "Menu:Keybinds") {
 				const std::string toggleKey = std::any_cast<std::string>(entry.value);
-				auto it = std::find_if(virtualKeyCodes.begin(), virtualKeyCodes.end(), [&toggleKey](const auto& pair) { return pair.first == toggleKey; });
-				if (it != virtualKeyCodes.end())
-					*reinterpret_cast<KeyBindToggle*>(entry.valuePtr) = KeyBindToggle(it->second);
+				if (const auto it = std::ranges::find(virtualKeyCodes, toggleKey, &Config::VKey::name); it != virtualKeyCodes.end())
+					reinterpret_cast<KeyBindOption*>(entry.optionPtr)->ChangeKeyBind(it->code);
 			}
 
 			switch (entry.type) {
+			case OPTION:
+				reader.InsertEntry(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value));
+				break;
 			case Float:
 				reader.InsertEntry(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
-				break;
-			case Bool:
-				reader.InsertEntry(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value));
 				break;
 			case String:
 				reader.InsertEntry(entry.section.data(), entry.key.data(), std::any_cast<std::string>(entry.value));
@@ -4131,18 +4131,17 @@ namespace Config {
 			std::string strValue{};
 			for (auto& entry : configVariablesDefault) {
 				switch (entry.type) {
-				case Float:
-					*reinterpret_cast<float*>(entry.valuePtr) = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
+				case OPTION:
+					reinterpret_cast<Option*>(entry.optionPtr)->Change(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
 					break;
-				case Bool:
-					*reinterpret_cast<bool*>(entry.valuePtr) = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value));
+				case Float:
+					*reinterpret_cast<float*>(entry.optionPtr) = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
 					break;
 				case String:
 					strValue = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<std::string>(entry.value));
 					if (entry.section == "Menu:Keybinds") {
-						auto it = std::find_if(virtualKeyCodes.begin(), virtualKeyCodes.end(), [&strValue](const auto& pair) { return pair.first == strValue; });
-						if (it != virtualKeyCodes.end())
-							*reinterpret_cast<KeyBindToggle*>(entry.valuePtr) = KeyBindToggle(it->second);
+						if (const auto it = std::ranges::find(virtualKeyCodes, strValue, &Config::VKey::name); it != virtualKeyCodes.end())
+							reinterpret_cast<KeyBindOption*>(entry.optionPtr)->ChangeKeyBind(it->code);
 						break;
 					}
 					else if (entry.key == "LastSaveSCRPath") {
@@ -4166,7 +4165,7 @@ namespace Config {
 						break;
 					}
 
-					*reinterpret_cast<std::string*>(entry.valuePtr) = strValue;
+					*reinterpret_cast<std::string*>(entry.optionPtr) = strValue;
 					break;
 				}
 			}
@@ -4182,21 +4181,22 @@ namespace Config {
 	void SaveConfig() {
 		for (auto& entry : configVariables) {
 			switch (entry.type) {
-			case Float:
-				entry.value = *reinterpret_cast<float*>(entry.valuePtr);
+			case OPTION:
+				entry.value = reinterpret_cast<Option*>(entry.optionPtr)->IsEnabled();
 				break;
-			case Bool:
-				entry.value = *reinterpret_cast<bool*>(entry.valuePtr);
+			case Float:
+				entry.value = *reinterpret_cast<float*>(entry.optionPtr);
 				break;
 			case String:
 				if (entry.section == "Menu:Keybinds") {
-					auto it = std::find_if(virtualKeyCodes.begin(), virtualKeyCodes.end(), [&entry](const auto& pair) { return pair.second == *reinterpret_cast<int*>(entry.valuePtr); });
-					if (it != virtualKeyCodes.end())
-						entry.value = std::string(it->first);
+					KeyBindOption* option = reinterpret_cast<KeyBindOption*>(entry.optionPtr);
+
+					if (const auto it = std::ranges::find(virtualKeyCodes, option->GetKeyBind(), &Config::VKey::code); it != virtualKeyCodes.end())
+						entry.value = std::string(it->name);
 					break;
 				}
 
-				entry.value = *reinterpret_cast<std::string*>(entry.valuePtr);
+				entry.value = *reinterpret_cast<std::string*>(entry.optionPtr);
 				break;
 			}
 

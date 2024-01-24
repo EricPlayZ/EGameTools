@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include <Hotkey.h>
 #include "..\sigscan\offsets.h"
 #include "..\game_classes.h"
 #include "..\core.h"
@@ -8,30 +9,25 @@ namespace Menu {
 	namespace Camera {
 		int FOV = 57;
 
-		SMART_BOOL photoModeEnabled;
+		Option photoMode{};
 
-		SMART_BOOL freeCamEnabled{};
-		KeyBindToggle freeCamToggleKey = KeyBindToggle(KeyBind::F3);
+		KeyBindOption freeCam{ VK_F3 };
 		float freeCamSpeed = 2.0f;
-		bool teleportPlayerToCameraEnabled = false;
-		KeyBindToggle teleportPlayerToCameraToggleKey = KeyBindToggle(KeyBind::F4);
+		KeyBindOption teleportPlayerToCamera{ VK_F4 };
 
-		SMART_BOOL thirdPersonCameraEnabled;
-		KeyBindToggle thirdPersonCameraToggleKey = KeyBindToggle(KeyBind::F1);
-		SMART_BOOL tpUseTPPModelEnabled;
-		KeyBindToggle tpUseTPPModelToggleKey = KeyBindToggle(KeyBind::F2);
+		KeyBindOption thirdPersonCamera{ VK_F1 };
+		KeyBindOption tpUseTPPModel{ VK_F2 };
 		float tpDistanceBehindPlayer = 2.0f;
 		float tpHeightAbovePlayer = 1.35f;
 
-		SMART_BOOL disablePhotoModeLimitsEnabled{};
-		SMART_BOOL disableSafezoneFOVReductionEnabled{};
+		Option disablePhotoModeLimits{};
+		Option disableSafezoneFOVReduction{};
 
 		static const int baseFOV = 57;
 		static const float baseSafezoneFOVReduction = -10.0f;
-		static LPVOID previousViewCam = nullptr;
 
 		static void UpdateFOVWhileMenuClosed() {
-			if (Menu::isOpen)
+			if (Menu::menuToggle.IsEnabled())
 				return;
 
 			Engine::CVideoSettings* videoSettings = Engine::CVideoSettings::Get();
@@ -41,7 +37,7 @@ namespace Menu {
 			Menu::Camera::FOV = static_cast<int>(videoSettings->extraFOV) + Menu::Camera::baseFOV;
 		}
 		static void FreeCamUpdate() {
-			if (photoModeEnabled.value)
+			if (photoMode.IsEnabled())
 				return;
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			if (!iLevel || !iLevel->IsLoaded())
@@ -56,7 +52,7 @@ namespace Menu {
 			if (!pFreeCam)
 				return;
 
-			if (freeCamEnabled.value) {
+			if (freeCam.IsEnabled()) {
 				if (viewCam == pFreeCam) {
 					pFreeCam->enableSpeedMultiplier1 = true;
 					pFreeCam->speedMultiplier = freeCamSpeed;
@@ -73,7 +69,7 @@ namespace Menu {
 
 				GamePH::ShowTPPModel(true);
 			} else {
-				if (freeCamEnabled.previousValue) {
+				if (freeCam.WasEnabled()) {
 					pFreeCam->enableSpeedMultiplier1 = false;
 					pFreeCam->speedMultiplier = 0.1f;
 				}
@@ -91,25 +87,25 @@ namespace Menu {
 			if (!GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
-			if (disableSafezoneFOVReductionEnabled.value) {
+			if (disableSafezoneFOVReduction.IsEnabled()) {
 				GamePH::PlayerVariables::ChangePlayerVar("CameraDefaultFOVReduction", 0.0f);
-				disableSafezoneFOVReductionEnabled.previousValue = true;
-			} else if (disableSafezoneFOVReductionEnabled.previousValue != disableSafezoneFOVReductionEnabled.value) {
-				disableSafezoneFOVReductionEnabled.previousValue = false;
+				disableSafezoneFOVReduction.Change(true);
+			} else if (disableSafezoneFOVReduction.WasEnabled()) {
+				disableSafezoneFOVReduction.Restore(true);
 				GamePH::PlayerVariables::ChangePlayerVar("CameraDefaultFOVReduction", baseSafezoneFOVReduction);
 			}
 		}
 
 		void Update() {
-			if (photoModeEnabled.value)
-				freeCamEnabled.Change(false);
+			if (photoMode.IsEnabled())
+				freeCam.Change(false);
 			else
-				freeCamEnabled.Restore();
+				freeCam.Restore();
 
-			if (freeCamEnabled.value)
-				disablePhotoModeLimitsEnabled.Change(true);
+			if (freeCam.IsEnabled())
+				disablePhotoModeLimits.Change(true);
 			else
-				disablePhotoModeLimitsEnabled.Restore();
+				disablePhotoModeLimits.Restore();
 
 			UpdateFOVWhileMenuClosed();
 			FreeCamUpdate();
@@ -118,26 +114,26 @@ namespace Menu {
 
 		void Render() {
 			ImGui::SeparatorText("Free Camera");
-			ImGui::BeginDisabled(photoModeEnabled.value); {
-				ImGui::Checkbox("Enabled##FreeCam", &freeCamEnabled.value);
+			ImGui::BeginDisabled(photoMode.IsEnabled()); {
+				ImGui::Checkbox("Enabled##FreeCam", &freeCam.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##FreeCamToggleKey", freeCamToggleKey);
+			ImGui::Hotkey("##FreeCamToggleKey", freeCam);
 			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.0f, 100.0f);
-			ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCameraEnabled);
-			ImGui::Hotkey("##TeleportPlayerToCamToggleKey", teleportPlayerToCameraToggleKey);
+			ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCamera.value);
+			ImGui::Hotkey("##TeleportPlayerToCamToggleKey", teleportPlayerToCamera);
 
 			ImGui::SeparatorText("Third Person Camera");
-			ImGui::BeginDisabled(freeCamEnabled.value || photoModeEnabled.value); {
-				ImGui::Checkbox("Enabled##ThirdPerson", &thirdPersonCameraEnabled.value);
+			ImGui::BeginDisabled(freeCam.IsEnabled() || photoMode.IsEnabled()); {
+				ImGui::Checkbox("Enabled##ThirdPerson", &thirdPersonCamera.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##ThirdPersonToggleKey", thirdPersonCameraToggleKey);
-			ImGui::BeginDisabled(freeCamEnabled.value || photoModeEnabled.value); {
-				ImGui::Checkbox("Use Third Person Player (TPP) Model", &tpUseTPPModelEnabled.value);
+			ImGui::Hotkey("##ThirdPersonToggleKey", thirdPersonCamera);
+			ImGui::BeginDisabled(freeCam.IsEnabled() || photoMode.IsEnabled()); {
+				ImGui::Checkbox("Use Third Person Player (TPP) Model", &tpUseTPPModel.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##TPPModelToggleKey", tpUseTPPModelToggleKey);
+			ImGui::Hotkey("##TPPModelToggleKey", tpUseTPPModel);
 			ImGui::SliderFloat("Distance behind player", &tpDistanceBehindPlayer, 1.0f, 10.0f);
 			ImGui::SliderFloat("Height above player", &tpHeightAbovePlayer, 1.0f, 3.0f);
 
@@ -150,11 +146,11 @@ namespace Menu {
 					FOV = static_cast<int>(pCVideoSettings->extraFOV) + Menu::Camera::baseFOV;
 				ImGui::EndDisabled();
 			}
-			ImGui::BeginDisabled(freeCamEnabled.value); {
-				ImGui::Checkbox("Disable Photo Mode Limits", &disablePhotoModeLimitsEnabled.value);
+			ImGui::BeginDisabled(freeCam.IsEnabled()); {
+				ImGui::Checkbox("Disable Photo Mode Limits", &disablePhotoModeLimits.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReductionEnabled.value);
+			ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction.value);
 		}
 	}
 }

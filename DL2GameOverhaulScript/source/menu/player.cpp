@@ -5995,11 +5995,9 @@ namespace Menu {
 0x41, 0x75, 0x64, 0x69, 0x6F, 0x45, 0x76, 0x65, 0x6E, 0x74, 0x44, 0x69, 0x73, 0x74, 0x61, 0x6E,
 0x63, 0x65, 0x22, 0x2C, 0x20, 0x22, 0x38, 0x22, 0x29, 0x3B, 0x0D, 0x0A, 0x7D, 0x0D, 0x0A };
         
-		SMART_BOOL godModeEnabled{};
-		KeyBindToggle godModeToggleKey = KeyBindToggle(KeyBind::F6);
-		SMART_BOOL freezePlayerEnabled{};
-		KeyBindToggle freezePlayerToggleKey = KeyBindToggle(KeyBind::F7);
-		bool playerVariablesEnabled = false;
+		KeyBindOption godMode{ VK_F6 };
+		KeyBindOption freezePlayer{ VK_F7 };
+		Option playerVariables{};
 
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
@@ -6169,14 +6167,14 @@ namespace Menu {
 			if (!playerCharacter)
 				return;
 
-			if (Menu::Player::freezePlayerEnabled.value) {
+			if (freezePlayer.IsEnabled()) {
 				playerCharacter->FreezeCharacter();
 				return;
 			}
 
 			Engine::CBulletPhysicsCharacter::posBeforeFreeze = playerCharacter->playerPos;
 
-			if (!Menu::Camera::freeCamEnabled.value || !Menu::Camera::teleportPlayerToCameraEnabled)
+			if (!Menu::Camera::freeCam.IsEnabled() || !Menu::Camera::teleportPlayerToCamera.IsEnabled())
 				return;
 
 			GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
@@ -6192,7 +6190,7 @@ namespace Menu {
 		}
 
 		static void UpdatePlayerVars() {
-			if (!playerVariablesEnabled)
+			if (!playerVariables.IsEnabled())
 				return;
 
 			auto bgn = GamePH::PlayerVariables::playerVars.begin();
@@ -6219,15 +6217,15 @@ namespace Menu {
 		}
 
 		void Update() {
-			if (Menu::Camera::freeCamEnabled.value)
-				godModeEnabled.Change(true);
+			if (Menu::Camera::freeCam.IsEnabled())
+				godMode.Change(true);
 			else
-				godModeEnabled.Restore();
+				godMode.Restore();
 
-			if (Menu::Camera::freeCamEnabled.value)
-				freezePlayerEnabled.Change(!Menu::Camera::teleportPlayerToCameraEnabled);
+			if (Menu::Camera::freeCam.IsEnabled())
+				freezePlayer.Change(!Menu::Camera::teleportPlayerToCamera.IsEnabled());
 			else
-				freezePlayerEnabled.Restore();
+				freezePlayer.Restore();
 
 			PlayerPositionUpdate();
 			UpdatePlayerVars();
@@ -6235,21 +6233,21 @@ namespace Menu {
 
 		void Render() {
 			ImGui::SeparatorText("Misc");
-			ImGui::BeginDisabled(Menu::Camera::freeCamEnabled.value); {
-				ImGui::Checkbox("God Mode", &godModeEnabled.value);
+			ImGui::BeginDisabled(Menu::Camera::freeCam.IsEnabled()); {
+				ImGui::Checkbox("God Mode", &godMode.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##GodModeToggleKey", godModeToggleKey);
+			ImGui::Hotkey("##GodModeToggleKey", godMode);
 			ImGui::SameLine();
-			ImGui::BeginDisabled(!Engine::CBulletPhysicsCharacter::Get() || Menu::Camera::freeCamEnabled.value); {
-				ImGui::Checkbox("Freeze Player", &freezePlayerEnabled.value);
+			ImGui::BeginDisabled(!Engine::CBulletPhysicsCharacter::Get() || Menu::Camera::freeCam.IsEnabled()); {
+				ImGui::Checkbox("Freeze Player", &freezePlayer.value);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##FreezePlayerToggleKey", freezePlayerToggleKey);
+			ImGui::Hotkey("##FreezePlayerToggleKey", freezePlayer);
 
 			ImGui::SeparatorText("Player Variables");
-			ImGui::Checkbox("Enabled##PlayerVars", &playerVariablesEnabled);
-			if (!playerVariablesEnabled)
+			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables.value);
+			if (!playerVariables.IsEnabled())
 				return;
 
 			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {

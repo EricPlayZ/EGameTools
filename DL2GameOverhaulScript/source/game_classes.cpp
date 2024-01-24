@@ -66,7 +66,7 @@ namespace GamePH {
 	static DWORD64(*pCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	static DWORD64(*oCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
-		if (!Menu::Camera::freeCamEnabled.value && !Menu::Camera::disablePhotoModeLimitsEnabled.value)
+		if (!Menu::Camera::freeCam.IsEnabled() && !Menu::Camera::disablePhotoModeLimits.IsEnabled())
 			return oCalculateFreeCamCollision(pFreeCamera, finalPos);
 
 		return 0;
@@ -89,7 +89,7 @@ namespace GamePH {
 	static void(*pLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	static void(*oLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	void detourLifeSetHealth(float* pLifeHealth, float health) {
-		if (!Menu::Player::godModeEnabled.value)
+		if (!Menu::Player::godMode.IsEnabled())
 			return oLifeSetHealth(pLifeHealth, health);
 
 		GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
@@ -122,9 +122,9 @@ namespace GamePH {
 	static void(*pTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
 	static void(*oTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
 	void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
-		Menu::Camera::photoModeEnabled.value = enabled;
+		Menu::Camera::photoMode.Set(enabled);
 
-		if (!Menu::Camera::freeCamEnabled.value)
+		if (!Menu::Camera::freeCam.IsEnabled())
 			return oTogglePhotoMode(guiPhotoModeData, enabled);
 		GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
 		if (!pGameDI_PH)
@@ -162,37 +162,37 @@ namespace GamePH {
 
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (pgen_TPPModel) {
-			if (Menu::Camera::photoModeEnabled.previousValue != Menu::Camera::photoModeEnabled.value && !Menu::Camera::photoModeEnabled.value) {
-				Menu::Camera::tpUseTPPModelEnabled.previousValue = !Menu::Camera::tpUseTPPModelEnabled.value;
-				Menu::Camera::thirdPersonCameraEnabled.previousValue = Menu::Camera::thirdPersonCameraEnabled.value;
+			if (Menu::Camera::photoMode.HasChangedTo(false)) {
+				Menu::Camera::tpUseTPPModel.SetPreviousVal(!Menu::Camera::tpUseTPPModel.IsEnabled());
+				Menu::Camera::thirdPersonCamera.SetPreviousVal(Menu::Camera::thirdPersonCamera.IsEnabled());
 			}
 
-			if (!Menu::Camera::photoModeEnabled.value && !Menu::Camera::freeCamEnabled.value) {
-				if ((Menu::Camera::tpUseTPPModelEnabled.previousValue != Menu::Camera::tpUseTPPModelEnabled.value && !Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.value) || (Menu::Camera::thirdPersonCameraEnabled.previousValue != Menu::Camera::thirdPersonCameraEnabled.value && !Menu::Camera::thirdPersonCameraEnabled.value)) {
+			if (!Menu::Camera::photoMode.IsEnabled() && !Menu::Camera::freeCam.IsEnabled()) {
+				if ((Menu::Camera::tpUseTPPModel.HasChangedTo(false) && Menu::Camera::thirdPersonCamera.IsEnabled()) || (Menu::Camera::thirdPersonCamera.HasChangedTo(false))) {
 					pgen_TPPModel->enableTPPModel2 = true;
 					pgen_TPPModel->enableTPPModel1 = true;
 				}
-				ShowTPPModel(Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.value);
-				if (Menu::Camera::tpUseTPPModelEnabled.previousValue == Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.previousValue == Menu::Camera::thirdPersonCameraEnabled.value && (Menu::Camera::tpUseTPPModelEnabled.value && Menu::Camera::thirdPersonCameraEnabled.value)) {
+				ShowTPPModel(Menu::Camera::tpUseTPPModel.IsEnabled() && Menu::Camera::thirdPersonCamera.IsEnabled());
+				if (!Menu::Camera::tpUseTPPModel.HasChanged() && !Menu::Camera::thirdPersonCamera.HasChanged() && (Menu::Camera::tpUseTPPModel.IsEnabled() && Menu::Camera::thirdPersonCamera.IsEnabled())) {
 					pgen_TPPModel->enableTPPModel2 = false;
 					pgen_TPPModel->enableTPPModel1 = false;
 				}
 
-				Menu::Camera::tpUseTPPModelEnabled.previousValue = Menu::Camera::tpUseTPPModelEnabled.value;
-				Menu::Camera::thirdPersonCameraEnabled.previousValue = Menu::Camera::thirdPersonCameraEnabled.value;
+				Menu::Camera::tpUseTPPModel.SetPreviousVal(Menu::Camera::tpUseTPPModel.IsEnabled());
+				Menu::Camera::thirdPersonCamera.SetPreviousVal(Menu::Camera::thirdPersonCamera.IsEnabled());
 			}
-			if (Menu::Camera::photoModeEnabled.previousValue != Menu::Camera::photoModeEnabled.value && Menu::Camera::photoModeEnabled.value) {
+			if (Menu::Camera::photoMode.HasChangedTo(true)) {
 				pgen_TPPModel->enableTPPModel2 = false;
 				pgen_TPPModel->enableTPPModel1 = false;
 			}
-			else if (Menu::Camera::photoModeEnabled.previousValue == Menu::Camera::photoModeEnabled.value && Menu::Camera::photoModeEnabled.value) {
-				ShowTPPModel(Menu::Camera::photoModeEnabled.value);
+			else if (!Menu::Camera::photoMode.HasChanged() && Menu::Camera::photoMode.IsEnabled()) {
+				ShowTPPModel(Menu::Camera::photoMode.IsEnabled());
 			}
 
-			Menu::Camera::photoModeEnabled.previousValue = Menu::Camera::photoModeEnabled.value;
+			Menu::Camera::photoMode.SetPreviousVal(Menu::Camera::photoMode.IsEnabled());
 		}
 
-		if (!Menu::Camera::thirdPersonCameraEnabled.value || Menu::Camera::photoModeEnabled.value || Menu::Camera::freeCamEnabled.value || !pos)
+		if (!Menu::Camera::thirdPersonCamera.IsEnabled() || Menu::Camera::photoMode.IsEnabled() || Menu::Camera::freeCam.IsEnabled() || !pos)
 			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
 
 		CameraFPPDI* viewCam = static_cast<CameraFPPDI*>(iLevel->GetViewCamera());

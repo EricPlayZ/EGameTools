@@ -1,12 +1,11 @@
 #pragma once
-#include <InputUtil.h>
+#include "..\core.h"
 #include "camera.h"
 #include "player.h"
 #include "world.h"
 
 namespace Menu {
-	extern KeyBindToggle toggleKey;
-	extern bool isOpen;
+	extern KeyBindOption menuToggle;
 	extern float transparency;
 
 	extern void Render();

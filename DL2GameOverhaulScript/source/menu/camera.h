@@ -1,28 +1,23 @@
 #pragma once
-#include <Hotkey.h>
 #include "..\core.h"
 
 namespace Menu {
 	namespace Camera {
 		extern int FOV;
 		
-		extern SMART_BOOL photoModeEnabled;
+		extern Option photoMode;
 
-		extern SMART_BOOL freeCamEnabled;
-		extern KeyBindToggle freeCamToggleKey;
+		extern KeyBindOption freeCam;
 		extern float freeCamSpeed;
-		extern bool teleportPlayerToCameraEnabled;
-		extern KeyBindToggle teleportPlayerToCameraToggleKey;
+		extern KeyBindOption teleportPlayerToCamera;
 
-		extern SMART_BOOL thirdPersonCameraEnabled;
-		extern KeyBindToggle thirdPersonCameraToggleKey;
-		extern SMART_BOOL tpUseTPPModelEnabled;
-		extern KeyBindToggle tpUseTPPModelToggleKey;
+		extern KeyBindOption thirdPersonCamera;
+		extern KeyBindOption tpUseTPPModel;
 		extern float tpDistanceBehindPlayer;
 		extern float tpHeightAbovePlayer;
 
-		extern SMART_BOOL disablePhotoModeLimitsEnabled;
-		extern SMART_BOOL disableSafezoneFOVReductionEnabled;
+		extern Option disablePhotoModeLimits;
+		extern Option disableSafezoneFOVReduction;
 
 		extern void Update();
 		extern void Render();

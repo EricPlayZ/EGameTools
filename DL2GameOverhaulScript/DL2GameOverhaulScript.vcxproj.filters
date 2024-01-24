@@ -59,9 +59,6 @@
     <ClCompile Include="source\menu\world.cpp">
       <Filter>menu</Filter>
     </ClCompile>
-    <ClCompile Include="source\ImGuiHotkeys\InputUtil.cpp">
-      <Filter>ImGuiHotkeys</Filter>
-    </ClCompile>
     <ClCompile Include="source\ImGuiHotkeys\Hotkey.cpp">
       <Filter>ImGuiHotkeys</Filter>
     </ClCompile>
@@ -156,9 +153,6 @@
       <Filter>menu</Filter>
     </ClInclude>
     <ClInclude Include="source\ImGuiHotkeys\Hotkey.h">
-      <Filter>ImGuiHotkeys</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ImGuiHotkeys\InputUtil.h">
       <Filter>ImGuiHotkeys</Filter>
     </ClInclude>
   </ItemGroup>

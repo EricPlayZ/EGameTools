@@ -10,7 +10,18 @@
 #include "sigscan\offsets.h"
 #include "config\config.h"
 #include "hook.h"
-#include "utils.h"
+
+#pragma region Option
+std::set<Option*> Option::instances{};
+std::set<Option*> Option::GetInstances() { return instances; };
+#pragma endregion
+
+#pragma region KeyBindOption
+bool KeyBindOption::wasAnyKeyPressed = false;
+
+std::set<KeyBindOption*> KeyBindOption::instances{};
+std::set<KeyBindOption*> KeyBindOption::GetInstances() { return instances; };
+#pragma endregion
 
 namespace Core {
 	// Console stuff
