@@ -294,7 +294,7 @@ namespace GamePH {
 		if (it == defaultVars.end())
 			return;
 
-		it->second.first.emplace<T>(varValue);
+		it->second.first.template emplace<T>(varValue);
 	}
 	static void processPlayerVar(PDWORD64*& playerVarsMem, std::pair<std::string, std::pair<LPVOID, std::string>>& var) {
 		while (true) {
@@ -340,12 +340,9 @@ namespace GamePH {
 			return;
 
 		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());
-		bool isFloatPlayerVar = false;
-		bool isBoolPlayerVar = false;
 
-		for (auto& var : playerVars) {
+		for (auto& var : playerVars)
 			processPlayerVar(playerVarsMem, var);
-		}
 
 		gotPlayerVars = true;
 	}

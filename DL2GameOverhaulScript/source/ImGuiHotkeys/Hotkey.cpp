@@ -10,7 +10,7 @@ void ImGui::Hotkey(std::string_view label, KeyBindOption& key, float samelineOff
     ImGui::PushID(label.data());
 
     if (!label.contains("##"))
-        ImGui::Text(label.data());
+        ImGui::Text("%s", label.data());
     ImGui::SameLine(samelineOffset);
 
     if (ImGui::GetActiveID() == id) {

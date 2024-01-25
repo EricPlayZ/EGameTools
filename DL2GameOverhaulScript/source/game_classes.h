@@ -124,7 +124,7 @@ namespace GamePH {
 				return;
 
 			if (std::is_same<T, std::string>::value) {
-				std::string valueStr = Utils::to_string(valueStr);
+				std::string valueStr = Utils::to_string(value);
 				if (it->second.second == "float") {
 					float* const varValue = reinterpret_cast<float*>(it->second.first);
 					const float actualValue = std::stof(valueStr);
