@@ -1,11 +1,11 @@
-#include <filesystem>
 #include <any>
 #include <array>
+#include <filesystem>
 #include <functional>
-#include "config.h"
 #include "..\menu\menu.h"
-#include "..\utils.h"
 #include "..\print.h"
+#include "..\utils.h"
+#include "config.h"
 #include "ini.h"
 
 namespace Config {
@@ -4132,7 +4132,7 @@ namespace Config {
 			for (auto& entry : configVariablesDefault) {
 				switch (entry.type) {
 				case OPTION:
-					reinterpret_cast<Option*>(entry.optionPtr)->Change(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
+					reinterpret_cast<Option*>(entry.optionPtr)->Set(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
 					break;
 				case Float:
 					*reinterpret_cast<float*>(entry.optionPtr) = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
