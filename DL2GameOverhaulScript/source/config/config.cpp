@@ -4025,6 +4025,7 @@ namespace Config {
 		{ "Menu:Keybinds", "ThirdPersonToggleKey", std::string("VK_F1"), &Menu::Camera::thirdPersonCamera, String},
 		{ "Menu:Keybinds", "UseTPPModelToggleKey", std::string("VK_F2"), &Menu::Camera::tpUseTPPModel, String},
 		{ "Player:Misc", "GodMode", false, &Menu::Player::godMode, OPTION },
+		{ "Player:Misc", "DisableOutOfBoundsTimer", true, &Menu::Player::disableOutOfBoundsTimer, OPTION },
 		{ "Player:PlayerVariables", "Enabled", false, &Menu::Player::playerVariables, OPTION },
 		{ "Player:PlayerVariables", "LastSaveSCRPath", std::string(), &Menu::Player::saveSCRPath, String },
 		{ "Player:PlayerVariables", "LastLoadSCRFilePath", std::string(), &Menu::Player::loadSCRFilePath, String },
@@ -4132,7 +4133,7 @@ namespace Config {
 			for (auto& entry : configVariablesDefault) {
 				switch (entry.type) {
 				case OPTION:
-					reinterpret_cast<Option*>(entry.optionPtr)->Set(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
+					reinterpret_cast<Option*>(entry.optionPtr)->SetBothValues(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
 					break;
 				case Float:
 					*reinterpret_cast<float*>(entry.optionPtr) = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
@@ -4182,7 +4183,7 @@ namespace Config {
 		for (auto& entry : configVariables) {
 			switch (entry.type) {
 			case OPTION:
-				entry.value = reinterpret_cast<Option*>(entry.optionPtr)->IsEnabled();
+				entry.value = reinterpret_cast<Option*>(entry.optionPtr)->GetValue();
 				break;
 			case Float:
 				entry.value = *reinterpret_cast<float*>(entry.optionPtr);

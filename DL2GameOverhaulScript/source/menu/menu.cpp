@@ -1,7 +1,7 @@
-#include <imgui.h>
 #include <Hotkey.h>
-#include "menu.h"
+#include <imgui.h>
 #include "camera.h"
+#include "menu.h"
 #include "player.h"
 #include "world.h"
 
@@ -21,15 +21,15 @@ namespace Menu {
         ImGui::Begin("EGameTools", &menuToggle.value, windowFlags); {
             if (ImGui::BeginTabBar("##MainTabBar")) {
                 if (ImGui::BeginTabItem("Player")) {
-                    Menu::Player::Render();
+                    Player::Render();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Camera")) {
-                    Menu::Camera::Render();
+                    Camera::Render();
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("World")) {
-                    Menu::World::Render();
+                    World::Render();
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();

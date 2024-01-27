@@ -1,6 +1,6 @@
 #pragma once
-#include "sigscan.h"
 #include "..\memory.h"
+#include "sigscan.h"
 
 #define AddOffset(name, moduleName, pattern, type, retType)\
 static retType Get_## name () {\
@@ -57,6 +57,8 @@ struct Offsets {
 	AddOffset(OnUpdate_ChangeMap, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 88 44 24 20 48 8B 84 24 ?? ?? ?? ?? 48 83 78 ?? ??", PatternType::RelativePointer, LPVOID)
 	AddOffset(ShowTPPModelFunc2, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 45 8D 45 40", PatternType::RelativePointer, LPVOID)
 	AddOffset(ShowTPPModelFunc3, "gamedll_ph_x64_rwdi.dll", "E9 [?? ?? ?? ?? 48 85 D2 74 0A", PatternType::RelativePointer, LPVOID)
+	//AddOffset(CalculateOutOfBoundsTimer, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 0F B6 99", PatternType::Address, LPVOID)
+	AddOffset(IsNotOutOfBounds, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F9 48 85 D2", PatternType::Address, LPVOID)
 	AddOffset(GetTimeWeatherSystem, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 49 8D 4F 38", PatternType::RelativePointer, LPVOID)
 	AddOffset(SetForcedWeather, "engine_x64_rwdi.dll", "89 51 68 C3 CC CC CC CC CC CC CC CC CC CC CC CC", PatternType::Address, LPVOID)
 	AddOffset(GetCurrentWeather, "engine_x64_rwdi.dll", "48 8B 41 78 48 85 C0 75 0F", PatternType::Address, LPVOID)

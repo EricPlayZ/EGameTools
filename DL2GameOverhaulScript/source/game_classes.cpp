@@ -2,13 +2,13 @@
 #include <string>
 #include <thread>
 #include "MinHook\include\MinHook.h"
-#include "sigscan\offsets.h"
-#include "menu\player.h"
-#include "menu\camera.h"
 #include "config\config.h"
 #include "game_classes.h"
 #include "memory.h"
+#include "menu\camera.h"
+#include "menu\player.h"
 #include "print.h"
+#include "sigscan\offsets.h"
 #include "utils.h"
 
 namespace Core {
@@ -17,8 +17,8 @@ namespace Core {
 
 #pragma region GamePH
 namespace GamePH {
-	#pragma region Hooks
-	#pragma region CreatePlayerHealthModule
+#pragma region Hooks
+#pragma region CreatePlayerHealthModule
 	static DWORD64(*pCreatePlayerHealthModule)(DWORD64 playerHealthModule) = nullptr;
 	static DWORD64(*oCreatePlayerHealthModule)(DWORD64 playerHealthModule) = nullptr;
 	DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule) {
@@ -37,9 +37,9 @@ namespace GamePH {
 			}
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region OnPostUpdate
+#pragma region OnPostUpdate
 	static void(*oOnPostUpdate)(LPVOID pGameDI_PH2) = nullptr;
 	void detourOnPostUpdate(LPVOID pGameDI_PH2) {
 		oOnPostUpdate(pGameDI_PH2);
@@ -66,10 +66,10 @@ namespace GamePH {
 	static DWORD64(*pCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	static DWORD64(*oCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
 	DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
-		if (!Menu::Camera::freeCam.IsEnabled() && !Menu::Camera::disablePhotoModeLimits.IsEnabled())
-			return oCalculateFreeCamCollision(pFreeCamera, finalPos);
+		if (Menu::Camera::disablePhotoModeLimits.GetValue() || Menu::Camera::freeCam.GetValue())
+			return 0;
 
-		return 0;
+		return oCalculateFreeCamCollision(pFreeCamera, finalPos);
 	}
 	void LoopHookCalculateFreeCamCollision() {
 		while (true) {
@@ -89,7 +89,7 @@ namespace GamePH {
 	static void(*pLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	static void(*oLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
 	void detourLifeSetHealth(float* pLifeHealth, float health) {
-		if (!Menu::Player::godMode.IsEnabled())
+		if (!Menu::Player::godMode.GetValue() && !Menu::Camera::freeCam.GetValue())
 			return oLifeSetHealth(pLifeHealth, health);
 
 		GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
@@ -124,7 +124,7 @@ namespace GamePH {
 	void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
 		Menu::Camera::photoMode.Set(enabled);
 
-		if (!Menu::Camera::freeCam.IsEnabled())
+		if (!Menu::Camera::freeCam.GetValue())
 			return oTogglePhotoMode(guiPhotoModeData, enabled);
 		GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
 		if (!pGameDI_PH)
@@ -133,9 +133,11 @@ namespace GamePH {
 		if (!pFreeCam)
 			return oTogglePhotoMode(guiPhotoModeData, enabled);
 
-		pGameDI_PH->TogglePhotoMode();
-		pFreeCam->AllowCameraMovement(0);
-
+		if (enabled) {
+			pGameDI_PH->TogglePhotoMode();
+			pFreeCam->AllowCameraMovement(0);
+		}
+		
 		oTogglePhotoMode(guiPhotoModeData, enabled);
 	}
 	void LoopHookTogglePhotoMode() {
@@ -152,7 +154,42 @@ namespace GamePH {
 	}
 #pragma endregion
 
+#pragma region ShowTPPModelFunc3
+	static Option wannaUseTPPModel{};
+
+	static void(*pShowTPPModelFunc3)(DWORD64 a1, bool showTPPModel) = nullptr;
+	static void(*oShowTPPModelFunc3)(DWORD64 a1, bool showTPPModel) = nullptr;
+	void detourShowTPPModelFunc3(DWORD64 a1, bool showTPPModel) {
+		wannaUseTPPModel.Set(showTPPModel);
+
+		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
+		if (!pgen_TPPModel) {
+			oShowTPPModelFunc3(a1, showTPPModel);
+			return;
+		}
+		if (wannaUseTPPModel.HasChangedTo(false)) {
+			wannaUseTPPModel.SetPrevValue(false);
+			pgen_TPPModel->enableTPPModel2 = true;
+			pgen_TPPModel->enableTPPModel1 = true;
+		}
+		oShowTPPModelFunc3(a1, showTPPModel);
+	}
+	void LoopHookShowTPPModelFunc3() {
+		while (true) {
+			Sleep(250);
+
+			if (!pShowTPPModelFunc3)
+				pShowTPPModelFunc3 = (decltype(pShowTPPModelFunc3))Offsets::Get_ShowTPPModelFunc3();
+			else if (!oShowTPPModelFunc3 && MH_CreateHook(pShowTPPModelFunc3, &detourShowTPPModelFunc3, reinterpret_cast<LPVOID*>(&oShowTPPModelFunc3)) == MH_OK) {
+				MH_EnableHook(pShowTPPModelFunc3);
+				break;
+			}
+		}
+	}
+#pragma endregion
+
 #pragma region MoveCameraFromForwardUpPos
+	static bool waitOneMoreFrame = false;
 	static void(*pMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
 	static void(*oMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
 	void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) {
@@ -162,37 +199,62 @@ namespace GamePH {
 
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (pgen_TPPModel) {
-			if (Menu::Camera::photoMode.HasChangedTo(false)) {
-				Menu::Camera::tpUseTPPModel.SetPreviousVal(!Menu::Camera::tpUseTPPModel.IsEnabled());
-				Menu::Camera::thirdPersonCamera.SetPreviousVal(Menu::Camera::thirdPersonCamera.IsEnabled());
-			}
-
-			if (!Menu::Camera::photoMode.IsEnabled() && !Menu::Camera::freeCam.IsEnabled()) {
-				if ((Menu::Camera::tpUseTPPModel.HasChangedTo(false) && Menu::Camera::thirdPersonCamera.IsEnabled()) || (Menu::Camera::thirdPersonCamera.HasChangedTo(false))) {
-					pgen_TPPModel->enableTPPModel2 = true;
-					pgen_TPPModel->enableTPPModel1 = true;
-				}
-				ShowTPPModel(Menu::Camera::tpUseTPPModel.IsEnabled() && Menu::Camera::thirdPersonCamera.IsEnabled());
-				if (!Menu::Camera::tpUseTPPModel.HasChanged() && !Menu::Camera::thirdPersonCamera.HasChanged() && (Menu::Camera::tpUseTPPModel.IsEnabled() && Menu::Camera::thirdPersonCamera.IsEnabled())) {
+			if (wannaUseTPPModel.GetValue()) {
+				wannaUseTPPModel.SetPrevValue(true);
+				if (Menu::Camera::thirdPersonCamera.GetValue() && Menu::Camera::tpUseTPPModel.GetValue()) {
 					pgen_TPPModel->enableTPPModel2 = false;
 					pgen_TPPModel->enableTPPModel1 = false;
 				}
-
-				Menu::Camera::tpUseTPPModel.SetPreviousVal(Menu::Camera::tpUseTPPModel.IsEnabled());
-				Menu::Camera::thirdPersonCamera.SetPreviousVal(Menu::Camera::thirdPersonCamera.IsEnabled());
-			}
-			if (Menu::Camera::photoMode.HasChangedTo(true)) {
-				pgen_TPPModel->enableTPPModel2 = false;
-				pgen_TPPModel->enableTPPModel1 = false;
-			}
-			else if (!Menu::Camera::photoMode.HasChanged() && Menu::Camera::photoMode.IsEnabled()) {
-				ShowTPPModel(Menu::Camera::photoMode.IsEnabled());
 			}
 
-			Menu::Camera::photoMode.SetPreviousVal(Menu::Camera::photoMode.IsEnabled());
+			if (Menu::Camera::photoMode.HasChangedTo(false) && !wannaUseTPPModel.GetValue()) {
+				if (!Menu::Camera::freeCam.GetValue() && !Menu::Camera::tpUseTPPModel.GetValue()) {
+					Menu::Camera::photoMode.SetPrevValue(false);
+					ShowTPPModel(false);
+				} else if (Menu::Camera::freeCam.GetValue() || (Menu::Camera::tpUseTPPModel.GetValue() && Menu::Camera::thirdPersonCamera.GetValue())) {
+					Menu::Camera::photoMode.SetPrevValue(true);
+					ShowTPPModel(true);
+				}
+			} else if (Menu::Camera::photoMode.HasChangedTo(true)) {
+				Menu::Camera::photoMode.SetPrevValue(true);
+				ShowTPPModel(true);
+			} else if (Menu::Camera::freeCam.HasChangedTo(false)) {
+				if (!Menu::Camera::photoMode.GetValue() && !Menu::Camera::thirdPersonCamera.GetValue()) {
+					Menu::Camera::freeCam.SetPrevValue(false);
+					ShowTPPModel(false);
+				} else if (Menu::Camera::photoMode.GetValue() || (Menu::Camera::tpUseTPPModel.GetValue() && Menu::Camera::thirdPersonCamera.GetValue())) {
+					Menu::Camera::freeCam.SetPrevValue(true);
+					ShowTPPModel(true);
+				}
+			} else if (Menu::Camera::freeCam.HasChangedTo(true)) {
+				Menu::Camera::freeCam.SetPrevValue(true);
+				ShowTPPModel(true);
+			} else if (Menu::Camera::thirdPersonCamera.HasChangedTo(false)) {
+				if (!Menu::Camera::freeCam.GetValue() && !Menu::Camera::photoMode.GetValue()) {
+					Menu::Camera::thirdPersonCamera.SetPrevValue(false);
+					ShowTPPModel(false);
+				} else if (Menu::Camera::freeCam.GetValue() || Menu::Camera::photoMode.GetValue()) {
+					Menu::Camera::thirdPersonCamera.SetPrevValue(true);
+					ShowTPPModel(true);
+				}
+			} else if (Menu::Camera::thirdPersonCamera.HasChangedTo(true) && Menu::Camera::tpUseTPPModel.GetValue()) {
+				Menu::Camera::thirdPersonCamera.SetPrevValue(true);
+				ShowTPPModel(true);
+			} else if (Menu::Camera::tpUseTPPModel.HasChangedTo(false)) {
+				if (!Menu::Camera::freeCam.GetValue() && !Menu::Camera::photoMode.GetValue()) {
+					Menu::Camera::tpUseTPPModel.SetPrevValue(false);
+					ShowTPPModel(false);
+				} else if (Menu::Camera::freeCam.GetValue() || Menu::Camera::photoMode.GetValue()) {
+					Menu::Camera::tpUseTPPModel.SetPrevValue(true);
+					ShowTPPModel(true);
+				}
+			} else if (Menu::Camera::tpUseTPPModel.HasChangedTo(true) && Menu::Camera::thirdPersonCamera.GetValue()) {
+				Menu::Camera::tpUseTPPModel.SetPrevValue(true);
+				ShowTPPModel(true);
+			}
 		}
 
-		if (!Menu::Camera::thirdPersonCamera.IsEnabled() || Menu::Camera::photoMode.IsEnabled() || Menu::Camera::freeCam.IsEnabled() || !pos)
+		if (!Menu::Camera::thirdPersonCamera.GetValue() || Menu::Camera::photoMode.GetValue() || Menu::Camera::freeCam.GetValue() || !pos)
 			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
 
 		CameraFPPDI* viewCam = static_cast<CameraFPPDI*>(iLevel->GetViewCamera());
@@ -222,23 +284,39 @@ namespace GamePH {
 			}
 		}
 	}
-	#pragma endregion
-	#pragma endregion
+#pragma endregion
 
-	#pragma region OtherFuncs
+#pragma region IsNotOutOfBounds
+	static bool(*pIsNotOutOfBounds)(LPVOID pInstance, DWORD64 a2) = nullptr;
+	static bool(*oIsNotOutOfBounds)(LPVOID pInstance, DWORD64 a2) = nullptr;
+	bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2) {
+		if (Menu::Player::disableOutOfBoundsTimer.GetValue())
+			return true;
+
+		return oIsNotOutOfBounds(pInstance, a2);
+	}
+	void LoopHookIsNotOutOfBounds() {
+		while (true) {
+			Sleep(250);
+
+			if (!pIsNotOutOfBounds)
+				pIsNotOutOfBounds = (decltype(pIsNotOutOfBounds))Offsets::Get_IsNotOutOfBounds();
+			else if (!oIsNotOutOfBounds && MH_CreateHook(pIsNotOutOfBounds, &detourIsNotOutOfBounds, reinterpret_cast<LPVOID*>(&oIsNotOutOfBounds)) == MH_OK) {
+				MH_EnableHook(pIsNotOutOfBounds);
+				break;
+			}
+		}
+	}
+#pragma endregion
+#pragma endregion
+
+#pragma region OtherFuncs
 	static DWORD64 ShowTPPModelFunc2(LPVOID a1) {
 		DWORD64(*pShowTPPModelFunc2)(LPVOID a1) = (decltype(pShowTPPModelFunc2))Offsets::Get_ShowTPPModelFunc2();
 		if (!pShowTPPModelFunc2)
 			return 0;
 
 		return pShowTPPModelFunc2(a1);
-	}
-	static void ShowTPPModelFunc3(DWORD64 a1, bool showTPPModel) {
-		void(*pShowTPPModelFunc3)(DWORD64 a1, bool showTPPModel) = (decltype(pShowTPPModelFunc3))Offsets::Get_ShowTPPModelFunc3();
-		if (!pShowTPPModelFunc3)
-			return;
-
-		pShowTPPModelFunc3(a1, showTPPModel);
 	}
 	void ShowTPPModel(bool showTPPModel) {
 		GameDI_PH* pGameDI_PH = GameDI_PH::Get();
@@ -247,15 +325,17 @@ namespace GamePH {
 		DWORD64 tppFunc2Addr = ShowTPPModelFunc2(pGameDI_PH);
 		if (!tppFunc2Addr)
 			return;
+		if (!pShowTPPModelFunc3)
+			return;
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (!pgen_TPPModel)
 			return;
 		
-		ShowTPPModelFunc3(tppFunc2Addr, showTPPModel);
+		pShowTPPModelFunc3(tppFunc2Addr, showTPPModel);
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region PlayerVariables
+#pragma region PlayerVariables
 	static const int FLOAT_VAR_OFFSET = 3;
 	static const int BOOL_VAR_OFFSET = 2;
 	static const int VAR_LOC_OFFSET = 1;
@@ -394,9 +474,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region PlayerState
+#pragma region PlayerState
 	PlayerState* PlayerState::Get() {
 		__try {
 			if (!Offsets::Get_PlayerState())
@@ -411,9 +491,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region PlayerHealthModule
+#pragma region PlayerHealthModule
 	PlayerHealthModule* PlayerHealthModule::pPlayerHealthModule = nullptr;
 	PlayerHealthModule* PlayerHealthModule::Get() {
 		__try {
@@ -428,9 +508,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region TPPCameraDI
+#pragma region TPPCameraDI
 	TPPCameraDI* TPPCameraDI::Get() {
 		__try {
 			FreeCamera* pFreeCam = FreeCamera::Get();
@@ -450,9 +530,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CameraFPPDI
+#pragma region CameraFPPDI
 	Vector3* CameraFPPDI::GetForwardVector(Vector3* outForwardVec) {
 		Vector3* (*pGetForwardVector)(LPVOID pCameraFPPDI, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
 		if (!pGetForwardVector)
@@ -486,9 +566,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}*/
-	#pragma endregion
+#pragma endregion
 
-	#pragma region FreeCamera
+#pragma region FreeCamera
 	Vector3* FreeCamera::GetForwardVector(Vector3* outForwardVec) {
 		Vector3* (*pGetForwardVector)(LPVOID pFreeCamera, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
 		if (!pGetForwardVector)
@@ -525,9 +605,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region DayNightCycle
+#pragma region DayNightCycle
 	void DayNightCycle::SetDaytime(float time) {
 		time /= 24;
 		time1 = time;
@@ -549,11 +629,11 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region TimeWeather
+#pragma region TimeWeather
 	namespace TimeWeather {
-		#pragma region CSystem
+#pragma region CSystem
 		void CSystem::SetForcedWeather(int weather) {
 			if (!Offsets::Get_SetForcedWeather())
 				return;
@@ -590,11 +670,11 @@ namespace GamePH {
 				return nullptr;
 			}
 		}
-		#pragma endregion
+#pragma endregion
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region LevelDI
+#pragma region LevelDI
 	bool LevelDI::IsLoading() {
 		if (!Offsets::Get_IsLoading())
 			return true;
@@ -667,9 +747,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region gen_TPPModel
+#pragma region gen_TPPModel
 	gen_TPPModel* gen_TPPModel::Get() {
 		__try {
 			LocalClientDI* pLocalClientDI = LocalClientDI::Get();
@@ -686,9 +766,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region LocalClientDI
+#pragma region LocalClientDI
 	LocalClientDI* LocalClientDI::Get() {
 		__try {
 			SessionCooperativeDI* pSessionCooperativeDI = SessionCooperativeDI::Get();
@@ -705,9 +785,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region SessionCooperativeDI
+#pragma region SessionCooperativeDI
 	SessionCooperativeDI* SessionCooperativeDI::Get() {
 		__try {
 			GameDI_PH* pGameDI_PH = GameDI_PH::Get();
@@ -724,9 +804,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region GameDI_PH2
+#pragma region GameDI_PH2
 	GameDI_PH2* GameDI_PH2::Get() {
 		__try {
 			GameDI_PH* pGameDI_PH = GameDI_PH::Get();
@@ -742,9 +822,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region GameDI_PH
+#pragma region GameDI_PH
 	float GameDI_PH::GetGameTimeDelta() {
 		if (!Offsets::Get_GetGameTimeDelta())
 			return -1.0f;
@@ -755,8 +835,8 @@ namespace GamePH {
 
 		return pGetGameTimeDelta(this);
 	}
-	INT64 GameDI_PH::GetCurrentGameVersion() {
-		return Memory::CallVT<225, INT64>(this);
+	DWORD64 GameDI_PH::GetCurrentGameVersion() {
+		return Memory::CallVT<225, DWORD64>(this);
 	}
 	void GameDI_PH::TogglePhotoMode(bool doNothing, bool setAsOptionalCamera) {
 		Memory::CallVT<258>(this, doNothing, setAsOptionalCamera);
@@ -777,9 +857,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region PlayerObjProperties
+#pragma region PlayerObjProperties
 	PlayerObjProperties* PlayerObjProperties::Get() {
 		__try {
 			if (!Offsets::Get_g_PlayerObjProperties())
@@ -794,9 +874,9 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region BackgroundModuleScreenController
+#pragma region BackgroundModuleScreenController
 	BackgroundModuleScreenController* BackgroundModuleScreenController::Get() {
 		__try {
 			if (!Offsets::Get_g_BackgroundModuleScreenController())
@@ -812,13 +892,13 @@ namespace GamePH {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 }
 #pragma endregion
 
 #pragma region Engine
 namespace Engine {
-	#pragma region CVideoSettings
+#pragma region CVideoSettings
 	CVideoSettings* CVideoSettings::Get() {
 		__try {
 			CGame* pCGame = CGame::Get();
@@ -834,9 +914,9 @@ namespace Engine {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CLevel
+#pragma region CLevel
 	CLevel* CLevel::Get() {
 		__try {
 			CGame* pCGame = CGame::Get();
@@ -852,9 +932,9 @@ namespace Engine {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CGame
+#pragma region CGame
 	CGame* CGame::Get() {
 		__try {
 			CLobbySteam* pCLobbySteam = CLobbySteam::Get();
@@ -870,9 +950,9 @@ namespace Engine {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CLobbySteam
+#pragma region CLobbySteam
 	CLobbySteam* CLobbySteam::Get() {
 		__try {
 			if (!Offsets::Get_CLobbySteam())
@@ -887,9 +967,9 @@ namespace Engine {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CInput
+#pragma region CInput
 	DWORD64 CInput::BlockGameInput() {
 		return Memory::CallVT<2, DWORD64>(this);
 	}
@@ -911,9 +991,9 @@ namespace Engine {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CBulletPhysicsCharacter
+#pragma region CBulletPhysicsCharacter
 	Vector3 CBulletPhysicsCharacter::posBeforeFreeze{};
 
 	void CBulletPhysicsCharacter::FreezeCharacter() {
@@ -940,9 +1020,9 @@ namespace Engine {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CoPhysicsProperty
+#pragma region CoPhysicsProperty
 	CoPhysicsProperty* CoPhysicsProperty::Get() {
 		__try {
 			GamePH::PlayerObjProperties* pPlayerObjProperties = GamePH::PlayerObjProperties::Get();
@@ -958,9 +1038,9 @@ namespace Engine {
 			return nullptr;
 		}
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CRTTIField
+#pragma region CRTTIField
 	DWORD64 CRTTIField::Get_float(CRTTI* crtti, float& out) {
 		if (!Offsets::Get_CRTTIFieldTypedNative_Get_float())
 			return 0;
@@ -971,9 +1051,9 @@ namespace Engine {
 
 		return pCRTTIFieldTypedNative_Get_float(this, crtti, out);
 	}
-	#pragma endregion
+#pragma endregion
 
-	#pragma region CRTTI
+#pragma region CRTTI
 	CRTTIField* CRTTI::FindField(const char* name) {
 		if (!Offsets::Get_CRTTI_FindField())
 			return nullptr;
@@ -984,6 +1064,6 @@ namespace Engine {
 
 		return pCRTTI_FindField(this, name);
 	}
-	#pragma endregion
+#pragma endregion
 }
 #pragma endregion

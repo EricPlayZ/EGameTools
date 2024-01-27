@@ -1,4 +1,5 @@
 #include <Hotkey.h>
+#include <ImGuiEx.h>
 #include <ImGuiFileDialog.h>
 #include <algorithm>
 #include <filesystem>
@@ -5998,6 +5999,7 @@ namespace Menu {
 		KeyBindOption godMode{ VK_F6 };
 		KeyBindOption freezePlayer{ VK_F7 };
 		Option playerVariables{};
+		Option disableOutOfBoundsTimer{};
 
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
@@ -6167,14 +6169,14 @@ namespace Menu {
 			if (!playerCharacter)
 				return;
 
-			if (freezePlayer.IsEnabled()) {
+			if (freezePlayer.GetValue() || (Camera::freeCam.GetValue() && !Camera::teleportPlayerToCamera.GetValue())) {
 				playerCharacter->FreezeCharacter();
 				return;
 			}
 
 			Engine::CBulletPhysicsCharacter::posBeforeFreeze = playerCharacter->playerPos;
 
-			if (!Menu::Camera::freeCam.IsEnabled() || !Menu::Camera::teleportPlayerToCamera.IsEnabled())
+			if (!Camera::freeCam.GetValue() || !Camera::teleportPlayerToCamera.GetValue())
 				return;
 
 			GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
@@ -6190,7 +6192,7 @@ namespace Menu {
 		}
 
 		static void UpdatePlayerVars() {
-			if (!playerVariables.IsEnabled())
+			if (!playerVariables.GetValue())
 				return;
 
 			auto bgn = GamePH::PlayerVariables::playerVars.begin();
@@ -6217,37 +6219,23 @@ namespace Menu {
 		}
 
 		void Update() {
-			if (Menu::Camera::freeCam.IsEnabled())
-				godMode.Change(true);
-			else
-				godMode.Restore();
-
-			if (Menu::Camera::freeCam.IsEnabled())
-				freezePlayer.Change(!Menu::Camera::teleportPlayerToCamera.IsEnabled());
-			else
-				freezePlayer.Restore();
-
 			PlayerPositionUpdate();
 			UpdatePlayerVars();
 		}
 
 		void Render() {
 			ImGui::SeparatorText("Misc");
-			ImGui::BeginDisabled(Menu::Camera::freeCam.IsEnabled()); {
-				ImGui::Checkbox("God Mode", &godMode.value);
-				ImGui::EndDisabled();
-			}
+			ImGui::Checkbox("God Mode", &godMode);
 			ImGui::Hotkey("##GodModeToggleKey", godMode);
 			ImGui::SameLine();
-			ImGui::BeginDisabled(!Engine::CBulletPhysicsCharacter::Get() || Menu::Camera::freeCam.IsEnabled()); {
-				ImGui::Checkbox("Freeze Player", &freezePlayer.value);
-				ImGui::EndDisabled();
-			}
+			ImGui::Checkbox("Freeze Player", &freezePlayer);
 			ImGui::Hotkey("##FreezePlayerToggleKey", freezePlayer);
 
+			ImGui::Checkbox("Disable Out of Bounds Timer", &disableOutOfBoundsTimer);
+
 			ImGui::SeparatorText("Player Variables");
-			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables.value);
-			if (!playerVariables.IsEnabled())
+			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables);
+			if (!playerVariables.GetValue())
 				return;
 
 			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {

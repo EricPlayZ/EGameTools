@@ -1,15 +1,15 @@
+#include <MinHook.h>
 #include <Windows.h>
 #include <iostream>
 #include <thread>
-#include <MinHook.h>
-#include "kiero.h"
 #include "ImGui\impl\d3d11_impl.h"
 #include "ImGui\impl\d3d12_impl.h"
-#include "menu\menu.h"
-#include "game_classes.h"
-#include "sigscan\offsets.h"
 #include "config\config.h"
+#include "game_classes.h"
 #include "hook.h"
+#include "kiero.h"
+#include "menu\menu.h"
+#include "sigscan\offsets.h"
 
 #pragma region Option
 std::set<Option*> Option::instances{};
@@ -152,6 +152,8 @@ namespace Core {
 		GamePH::LoopHookLifeSetHealth();
 		GamePH::LoopHookTogglePhotoMode();
 		GamePH::LoopHookMoveCameraFromForwardUpPos();
+		GamePH::LoopHookShowTPPModelFunc3();
+		GamePH::LoopHookIsNotOutOfBounds();
 
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);

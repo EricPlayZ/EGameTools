@@ -1,13 +1,13 @@
-﻿#include <Windows.h>
-#include <imgui.h>
+﻿#include <Hotkey.h>
+#include <Windows.h>
 #include <backends\imgui_impl_win32.h>
-#include <Hotkey.h>
+#include <imgui.h>
 #include "..\..\core.h"
-#include "..\..\menu\menu.h"
-#include "..\config\config.h"
-#include "..\..\sigscan\offsets.h"
 #include "..\..\game_classes.h"
 #include "..\..\kiero.h"
+#include "..\..\menu\menu.h"
+#include "..\..\sigscan\offsets.h"
+#include "..\config\config.h"
 #include "win32_impl.h"
 
 static WNDPROC oWndProc = NULL;
@@ -23,6 +23,8 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 			break;
 
 		for (auto& option : KeyBindOption::GetInstances()) {
+			if (option->GetImGuiDisabled())
+				continue;
 			if (wParam == option->GetKeyBind()) {
 				KeyBindOption::wasAnyKeyPressed = true;
 				option->Toggle();
@@ -45,10 +47,10 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 	if (!pCInput)
 		return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
 
-	ImGui::GetIO().MouseDrawCursor = Menu::menuToggle.IsEnabled();
+	ImGui::GetIO().MouseDrawCursor = Menu::menuToggle.GetValue();
 	ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam);
 
-	if (Menu::menuToggle.IsEnabled()) {
+	if (Menu::menuToggle.GetValue()) {
 		if (!toggledMenu)
 			pCInput->BlockGameInput();
 

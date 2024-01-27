@@ -25,42 +25,22 @@ public:
     ~Option() { instances.erase(this); }
     static std::set<Option*> GetInstances();
 
-	bool value = false;
+    bool value = false;
 
-    void Toggle() { value = !value; }
-    void Set(bool newValue) { value = newValue; }
-    void SetPreviousVal(bool newValue) { previousValue = newValue; }
-    constexpr bool IsEnabled() const { return value; }
-    constexpr bool WasEnabled() const { return previousValue; }
+    void SetImGuiDisabled(bool newValue) { imGuiDisabled = newValue; }
+    bool GetImGuiDisabled() const { return imGuiDisabled; }
+    void Toggle() { previousValue = value; value = !value; }
+    void Set(bool newValue) { previousValue = value; value = newValue; }
+    void SetBothValues(bool newValue) { previousValue = newValue; value = newValue; }
+    void SetValue(bool newValue) { value = newValue; }
+    void SetPrevValue(bool newValue) { previousValue = newValue; }
+    constexpr bool GetValue() const { return value; }
+    constexpr bool GetPrevValue() const { return previousValue; }
     constexpr bool HasChanged() const { return previousValue != value; }
     constexpr bool HasChangedTo(bool toValue) const { return previousValue != value && value == toValue; }
-
-    constexpr bool Change(bool newValue) {
-        if (changed)
-            return false;
-
-        previousValue = value;
-
-        changed = true;
-        value = newValue;
-        return true;
-    }
-    constexpr bool Restore(bool noValChange = false) {
-        if (!changed)
-            return false;
-
-        changed = false;
-
-        if (noValChange) {
-            previousValue = value;
-            return true;
-        }
-        value = previousValue;
-        return true;
-    }
 private:
+    bool imGuiDisabled = false;
 	bool previousValue = false;
-	bool changed = false;
 
     static std::set<Option*> instances;
 };

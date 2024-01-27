@@ -7,6 +7,7 @@ namespace Menu {
 		extern KeyBindOption godMode;
 		extern KeyBindOption freezePlayer;
 		extern Option playerVariables;
+		extern Option disableOutOfBoundsTimer;
 
 		extern std::string saveSCRPath;
 		extern std::string loadSCRFilePath;

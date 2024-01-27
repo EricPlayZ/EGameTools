@@ -16,6 +16,7 @@
     <ClCompile Include="source\dllmain.cpp" />
     <ClCompile Include="source\game_classes.cpp" />
     <ClCompile Include="source\hook.cpp" />
+    <ClCompile Include="source\ImGuiEx\ImGuiEx.cpp" />
     <ClCompile Include="source\ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\ImGuiHotkeys\Hotkey.cpp" />
     <ClCompile Include="source\ImGui\backends\imgui_impl_dx11.cpp" />
@@ -44,6 +45,7 @@
     <ClInclude Include="source\core.h" />
     <ClInclude Include="source\game_classes.h" />
     <ClInclude Include="source\hook.h" />
+    <ClInclude Include="source\ImGuiEx\ImGuiEx.h" />
     <ClInclude Include="source\ImGuiFileDialog\dirent\dirent.h" />
     <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialog.h" />
     <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
@@ -86,7 +88,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>ClangCL</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -144,7 +146,7 @@
       </Optimization>
       <IntrinsicFunctions>
       </IntrinsicFunctions>
-      <AdditionalIncludeDirectories>source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>source\ImGuiEx;source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -173,7 +175,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>source\ImGuiEx;source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>

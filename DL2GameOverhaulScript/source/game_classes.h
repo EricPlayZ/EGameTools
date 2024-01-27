@@ -1,10 +1,10 @@
 #pragma once
 #include <Windows.h>
-#include <map>
-#include <vector>
-#include <string>
-#include <memory>
 #include <any>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 #include "hook.h"
 #include "utils.h"
 
@@ -99,6 +99,8 @@ namespace GamePH {
 	extern void LoopHookLifeSetHealth();
 	extern void LoopHookTogglePhotoMode();
 	extern void LoopHookMoveCameraFromForwardUpPos();
+	extern void LoopHookShowTPPModelFunc3();
+	extern void LoopHookIsNotOutOfBounds();
 
 	extern void ShowTPPModel(bool showTPPModel);
 
@@ -291,7 +293,7 @@ namespace GamePH {
 		};
 
 		float GetGameTimeDelta();
-		INT64 GetCurrentGameVersion();
+		DWORD64 GetCurrentGameVersion();
 		void TogglePhotoMode(bool doNothing = false, bool setAsOptionalCamera = false);
 
 		static GameDI_PH* Get();
@@ -301,6 +303,8 @@ namespace GamePH {
 	public:
 		union {
 			DEFINE_MEMBER_N(Engine::CoPhysicsProperty*, pCoPhysicsProperty, 0xF0);
+			DEFINE_MEMBER_N(bool, isOutOfBounds, 0x2E80);
+			DEFINE_MEMBER_N(float, outOfBoundsTimer, 0x2E84);
 		};
 
 		static PlayerObjProperties* Get();
