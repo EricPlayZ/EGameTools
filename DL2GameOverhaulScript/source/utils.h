@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <chrono>
+#include <string>
 
 enum class WindowsVersion {
 	Unknown,
@@ -32,6 +32,8 @@ namespace Utils {
 		else
 			return std::to_string(val);
 	}
+
+	extern FARPROC GetProcAddr(std::string_view module, std::string_view funcName);
 
 	extern std::string_view GetDesktopDir();
 	extern WindowsVersion GetWindowsVersion();

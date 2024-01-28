@@ -33,6 +33,7 @@
     <ClCompile Include="source\memory.cpp" />
     <ClCompile Include="source\menu\camera.cpp" />
     <ClCompile Include="source\menu\menu.cpp" />
+    <ClCompile Include="source\menu\misc.cpp" />
     <ClCompile Include="source\menu\player.cpp" />
     <ClCompile Include="source\menu\world.cpp" />
     <ClCompile Include="source\sigscan\sigscan.cpp" />
@@ -68,6 +69,7 @@
     <ClInclude Include="source\memory.h" />
     <ClInclude Include="source\menu\camera.h" />
     <ClInclude Include="source\menu\menu.h" />
+    <ClInclude Include="source\menu\misc.h" />
     <ClInclude Include="source\menu\player.h" />
     <ClInclude Include="source\menu\world.h" />
     <ClInclude Include="source\MinHook\include\MinHook.h" />

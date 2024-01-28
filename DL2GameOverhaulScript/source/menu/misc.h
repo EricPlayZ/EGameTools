@@ -1,16 +1,13 @@
 #pragma once
-#include "..\game_classes.h"
 #include "menu.h"
 	
 namespace Menu {
-	namespace World {
-		extern float time;
-
-		extern EWeather::TYPE weather;
+	namespace Misc {
+		extern KeyBindOption disableHUD;
 
 		class Tab : MenuTab {
 		public:
-			Tab() : MenuTab("World", 3) {}
+			Tab() : MenuTab("Misc", 2) {}
 			void Update() override;
 			void Render() override;
 

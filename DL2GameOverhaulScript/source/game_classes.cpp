@@ -1,11 +1,11 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include "MinHook\include\MinHook.h"
 #include "config\config.h"
 #include "game_classes.h"
 #include "memory.h"
 #include "menu\camera.h"
+#include "menu\misc.h"
 #include "menu\player.h"
 #include "print.h"
 #include "sigscan\offsets.h"
@@ -18,153 +18,101 @@ namespace Core {
 #pragma region GamePH
 namespace GamePH {
 #pragma region Hooks
-#pragma region CreatePlayerHealthModule
-	static DWORD64(*pCreatePlayerHealthModule)(DWORD64 playerHealthModule) = nullptr;
-	static DWORD64(*oCreatePlayerHealthModule)(DWORD64 playerHealthModule) = nullptr;
-	DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule) {
-		PlayerHealthModule::pPlayerHealthModule = reinterpret_cast<PlayerHealthModule*>(playerHealthModule);
-		return oCreatePlayerHealthModule(playerHealthModule);
-	}
-	void LoopHookCreatePlayerHealthModule() {
-		while (true) {
-			Sleep(250);
+	// Forward decl
+	static DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule);
+	static void detourOnPostUpdate(LPVOID pGameDI_PH2);
+	static DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos);
+	static void detourLifeSetHealth(float* pLifeHealth, float health);
+	static void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled);
+	static void detourShowTPPModelFunc3(DWORD64 a1, bool showTPPModel);
+	static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos);
+	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
+	static void detourShowUIManager(LPVOID pLevelDI, bool enabled);
 
-			if (!pCreatePlayerHealthModule)
-				pCreatePlayerHealthModule = (decltype(pCreatePlayerHealthModule))Offsets::Get_CreatePlayerHealthModule();
-			else if (!oCreatePlayerHealthModule && MH_CreateHook(pCreatePlayerHealthModule, &detourCreatePlayerHealthModule, reinterpret_cast<LPVOID*>(&oCreatePlayerHealthModule)) == MH_OK) {
-				MH_EnableHook(pCreatePlayerHealthModule);
-				break;
-			}
-		}
+#pragma region CreatePlayerHealthModule
+	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerHealthModuleHook{ &Offsets::Get_CreatePlayerHealthModule, &detourCreatePlayerHealthModule };
+
+	static DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule) {
+		PlayerHealthModule::pPlayerHealthModule = reinterpret_cast<PlayerHealthModule*>(playerHealthModule);
+		return CreatePlayerHealthModuleHook.pOriginal(playerHealthModule);
 	}
 #pragma endregion
 
 #pragma region OnPostUpdate
-	static void(*oOnPostUpdate)(LPVOID pGameDI_PH2) = nullptr;
-	void detourOnPostUpdate(LPVOID pGameDI_PH2) {
-		oOnPostUpdate(pGameDI_PH2);
+	static Hook::VTHook<GamePH::GameDI_PH2*, void(*)(LPVOID)> OnPostUpdateHook{ &GamePH::GameDI_PH2::Get, &detourOnPostUpdate, 0x3A8 };
+
+	static void detourOnPostUpdate(LPVOID pGameDI_PH2) {
+		OnPostUpdateHook.pOriginal(pGameDI_PH2);
 		Core::OnPostUpdate();
-	}
-	void LoopHookOnUpdate() {
-		GamePH::GameDI_PH2* pGameDI_PH2 = nullptr;
-
-		while (true) {
-			Sleep(250);
-
-			pGameDI_PH2 = GamePH::GameDI_PH2::Get();
-			if (!pGameDI_PH2)
-				continue;
-
-			Hook::VTHook(pGameDI_PH2, &detourOnPostUpdate, reinterpret_cast<LPVOID*>(&oOnPostUpdate), 0x3a8);
-			if (oOnPostUpdate)
-				break;
-		}
 	}
 #pragma endregion
 
 #pragma region CalculateFreeCamCollision
-	static DWORD64(*pCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
-	static DWORD64(*oCalculateFreeCamCollision)(LPVOID pFreeCamera, float* finalPos) = nullptr;
-	DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
+	static Hook::MHook<LPVOID, DWORD64(*)(LPVOID, float*)> CalculateFreeCamCollisionHook{ &Offsets::Get_CalculateFreeCamCollision, &detourCalculateFreeCamCollision };
+
+	static DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
 		if (Menu::Camera::disablePhotoModeLimits.GetValue() || Menu::Camera::freeCam.GetValue())
 			return 0;
 
-		return oCalculateFreeCamCollision(pFreeCamera, finalPos);
-	}
-	void LoopHookCalculateFreeCamCollision() {
-		while (true) {
-			Sleep(250);
-
-			if (!pCalculateFreeCamCollision)
-				pCalculateFreeCamCollision = (decltype(pCalculateFreeCamCollision))Offsets::Get_CalculateFreeCamCollision();
-			else if (!oCalculateFreeCamCollision && MH_CreateHook(pCalculateFreeCamCollision, &detourCalculateFreeCamCollision, reinterpret_cast<LPVOID*>(&oCalculateFreeCamCollision)) == MH_OK) {
-				MH_EnableHook(pCalculateFreeCamCollision);
-				break;
-			}
-		}
+		return CalculateFreeCamCollisionHook.pOriginal(pFreeCamera, finalPos);
 	}
 #pragma endregion
 
 #pragma region LifeSetHealth
-	static void(*pLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
-	static void(*oLifeSetHealth)(float* pLifeHealth, float health) = nullptr;
-	void detourLifeSetHealth(float* pLifeHealth, float health) {
+	static Hook::MHook<LPVOID, void(*)(float*, float)> LifeSetHealthHook{ &Offsets::Get_LifeSetHealth, &detourLifeSetHealth };
+
+	static void detourLifeSetHealth(float* pLifeHealth, float health) {
 		if (!Menu::Player::godMode.GetValue() && !Menu::Camera::freeCam.GetValue())
-			return oLifeSetHealth(pLifeHealth, health);
+			return LifeSetHealthHook.pOriginal(pLifeHealth, health);
 
 		GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
 		if (!playerHealthModule)
-			return oLifeSetHealth(pLifeHealth, health);
+			return LifeSetHealthHook.pOriginal(pLifeHealth, health);
 		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 		if (!iLevel || !iLevel->IsLoaded())
-			return oLifeSetHealth(pLifeHealth, health);
+			return LifeSetHealthHook.pOriginal(pLifeHealth, health);
 				
 		if (std::abs(reinterpret_cast<LONG64>(playerHealthModule) - reinterpret_cast<LONG64>(pLifeHealth)) < 0x100 && playerHealthModule->health > 0.0f)
 			return;
 
-		oLifeSetHealth(pLifeHealth, health);
-	}
-	void LoopHookLifeSetHealth() {
-		while (true) {
-			Sleep(250);
-
-			if (!pLifeSetHealth)
-				pLifeSetHealth = (decltype(pLifeSetHealth))Offsets::Get_LifeSetHealth();
-			else if (!oLifeSetHealth && MH_CreateHook(pLifeSetHealth, &detourLifeSetHealth, reinterpret_cast<LPVOID*>(&oLifeSetHealth)) == MH_OK) {
-				MH_EnableHook(pLifeSetHealth);
-				break;
-			}
-		}
+		LifeSetHealthHook.pOriginal(pLifeHealth, health);
 	}
 #pragma endregion
 
 #pragma region TogglePhotoMode
-	static void(*pTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
-	static void(*oTogglePhotoMode)(LPVOID guiPhotoModeData, bool enabled) = nullptr;
-	void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
+	static Hook::MHook<LPVOID, void(*)(LPVOID, bool)> TogglePhotoModeHook{ &Offsets::Get_TogglePhotoMode, &detourTogglePhotoMode };
+
+	static void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
 		Menu::Camera::photoMode.Set(enabled);
 
 		if (!Menu::Camera::freeCam.GetValue())
-			return oTogglePhotoMode(guiPhotoModeData, enabled);
+			return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
 		GamePH::GameDI_PH* pGameDI_PH = GamePH::GameDI_PH::Get();
 		if (!pGameDI_PH)
-			return oTogglePhotoMode(guiPhotoModeData, enabled);
+			return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
 		GamePH::FreeCamera* pFreeCam = GamePH::FreeCamera::Get();
 		if (!pFreeCam)
-			return oTogglePhotoMode(guiPhotoModeData, enabled);
+			return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
 
 		if (enabled) {
 			pGameDI_PH->TogglePhotoMode();
 			pFreeCam->AllowCameraMovement(0);
 		}
 		
-		oTogglePhotoMode(guiPhotoModeData, enabled);
-	}
-	void LoopHookTogglePhotoMode() {
-		while (true) {
-			Sleep(250);
-
-			if (!pTogglePhotoMode)
-				pTogglePhotoMode = (decltype(pTogglePhotoMode))Offsets::Get_TogglePhotoMode();
-			else if (!oTogglePhotoMode && MH_CreateHook(pTogglePhotoMode, &detourTogglePhotoMode, reinterpret_cast<LPVOID*>(&oTogglePhotoMode)) == MH_OK) {
-				MH_EnableHook(pTogglePhotoMode);
-				break;
-			}
-		}
+		TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
 	}
 #pragma endregion
 
 #pragma region ShowTPPModelFunc3
 	static Option wannaUseTPPModel{};
+	static Hook::MHook<LPVOID, void(*)(DWORD64, bool)> ShowTPPModelFunc3Hook{ &Offsets::Get_ShowTPPModelFunc3, &detourShowTPPModelFunc3 };
 
-	static void(*pShowTPPModelFunc3)(DWORD64 a1, bool showTPPModel) = nullptr;
-	static void(*oShowTPPModelFunc3)(DWORD64 a1, bool showTPPModel) = nullptr;
-	void detourShowTPPModelFunc3(DWORD64 a1, bool showTPPModel) {
+	static void detourShowTPPModelFunc3(DWORD64 a1, bool showTPPModel) {
 		wannaUseTPPModel.Set(showTPPModel);
 
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (!pgen_TPPModel) {
-			oShowTPPModelFunc3(a1, showTPPModel);
+			ShowTPPModelFunc3Hook.pOriginal(a1, showTPPModel);
 			return;
 		}
 		if (wannaUseTPPModel.HasChangedTo(false)) {
@@ -172,30 +120,17 @@ namespace GamePH {
 			pgen_TPPModel->enableTPPModel2 = true;
 			pgen_TPPModel->enableTPPModel1 = true;
 		}
-		oShowTPPModelFunc3(a1, showTPPModel);
-	}
-	void LoopHookShowTPPModelFunc3() {
-		while (true) {
-			Sleep(250);
-
-			if (!pShowTPPModelFunc3)
-				pShowTPPModelFunc3 = (decltype(pShowTPPModelFunc3))Offsets::Get_ShowTPPModelFunc3();
-			else if (!oShowTPPModelFunc3 && MH_CreateHook(pShowTPPModelFunc3, &detourShowTPPModelFunc3, reinterpret_cast<LPVOID*>(&oShowTPPModelFunc3)) == MH_OK) {
-				MH_EnableHook(pShowTPPModelFunc3);
-				break;
-			}
-		}
+		ShowTPPModelFunc3Hook.pOriginal(a1, showTPPModel);
 	}
 #pragma endregion
 
 #pragma region MoveCameraFromForwardUpPos
-	static bool waitOneMoreFrame = false;
-	static void(*pMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
-	static void(*oMoveCameraFromForwardUpPos)(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) = nullptr;
-	void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) {
+	static Hook::MHook<LPVOID, void(*)(LPVOID, float*, float*, Vector3*)> MoveCameraFromForwardUpPosHook{ &Offsets::Get_MoveCameraFromForwardUpPos, &detourMoveCameraFromForwardUpPos };
+
+	static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) {
 		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 		if (!iLevel || !iLevel->IsLoaded())
-			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
+			return MoveCameraFromForwardUpPosHook.pOriginal(pCBaseCamera, a3, a4, pos);
 
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (pgen_TPPModel) {
@@ -255,11 +190,11 @@ namespace GamePH {
 		}
 
 		if (!Menu::Camera::thirdPersonCamera.GetValue() || Menu::Camera::photoMode.GetValue() || Menu::Camera::freeCam.GetValue() || !pos)
-			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
+			return MoveCameraFromForwardUpPosHook.pOriginal(pCBaseCamera, a3, a4, pos);
 
 		CameraFPPDI* viewCam = static_cast<CameraFPPDI*>(iLevel->GetViewCamera());
 		if (!viewCam)
-			return oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
+			return MoveCameraFromForwardUpPosHook.pOriginal(pCBaseCamera, a3, a4, pos);
 
 		Vector3 forwardVec{};
 		viewCam->GetForwardVector(&forwardVec);
@@ -270,42 +205,32 @@ namespace GamePH {
 
 		*pos = newCamPos;
 
-		oMoveCameraFromForwardUpPos(pCBaseCamera, a3, a4, pos);
-	}
-	void LoopHookMoveCameraFromForwardUpPos() {
-		while (true) {
-			Sleep(250);
-
-			if (!pMoveCameraFromForwardUpPos)
-				pMoveCameraFromForwardUpPos = (decltype(pMoveCameraFromForwardUpPos))Offsets::Get_MoveCameraFromForwardUpPos();
-			else if (!oMoveCameraFromForwardUpPos && MH_CreateHook(pMoveCameraFromForwardUpPos, &detourMoveCameraFromForwardUpPos, reinterpret_cast<LPVOID*>(&oMoveCameraFromForwardUpPos)) == MH_OK) {
-				MH_EnableHook(pMoveCameraFromForwardUpPos);
-				break;
-			}
-		}
+		MoveCameraFromForwardUpPosHook.pOriginal(pCBaseCamera, a3, a4, pos);
 	}
 #pragma endregion
 
 #pragma region IsNotOutOfBounds
-	static bool(*pIsNotOutOfBounds)(LPVOID pInstance, DWORD64 a2) = nullptr;
-	static bool(*oIsNotOutOfBounds)(LPVOID pInstance, DWORD64 a2) = nullptr;
-	bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2) {
+	static Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfBoundsHook{ &Offsets::Get_IsNotOutOfBounds, &detourIsNotOutOfBounds };
+
+	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2) {
 		if (Menu::Player::disableOutOfBoundsTimer.GetValue())
 			return true;
 
-		return oIsNotOutOfBounds(pInstance, a2);
+		return IsNotOutOfBoundsHook.pOriginal(pInstance, a2);
 	}
-	void LoopHookIsNotOutOfBounds() {
-		while (true) {
-			Sleep(250);
+#pragma endregion
 
-			if (!pIsNotOutOfBounds)
-				pIsNotOutOfBounds = (decltype(pIsNotOutOfBounds))Offsets::Get_IsNotOutOfBounds();
-			else if (!oIsNotOutOfBounds && MH_CreateHook(pIsNotOutOfBounds, &detourIsNotOutOfBounds, reinterpret_cast<LPVOID*>(&oIsNotOutOfBounds)) == MH_OK) {
-				MH_EnableHook(pIsNotOutOfBounds);
-				break;
-			}
-		}
+#pragma region ShowUIManager
+	static LPVOID GetShowUIManager() {
+		return Utils::GetProcAddr("engine_x64_rwdi.dll", "?ShowUIManager@ILevel@@QEAAX_N@Z");
+	}
+	static Hook::MHook<LPVOID, void(*)(LPVOID, bool)> ShowUIManagerHook{ &GetShowUIManager, &detourShowUIManager };
+
+	static void detourShowUIManager(LPVOID pLevelDI, bool enabled) {
+		if (Menu::Misc::disableHUD.GetValue())
+			enabled = false;
+
+		ShowUIManagerHook.pOriginal(pLevelDI, enabled);
 	}
 #pragma endregion
 #pragma endregion
@@ -325,13 +250,13 @@ namespace GamePH {
 		DWORD64 tppFunc2Addr = ShowTPPModelFunc2(pGameDI_PH);
 		if (!tppFunc2Addr)
 			return;
-		if (!pShowTPPModelFunc3)
+		if (!ShowTPPModelFunc3Hook.pTarget)
 			return;
 		gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 		if (!pgen_TPPModel)
 			return;
 		
-		pShowTPPModelFunc3(tppFunc2Addr, showTPPModel);
+		ShowTPPModelFunc3Hook.pTarget(tppFunc2Addr, showTPPModel);
 	}
 #pragma endregion
 
@@ -499,7 +424,7 @@ namespace GamePH {
 		__try {
 			if (!pPlayerHealthModule)
 				return nullptr;
-			if (!*reinterpret_cast<PDWORD64*>(pPlayerHealthModule))
+			if (!*reinterpret_cast<LPVOID*>(pPlayerHealthModule))
 				return nullptr;
 
 			return pPlayerHealthModule;
@@ -534,18 +459,11 @@ namespace GamePH {
 
 #pragma region CameraFPPDI
 	Vector3* CameraFPPDI::GetForwardVector(Vector3* outForwardVec) {
-		Vector3* (*pGetForwardVector)(LPVOID pCameraFPPDI, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+		Vector3* (*pGetForwardVector)(LPVOID pCameraFPPDI, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
 		if (!pGetForwardVector)
 			return nullptr;
 
 		return pGetForwardVector(this, outForwardVec);
-	}
-	Vector3* CameraFPPDI::GetUpVector(Vector3* outUpVec) {
-		Vector3* (*pGetUpVector)(LPVOID pCameraFPPDI, Vector3 * outUpVec) = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
-		if (!pGetUpVector)
-			return nullptr;
-
-		return pGetUpVector(this, outUpVec);
 	}
 	Vector3* CameraFPPDI::GetPosition(Vector3* posIN) {
 		return Memory::CallVT<181, Vector3*>(this, posIN);
@@ -570,18 +488,11 @@ namespace GamePH {
 
 #pragma region FreeCamera
 	Vector3* FreeCamera::GetForwardVector(Vector3* outForwardVec) {
-		Vector3* (*pGetForwardVector)(LPVOID pFreeCamera, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Offsets::Get_GetForwardVector();
+		Vector3* (*pGetForwardVector)(LPVOID pFreeCamera, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
 		if (!pGetForwardVector)
 			return nullptr;
 
 		return pGetForwardVector(this, outForwardVec);
-	}
-	Vector3* FreeCamera::GetUpVector(Vector3* outUpVec) {
-		Vector3* (*pGetUpVector)(LPVOID pFreeCamera, Vector3 * outUpVec) = (decltype(pGetUpVector))Offsets::Get_GetUpVector();
-		if (!pGetUpVector)
-			return nullptr;
-
-		return pGetUpVector(this, outUpVec);
 	}
 	Vector3* FreeCamera::GetPosition(Vector3* posIN) {
 		return Memory::CallVT<181, Vector3*>(this, posIN);
@@ -635,20 +546,14 @@ namespace GamePH {
 	namespace TimeWeather {
 #pragma region CSystem
 		void CSystem::SetForcedWeather(int weather) {
-			if (!Offsets::Get_SetForcedWeather())
-				return;
-
-			void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Offsets::Get_SetForcedWeather();
+			void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Utils::GetProcAddr("engine_x64_rwdi.dll", "?SetForcedWeather@CSystem@TimeWeather@@QEAAXW4TYPE@EWeather@@VApiDebugAccess@2@@Z");
 			if (!pSetForcedWeather)
 				return;
 
 			pSetForcedWeather(this, weather);
 		}
 		int CSystem::GetCurrentWeather() {
-			if (!Offsets::Get_GetCurrentWeather())
-				return EWeather::TYPE::Default;
-
-			int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Offsets::Get_GetCurrentWeather();
+			int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetCurrentWeather@CSystem@TimeWeather@@QEBA?AW4TYPE@EWeather@@XZ");
 			if (!pGetCurrentWeather)
 				return EWeather::TYPE::Default;
 
@@ -676,10 +581,7 @@ namespace GamePH {
 
 #pragma region LevelDI
 	bool LevelDI::IsLoading() {
-		if (!Offsets::Get_IsLoading())
-			return true;
-
-		bool(*pIsLoading)(LPVOID iLevel) = (decltype(pIsLoading))Offsets::Get_IsLoading();
+		bool(*pIsLoading)(LPVOID iLevel) = (decltype(pIsLoading))Utils::GetProcAddr("engine_x64_rwdi.dll", "?IsLoading@ILevel@@QEBA_NXZ");
 		if (!pIsLoading)
 			return true;
 
@@ -699,10 +601,7 @@ namespace GamePH {
 		return false;
 	}
 	LPVOID LevelDI::GetViewCamera() {
-		if (!Offsets::Get_GetViewCamera())
-			return nullptr;
-
-		LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Offsets::Get_GetViewCamera();
+		LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetViewCamera@ILevel@@QEBAPEAVIBaseCamera@@XZ");
 		if (!pGetViewCamera)
 			return nullptr;
 
@@ -717,19 +616,19 @@ namespace GamePH {
 	float LevelDI::GetTimePlayed() {
 		return Memory::CallVT<317, float>(this);
 	}
+	void LevelDI::ShowUIManager(bool enabled) {
+		void(*pShowUIManager)(LPVOID iLevel, bool enabled) = (decltype(pShowUIManager))Utils::GetProcAddr("engine_x64_rwdi.dll", "?ShowUIManager@ILevel@@QEAAX_N@Z");
+		if (!pShowUIManager)
+			return;
+
+		pShowUIManager(this, enabled);
+	}
 	TimeWeather::CSystem* LevelDI::GetTimeWeatherSystem() {
-		__try {
-			if (!Offsets::Get_GetTimeWeatherSystem())
-				return nullptr;
-
-			TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Offsets::Get_GetTimeWeatherSystem();
-			if (!pGetTimeWeatherSystem)
-				return nullptr;
-
-			return pGetTimeWeatherSystem(this);
-		} __except (EXCEPTION_EXECUTE_HANDLER) {
+		TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetTimeWeatherSystem@ILevel@@QEBAPEAVCSystem@TimeWeather@@XZ");
+		if (!pGetTimeWeatherSystem)
 			return nullptr;
-		}
+
+		return pGetTimeWeatherSystem(this);
 	}
 
 	LevelDI* LevelDI::Get() {
@@ -826,10 +725,7 @@ namespace GamePH {
 
 #pragma region GameDI_PH
 	float GameDI_PH::GetGameTimeDelta() {
-		if (!Offsets::Get_GetGameTimeDelta())
-			return -1.0f;
-
-		float(*pGetGameTimeDelta)(LPVOID pGameDI_PH) = (decltype(pGetGameTimeDelta))Offsets::Get_GetGameTimeDelta();
+		float(*pGetGameTimeDelta)(LPVOID pGameDI_PH) = (decltype(pGetGameTimeDelta))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetGameTimeDelta@IGame@@QEBAMXZ");
 		if (!pGetGameTimeDelta)
 			return -1.0f;
 

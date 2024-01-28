@@ -4,6 +4,7 @@
 #include "..\core.h"
 #include "..\game_classes.h"
 #include "..\sigscan\offsets.h"
+#include "camera.h"
 #include "menu.h"
 
 namespace Menu {
@@ -27,7 +28,7 @@ namespace Menu {
 		static const int baseFOV = 57;
 		static const float baseSafezoneFOVReduction = -10.0f;
 
-		static void UpdateFOVWhileMenuClosed() {
+		static void UpdateFOV() {
 			if (menuToggle.GetValue())
 				return;
 
@@ -97,21 +98,25 @@ namespace Menu {
 			}
 		}
 
-		void Update() {
-			UpdateFOVWhileMenuClosed();
+		Tab Tab::instance{};
+		void Tab::Update() {
+			UpdateFOV();
 			FreeCamUpdate();
 			UpdatePlayerVars();
 		}
-
-		void Render() {
+		void Tab::Render() {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			ImGui::SeparatorText("Free Camera");
-			ImGui::BeginDisabled(photoMode.GetValue(), &freeCam); {
+			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || photoMode.GetValue(), &freeCam); {
 				ImGui::Checkbox("Enabled##FreeCam", &freeCam);
 				ImGui::EndDisabled();
 			}
 			ImGui::Hotkey("##FreeCamToggleKey", freeCam);
 			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.0f, 100.0f);
-			ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCamera);
+			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded(), &teleportPlayerToCamera); {
+				ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCamera);
+				ImGui::EndDisabled();
+			}
 			ImGui::Hotkey("##TeleportPlayerToCamToggleKey", teleportPlayerToCamera);
 
 			ImGui::SeparatorText("Third Person Camera");

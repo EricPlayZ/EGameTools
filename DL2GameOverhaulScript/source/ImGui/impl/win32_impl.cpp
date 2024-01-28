@@ -22,7 +22,7 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 		if (ImGui::isAnyHotkeyBtnPressed || !ImGui::timeSinceHotkeyBtnPressed.GetTimePassed() || KeyBindOption::wasAnyKeyPressed)
 			break;
 
-		for (auto& option : KeyBindOption::GetInstances()) {
+		for (auto& option : *KeyBindOption::GetInstances()) {
 			if (option->GetImGuiDisabled())
 				continue;
 			if (wParam == option->GetKeyBind()) {
@@ -36,7 +36,7 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 		if (!KeyBindOption::wasAnyKeyPressed)
 			break;
 
-		for (auto& option : KeyBindOption::GetInstances()) {
+		for (auto& option : *KeyBindOption::GetInstances()) {
 			if (wParam == option->GetKeyBind())
 				KeyBindOption::wasAnyKeyPressed = false;
 		}

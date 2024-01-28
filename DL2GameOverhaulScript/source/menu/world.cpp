@@ -1,5 +1,6 @@
 #include <imgui.h>
 #include "..\game_classes.h"
+#include "world.h"
 
 namespace Menu {
 	namespace World {
@@ -16,10 +17,13 @@ namespace Menu {
 			"Stormy"
 		};
 
-		void Render() {
+		Tab Tab::instance{};
+		void Tab::Update() {}
+		void Tab::Render() {
 			GamePH::DayNightCycle* dayNightCycle = GamePH::DayNightCycle::Get();
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			ImGui::SeparatorText("Misc##World");
-			ImGui::BeginDisabled(!Engine::CBulletPhysicsCharacter::Get() || !dayNightCycle || dayNightCycle->time1 == 0.0f); {
+			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle || dayNightCycle->time1 == 0.0f); {
 				if (ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp) && dayNightCycle)
 					dayNightCycle->SetDaytime(time);
 				else if (dayNightCycle)
@@ -28,7 +32,7 @@ namespace Menu {
 			}
 
 			GamePH::TimeWeather::CSystem* timeWeatherSystem = GamePH::TimeWeather::CSystem::Get();
-			const bool weatherDisabledFlag = !Engine::CBulletPhysicsCharacter::Get() || !timeWeatherSystem;
+			const bool weatherDisabledFlag = !iLevel || !iLevel->IsLoaded() || !timeWeatherSystem;
 
 			ImGui::SeparatorText("Weather");
 			ImGui::BeginDisabled(weatherDisabledFlag); {

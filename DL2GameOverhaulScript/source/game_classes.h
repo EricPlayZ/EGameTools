@@ -93,15 +93,6 @@ namespace Engine {
 }
 
 namespace GamePH {
-	extern void LoopHookCreatePlayerHealthModule();
-	extern void LoopHookOnUpdate();
-	extern void LoopHookCalculateFreeCamCollision();
-	extern void LoopHookLifeSetHealth();
-	extern void LoopHookTogglePhotoMode();
-	extern void LoopHookMoveCameraFromForwardUpPos();
-	extern void LoopHookShowTPPModelFunc3();
-	extern void LoopHookIsNotOutOfBounds();
-
 	extern void ShowTPPModel(bool showTPPModel);
 
 	class PlayerVariables {
@@ -247,6 +238,7 @@ namespace GamePH {
 		float GetTimeDelta();
 		void SetViewCamera(LPVOID viewCam);
 		float GetTimePlayed();
+		void ShowUIManager(bool enabled);
 		TimeWeather::CSystem* GetTimeWeatherSystem();
 
 		static LevelDI* Get();

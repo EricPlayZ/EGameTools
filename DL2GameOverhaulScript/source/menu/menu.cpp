@@ -1,9 +1,6 @@
 #include <Hotkey.h>
 #include <imgui.h>
-#include "camera.h"
 #include "menu.h"
-#include "player.h"
-#include "world.h"
 
 namespace Menu {
 	static const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
@@ -20,17 +17,11 @@ namespace Menu {
         ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
         ImGui::Begin("EGameTools", &menuToggle.value, windowFlags); {
             if (ImGui::BeginTabBar("##MainTabBar")) {
-                if (ImGui::BeginTabItem("Player")) {
-                    Player::Render();
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Camera")) {
-                    Camera::Render();
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("World")) {
-                    World::Render();
-                    ImGui::EndTabItem();
+                for (auto& tab : *MenuTab::GetInstances()) {
+                    if (ImGui::BeginTabItem(tab.second->tabName.data())) {
+                        tab.second->Render();
+                        ImGui::EndTabItem();
+                    }
                 }
                 ImGui::EndTabBar();
             }

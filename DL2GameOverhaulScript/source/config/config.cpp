@@ -2,7 +2,11 @@
 #include <array>
 #include <filesystem>
 #include <functional>
+#include "..\menu\camera.h"
 #include "..\menu\menu.h"
+#include "..\menu\misc.h"
+#include "..\menu\player.h"
+#include "..\menu\world.h"
 #include "..\print.h"
 #include "..\utils.h"
 #include "config.h"
@@ -4024,6 +4028,7 @@ namespace Config {
 		{ "Menu:Keybinds", "TeleportPlayerToCameraToggleKey", std::string("VK_F4"), &Menu::Camera::teleportPlayerToCamera, String},
 		{ "Menu:Keybinds", "ThirdPersonToggleKey", std::string("VK_F1"), &Menu::Camera::thirdPersonCamera, String},
 		{ "Menu:Keybinds", "UseTPPModelToggleKey", std::string("VK_F2"), &Menu::Camera::tpUseTPPModel, String},
+		{ "Menu:Keybinds", "DisableHUDToggleKey", std::string("VK_F8"), &Menu::Misc::disableHUD, String},
 		{ "Player:Misc", "GodMode", false, &Menu::Player::godMode, OPTION },
 		{ "Player:Misc", "DisableOutOfBoundsTimer", true, &Menu::Player::disableOutOfBoundsTimer, OPTION },
 		{ "Player:PlayerVariables", "Enabled", false, &Menu::Player::playerVariables, OPTION },
@@ -4132,9 +4137,13 @@ namespace Config {
 			std::string strValue{};
 			for (auto& entry : configVariablesDefault) {
 				switch (entry.type) {
-				case OPTION:
-					reinterpret_cast<Option*>(entry.optionPtr)->SetBothValues(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
+				case OPTION: {
+					Option* option = reinterpret_cast<Option*>(entry.optionPtr);
+					if (option->GetImGuiDisabled())
+						break;
+					option->SetBothValues(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
 					break;
+				}
 				case Float:
 					*reinterpret_cast<float*>(entry.optionPtr) = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
 					break;

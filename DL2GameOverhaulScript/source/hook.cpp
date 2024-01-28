@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <iostream>
-#include "sigscan\offsets.h"
 #include "hook.h"
+#include "sigscan\offsets.h"
 
 namespace Hook {
 	// VTable hooking
@@ -17,7 +17,7 @@ namespace Hook {
 		VirtualProtect(mbi.BaseAddress, mbi.RegionSize, protection, &mbi.Protect);
 	}
 
-	void VTHook(LPVOID instance, LPVOID pDetour, LPVOID* ppOriginal, const DWORD offset) {
+	void HookVT(LPVOID instance, LPVOID pDetour, LPVOID* ppOriginal, const DWORD offset) {
 		PDWORD64* entry = reinterpret_cast<PDWORD64*>(*reinterpret_cast<DWORD64*>(instance) + offset);
 		*ppOriginal = *entry;
 

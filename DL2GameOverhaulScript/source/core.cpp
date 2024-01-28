@@ -11,16 +11,8 @@
 #include "menu\menu.h"
 #include "sigscan\offsets.h"
 
-#pragma region Option
-std::set<Option*> Option::instances{};
-std::set<Option*> Option::GetInstances() { return instances; };
-#pragma endregion
-
 #pragma region KeyBindOption
 bool KeyBindOption::wasAnyKeyPressed = false;
-
-std::set<KeyBindOption*> KeyBindOption::instances{};
-std::set<KeyBindOption*> KeyBindOption::GetInstances() { return instances; };
 #pragma endregion
 
 namespace Core {
@@ -121,8 +113,8 @@ namespace Core {
 		if (!GamePH::PlayerVariables::gotPlayerVars)
 			GamePH::PlayerVariables::GetPlayerVars();
 
-		Menu::Player::Update();
-		Menu::Camera::Update();
+		for (auto& menuTab : *Menu::MenuTab::GetInstances())
+			menuTab.second->Update();
 
 		/*Engine::CRTTI* g_BackgroundModuleScreenController = GamePH::BackgroundModuleScreenController::Get();
 		if (!g_BackgroundModuleScreenController)
@@ -146,14 +138,10 @@ namespace Core {
 		hookRendererThread = std::thread(LoopHookRenderer);
 		hookRendererThread.detach();
 
-		GamePH::LoopHookCreatePlayerHealthModule();
-		GamePH::LoopHookOnUpdate();
-		GamePH::LoopHookCalculateFreeCamCollision();
-		GamePH::LoopHookLifeSetHealth();
-		GamePH::LoopHookTogglePhotoMode();
-		GamePH::LoopHookMoveCameraFromForwardUpPos();
-		GamePH::LoopHookShowTPPModelFunc3();
-		GamePH::LoopHookIsNotOutOfBounds();
+		for (auto& hook : *Hook::HookBase::GetInstances())
+			hook->HookLoop();
+		for (auto& hook : *Hook::HookBase::GetInstances())
+			hook->HookLoop();
 
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);

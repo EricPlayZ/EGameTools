@@ -1,5 +1,6 @@
 #pragma once
 #include "..\core.h"
+#include "menu.h"
 
 namespace Menu {
 	namespace Camera {
@@ -19,7 +20,13 @@ namespace Menu {
 		extern Option disablePhotoModeLimits;
 		extern Option disableSafezoneFOVReduction;
 
-		extern void Update();
-		extern void Render();
+		class Tab : MenuTab {
+		public:
+			Tab() : MenuTab("Camera", 1) {}
+			void Update() override;
+			void Render() override;
+
+			static Tab instance;
+		};
 	}
 }

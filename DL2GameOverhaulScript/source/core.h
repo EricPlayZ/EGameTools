@@ -21,9 +21,9 @@ struct Key {
 
 class Option {
 public:
-    Option() { instances.insert(this); };
-    ~Option() { instances.erase(this); }
-    static std::set<Option*> GetInstances();
+    Option() { GetInstances()->insert(this); };
+    ~Option() { GetInstances()->erase(this); }
+    static std::set<Option*>* GetInstances() { static std::set<Option*> instances{}; return &instances; };
 
     bool value = false;
 
@@ -41,16 +41,14 @@ public:
 private:
     bool imGuiDisabled = false;
 	bool previousValue = false;
-
-    static std::set<Option*> instances;
 };
 class KeyBindOption : public Option {
 public:
     static bool wasAnyKeyPressed;
 
-    KeyBindOption(int keyCode) : keyCode(keyCode) { instances.insert(this); };
-    ~KeyBindOption() { instances.erase(this); }
-    static std::set<KeyBindOption*> GetInstances();
+    KeyBindOption(int keyCode) : keyCode(keyCode) { GetInstances()->insert(this); };
+    ~KeyBindOption() { GetInstances()->erase(this); }
+    static std::set<KeyBindOption*>* GetInstances() { static std::set<KeyBindOption*> instances{}; return &instances; };
 
     const char* ToString() {
         if (const auto it = std::ranges::find(keyMap, keyCode, &Key::code); it != keyMap.end())
@@ -212,8 +210,6 @@ private:
         { "]", VK_OEM_6, ImGuiKey_RightBracket },
         { "`", VK_OEM_3, ImGuiKey_GraveAccent }
     });
-
-    static std::set<KeyBindOption*> instances;
 };
 
 namespace Core {

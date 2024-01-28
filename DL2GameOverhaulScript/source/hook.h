@@ -1,6 +1,8 @@
 #pragma once
 #include <Windows.h>
 #include <functional>
+#include <set>
+#include "MinHook\include\MinHook.h"
 
 namespace Hook {
 	struct DETOUR_INFO {
@@ -18,7 +20,7 @@ namespace Hook {
 		}
 	};
 
-	extern void VTHook(LPVOID instance, LPVOID pDetour, LPVOID* ppOriginal, const DWORD offset);
+	extern void HookVT(LPVOID instance, LPVOID pDetour, LPVOID* ppOriginal, const DWORD offset);
 
 	extern DETOUR_INFO MidFuncHook(LPVOID pTarget, LPVOID hookedFunc, const size_t nops = 0, const size_t bytesToSkip = 0);
 
@@ -35,5 +37,70 @@ namespace Hook {
 		void Enable();
 		void Disable();
 		~BreakpointHook();
+	};
+
+	class HookBase {
+	public:
+		HookBase() { GetInstances()->insert(this); }
+		~HookBase() { GetInstances()->erase(this); }
+		static std::set<HookBase*>* GetInstances() { static std::set<HookBase*> instances{}; return &instances; };
+
+		virtual void HookLoop() {};
+	};
+	template <typename GetTargetOffsetRetType, typename OrigType>
+	class MHook : HookBase {
+	public:
+		MHook(GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour) : pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour) {}
+
+		void HookLoop() override {
+			while (true) {
+				Sleep(250);
+
+				if (!pGetOffsetFunc)
+					continue;
+
+				if (!pTarget)
+					pTarget = reinterpret_cast<OrigType>(pGetOffsetFunc());
+				else if (!pOriginal && MH_CreateHook(pTarget, pDetour, reinterpret_cast<LPVOID*>(&pOriginal)) == MH_OK) {
+					MH_EnableHook(pTarget);
+					break;
+				}
+			}
+		}
+
+		OrigType pOriginal = nullptr;
+		OrigType pTarget = nullptr;
+	private:
+		GetTargetOffsetRetType(*pGetOffsetFunc)()  = nullptr;
+		OrigType pDetour = nullptr;
+	};
+	template <typename GetTargetOffsetRetType, typename OrigType>
+	class VTHook : HookBase {
+	public:
+		VTHook(GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour, DWORD offset) : pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour), offset(offset) {}
+
+		void HookLoop() override {
+			while (true) {
+				Sleep(250);
+
+				if (!pGetOffsetFunc)
+					continue;
+
+				if (!pInstance)
+					pInstance = pGetOffsetFunc();
+				else if (!pOriginal) {
+					Hook::HookVT(pInstance, pDetour, reinterpret_cast<LPVOID*>(&pOriginal), offset);
+					break;
+				}
+			}
+		}
+
+		OrigType pOriginal = nullptr;
+	private:
+		GetTargetOffsetRetType(*pGetOffsetFunc)() = nullptr;
+		LPVOID pInstance = nullptr;
+		OrigType pDetour = nullptr;
+
+		DWORD offset = 0x0;
 	};
 }

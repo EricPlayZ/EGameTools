@@ -12,6 +12,11 @@ namespace Utils {
 
         auto end = clock::now();
         long timePassedMs = static_cast<long>((end - start).count());
+
+        if (timePassedMs < 0) {
+            start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+            return false;
+        }
         
         if (timePassedMs >= timeToPass)
             timePassed = true;
@@ -29,6 +34,14 @@ namespace Utils {
 
         str.replace(start_pos, from.length(), to);
         return true;
+    }
+
+    FARPROC GetProcAddr(std::string_view module, std::string_view funcName) {
+        HMODULE moduleHandle = GetModuleHandleA(module.data());
+        if (!moduleHandle)
+            return nullptr;
+
+        return GetProcAddress(moduleHandle, funcName.data());
     }
 
     std::string_view GetDesktopDir() {
