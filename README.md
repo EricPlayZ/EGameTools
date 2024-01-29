@@ -3,8 +3,10 @@
 <b>EGameTools (short for Eric's Game Tools) is a mod menu developed in C++ which aims to add additional features such as FreeCam, Third Person, Weather and Time control, etc. which the game does not provide by default and also to help ease mod developers in the process of creating mods.</b><br>
 <img src="https://i.imgur.com/M9VP0cv.png"/><br>
 <b>PLAYER</b><br>
+- Player Health slider<br>
 - God Mode<br>
 - Freeze Player<br>
+- Disable Out of Bounds Timer<br>
 - Player Variables editing (with the ability to save and load to/from a `player_variables.scr`, restore to default values)<br><br>
 <b>CAMERA</b><br>
 - FreeCam<br>
@@ -13,6 +15,8 @@
 - FOV slider<br>
 - Disable PhotoMode Limits<br>
 - Disable Safezone FOV Reduction<br><br>
+<b>MISC</b><br>
+- Disable HUD<br><br>
 <b>WORLD</b><br>
 - Time slider<br>
 - Weather control<br><br>
