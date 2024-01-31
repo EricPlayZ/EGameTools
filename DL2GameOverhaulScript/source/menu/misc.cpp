@@ -13,6 +13,12 @@ namespace Menu {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			if (!iLevel)
 				return;
+			else if (!iLevel->IsLoaded() && disableHUD.GetValue()) {
+				disableHUD.SetBothValues(false);
+				iLevel->ShowUIManager(true);
+
+				return;
+			}
 
 			if (disableHUD.HasChanged()) {
 				disableHUD.SetPrevValue(disableHUD.GetValue());
@@ -22,9 +28,9 @@ namespace Menu {
 		void Tab::Render() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			ImGui::SeparatorText("Misc##Misc");
-			ImGui::BeginDisabled(!iLevel->IsLoaded(), &disableHUD); {
+			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded(), &disableHUD); {
 				ImGui::Checkbox("Disable HUD", &disableHUD);
-				ImGui::Hotkey("##GodModeToggleKey", disableHUD);
+				ImGui::Hotkey("##DisableHUDToggleKey", disableHUD);
 				ImGui::EndDisabled();
 			}
 		}

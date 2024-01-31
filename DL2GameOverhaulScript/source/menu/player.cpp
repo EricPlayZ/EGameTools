@@ -6037,7 +6037,7 @@ namespace Menu {
 			if (lastQuotePos == std::string::npos)
 				return {};
 
-			return str.substr(firstQuotePos + 1, lastQuotePos - firstQuotePos - 1);
+			return str.substr(thirdQuotePos + 1, lastQuotePos - thirdQuotePos - 1);
 		}
         static void replaceParamValue(std::string& str, const std::string& newValue) {
 			const std::string value = getParamValue(str);
