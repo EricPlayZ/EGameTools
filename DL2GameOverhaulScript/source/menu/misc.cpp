@@ -27,6 +27,10 @@ namespace Menu {
 				ImGui::Hotkey("##GodModeToggleKey", disableHUD);
 				ImGui::EndDisabled();
 			}
+			if (ImGui::Button("Reload Jump Params")) {
+				char(*pReloadJumps)() = (decltype(pReloadJumps))reinterpret_cast<LPVOID>(reinterpret_cast<DWORD64>(GetModuleHandle("gamedll_ph_x64_rwdi.dll")) + 0xF900A0);
+				pReloadJumps();
+			}
 		}
 	}
 }

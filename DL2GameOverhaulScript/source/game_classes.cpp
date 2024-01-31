@@ -28,6 +28,8 @@ namespace GamePH {
 	static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos);
 	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 	static void detourShowUIManager(LPVOID pLevelDI, bool enabled);
+	//static bool detourIs_dev_tools(LPVOID pInstance);
+	static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DWORD64 a4, DWORD64 a5, DWORD64 a6, char a7, DWORD64 a8, DWORD64 a9);
 
 #pragma region CreatePlayerHealthModule
 	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerHealthModuleHook{ &Offsets::Get_CreatePlayerHealthModule, &detourCreatePlayerHealthModule };
@@ -233,6 +235,32 @@ namespace GamePH {
 		ShowUIManagerHook.pOriginal(pLevelDI, enabled);
 	}
 #pragma endregion
+
+/*#pragma region is_dev_tools
+	static LPVOID GetIs_dev_tools() {
+		return Utils::GetProcAddr("filesystem_x64_rwdi.dll", "?is_dev_tools@fs@@YA_NXZ");
+	}
+	static Hook::MHook<LPVOID, bool(*)(LPVOID)> is_dev_toolsHook{ &GetIs_dev_tools, &detourIs_dev_tools };
+
+	static bool detourIs_dev_tools(LPVOID pInstance) {
+		return true;
+	}
+#pragma endregion*/
+
+/*#pragma region PossibleLoadScrFile
+static LPVOID GetPossibleLoadScrFile() {
+	return reinterpret_cast<LPVOID>(reinterpret_cast<DWORD64>(GetModuleHandle("gamedll_ph_x64_rwdi.dll")) + 0x171D830);
+}
+static Hook::MHook<LPVOID, DWORD64(*)(char*, const char*, char, DWORD64, DWORD64, DWORD64, char, DWORD64, DWORD64)> PossibleLoadScrFileHook{ &GetPossibleLoadScrFile, &detourPossibleLoadScrFile };
+
+static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DWORD64 a4, DWORD64 a5, DWORD64 a6, char a7, DWORD64 a8, DWORD64 a9) {
+	if (!strcmp(file, "jump_parameters.scr")) {
+		char file2[] = "C:\\Users\\EricPlayZ\\Desktop\\jump_parameters.scr";
+		return PossibleLoadScrFileHook.pOriginal(file2, a2, true, a4, a5, a6, a7, a8, a9);
+	}
+	return PossibleLoadScrFileHook.pOriginal(file, a2, a3, a4, a5, a6, a7, a8, a9);
+}
+#pragma endregion*/
 #pragma endregion
 
 #pragma region OtherFuncs
