@@ -487,11 +487,15 @@ static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DW
 
 #pragma region CameraFPPDI
 	Vector3* CameraFPPDI::GetForwardVector(Vector3* outForwardVec) {
-		Vector3* (*pGetForwardVector)(LPVOID pCameraFPPDI, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
-		if (!pGetForwardVector)
-			return nullptr;
+		__try {
+			Vector3* (*pGetForwardVector)(LPVOID pCameraFPPDI, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
+			if (!pGetForwardVector)
+				return nullptr;
 
-		return pGetForwardVector(this, outForwardVec);
+			return pGetForwardVector(this, outForwardVec);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
 	}
 	Vector3* CameraFPPDI::GetPosition(Vector3* posIN) {
 		return Memory::CallVT<181, Vector3*>(this, posIN);
@@ -516,11 +520,15 @@ static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DW
 
 #pragma region FreeCamera
 	Vector3* FreeCamera::GetForwardVector(Vector3* outForwardVec) {
-		Vector3* (*pGetForwardVector)(LPVOID pFreeCamera, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
-		if (!pGetForwardVector)
-			return nullptr;
+		__try {
+			Vector3* (*pGetForwardVector)(LPVOID pFreeCamera, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
+			if (!pGetForwardVector)
+				return nullptr;
 
-		return pGetForwardVector(this, outForwardVec);
+			return pGetForwardVector(this, outForwardVec);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
 	}
 	Vector3* FreeCamera::GetPosition(Vector3* posIN) {
 		return Memory::CallVT<181, Vector3*>(this, posIN);
@@ -574,18 +582,26 @@ static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DW
 	namespace TimeWeather {
 #pragma region CSystem
 		void CSystem::SetForcedWeather(int weather) {
-			void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Utils::GetProcAddr("engine_x64_rwdi.dll", "?SetForcedWeather@CSystem@TimeWeather@@QEAAXW4TYPE@EWeather@@VApiDebugAccess@2@@Z");
-			if (!pSetForcedWeather)
-				return;
+			__try {
+				void(*pSetForcedWeather)(LPVOID timeWeatherSystem, int weather) = (decltype(pSetForcedWeather))Utils::GetProcAddr("engine_x64_rwdi.dll", "?SetForcedWeather@CSystem@TimeWeather@@QEAAXW4TYPE@EWeather@@VApiDebugAccess@2@@Z");
+				if (!pSetForcedWeather)
+					return;
 
-			pSetForcedWeather(this, weather);
+				pSetForcedWeather(this, weather);
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return;
+			}
 		}
 		int CSystem::GetCurrentWeather() {
-			int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetCurrentWeather@CSystem@TimeWeather@@QEBA?AW4TYPE@EWeather@@XZ");
-			if (!pGetCurrentWeather)
-				return EWeather::TYPE::Default;
+			__try {
+				int(*pGetCurrentWeather)(LPVOID timeWeatherSystem) = (decltype(pGetCurrentWeather))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetCurrentWeather@CSystem@TimeWeather@@QEBA?AW4TYPE@EWeather@@XZ");
+				if (!pGetCurrentWeather)
+					return EWeather::TYPE::Default;
 
-			return pGetCurrentWeather(this);
+				return pGetCurrentWeather(this);
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return EWeather::TYPE::Default;
+			}
 		}
 
 		CSystem* CSystem::Get() {
@@ -609,11 +625,15 @@ static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DW
 
 #pragma region LevelDI
 	bool LevelDI::IsLoading() {
-		bool(*pIsLoading)(LPVOID iLevel) = (decltype(pIsLoading))Utils::GetProcAddr("engine_x64_rwdi.dll", "?IsLoading@ILevel@@QEBA_NXZ");
-		if (!pIsLoading)
-			return true;
+		__try {
+			bool(*pIsLoading)(LPVOID iLevel) = (decltype(pIsLoading))Utils::GetProcAddr("engine_x64_rwdi.dll", "?IsLoading@ILevel@@QEBA_NXZ");
+			if (!pIsLoading)
+				return true;
 
-		return pIsLoading(this);
+			return pIsLoading(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return true;
+		}
 	}
 	bool LevelDI::IsLoaded() {
 		static float loadDeltaTime = 0.0f;
@@ -629,11 +649,15 @@ static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DW
 		return false;
 	}
 	LPVOID LevelDI::GetViewCamera() {
-		LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetViewCamera@ILevel@@QEBAPEAVIBaseCamera@@XZ");
-		if (!pGetViewCamera)
-			return nullptr;
+		__try {
+			LPVOID(*pGetViewCamera)(LPVOID iLevel) = (decltype(pGetViewCamera))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetViewCamera@ILevel@@QEBAPEAVIBaseCamera@@XZ");
+			if (!pGetViewCamera)
+				return nullptr;
 
-		return pGetViewCamera(this);
+			return pGetViewCamera(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
 	}
 	float LevelDI::GetTimeDelta() {
 		return Memory::CallVT<176, float>(this);
@@ -645,18 +669,26 @@ static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DW
 		return Memory::CallVT<317, float>(this);
 	}
 	void LevelDI::ShowUIManager(bool enabled) {
-		void(*pShowUIManager)(LPVOID iLevel, bool enabled) = (decltype(pShowUIManager))Utils::GetProcAddr("engine_x64_rwdi.dll", "?ShowUIManager@ILevel@@QEAAX_N@Z");
-		if (!pShowUIManager)
-			return;
+		__try {
+			void(*pShowUIManager)(LPVOID iLevel, bool enabled) = (decltype(pShowUIManager))Utils::GetProcAddr("engine_x64_rwdi.dll", "?ShowUIManager@ILevel@@QEAAX_N@Z");
+			if (!pShowUIManager)
+				return;
 
-		pShowUIManager(this, enabled);
+			pShowUIManager(this, enabled);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return;
+		}
 	}
 	TimeWeather::CSystem* LevelDI::GetTimeWeatherSystem() {
-		TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetTimeWeatherSystem@ILevel@@QEBAPEAVCSystem@TimeWeather@@XZ");
-		if (!pGetTimeWeatherSystem)
-			return nullptr;
+		__try {
+			TimeWeather::CSystem*(*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetTimeWeatherSystem@ILevel@@QEBAPEAVCSystem@TimeWeather@@XZ");
+			if (!pGetTimeWeatherSystem)
+				return nullptr;
 
-		return pGetTimeWeatherSystem(this);
+			return pGetTimeWeatherSystem(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
 	}
 
 	LevelDI* LevelDI::Get() {
@@ -753,11 +785,15 @@ static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DW
 
 #pragma region GameDI_PH
 	float GameDI_PH::GetGameTimeDelta() {
-		float(*pGetGameTimeDelta)(LPVOID pGameDI_PH) = (decltype(pGetGameTimeDelta))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetGameTimeDelta@IGame@@QEBAMXZ");
-		if (!pGetGameTimeDelta)
-			return -1.0f;
+		__try {
+			float(*pGetGameTimeDelta)(LPVOID pGameDI_PH) = (decltype(pGetGameTimeDelta))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetGameTimeDelta@IGame@@QEBAMXZ");
+			if (!pGetGameTimeDelta)
+				return -1.0f;
 
-		return pGetGameTimeDelta(this);
+			return pGetGameTimeDelta(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return -1.0f;
+		}
 	}
 	DWORD64 GameDI_PH::GetCurrentGameVersion() {
 		return Memory::CallVT<225, DWORD64>(this);
