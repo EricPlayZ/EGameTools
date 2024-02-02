@@ -36,5 +36,6 @@ namespace Utils {
 	extern FARPROC GetProcAddr(std::string_view module, std::string_view funcName);
 
 	extern std::string_view GetDesktopDir();
+	extern std::string_view GetDocumentsDir();
 	extern WindowsVersion GetWindowsVersion();
 }

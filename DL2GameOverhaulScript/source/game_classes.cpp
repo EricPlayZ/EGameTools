@@ -1,6 +1,3 @@
-#include <iostream>
-#include <string>
-#include <thread>
 #include "config\config.h"
 #include "game_classes.h"
 #include "memory.h"
@@ -10,6 +7,9 @@
 #include "print.h"
 #include "sigscan\offsets.h"
 #include "utils.h"
+#include <iostream>
+#include <string>
+#include <thread>
 
 namespace Core {
 	extern void OnPostUpdate();
@@ -247,20 +247,25 @@ namespace GamePH {
 	}
 #pragma endregion*/
 
-/*#pragma region PossibleLoadScrFile
+#pragma region PossibleLoadScrFile
 static LPVOID GetPossibleLoadScrFile() {
 	return reinterpret_cast<LPVOID>(reinterpret_cast<DWORD64>(GetModuleHandle("gamedll_ph_x64_rwdi.dll")) + 0x171D830);
 }
 static Hook::MHook<LPVOID, DWORD64(*)(char*, const char*, char, DWORD64, DWORD64, DWORD64, char, DWORD64, DWORD64)> PossibleLoadScrFileHook{ &GetPossibleLoadScrFile, &detourPossibleLoadScrFile };
 
 static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DWORD64 a4, DWORD64 a5, DWORD64 a6, char a7, DWORD64 a8, DWORD64 a9) {
+	std::string_view fileName = std::string_view(file);
+	
 	if (!strcmp(file, "jump_parameters.scr")) {
-		char file2[] = "C:\\Users\\EricPlayZ\\Desktop\\jump_parameters.scr";
-		return PossibleLoadScrFileHook.pOriginal(file2, a2, true, a4, a5, a6, a7, a8, a9);
+		char file2[] = "out\\settings\\EGameTools\\jump_parameters.scr";
+		return PossibleLoadScrFileHook.pOriginal(file2, a2, a3, a4, a5, a6, a7, a8, a9);
+	} else if (fileName.contains("default_weather_config.scr")) {
+		char file2[] = "out\\settings\\EGameTools\\jump_parameters.scr";
+		return PossibleLoadScrFileHook.pOriginal(file2, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 	return PossibleLoadScrFileHook.pOriginal(file, a2, a3, a4, a5, a6, a7, a8, a9);
 }
-#pragma endregion*/
+#pragma endregion
 #pragma endregion
 
 #pragma region OtherFuncs

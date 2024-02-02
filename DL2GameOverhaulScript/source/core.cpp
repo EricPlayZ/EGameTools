@@ -1,7 +1,3 @@
-#include <MinHook.h>
-#include <Windows.h>
-#include <iostream>
-#include <thread>
 #include "ImGui\impl\d3d11_impl.h"
 #include "ImGui\impl\d3d12_impl.h"
 #include "config\config.h"
@@ -10,6 +6,10 @@
 #include "kiero.h"
 #include "menu\menu.h"
 #include "sigscan\offsets.h"
+#include <MinHook.h>
+#include <Windows.h>
+#include <iostream>
+#include <thread>
 
 #pragma region KeyBindOption
 bool KeyBindOption::wasAnyKeyPressed = false;

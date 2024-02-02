@@ -1,6 +1,6 @@
+#include "utils.h"
 #include <Windows.h>
 #include <shlobj.h>
-#include "utils.h"
 
 namespace Utils {
     Timer::Timer(long timeMs) : timeToPass(timeMs), timePassed(false) {
@@ -45,8 +45,15 @@ namespace Utils {
     }
 
     std::string_view GetDesktopDir() {
-        char path[MAX_PATH + 1];
+        char path[MAX_PATH + 1]{};
         if (!SHGetSpecialFolderPathA(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE))
+            return {};
+
+        return path;
+    }
+    std::string_view GetDocumentsDir() {
+        char path[MAX_PATH + 1]{};
+        if (SHGetFolderPathA(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, path) != S_OK)
             return {};
 
         return path;
