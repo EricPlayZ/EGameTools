@@ -199,9 +199,13 @@ namespace GamePH {
 		Vector3 forwardVec{};
 		viewCam->GetForwardVector(&forwardVec);
 		const Vector3 normForwardVec = forwardVec.normalize();
+		Vector3 leftVec{};
+		viewCam->GetLeftVector(&leftVec);
+		const Vector3 normLeftVec = leftVec.normalize();
 
 		Vector3 newCamPos = *pos - normForwardVec * -Menu::Camera::tpDistanceBehindPlayer;
 		newCamPos.Y += Menu::Camera::tpHeightAbovePlayer - 1.5f;
+		newCamPos -= normLeftVec * Menu::Camera::tpHorizontalDistanceFromPlayer;
 
 		*pos = newCamPos;
 
@@ -458,21 +462,6 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region CameraFPPDI
-	Vector3* CameraFPPDI::GetForwardVector(Vector3* outForwardVec) {
-		__try {
-			Vector3* (*pGetForwardVector)(LPVOID pCameraFPPDI, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
-			if (!pGetForwardVector)
-				return nullptr;
-
-			return pGetForwardVector(this, outForwardVec);
-		} __except (EXCEPTION_EXECUTE_HANDLER) {
-			return nullptr;
-		}
-	}
-	Vector3* CameraFPPDI::GetPosition(Vector3* posIN) {
-		return Memory::CallVT<181, Vector3*>(this, posIN);
-	}
-
 	/*CameraFPPDI* CameraFPPDI::Get() {
 		__try {
 			PDWORD64 pg_CameraFPPDI = Offsets::Get_g_CameraFPPDI();
@@ -491,20 +480,6 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region FreeCamera
-	Vector3* FreeCamera::GetForwardVector(Vector3* outForwardVec) {
-		__try {
-			Vector3* (*pGetForwardVector)(LPVOID pFreeCamera, Vector3 * outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
-			if (!pGetForwardVector)
-				return nullptr;
-
-			return pGetForwardVector(this, outForwardVec);
-		} __except (EXCEPTION_EXECUTE_HANDLER) {
-			return nullptr;
-		}
-	}
-	Vector3* FreeCamera::GetPosition(Vector3* posIN) {
-		return Memory::CallVT<181, Vector3*>(this, posIN);
-	}
 	void FreeCamera::AllowCameraMovement(int mode) {
 		Memory::CallVT<187>(this, mode);
 	}
@@ -919,6 +894,53 @@ namespace Engine {
 				return nullptr;
 
 			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+#pragma endregion
+
+#pragma region CBaseCamera
+	Vector3* CBaseCamera::GetForwardVector(Vector3* outForwardVec) {
+		__try {
+			Vector3*(*pGetForwardVector)(LPVOID pCBaseCamera, Vector3* outForwardVec) = (decltype(pGetForwardVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetForwardVector@IBaseCamera@@QEBA?BVvec3@@XZ");
+			if (!pGetForwardVector)
+				return nullptr;
+
+			return pGetForwardVector(this, outForwardVec);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	Vector3* CBaseCamera::GetUpVector(Vector3* outUpVec) {
+		__try {
+			Vector3*(*pGetUpVector)(LPVOID pCBaseCamera, Vector3* outUpVec) = (decltype(pGetUpVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetUpVector@IBaseCamera@@QEBA?BVvec3@@XZ");
+			if (!pGetUpVector)
+				return nullptr;
+
+			return pGetUpVector(this, outUpVec);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	Vector3* CBaseCamera::GetLeftVector(Vector3* outLeftVec) {
+		__try {
+			Vector3*(*pGetLeftVector)(LPVOID pCBaseCamera, Vector3* outLeftVec) = (decltype(pGetLeftVector))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetLeftVector@IBaseCamera@@QEBA?BVvec3@@XZ");
+			if (!pGetLeftVector)
+				return nullptr;
+
+			return pGetLeftVector(this, outLeftVec);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+	Vector3* CBaseCamera::GetPosition(Vector3* outPos) {
+		__try {
+			Vector3*(*pGetPosition)(LPVOID pCBaseCamera, Vector3* outPos) = (decltype(pGetPosition))Utils::GetProcAddr("engine_x64_rwdi.dll", "?GetPosition@IBaseCamera@@UEBA?BVvec3@@XZ");
+			if (!pGetPosition)
+				return nullptr;
+
+			return pGetPosition(this, outPos);
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}

@@ -6236,12 +6236,16 @@ namespace Menu {
 
 			playerHealth = playerHealthModule->health;
 		}
+		static void UpdateDisabledOptions() {
+			freezePlayer.SetChangesAreDisabled(!Engine::CBulletPhysicsCharacter::Get());
+		}
 
 		Tab Tab::instance{};
 		void Tab::Update() {
 			PlayerPositionUpdate();
 			PlayerVarsUpdate();
 			PlayerHealthUpdate();
+			UpdateDisabledOptions();
 		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Misc");
@@ -6256,7 +6260,7 @@ namespace Menu {
 			ImGui::Checkbox("God Mode", &godMode);
 			ImGui::Hotkey("##GodModeToggleKey", godMode);
 			ImGui::SameLine();
-			ImGui::BeginDisabled(!Engine::CBulletPhysicsCharacter::Get(), &freezePlayer); {
+			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled()); {
 				ImGui::Checkbox("Freeze Player", &freezePlayer);
 				ImGui::EndDisabled();
 			}

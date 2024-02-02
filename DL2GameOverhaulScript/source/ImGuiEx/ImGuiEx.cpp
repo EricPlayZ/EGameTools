@@ -53,9 +53,4 @@ namespace ImGui {
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (v->GetValue() ? ImGuiItemStatusFlags_Checked : 0));
         return pressed;
 	}
-
-    void BeginDisabled(bool disabled, Option* v) {
-        BeginDisabled(disabled);
-        v->SetImGuiDisabled(disabled);
-    }
 }

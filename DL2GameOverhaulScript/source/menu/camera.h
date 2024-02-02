@@ -16,6 +16,7 @@ namespace Menu {
 		extern KeyBindOption tpUseTPPModel;
 		extern float tpDistanceBehindPlayer;
 		extern float tpHeightAbovePlayer;
+		extern float tpHorizontalDistanceFromPlayer;
 
 		extern Option disablePhotoModeLimits;
 		extern Option disableSafezoneFOVReduction;

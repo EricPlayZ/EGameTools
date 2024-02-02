@@ -8,12 +8,20 @@ namespace Menu {
 	namespace Misc {
 		KeyBindOption disableHUD{ VK_F8 };
 
+		static void UpdateDisabledOptions() {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			disableHUD.SetChangesAreDisabled(!iLevel || !iLevel->IsLoaded());
+		}
+
 		Tab Tab::instance{};
 		void Tab::Update() {
+			UpdateDisabledOptions();
+
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			if (!iLevel)
 				return;
-			else if (!iLevel->IsLoaded() && disableHUD.GetValue()) {
+
+			if (!iLevel->IsLoaded() && disableHUD.GetValue()) {
 				disableHUD.SetBothValues(false);
 				iLevel->ShowUIManager(true);
 
@@ -26,9 +34,8 @@ namespace Menu {
 			}
 		}
 		void Tab::Render() {
-			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			ImGui::SeparatorText("Misc##Misc");
-			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded(), &disableHUD); {
+			ImGui::BeginDisabled(disableHUD.GetChangesAreDisabled()); {
 				ImGui::Checkbox("Disable HUD", &disableHUD);
 				ImGui::Hotkey("##DisableHUDToggleKey", disableHUD);
 				ImGui::EndDisabled();

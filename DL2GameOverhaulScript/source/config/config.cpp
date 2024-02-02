@@ -4040,6 +4040,7 @@ namespace Config {
 		{ "Camera:ThirdPerson", "UseTPPModel", true, &Menu::Camera::tpUseTPPModel, OPTION },
 		{ "Camera:ThirdPerson", "DistanceBehindPlayer", 2.0f, &Menu::Camera::tpDistanceBehindPlayer, Float },
 		{ "Camera:ThirdPerson", "HeightAbovePlayer", 1.35f, &Menu::Camera::tpHeightAbovePlayer, Float },
+		{ "Camera:ThirdPerson", "HorizontalDistanceFromPlayer", 0.0f, &Menu::Camera::tpHorizontalDistanceFromPlayer, Float },
 		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimits, OPTION },
 		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION }
 	});
@@ -4139,7 +4140,7 @@ namespace Config {
 				switch (entry.type) {
 				case OPTION: {
 					Option* option = reinterpret_cast<Option*>(entry.optionPtr);
-					if (option->GetImGuiDisabled())
+					if (option->GetChangesAreDisabled())
 						break;
 					option->SetBothValues(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)));
 					break;

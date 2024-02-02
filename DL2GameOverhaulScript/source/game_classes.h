@@ -76,7 +76,21 @@ namespace EWeather {
 
 // Forward decl
 namespace Engine {
-	class CBaseCamera;
+	class CBaseCamera {
+	public:
+		union {
+			DEFINE_MEMBER_N(float, yaw, 0x48);
+			DEFINE_MEMBER_N(float, X, 0x4C);
+			DEFINE_MEMBER_N(float, pitch, 0x58);
+			DEFINE_MEMBER_N(float, Y, 0x5C);
+			DEFINE_MEMBER_N(float, Z, 0x6C);
+		};
+
+		Vector3* GetForwardVector(Vector3* outForwardVec);
+		Vector3* GetUpVector(Vector3* outUpVec);
+		Vector3* GetLeftVector(Vector3* outLeftVec);
+		Vector3* GetPosition(Vector3* outPos);
+	};
 	class CoPhysicsProperty;
 	class CRTTI;
 
@@ -164,20 +178,16 @@ namespace GamePH {
 		static PlayerHealthModule* Get();
 	};
 
-	class TPPCameraDI {
+	class TPPCameraDI : public Engine::CBaseCamera {
 	public:
 		static TPPCameraDI* Get();
 	};
 
-	class CameraFPPDI {
+	class CameraFPPDI : public Engine::CBaseCamera {
 	public:
 		union {
 			DEFINE_MEMBER_N(Engine::CBaseCamera*, pCBaseCamera, 0x38);
 		};
-
-		Vector3* GetForwardVector(Vector3* outForwardVec);
-		Vector3* GetUpVector(Vector3* outUpVec);
-		Vector3* GetPosition(Vector3* posIN);
 
 		//static CameraFPPDI* Get();
 	};
@@ -189,7 +199,7 @@ namespace GamePH {
 		};
 	};
 
-	class FreeCamera {
+	class FreeCamera : public Engine::CBaseCamera {
 	public:
 		union {
 			DEFINE_MEMBER_N(CoBaseCameraProxy*, pCoBaseCameraProxy, 0x18);
@@ -199,9 +209,6 @@ namespace GamePH {
 			DEFINE_MEMBER_N(float, speedMultiplier, 0x1CC);
 		};
 
-		Vector3* GetForwardVector(Vector3* outForwardVec);
-		Vector3* GetUpVector(Vector3* outUpVec);
-		Vector3* GetPosition(Vector3* posIN);
 		void AllowCameraMovement(int mode = 2);
 
 		static FreeCamera* Get();
@@ -353,17 +360,6 @@ namespace Engine {
 		void UnlockGameInput();
 
 		static CInput* Get();
-	};
-
-	class CBaseCamera {
-	public:
-		union {
-			DEFINE_MEMBER_N(float, yaw, 0x48);
-			DEFINE_MEMBER_N(float, X, 0x4C);
-			DEFINE_MEMBER_N(float, pitch, 0x58);
-			DEFINE_MEMBER_N(float, Y, 0x5C);
-			DEFINE_MEMBER_N(float, Z, 0x6C);
-		};
 	};
 
 	class CBulletPhysicsCharacter {
