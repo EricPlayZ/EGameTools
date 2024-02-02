@@ -247,23 +247,24 @@ namespace GamePH {
 	}
 #pragma endregion*/
 
-#pragma region PossibleLoadScrFile
-static LPVOID GetPossibleLoadScrFile() {
-	return reinterpret_cast<LPVOID>(reinterpret_cast<DWORD64>(GetModuleHandle("gamedll_ph_x64_rwdi.dll")) + 0x171D830);
+#pragma region fs::open
+static LPVOID GetFsOpen() {
+	return Utils::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
 }
-static Hook::MHook<LPVOID, DWORD64(*)(char*, const char*, char, DWORD64, DWORD64, DWORD64, char, DWORD64, DWORD64)> PossibleLoadScrFileHook{ &GetPossibleLoadScrFile, &detourPossibleLoadScrFile };
+static Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ &GetFsOpen, &detourFsOpen };
 
-static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DWORD64 a4, DWORD64 a5, DWORD64 a6, char a7, DWORD64 a8, DWORD64 a9) {
-	std::string_view fileName = std::string_view(file);
+static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
+	char* filePtr = reinterpret_cast<char*>(file & 0x1FFFFFFFFFFFFFFF); // remove the first bit '6' from address
+	std::string_view fileName = std::string_view(filePtr);
 	
-	if (!strcmp(file, "jump_parameters.scr")) {
+	if (fileName.contains("jump_parameters.scr")) {
 		char file2[] = "out\\settings\\EGameTools\\jump_parameters.scr";
-		return PossibleLoadScrFileHook.pOriginal(file2, a2, a3, a4, a5, a6, a7, a8, a9);
+		return FsOpenHook.pOriginal(file2, a2, a3);
 	} else if (fileName.contains("default_weather_config.scr")) {
 		char file2[] = "out\\settings\\EGameTools\\jump_parameters.scr";
-		return PossibleLoadScrFileHook.pOriginal(file2, a2, a3, a4, a5, a6, a7, a8, a9);
+		return FsOpenHook.pOriginal(file2, a2, a3);
 	}
-	return PossibleLoadScrFileHook.pOriginal(file, a2, a3, a4, a5, a6, a7, a8, a9);
+	return FsOpenHook.pOriginal(file, a2, a3);
 }
 #pragma endregion
 #pragma endregion
