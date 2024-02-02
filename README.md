@@ -20,7 +20,7 @@
 <b>WORLD</b><br>
 - Time slider<br>
 - Weather control<br><br>
-<b>Check <a href="https://trello.com/b/oRaJQEOi/egametools-dying-light-2">EGameTools' Trello﻿﻿</a> page to see what features or bug fixes I'm working on/planning to add!</b><br>
+<b>Check the mod's <a href="https://trello.com/b/oRaJQEOi/egametools-dying-light-2">Trello﻿﻿</a> page to see what features or bug fixes I'm working on/planning to add!</b><br>
 <img src="https://i.imgur.com/kOyrZYC.png"/><br>
 <b>STEP 1: </b>Download the archive from the <a href="https://github.com/EricPlayZ/EGameTools/releases">Releases</a> section<br>
 <b>STEP 2: </b>Extract the files from inside the archive to the game's exe folder (<b>Dying Light 2\ph\work\bin\x64</b>).<br><br>
@@ -36,7 +36,7 @@ Changes to the mod menu or to the config file are always automatically saved or 
 You <b>DO NOT NEED</b> to restart the game for changes in the config to be applied!<br>
 If you want to regenerate the config file, delete it and it will automatically be regenerated.<br>
 <img src="https://i.imgur.com/m0X9akl.png"/><br>
-<b>Check <a href="https://trello.com/b/oRaJQEOi/egametools-dying-light-2">EGameTools' Trello﻿﻿</a> page to see what features or bug fixes I'm working on/planning to add.</b><br><br>
+<b>Check the mod's <a href="https://trello.com/b/oRaJQEOi/egametools-dying-light-2">Trello﻿﻿</a> page to see what features or bug fixes I'm working on/planning to add.</b><br><br>
 <b>DO NOT</b> use the discussions tab for bug reports.<br>
 If there is a bug you're encountering, open a bug report, otherwise please refrain from using the discussions tab unless you need help or want to request additional features!<br><br>
 Currently, this mod has been designed with <b>singleplayer</b> in mind. That means certain features might glitch out or completely stop working in <b>multiplayer</b>.<br>
