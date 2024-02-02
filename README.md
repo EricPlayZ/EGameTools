@@ -27,9 +27,9 @@
 To uninstall, delete <b>winmm.dll</b>, <b>EGameTools.asi</b> and <b>EGameTools.ini</b> from the game's exe folder (<b>Dying Light 2\ph\work\bin\x64</b>).<br>
 <img src="https://i.imgur.com/CRAQXjm.png"/><br>
 ﻿﻿When you launch the game, a console window will appear. When it does, <b>DON'T CLOSE IT!</b> Closing it will also close the game.<br><br>
-To toggle the mod menu, in-game press <b>F5</b> on your keyboard. The same key will open and close the menu.<br><br>
-To change the number of a slider value manually, press <b>Ctrl + Left Mouse Button</b> on the slider.<br><br>
+To toggle the mod menu, in-game press <b>F5</b> on your keyboard. The same key will open and close the menu.<br>
 You can use your mouse to navigate the menu.<br><br>
+To change the number of a slider value manually, press <b>Ctrl + Left Mouse Button</b> on the slider.<br><br>
 A config file <b>EGameTools.ini</b> is stored in the same folder as the mod file which stores the mod menu's options.<br>
 The menu includes hotkeys for each option which can be changed through the mod menu by clicking on the hotkey button and then pressing a key on your keyboard.<br>
 To change them through the config file, visit <a href="https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes">this link from Microsoft</a> which contains all virtual key codes. Simply write the name of the keycode you want to use for each hotkey and save the config file.<br><br>
