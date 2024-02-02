@@ -3,5 +3,4 @@
 
 namespace ImGui {
 	bool Checkbox(const char* label, Option* v);
-	void BeginDisabled(bool disabled, Option* v);
 }

@@ -27,8 +27,8 @@ public:
 
     bool value = false;
 
-    void SetImGuiDisabled(bool newValue) { imGuiDisabled = newValue; }
-    bool GetImGuiDisabled() const { return imGuiDisabled; }
+    void SetChangesAreDisabled(bool newValue) { changesAreDisabled = newValue; }
+    bool GetChangesAreDisabled() const { return changesAreDisabled; }
     void Toggle() { previousValue = value; value = !value; }
     void Set(bool newValue) { previousValue = value; value = newValue; }
     void SetBothValues(bool newValue) { previousValue = newValue; value = newValue; }
@@ -39,7 +39,7 @@ public:
     constexpr bool HasChanged() const { return previousValue != value; }
     constexpr bool HasChangedTo(bool toValue) const { return previousValue != value && value == toValue; }
 private:
-    bool imGuiDisabled = false;
+    bool changesAreDisabled = false;
 	bool previousValue = false;
 };
 class KeyBindOption : public Option {

@@ -23,7 +23,7 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 			break;
 
 		for (auto& option : *KeyBindOption::GetInstances()) {
-			if (option->GetImGuiDisabled())
+			if (option->GetChangesAreDisabled())
 				continue;
 			if (wParam == option->GetKeyBind()) {
 				KeyBindOption::wasAnyKeyPressed = true;
