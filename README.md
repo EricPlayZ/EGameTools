@@ -29,10 +29,9 @@ To uninstall, delete <b>winmm.dll</b>, <b>EGameTools.asi</b> and <b>EGameTools.i
 ﻿﻿When you launch the game, a console window will appear. When it does, <b>DON'T CLOSE IT!</b> Closing it will also close the game.<br><br>
 To toggle the mod menu, in-game press <b>F5</b> on your keyboard. The same key will open and close the menu.<br>
 You can use your mouse to navigate the menu.<br><br>
-A config file <b>EGameTools.ini</b> is stored in the same folder as the mod file. There's a value called <b>ToggleKey</b> where <b>VK_F5</b> is specified.<br>
-This is the key for toggling the mod menu.<br>
-To change it through the config file, visit <a href="https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes">this link from Microsoft</a> which contains all virtual key codes. Simply write the name of the keycode you want to use and save the config file.<br><br>
-The menu includes hotkeys for each option which can be changed through the mod menu by clicking on the hotkey button and then pressing a key on your keyboard.<br><br>
+A config file <b>EGameTools.ini</b> is stored in the same folder as the mod file which stores the mod menu's options.<br>
+The menu includes hotkeys for each option which can be changed through the mod menu by clicking on the hotkey button and then pressing a key on your keyboard.<br>
+To change them through the config file, visit <a href="https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes">this link from Microsoft</a> which contains all virtual key codes. Simply write the name of the keycode you want to use for each hotkey and save the config file.<br><br>
 Changes to the mod menu or to the config file are always automatically saved or refreshed respectively.<br>
 You <b>DO NOT NEED</b> to restart the game for changes in the config to be applied!<br>
 If you want to regenerate the config file, delete it and it will automatically be regenerated.<br>
