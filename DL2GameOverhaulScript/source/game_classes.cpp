@@ -1,3 +1,7 @@
+#include <filesystem>
+#include <iostream>
+#include <string>
+#include <thread>
 #include "config\config.h"
 #include "game_classes.h"
 #include "memory.h"
@@ -7,9 +11,6 @@
 #include "print.h"
 #include "sigscan\offsets.h"
 #include "utils.h"
-#include <iostream>
-#include <string>
-#include <thread>
 
 namespace Core {
 	extern void OnPostUpdate();
@@ -29,7 +30,7 @@ namespace GamePH {
 	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 	static void detourShowUIManager(LPVOID pLevelDI, bool enabled);
 	//static bool detourIs_dev_tools(LPVOID pInstance);
-	static DWORD64 detourPossibleLoadScrFile(char* file, const char* a2, char a3, DWORD64 a4, DWORD64 a5, DWORD64 a6, char a7, DWORD64 a8, DWORD64 a9);
+	static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
 
 #pragma region CreatePlayerHealthModule
 	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerHealthModuleHook{ &Offsets::Get_CreatePlayerHealthModule, &detourCreatePlayerHealthModule };
@@ -258,15 +259,26 @@ static LPVOID GetFsOpen() {
 static Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ &GetFsOpen, &detourFsOpen };
 
 static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
-	char* filePtr = reinterpret_cast<char*>(file & 0x1FFFFFFFFFFFFFFF); // remove the first bit '6' from address
-	std::string_view fileName = std::string_view(filePtr);
-	
-	if (fileName.contains("jump_parameters.scr")) {
-		char file2[] = "out\\settings\\EGameTools\\jump_parameters.scr";
-		return FsOpenHook.pOriginal(file2, a2, a3);
-	} else if (fileName.contains("default_weather_config.scr")) {
-		char file2[] = "out\\settings\\EGameTools\\jump_parameters.scr";
-		return FsOpenHook.pOriginal(file2, a2, a3);
+	DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
+
+	const char* filePath = reinterpret_cast<const char*>(file & 0x1FFFFFFFFFFFFFFF); // remove first byte of addr in case it exists
+	std::string fileName = std::filesystem::path(filePath).filename().string();
+	if (fileName.empty())
+		return FsOpenHook.pOriginal(file, a2, a3);
+
+	for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data\\EGameTools\\FilesToLoad")) {
+		if (fileName.contains(".rpack"))
+			int i = 0;
+		if (fileName.contains("player_anims_pc"))
+			int i = 0;
+		if (fileName.contains("sfx"))
+			int i = 0;
+		if (entry.path().filename().string().contains(fileName)) {
+			std::string finalPath = std::string("ph\\work\\data\\EGameTools\\FilesToLoad\\") + fileName;
+			const char* filePath2 = finalPath.c_str();
+
+			return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
+		}
 	}
 	return FsOpenHook.pOriginal(file, a2, a3);
 }

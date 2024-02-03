@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include <string>
+#include <windows.h>
 
 enum class WindowsVersion {
 	Unknown,
