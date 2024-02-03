@@ -78,14 +78,13 @@ namespace EWeather {
 namespace Engine {
 	class CBaseCamera {
 	public:
-		union {
+		/*union {
 			DEFINE_MEMBER_N(float, yaw, 0x48);
 			DEFINE_MEMBER_N(float, X, 0x4C);
 			DEFINE_MEMBER_N(float, pitch, 0x58);
 			DEFINE_MEMBER_N(float, Y, 0x5C);
 			DEFINE_MEMBER_N(float, Z, 0x6C);
-		};
-
+		};*/
 		Vector3* GetForwardVector(Vector3* outForwardVec);
 		Vector3* GetUpVector(Vector3* outUpVec);
 		Vector3* GetLeftVector(Vector3* outLeftVec);
