@@ -29,7 +29,6 @@ namespace GamePH {
 	static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos);
 	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 	static void detourShowUIManager(LPVOID pLevelDI, bool enabled);
-	//static bool detourIs_dev_tools(LPVOID pInstance);
 	static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
 
 #pragma region CreatePlayerHealthModule
@@ -241,17 +240,6 @@ namespace GamePH {
 	}
 #pragma endregion
 
-/*#pragma region is_dev_tools
-	static LPVOID GetIs_dev_tools() {
-		return Utils::GetProcAddr("filesystem_x64_rwdi.dll", "?is_dev_tools@fs@@YA_NXZ");
-	}
-	static Hook::MHook<LPVOID, bool(*)(LPVOID)> is_dev_toolsHook{ &GetIs_dev_tools, &detourIs_dev_tools };
-
-	static bool detourIs_dev_tools(LPVOID pInstance) {
-		return true;
-	}
-#pragma endregion*/
-
 #pragma region fs::open
 static LPVOID GetFsOpen() {
 	return Utils::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
@@ -266,15 +254,15 @@ static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
 	if (fileName.empty())
 		return FsOpenHook.pOriginal(file, a2, a3);
 
-	for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data\\EGameTools\\FilesToLoad")) {
+	for (const auto& entry : std::filesystem::directory_iterator("EGameTools\\FilesToLoad")) {
 		if (fileName.contains(".rpack"))
-			int i = 0;
+			return FsOpenHook.pOriginal(file, a2, a3);
 		if (fileName.contains("player_anims_pc"))
-			int i = 0;
+			return FsOpenHook.pOriginal(file, a2, a3);
 		if (fileName.contains("sfx"))
-			int i = 0;
+			return FsOpenHook.pOriginal(file, a2, a3);
 		if (entry.path().filename().string().contains(fileName)) {
-			std::string finalPath = std::string("ph\\work\\data\\EGameTools\\FilesToLoad\\") + fileName;
+			std::string finalPath = std::string("EGameTools\\FilesToLoad\\") + fileName;
 			const char* filePath2 = finalPath.c_str();
 
 			return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0

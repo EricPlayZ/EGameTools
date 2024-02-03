@@ -1,3 +1,8 @@
+#include <MinHook.h>
+#include <Windows.h>
+#include <filesystem>
+#include <iostream>
+#include <thread>
 #include "ImGui\impl\d3d11_impl.h"
 #include "ImGui\impl\d3d12_impl.h"
 #include "config\config.h"
@@ -6,10 +11,6 @@
 #include "kiero.h"
 #include "menu\menu.h"
 #include "sigscan\offsets.h"
-#include <MinHook.h>
-#include <Windows.h>
-#include <iostream>
-#include <thread>
 
 #pragma region KeyBindOption
 bool KeyBindOption::wasAnyKeyPressed = false;
@@ -126,10 +127,21 @@ namespace Core {
 		*/
 	}
 
+	static void CreateSymlinkForLoadingFiles() {
+		for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data")) {
+			if (entry.path().filename().string() == "EGameTools" && is_symlink(entry.symlink_status())) {
+				assert(std::filesystem::equivalent("..\\..\\data\\EGameTools", "EGameTools"));
+				return;
+			}
+		}
+		std::filesystem::create_directory_symlink(Utils::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
+	}
+
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
 
 		Config::InitConfig();
+		CreateSymlinkForLoadingFiles();
 		GamePH::PlayerVariables::SortPlayerVars();
 
 		MH_Initialize();

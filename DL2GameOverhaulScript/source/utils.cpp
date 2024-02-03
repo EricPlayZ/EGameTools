@@ -1,6 +1,7 @@
-#include "utils.h"
 #include <Windows.h>
+#include <filesystem>
 #include <shlobj.h>
+#include "utils.h"
 
 namespace Utils {
     Timer::Timer(long timeMs) : timeToPass(timeMs), timePassed(false) {
@@ -57,6 +58,11 @@ namespace Utils {
             return {};
 
         return path;
+    }
+    std::string GetCurrentProcDirectory() {
+        char buffer[MAX_PATH];
+        GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
+        return std::filesystem::path(buffer).parent_path().string();
     }
     WindowsVersion GetWindowsVersion() {
         OSVERSIONINFOEX info{};
