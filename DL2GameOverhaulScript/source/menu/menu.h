@@ -18,6 +18,7 @@ namespace Menu {
 
 	extern KeyBindOption menuToggle;
 	extern float transparency;
+	extern float scale;
 
 	extern void Render();
 }

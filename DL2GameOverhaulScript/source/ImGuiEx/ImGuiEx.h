@@ -2,5 +2,6 @@
 #include "..\core.h"
 
 namespace ImGui {
-	bool Checkbox(const char* label, Option* v);
+	extern void StyleScaleAllSizes(ImGuiStyle* style, float scale_factor);
+	extern bool Checkbox(const char* label, Option* v);
 }

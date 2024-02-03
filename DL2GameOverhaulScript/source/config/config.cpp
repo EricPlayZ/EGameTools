@@ -4021,6 +4021,7 @@ namespace Config {
 	};
 	static const auto configVariablesDefault = std::to_array<ConfigEntry>({
 		{ "Menu", "Transparency", 99.0f, &Menu::transparency, Float },
+		{ "Menu", "Scale", 1.0f, &Menu::scale, Float },
 		{ "Menu:Keybinds", "MenuToggleKey", std::string("VK_F5"), &Menu::menuToggle, String},
 		{ "Menu:Keybinds", "GodModeToggleKey", std::string("VK_F6"), &Menu::Player::godMode, String},
 		{ "Menu:Keybinds", "FreezePlayerToggleKey", std::string("VK_F7"), &Menu::Player::freezePlayer, String},

@@ -1,10 +1,10 @@
-﻿#include <d3d11.h>
-#include <assert.h>
-#include <imgui.h>
-#include <backends\imgui_impl_win32.h>
+﻿#include <assert.h>
 #include <backends\imgui_impl_dx11.h>
-#include "..\..\menu\menu.h"
+#include <backends\imgui_impl_win32.h>
+#include <d3d11.h>
+#include <imgui.h>
 #include "..\..\kiero.h"
+#include "..\..\menu\menu.h"
 #include "d3d11_impl.h"
 #include "win32_impl.h"
 

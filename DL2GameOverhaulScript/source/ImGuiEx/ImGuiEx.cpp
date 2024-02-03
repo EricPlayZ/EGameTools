@@ -3,6 +3,34 @@
 #include "..\core.h"
 
 namespace ImGui {
+    static ImGuiStyle defStyle{};
+    void StyleScaleAllSizes(ImGuiStyle* style, float scale_factor) {
+        style->WindowPadding = ImFloor(defStyle.WindowPadding * scale_factor);
+        style->WindowRounding = ImFloor(defStyle.WindowRounding * scale_factor);
+        style->WindowMinSize = ImFloor(defStyle.WindowMinSize * scale_factor);
+        style->ChildRounding = ImFloor(defStyle.ChildRounding * scale_factor);
+        style->PopupRounding = ImFloor(defStyle.PopupRounding * scale_factor);
+        style->FramePadding = ImFloor(defStyle.FramePadding * scale_factor);
+        style->FrameRounding = ImFloor(defStyle.FrameRounding * scale_factor);
+        style->ItemSpacing = ImFloor(defStyle.ItemSpacing * scale_factor);
+        style->ItemInnerSpacing = ImFloor(defStyle.ItemInnerSpacing * scale_factor);
+        style->CellPadding = ImFloor(defStyle.CellPadding * scale_factor);
+        style->TouchExtraPadding = ImFloor(defStyle.TouchExtraPadding * scale_factor);
+        style->IndentSpacing = ImFloor(defStyle.IndentSpacing * scale_factor);
+        style->ColumnsMinSpacing = ImFloor(defStyle.ColumnsMinSpacing * scale_factor);
+        style->ScrollbarSize = ImFloor(defStyle.ScrollbarSize * scale_factor);
+        style->ScrollbarRounding = ImFloor(defStyle.ScrollbarRounding * scale_factor);
+        style->GrabMinSize = ImFloor(defStyle.GrabMinSize * scale_factor);
+        style->GrabRounding = ImFloor(defStyle.GrabRounding * scale_factor);
+        style->LogSliderDeadzone = ImFloor(defStyle.LogSliderDeadzone * scale_factor);
+        style->TabRounding = ImFloor(defStyle.TabRounding * scale_factor);
+        style->TabMinWidthForCloseButton = (defStyle.TabMinWidthForCloseButton != FLT_MAX) ? ImFloor(defStyle.TabMinWidthForCloseButton * scale_factor) : FLT_MAX;
+        style->SeparatorTextPadding = ImFloor(defStyle.SeparatorTextPadding * scale_factor);
+        style->DisplayWindowPadding = ImFloor(defStyle.DisplayWindowPadding * scale_factor);
+        style->DisplaySafeAreaPadding = ImFloor(defStyle.DisplaySafeAreaPadding * scale_factor);
+        style->MouseCursorScale = ImFloor(defStyle.MouseCursorScale * scale_factor);
+    }
+
 	bool Checkbox(const char* label, Option* v) {
         ImGuiWindow* window = GetCurrentWindow();
         if (window->SkipItems)
