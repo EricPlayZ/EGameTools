@@ -28,6 +28,7 @@ struct Offsets {
 
 	// Input related
 	AddOffset(g_CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 0F 48 8B 01 84 D2", PatternType::RelativePointer, PDWORD64*)
+	AddOffset(WndProc, "engine_x64_rwdi.dll", "40 55 56 57 41 54 41 56 48 83 EC ?? 49 8B E9", PatternType::Address, LPVOID)
 
 	// Player vars related
 	AddStaticOffset(LoadPlayerVariableFunc_size, 0x14E)

@@ -14,6 +14,8 @@
 
 #pragma region KeyBindOption
 bool KeyBindOption::wasAnyKeyPressed = false;
+bool KeyBindOption::scrolledMouseWheelUp = false;
+bool KeyBindOption::scrolledMouseWheelDown = false;
 #pragma endregion
 
 namespace Core {
@@ -150,8 +152,6 @@ namespace Core {
 		hookRendererThread = std::thread(LoopHookRenderer);
 		hookRendererThread.detach();
 
-		for (auto& hook : *Hook::HookBase::GetInstances())
-			hook->HookLoop();
 		for (auto& hook : *Hook::HookBase::GetInstances())
 			hook->HookLoop();
 

@@ -11,6 +11,7 @@ namespace Menu {
 		extern KeyBindOption freezePlayer;
 		extern Option playerVariables;
 		extern Option disableOutOfBoundsTimer;
+		extern KeyBindOption nightrunnerMode;
 
 		extern std::string saveSCRPath;
 		extern std::string loadSCRFilePath;

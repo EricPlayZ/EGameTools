@@ -58,7 +58,23 @@ namespace Menu {
 			if (freeCam.GetValue()) {
 				if (viewCam == pFreeCam) {
 					pFreeCam->enableSpeedMultiplier1 = true;
+
+					if (KeyBindOption::scrolledMouseWheelUp) {
+						KeyBindOption::scrolledMouseWheelUp = false;
+						freeCamSpeed += 0.5f;
+					} else if (KeyBindOption::scrolledMouseWheelDown) {
+						KeyBindOption::scrolledMouseWheelDown = false;
+						freeCamSpeed -= 0.5f;
+					}
+
+					/*if (ImGui::GetIO().MouseWheel > 0.0f) {
+						freeCamSpeed += 0.5f;
+					} else if (ImGui::GetIO().MouseWheel < 0.0f) {
+						freeCamSpeed -= 0.5f;
+					}*/
+
 					pFreeCam->speedMultiplier = freeCamSpeed;
+
 					if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
 						pFreeCam->speedMultiplier *= 2.0f;
 					else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt))

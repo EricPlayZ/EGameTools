@@ -6005,6 +6005,7 @@ namespace Menu {
 		KeyBindOption freezePlayer{ VK_F7 };
 		Option playerVariables{};
 		Option disableOutOfBoundsTimer{};
+		KeyBindOption nightrunnerMode{ VK_F9 };
 
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
@@ -6236,6 +6237,32 @@ namespace Menu {
 
 			playerHealth = playerHealthModule->health;
 		}
+		static void UpdatePlayerVars() {
+			if (!GamePH::PlayerVariables::gotPlayerVars)
+				return;
+
+			static bool previousNightRunnerItemForced{};
+			static bool previousNightRunnerFurySmashEnabled{};
+			static bool previousNightRunnerFuryGroundPoundEnabled{};
+
+			if (nightrunnerMode.GetValue()) {
+				if (!nightrunnerMode.GetPrevValue()) {
+					previousNightRunnerItemForced = GamePH::PlayerVariables::GetPlayerVar<bool>("NightRunnerItemForced");
+					previousNightRunnerFurySmashEnabled = GamePH::PlayerVariables::GetPlayerVar<bool>("NightRunnerFurySmashEnabled");
+					previousNightRunnerFuryGroundPoundEnabled = GamePH::PlayerVariables::GetPlayerVar<bool>("NightRunnerFuryGroundPoundEnabled");
+				}
+
+				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerItemForced", true);
+				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFurySmashEnabled", true);
+				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFuryGroundPoundEnabled", true);
+				nightrunnerMode.SetPrevValue(true);
+			} else if (nightrunnerMode.GetPrevValue()) {
+				nightrunnerMode.SetPrevValue(false);
+				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerItemForced", previousNightRunnerItemForced);
+				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFurySmashEnabled", previousNightRunnerFurySmashEnabled);
+				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFuryGroundPoundEnabled", previousNightRunnerFuryGroundPoundEnabled);
+			}
+		}
 		static void UpdateDisabledOptions() {
 			freezePlayer.SetChangesAreDisabled(!Engine::CBulletPhysicsCharacter::Get());
 		}
@@ -6246,6 +6273,7 @@ namespace Menu {
 			PlayerVarsUpdate();
 			PlayerHealthUpdate();
 			UpdateDisabledOptions();
+			UpdatePlayerVars();
 		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Misc");
@@ -6267,6 +6295,8 @@ namespace Menu {
 			ImGui::Hotkey("##FreezePlayerToggleKey", freezePlayer);
 
 			ImGui::Checkbox("Disable Out of Bounds Timer", &disableOutOfBoundsTimer);
+			ImGui::Checkbox("Nightrunner Mode", &nightrunnerMode);
+			ImGui::Hotkey("##NightrunnerModeToggleKey", nightrunnerMode);
 
 			ImGui::SeparatorText("Player Variables");
 			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables);

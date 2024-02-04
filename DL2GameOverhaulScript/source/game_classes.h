@@ -119,6 +119,25 @@ namespace GamePH {
 		static void SortPlayerVars();
 
 		template <typename T>
+		static T GetPlayerVar(const std::string& playerVar) {
+			static_assert(std::is_same<T, bool>::value || std::is_same<T, float>::value || std::is_same<T, std::string>::value, "Invalid type: value must be bool, float or string");
+
+			auto it = std::find_if(PlayerVariables::playerVars.begin(), PlayerVariables::playerVars.end(), [&playerVar](const auto& pair) {
+				return pair.first == playerVar;
+			});
+
+			if (it == PlayerVariables::playerVars.end()) {
+				if (std::is_same<T, std::string>::value)
+					return {};
+				else if (std::is_same<T, float>::value)
+					return -404.0f;
+				else
+					return false;
+			}
+
+			return *reinterpret_cast<T*>(it->second.first);
+		}
+		template <typename T>
 		static void ChangePlayerVar(const std::string& playerVar, const T value) {
 			static_assert(std::is_same<T, bool>::value || std::is_same<T, float>::value || std::is_same<T, std::string>::value, "Invalid type: value must be bool, float or string");
 

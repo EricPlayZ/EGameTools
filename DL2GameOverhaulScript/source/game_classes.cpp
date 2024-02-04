@@ -20,6 +20,7 @@ namespace Core {
 namespace GamePH {
 #pragma region Hooks
 	// Forward decl
+	static LRESULT __fastcall detourWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule);
 	static void detourOnPostUpdate(LPVOID pGameDI_PH2);
 	static DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos);
@@ -30,6 +31,14 @@ namespace GamePH {
 	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 	static void detourShowUIManager(LPVOID pLevelDI, bool enabled);
 	static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
+
+#pragma region WndProc
+	static Hook::MHook<LPVOID, LRESULT(*)(HWND, UINT, WPARAM, LPARAM)> CreateWndProcHook{ &Offsets::Get_WndProc, &detourWndProc };
+
+	static LRESULT __fastcall detourWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+		return CreateWndProcHook.pOriginal(hwnd, uMsg, wParam, lParam);
+	}
+#pragma endregion
 
 #pragma region CreatePlayerHealthModule
 	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerHealthModuleHook{ &Offsets::Get_CreatePlayerHealthModule, &detourCreatePlayerHealthModule };

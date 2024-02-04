@@ -2,20 +2,22 @@
 #include <Windows.h>
 #include <backends\imgui_impl_win32.h>
 #include <imgui.h>
+#include <thread>
 #include "..\..\core.h"
 #include "..\..\game_classes.h"
 #include "..\..\kiero.h"
 #include "..\..\menu\menu.h"
+#include "..\..\print.h"
 #include "..\..\sigscan\offsets.h"
 #include "..\config\config.h"
 #include "win32_impl.h"
 
-static WNDPROC oWndProc = NULL;
-static bool toggledMenu = false;
-
+static HWND gHwnd = nullptr;
+static WNDPROC oWndProc = nullptr;
+static HHOOK oMouseProc = nullptr;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) {
+static LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam) {
 	switch (uMsg) {
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
@@ -25,6 +27,7 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 		for (auto& option : *KeyBindOption::GetInstances()) {
 			if (option->GetChangesAreDisabled())
 				continue;
+
 			if (wParam == option->GetKeyBind()) {
 				KeyBindOption::wasAnyKeyPressed = true;
 				option->Toggle();
@@ -51,19 +54,64 @@ LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARAM wPara
 	ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam);
 
 	if (Menu::menuToggle.GetValue()) {
-		if (!toggledMenu)
-			pCInput->BlockGameInput();
+		pCInput->BlockGameInput();
 
-		toggledMenu = true;
-		return true;
-	} else if (toggledMenu) {
-		toggledMenu = false;
+		Menu::menuToggle.SetPrevValue(true);
+	} else if (Menu::menuToggle.GetPrevValue()) {
+		Menu::menuToggle.SetPrevValue(false);
 		pCInput->UnlockGameInput();
 	}
 
 	return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
 }
 
+#ifndef LLMH_IMPL_DISABLE_DEBUG
+static LRESULT CALLBACK hkMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+	if (nCode != HC_ACTION)
+		return CallNextHookEx(oMouseProc, nCode, wParam, lParam);
+	if (GetForegroundWindow() != gHwnd)
+		return CallNextHookEx(oMouseProc, nCode, wParam, lParam);
+
+	switch (wParam) {
+	case WM_MOUSEWHEEL:
+	case WM_MOUSEHWHEEL: {
+		MSLLHOOKSTRUCT* pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
+		if (pMouseStruct == nullptr)
+			return CallNextHookEx(oMouseProc, nCode, wParam, lParam);
+
+		if (GET_WHEEL_DELTA_WPARAM(pMouseStruct->mouseData)) {
+			for (auto& option : *KeyBindOption::GetInstances()) {
+				if (option->GetChangesAreDisabled())
+					continue;	
+
+				if ((option->GetKeyBind() == VK_MWHEELUP && GET_WHEEL_DELTA_WPARAM(pMouseStruct->mouseData) > 0) ||
+					(option->GetKeyBind() == VK_MWHEELDOWN && GET_WHEEL_DELTA_WPARAM(pMouseStruct->mouseData) < 0))
+					option->Toggle();
+			}
+
+			if (GET_WHEEL_DELTA_WPARAM(pMouseStruct->mouseData) > 0)
+				KeyBindOption::scrolledMouseWheelUp = true;
+			else if (GET_WHEEL_DELTA_WPARAM(pMouseStruct->mouseData) < 0)
+				KeyBindOption::scrolledMouseWheelDown = true;
+		}
+		break;
+	}
+	}
+
+	return CallNextHookEx(oMouseProc, nCode, wParam, lParam);
+}
+#endif
+
 void impl::win32::init(HWND hwnd) {
+	gHwnd = hwnd;
 	oWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)hkWindowProc);
+#ifndef LLMH_IMPL_DISABLE_DEBUG
+	oMouseProc = SetWindowsHookEx(WH_MOUSE_LL, hkMouseProc, GetModuleHandle(nullptr), 0);
+
+	MSG msg;
+	while (oMouseProc && GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+#endif
 }

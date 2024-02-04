@@ -3,6 +3,7 @@
 #include <backends\imgui_impl_win32.h>
 #include <d3d11.h>
 #include <imgui.h>
+#include <thread>
 #include "..\..\kiero.h"
 #include "..\..\menu\menu.h"
 #include "d3d11_impl.h"
@@ -23,7 +24,11 @@ HRESULT __stdcall hkPresent11(IDXGISwapChain* pSwapChain, UINT SyncInterval, UIN
 		ID3D11DeviceContext* context = nullptr;
 		device->GetImmediateContext(&context);
 
+#ifndef LLMH_IMPL_DISABLE_DEBUG
+		std::thread([&desc]() { impl::win32::init(desc.OutputWindow); }).detach();
+#else 
 		impl::win32::init(desc.OutputWindow);
+#endif
 
 		ImGui::CreateContext();
 		ImGui::GetIO().IniFilename = nullptr;

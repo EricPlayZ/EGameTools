@@ -6,6 +6,7 @@
 #include <string_view>
 #include "utils.h"
 #ifndef VK_NONE
+// #define LLMH_IMPL_DISABLE_DEBUG     // this is for disabling low-level mouse hook in case ure trying to debug and u dont want ur pc to die lol
 #define VK_NONE -1
 #define VK_MWHEELDOWN 0x100
 #define VK_MWHEELUP 0x101
@@ -45,6 +46,8 @@ private:
 class KeyBindOption : public Option {
 public:
     static bool wasAnyKeyPressed;
+    static bool scrolledMouseWheelUp;
+    static bool scrolledMouseWheelDown;
 
     KeyBindOption(int keyCode) : keyCode(keyCode) { GetInstances()->insert(this); };
     ~KeyBindOption() { GetInstances()->erase(this); }

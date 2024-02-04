@@ -4,6 +4,7 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <imgui.h>
+#include <thread>
 #include "..\..\kiero.h"
 #include "..\..\menu\menu.h"
 #include "d3d12_impl.h"
@@ -83,7 +84,11 @@ static void RenderImGui_DX12(IDXGISwapChain3* pSwapChain) {
 		if (device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, frameContext[0].commandAllocator, NULL, IID_PPV_ARGS(&d3d12CommandList)) != S_OK || d3d12CommandList->Close() != S_OK)
 			return;
 
+#ifndef LLMH_IMPL_DISABLE_DEBUG
+		std::thread([&desc]() { impl::win32::init(desc.OutputWindow); }).detach();
+#else 
 		impl::win32::init(desc.OutputWindow);
+#endif
 
 		ImGui::CreateContext();
 		ImGui::GetIO().IniFilename = nullptr;
