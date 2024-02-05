@@ -4,22 +4,38 @@
 #include "utils.h"
 
 namespace Utils {
-    Timer::Timer(long timeMs) : timeToPass(timeMs), timePassed(false) {
+    Timer::Timer(long timeMs) : timeToPass(std::chrono::milliseconds(timeMs)), timePassed(false) {
         start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
     }
-    bool Timer::GetTimePassed() {
+
+    long Timer::GetTimePassed() {
+        if (timePassed)
+            return -1;
+
+        auto end = clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        long timePassedMs = duration.count();
+
+        if (timePassedMs < 0) {
+            start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+            return -1;
+        }
+        return timePassedMs;
+    }
+    bool Timer::DidTimePass() {
         if (timePassed)
             return timePassed;
 
         auto end = clock::now();
-        long timePassedMs = static_cast<long>((end - start).count());
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        long timePassedMs = duration.count();
 
         if (timePassedMs < 0) {
             start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
             return false;
         }
-        
-        if (timePassedMs >= timeToPass)
+
+        if (duration >= timeToPass)
             timePassed = true;
         return timePassed;
     }

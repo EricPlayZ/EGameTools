@@ -30,7 +30,6 @@ namespace ImGui {
         style->DisplaySafeAreaPadding = ImFloor(defStyle.DisplaySafeAreaPadding * scale_factor);
         style->MouseCursorScale = ImFloor(defStyle.MouseCursorScale * scale_factor);
     }
-
 	bool Checkbox(const char* label, Option* v) {
         ImGuiWindow* window = GetCurrentWindow();
         if (window->SkipItems)
@@ -81,4 +80,105 @@ namespace ImGui {
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (v->GetValue() ? ImGuiItemStatusFlags_Checked : 0));
         return pressed;
 	}
+    static const float CalculateIndentation(const float& window_width, const float& text_width, const float& min_indentation) {
+        const float indentation = (window_width - text_width) * 0.5f;
+        return indentation > min_indentation ? indentation : min_indentation;
+    }
+    void TextCentered(const char* text) {
+        const float min_indentation = 20.0f;
+        const float window_width = ImGui::GetWindowSize().x - ImGui::GetStyle().ScrollbarSize - min_indentation;
+        const float wrap_pos = window_width - min_indentation;
+
+        std::istringstream iss(text);
+        std::vector<std::string> words((std::istream_iterator<std::string>(iss)), std::istream_iterator<std::string>());
+
+        std::string line{};
+        for (const auto& word : words) {
+            std::string new_line = line.empty() ? word : line + " " + word;
+            if (ImGui::CalcTextSize(new_line.c_str()).x <= wrap_pos) {
+                line = new_line;
+                continue;
+            }
+
+            ImGui::SameLine(CalculateIndentation(window_width, ImGui::CalcTextSize(line.c_str()).x, min_indentation));
+            ImGui::TextUnformatted(line.c_str());
+            ImGui::NewLine();
+            line = word;
+        }
+
+        if (!line.empty()) {
+            ImGui::SameLine(CalculateIndentation(window_width, ImGui::CalcTextSize(line.c_str()).x, min_indentation));
+            ImGui::TextUnformatted(line.c_str());
+            ImGui::NewLine();
+        }
+    }
+    void TextCenteredColored(const char* text, const ImU32& col) {
+        const float min_indentation = 20.0f;
+        const float window_width = ImGui::GetWindowSize().x - ImGui::GetStyle().ScrollbarSize - min_indentation;
+        const float wrap_pos = window_width - min_indentation;
+
+        std::istringstream iss(text);
+        std::vector<std::string> words((std::istream_iterator<std::string>(iss)), std::istream_iterator<std::string>());
+
+        std::string line{};
+        for (const auto& word : words) {
+            std::string new_line = line.empty() ? word : line + " " + word;
+            if (ImGui::CalcTextSize(new_line.c_str()).x <= wrap_pos) {
+                line = new_line;
+                continue;
+            }
+
+            ImGui::SameLine(CalculateIndentation(window_width, ImGui::CalcTextSize(line.c_str()).x, min_indentation));
+            ImGui::PushStyleColor(ImGuiCol_Text, col);
+            ImGui::TextUnformatted(line.c_str());
+            ImGui::PopStyleColor();
+            ImGui::NewLine();
+            line = word;
+        }
+
+        if (!line.empty()) {
+            ImGui::SameLine(CalculateIndentation(window_width, ImGui::CalcTextSize(line.c_str()).x, min_indentation));
+            ImGui::PushStyleColor(ImGuiCol_Text, col);
+            ImGui::TextUnformatted(line.c_str());
+            ImGui::PopStyleColor();
+            ImGui::NewLine();
+        }
+    }
+    bool ButtonCentered(const char* label, const ImVec2& size) {
+        ImGuiStyle& style = ImGui::GetStyle();
+        const float window_width = ImGui::GetContentRegionAvail().x;
+        const float button_width = ImGui::CalcTextSize(label).x + style.FramePadding.x * 2.0f;
+        float button_indentation = (window_width - button_width) * 0.5f;
+
+        const float min_indentation = 20.0f;
+        if (button_indentation <= min_indentation)
+            button_indentation = min_indentation;
+
+        ImGui::SameLine(button_indentation);
+        return ImGui::Button(label, size);
+        ImGui::NewLine();
+    }
+    void SeparatorTextColored(const char* label, const ImU32& col) {
+        ImGui::PushStyleColor(ImGuiCol_Text, col);
+        ImGui::SeparatorText(label);
+        ImGui::PopStyleColor();
+    }
+    void Spacing(const ImVec2& size, const bool& customPosOffset) {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems)
+            return;
+
+        if (!customPosOffset) {
+            ImGui::ItemSize(size);
+            return;
+        }
+
+        const ImVec2 currentCursorPos = ImGui::GetCursorPos();
+        if (size.y == 0.0f)
+            ImGui::SetCursorPosX(currentCursorPos.x + size.x);
+        else if (size.x == 0.0f)
+            ImGui::SetCursorPosY(currentCursorPos.y + size.y);
+        else
+            ImGui::SetCursorPos(currentCursorPos + size);
+    }
 }

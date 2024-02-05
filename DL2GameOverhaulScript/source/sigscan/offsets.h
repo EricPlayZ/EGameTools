@@ -28,7 +28,7 @@ struct Offsets {
 
 	// Input related
 	AddOffset(g_CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 0F 48 8B 01 84 D2", PatternType::RelativePointer, PDWORD64*)
-	AddOffset(WndProc, "engine_x64_rwdi.dll", "40 55 56 57 41 54 41 56 48 83 EC ?? 49 8B E9", PatternType::Address, LPVOID)
+	//AddOffset(WndProc, "engine_x64_rwdi.dll", "40 55 56 57 41 54 41 56 48 83 EC ?? 49 8B E9", PatternType::Address, LPVOID)
 
 	// Player vars related
 	AddStaticOffset(LoadPlayerVariableFunc_size, 0x14E)
@@ -49,6 +49,7 @@ struct Offsets {
 	//AddOffset(CameraFPPDI_VT, "gamedll_ph_x64_rwdi.dll", "48 8D 05 [?? ?? ?? ?? 48 89 07 48 8D 4F 60", PatternType::RelativePointer, DWORD64)
 
 	// Functions
+	AddOffset(GetCurrentGameVersion, "gamedll_ph_x64_rwdi.dll", "B8 ?? ?? ?? ?? C3 CC CC CC CC CC CC CC CC CC CC 48 83 79", PatternType::Address, LPVOID)
 	AddOffset(ReadVideoSettings, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8D 4C 24 ?? FF 15 ?? ?? ?? ?? 48 C7 C2 ?? ?? ?? ??", PatternType::RelativePointer, LPVOID)
 	AddOffset(CalculateFreeCamCollision, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B 06 4C 8D 4C 24 ??", PatternType::RelativePointer, LPVOID)
 	//AddOffset(GetViewCamera, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 85 C0 74 28 48 8B C8", PatternType::RelativePointer, LPVOID)

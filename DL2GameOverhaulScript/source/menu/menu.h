@@ -20,5 +20,8 @@ namespace Menu {
 	extern float transparency;
 	extern float scale;
 
+    extern Option firstTimeRunning;
+
+    extern void FirstTimeRunning();
 	extern void Render();
 }

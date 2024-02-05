@@ -14,10 +14,12 @@ namespace Utils {
 		using clock = std::chrono::system_clock;
 		using time_point_type = std::chrono::time_point<clock, std::chrono::milliseconds>;
 	public:
-		long timeToPass;
+		std::chrono::milliseconds timeToPass;
+		Timer() : timeToPass(0), timePassed(false) {}
 		Timer(long timeMs);
 
-		bool GetTimePassed();
+		long GetTimePassed();
+		bool DidTimePass();
 	private:
 		time_point_type start;
 		bool timePassed;

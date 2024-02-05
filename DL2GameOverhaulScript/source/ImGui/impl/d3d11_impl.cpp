@@ -43,6 +43,7 @@ HRESULT __stdcall hkPresent11(IDXGISwapChain* pSwapChain, UINT SyncInterval, UIN
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	Menu::FirstTimeRunning();
 	if (Menu::menuToggle.GetValue())
 		Menu::Render();
 

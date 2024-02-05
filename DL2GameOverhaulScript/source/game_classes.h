@@ -106,6 +106,9 @@ namespace Engine {
 }
 
 namespace GamePH {
+	extern const std::string GameVerToStr(DWORD64 version);
+	extern const std::string GetCurrentGameVersionStr();
+	extern const DWORD64 GetCurrentGameVersion();
 	extern void ShowTPPModel(bool showTPPModel);
 
 	class PlayerVariables {

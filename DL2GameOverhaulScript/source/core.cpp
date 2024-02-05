@@ -10,6 +10,7 @@
 #include "hook.h"
 #include "kiero.h"
 #include "menu\menu.h"
+#include "print.h"
 #include "sigscan\offsets.h"
 
 #pragma region KeyBindOption
@@ -19,7 +20,7 @@ bool KeyBindOption::scrolledMouseWheelDown = false;
 #pragma endregion
 
 namespace Core {
-	// Console stuff
+#pragma region Console
 	static void DisableConsoleQuickEdit() {
 		DWORD prev_mode = 0;
 		const HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
@@ -39,14 +40,11 @@ namespace Core {
 			fclose(f);
 		FreeConsole();
 	}
+#pragma endregion
 
 	// Core
 	bool exiting = false;
 	static bool createdConfigThread = false;
-
-	std::thread hookRendererThread{};
-	std::thread configLoopThread{};
-	std::thread configSaveLoopThread{};
 
 	static std::string_view rendererAPI{};
 	static void LoopHookRenderer() {
@@ -58,7 +56,6 @@ namespace Core {
 
 			if (rendererAPI.empty())
 				continue;
-
 			if (kiero::init(rendererAPI == "d3d11" ? kiero::RenderType::D3D11 : kiero::RenderType::D3D12) != kiero::Status::Success)
 				continue;
 
@@ -77,38 +74,26 @@ namespace Core {
 		}
 	}
 
-	#pragma region GetRendererAPI
-	static bool(*pReadVideoSettings)(LPVOID instance, LPVOID file, bool flag1) = nullptr;
-	static bool(*oReadVideoSettings)(LPVOID instance, LPVOID file, bool flag1) = nullptr;
-	bool detourReadVideoSettings(LPVOID instance, LPVOID file, bool flag1) {
+	#pragma region ReadVideoSettings
+	// forward decl
+	static bool detourReadVideoSettings(LPVOID instance, LPVOID file, bool flag1);
+	static Hook::MHook<LPVOID, bool(*)(LPVOID, LPVOID, bool)> ReadVideoSettingsHook{ "ReadVideoSettings", &Offsets::Get_ReadVideoSettings, &detourReadVideoSettings};
+
+	static bool detourReadVideoSettings(LPVOID instance, LPVOID file, bool flag1) {
 		if (!rendererAPI.empty())
-			return oReadVideoSettings(instance, file, flag1);
+			return ReadVideoSettingsHook.pOriginal(instance, file, flag1);
 
 		DWORD renderer = *reinterpret_cast<PDWORD>(reinterpret_cast<DWORD64>(instance) + 0x7C);
 		rendererAPI = !renderer ? "d3d11" : "d3d12";
-		
-		return oReadVideoSettings(instance, file, flag1);
-	}
-	void LoopHookReadVideoSettings() {
-		while (true) {
-			Sleep(250);
 
-			if (!pReadVideoSettings)
-				pReadVideoSettings = (decltype(pReadVideoSettings))Offsets::Get_ReadVideoSettings();
-			else if (!oReadVideoSettings && MH_CreateHook(pReadVideoSettings, &detourReadVideoSettings, reinterpret_cast<LPVOID*>(&oReadVideoSettings)) == MH_OK) {
-				MH_EnableHook(pReadVideoSettings);
-				break;
-			}
-		}
+		return ReadVideoSettingsHook.pOriginal(instance, file, flag1);
 	}
 	#pragma endregion
 
 	void OnPostUpdate() {
 		if (!createdConfigThread) {
-			configLoopThread = std::thread(Config::ConfigLoop);
-			configLoopThread.detach();
-			configSaveLoopThread = std::thread(Config::ConfigSaveLoop);
-			configSaveLoopThread.detach();
+			std::thread(Config::ConfigLoop).detach();
+			std::thread(Config::ConfigSaveLoop).detach();
 
 			createdConfigThread = true;
 		}
@@ -130,10 +115,13 @@ namespace Core {
 	}
 
 	static void CreateSymlinkForLoadingFiles() {
+		std::filesystem::create_directories("EGameTools\\FilesToLoad");
+
 		for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data")) {
 			if (entry.path().filename().string() == "EGameTools" && is_symlink(entry.symlink_status())) {
-				assert(std::filesystem::equivalent("..\\..\\data\\EGameTools", "EGameTools"));
-				return;
+				if (std::filesystem::equivalent("..\\..\\data\\EGameTools", "EGameTools"))
+					return;
+				std::filesystem::remove(entry.path());
 			}
 		}
 		std::filesystem::create_directory_symlink(Utils::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
@@ -142,18 +130,33 @@ namespace Core {
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
 
+		PrintInfo("Initializing config");
 		Config::InitConfig();
+		PrintInfo("Creating \"EGameTools\\FilesToLoad\"");
 		CreateSymlinkForLoadingFiles();
+		PrintInfo("Sorting Player Variables");
 		GamePH::PlayerVariables::SortPlayerVars();
 
+		PrintInfo("Initializing MinHook");
 		MH_Initialize();
-		LoopHookReadVideoSettings();
 
-		hookRendererThread = std::thread(LoopHookRenderer);
-		hookRendererThread.detach();
+		PrintInfo("Hooking ReadVideoSettings");
+		const auto readVidSettingsHook = std::find_if(Hook::HookBase::GetInstances()->begin(), Hook::HookBase::GetInstances()->end(), [](const auto& item) { return item->name == "ReadVideoSettings"; });
+		if (readVidSettingsHook != Hook::HookBase::GetInstances()->end()) {
+			(*readVidSettingsHook)->HookLoop();
+			Hook::HookBase::GetInstances()->erase(readVidSettingsHook);
+			PrintSuccess("Hooked ReadVideoSettings!");
+		}
 
-		for (auto& hook : *Hook::HookBase::GetInstances())
+		PrintInfo("Hooking DX11/DX12 renderer");
+		LoopHookRenderer();
+		PrintSuccess("Hooked DX11/DX12 renderer!");
+
+		for (auto& hook : *Hook::HookBase::GetInstances()) {
+			PrintInfo("Hooking %s", hook->name.data());
 			hook->HookLoop();
+			PrintSuccess("Hooked %s!", hook->name.data());
+		}
 
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);

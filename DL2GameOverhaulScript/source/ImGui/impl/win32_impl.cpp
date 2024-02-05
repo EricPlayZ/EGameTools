@@ -21,7 +21,7 @@ static LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARA
 	switch (uMsg) {
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
-		if (ImGui::isAnyHotkeyBtnPressed || !ImGui::timeSinceHotkeyBtnPressed.GetTimePassed() || KeyBindOption::wasAnyKeyPressed)
+		if (Menu::firstTimeRunning.GetValue() || ImGui::isAnyHotkeyBtnPressed || !ImGui::timeSinceHotkeyBtnPressed.DidTimePass() || KeyBindOption::wasAnyKeyPressed)
 			break;
 
 		for (auto& option : *KeyBindOption::GetInstances()) {
@@ -50,15 +50,19 @@ static LRESULT __stdcall hkWindowProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ WPARA
 	if (!pCInput)
 		return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
 
-	ImGui::GetIO().MouseDrawCursor = Menu::menuToggle.GetValue();
+	ImGui::GetIO().MouseDrawCursor = Menu::firstTimeRunning.GetValue() || Menu::menuToggle.GetValue();
 	ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam);
 
-	if (Menu::menuToggle.GetValue()) {
+	if (Menu::firstTimeRunning.GetValue() || Menu::menuToggle.GetValue()) {
 		pCInput->BlockGameInput();
 
-		Menu::menuToggle.SetPrevValue(true);
-	} else if (Menu::menuToggle.GetPrevValue()) {
-		Menu::menuToggle.SetPrevValue(false);
+		if (Menu::menuToggle.GetValue())
+			Menu::menuToggle.SetPrevValue(true);
+	} else if (Menu::firstTimeRunning.GetPrevValue() || Menu::menuToggle.GetPrevValue()) {
+		if (Menu::firstTimeRunning.GetPrevValue())
+			Menu::firstTimeRunning.SetPrevValue(false);
+		else if (Menu::menuToggle.GetPrevValue())
+			Menu::menuToggle.SetPrevValue(false);
 		pCInput->UnlockGameInput();
 	}
 
@@ -77,9 +81,11 @@ static LRESULT CALLBACK hkMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	case WM_MOUSEHWHEEL: {
 		MSLLHOOKSTRUCT* pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
 		if (pMouseStruct == nullptr)
-			return CallNextHookEx(oMouseProc, nCode, wParam, lParam);
+			break;
 
 		if (GET_WHEEL_DELTA_WPARAM(pMouseStruct->mouseData)) {
+			if (Menu::firstTimeRunning.GetValue())
+				break;
 			for (auto& option : *KeyBindOption::GetInstances()) {
 				if (option->GetChangesAreDisabled())
 					continue;	

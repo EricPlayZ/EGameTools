@@ -6,7 +6,12 @@
 #include <string_view>
 #include "utils.h"
 #ifndef VK_NONE
-// #define LLMH_IMPL_DISABLE_DEBUG     // this is for disabling low-level mouse hook in case ure trying to debug and u dont want ur pc to die lol
+#define LLMH_IMPL_DISABLE_DEBUG     // this is for disabling low-level mouse hook in case ure trying to debug and u dont want ur pc to die lol
+
+#define MOD_VERSION_STR "v1.1.0"
+#define GAME_VER_COMPAT_STR ">= v1.14.0"
+#define GAME_VER_COMPAT 11401
+
 #define VK_NONE -1
 #define VK_MWHEELDOWN 0x100
 #define VK_MWHEELUP 0x101

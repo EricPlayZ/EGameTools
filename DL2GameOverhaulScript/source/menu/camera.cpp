@@ -67,11 +67,10 @@ namespace Menu {
 						freeCamSpeed -= 0.5f;
 					}
 
-					/*if (ImGui::GetIO().MouseWheel > 0.0f) {
-						freeCamSpeed += 0.5f;
-					} else if (ImGui::GetIO().MouseWheel < 0.0f) {
-						freeCamSpeed -= 0.5f;
-					}*/
+					if (freeCamSpeed < 0.1f)
+						freeCamSpeed = 0.1f;
+					else if (freeCamSpeed > 200.0f)
+						freeCamSpeed = 200.0f;
 
 					pFreeCam->speedMultiplier = freeCamSpeed;
 
@@ -135,7 +134,7 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 			ImGui::Hotkey("##FreeCamToggleKey", freeCam);
-			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.0f, 100.0f);
+			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 			ImGui::BeginDisabled(teleportPlayerToCamera.GetChangesAreDisabled()); {
 				ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCamera);
 				ImGui::EndDisabled();

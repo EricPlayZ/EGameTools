@@ -41,16 +41,18 @@ namespace Hook {
 
 	class HookBase {
 	public:
-		HookBase() { GetInstances()->insert(this); }
+		HookBase(const std::string_view& name) : name(name) { GetInstances()->insert(this); }
 		~HookBase() { GetInstances()->erase(this); }
 		static std::set<HookBase*>* GetInstances() { static std::set<HookBase*> instances{}; return &instances; };
 
 		virtual void HookLoop() {};
+
+		const std::string_view name;
 	};
 	template <typename GetTargetOffsetRetType, typename OrigType>
 	class MHook : HookBase {
 	public:
-		MHook(GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour) : pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour) {}
+		MHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour) {}
 
 		void HookLoop() override {
 			while (true) {
@@ -77,7 +79,7 @@ namespace Hook {
 	template <typename GetTargetOffsetRetType, typename OrigType>
 	class VTHook : HookBase {
 	public:
-		VTHook(GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour, DWORD offset) : pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour), offset(offset) {}
+		VTHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour, DWORD offset) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour), offset(offset) {}
 
 		void HookLoop() override {
 			while (true) {

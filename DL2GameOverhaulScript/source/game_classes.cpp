@@ -20,7 +20,6 @@ namespace Core {
 namespace GamePH {
 #pragma region Hooks
 	// Forward decl
-	static LRESULT __fastcall detourWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule);
 	static void detourOnPostUpdate(LPVOID pGameDI_PH2);
 	static DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos);
@@ -32,16 +31,8 @@ namespace GamePH {
 	static void detourShowUIManager(LPVOID pLevelDI, bool enabled);
 	static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
 
-#pragma region WndProc
-	static Hook::MHook<LPVOID, LRESULT(*)(HWND, UINT, WPARAM, LPARAM)> CreateWndProcHook{ &Offsets::Get_WndProc, &detourWndProc };
-
-	static LRESULT __fastcall detourWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-		return CreateWndProcHook.pOriginal(hwnd, uMsg, wParam, lParam);
-	}
-#pragma endregion
-
 #pragma region CreatePlayerHealthModule
-	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerHealthModuleHook{ &Offsets::Get_CreatePlayerHealthModule, &detourCreatePlayerHealthModule };
+	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerHealthModuleHook{ "CreatePlayerHealthModule", &Offsets::Get_CreatePlayerHealthModule, &detourCreatePlayerHealthModule};
 
 	static DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule) {
 		PlayerHealthModule::pPlayerHealthModule = reinterpret_cast<PlayerHealthModule*>(playerHealthModule);
@@ -50,7 +41,7 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region OnPostUpdate
-	static Hook::VTHook<GamePH::GameDI_PH2*, void(*)(LPVOID)> OnPostUpdateHook{ &GamePH::GameDI_PH2::Get, &detourOnPostUpdate, 0x3A8 };
+	static Hook::VTHook<GamePH::GameDI_PH2*, void(*)(LPVOID)> OnPostUpdateHook{ "OnPostUpdate", &GamePH::GameDI_PH2::Get, &detourOnPostUpdate, 0x3A8 };
 
 	static void detourOnPostUpdate(LPVOID pGameDI_PH2) {
 		OnPostUpdateHook.pOriginal(pGameDI_PH2);
@@ -59,7 +50,7 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region CalculateFreeCamCollision
-	static Hook::MHook<LPVOID, DWORD64(*)(LPVOID, float*)> CalculateFreeCamCollisionHook{ &Offsets::Get_CalculateFreeCamCollision, &detourCalculateFreeCamCollision };
+	static Hook::MHook<LPVOID, DWORD64(*)(LPVOID, float*)> CalculateFreeCamCollisionHook{ "CalculateFreeCamCollision", &Offsets::Get_CalculateFreeCamCollision, &detourCalculateFreeCamCollision };
 
 	static DWORD64 detourCalculateFreeCamCollision(LPVOID pFreeCamera, float* finalPos) {
 		if (Menu::Camera::disablePhotoModeLimits.GetValue() || Menu::Camera::freeCam.GetValue())
@@ -70,7 +61,7 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region LifeSetHealth
-	static Hook::MHook<LPVOID, void(*)(float*, float)> LifeSetHealthHook{ &Offsets::Get_LifeSetHealth, &detourLifeSetHealth };
+	static Hook::MHook<LPVOID, void(*)(float*, float)> LifeSetHealthHook{ "LifeSetHealth", &Offsets::Get_LifeSetHealth, &detourLifeSetHealth };
 
 	static void detourLifeSetHealth(float* pLifeHealth, float health) {
 		if (!Menu::Player::godMode.GetValue() && !Menu::Camera::freeCam.GetValue())
@@ -91,7 +82,7 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region TogglePhotoMode
-	static Hook::MHook<LPVOID, void(*)(LPVOID, bool)> TogglePhotoModeHook{ &Offsets::Get_TogglePhotoMode, &detourTogglePhotoMode };
+	static Hook::MHook<LPVOID, void(*)(LPVOID, bool)> TogglePhotoModeHook{ "TogglePhotoMode", &Offsets::Get_TogglePhotoMode, &detourTogglePhotoMode };
 
 	static void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
 		Menu::Camera::photoMode.Set(enabled);
@@ -116,7 +107,7 @@ namespace GamePH {
 
 #pragma region ShowTPPModelFunc3
 	static Option wannaUseTPPModel{};
-	static Hook::MHook<LPVOID, void(*)(DWORD64, bool)> ShowTPPModelFunc3Hook{ &Offsets::Get_ShowTPPModelFunc3, &detourShowTPPModelFunc3 };
+	static Hook::MHook<LPVOID, void(*)(DWORD64, bool)> ShowTPPModelFunc3Hook{ "ShowTPPModelFunc3", &Offsets::Get_ShowTPPModelFunc3, &detourShowTPPModelFunc3 };
 
 	static void detourShowTPPModelFunc3(DWORD64 a1, bool showTPPModel) {
 		wannaUseTPPModel.Set(showTPPModel);
@@ -136,7 +127,7 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region MoveCameraFromForwardUpPos
-	static Hook::MHook<LPVOID, void(*)(LPVOID, float*, float*, Vector3*)> MoveCameraFromForwardUpPosHook{ &Offsets::Get_MoveCameraFromForwardUpPos, &detourMoveCameraFromForwardUpPos };
+	static Hook::MHook<LPVOID, void(*)(LPVOID, float*, float*, Vector3*)> MoveCameraFromForwardUpPosHook{ "MoveCameraFromForwardUpPos", &Offsets::Get_MoveCameraFromForwardUpPos, &detourMoveCameraFromForwardUpPos };
 
 	static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) {
 		GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
@@ -225,7 +216,7 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region IsNotOutOfBounds
-	static Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfBoundsHook{ &Offsets::Get_IsNotOutOfBounds, &detourIsNotOutOfBounds };
+	static Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfBoundsHook{ "IsNotOutOfBounds", &Offsets::Get_IsNotOutOfBounds, &detourIsNotOutOfBounds };
 
 	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2) {
 		if (Menu::Player::disableOutOfBoundsTimer.GetValue())
@@ -239,7 +230,7 @@ namespace GamePH {
 	static LPVOID GetShowUIManager() {
 		return Utils::GetProcAddr("engine_x64_rwdi.dll", "?ShowUIManager@ILevel@@QEAAX_N@Z");
 	}
-	static Hook::MHook<LPVOID, void(*)(LPVOID, bool)> ShowUIManagerHook{ &GetShowUIManager, &detourShowUIManager };
+	static Hook::MHook<LPVOID, void(*)(LPVOID, bool)> ShowUIManagerHook{ "ShowUIManager", &GetShowUIManager, &detourShowUIManager };
 
 	static void detourShowUIManager(LPVOID pLevelDI, bool enabled) {
 		if (Menu::Misc::disableHUD.GetValue())
@@ -250,39 +241,66 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region fs::open
-static LPVOID GetFsOpen() {
-	return Utils::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
-}
-static Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ &GetFsOpen, &detourFsOpen };
-
-static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
-	DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
-
-	const char* filePath = reinterpret_cast<const char*>(file & 0x1FFFFFFFFFFFFFFF); // remove first byte of addr in case it exists
-	std::string fileName = std::filesystem::path(filePath).filename().string();
-	if (fileName.empty())
-		return FsOpenHook.pOriginal(file, a2, a3);
-
-	for (const auto& entry : std::filesystem::directory_iterator("EGameTools\\FilesToLoad")) {
-		if (fileName.contains(".rpack"))
-			return FsOpenHook.pOriginal(file, a2, a3);
-		if (fileName.contains("player_anims_pc"))
-			return FsOpenHook.pOriginal(file, a2, a3);
-		if (fileName.contains("sfx"))
-			return FsOpenHook.pOriginal(file, a2, a3);
-		if (entry.path().filename().string().contains(fileName)) {
-			std::string finalPath = std::string("EGameTools\\FilesToLoad\\") + fileName;
-			const char* filePath2 = finalPath.c_str();
-
-			return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
-		}
+	static LPVOID GetFsOpen() {
+		return Utils::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
 	}
-	return FsOpenHook.pOriginal(file, a2, a3);
-}
+	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ "fs::open", &GetFsOpen, &detourFsOpen };
+
+	static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
+		DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
+
+		const char* filePath = reinterpret_cast<const char*>(file & 0x1FFFFFFFFFFFFFFF); // remove first byte of addr in case it exists
+		std::string fileName = std::filesystem::path(filePath).filename().string();
+		if (fileName.empty())
+			return FsOpenHook.pOriginal(file, a2, a3);
+
+		for (const auto& entry : std::filesystem::directory_iterator("EGameTools\\FilesToLoad")) {
+			if (fileName.contains(".rpack"))
+				return FsOpenHook.pOriginal(file, a2, a3);
+			if (fileName.contains("player_anims_pc"))
+				return FsOpenHook.pOriginal(file, a2, a3);
+			if (fileName.contains("sfx"))
+				return FsOpenHook.pOriginal(file, a2, a3);
+			if (entry.path().filename().string().contains(fileName)) {
+				std::string finalPath = std::string("EGameTools\\FilesToLoad\\") + fileName;
+				const char* filePath2 = finalPath.c_str();
+
+				return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
+			}
+		}
+		return FsOpenHook.pOriginal(file, a2, a3);
+	}
 #pragma endregion
 #pragma endregion
 
 #pragma region OtherFuncs
+	const std::string GameVerToStr(DWORD64 version) {
+		DWORD64 major = version / 10000;
+		DWORD64 minor = (version / 100) % 100;
+		DWORD64 patch = version % 100;
+
+		return std::string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch));
+	}
+	const std::string GetCurrentGameVersionStr() {
+		if (!GetCurrentGameVersion())
+			return {};
+
+		DWORD64 version = GetCurrentGameVersion();
+
+		DWORD64 major = version / 10000;
+		DWORD64 minor = (version / 100) % 100;
+		DWORD64 patch = version % 100;
+
+		return std::string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch));
+	}
+	const DWORD64 GetCurrentGameVersion() {
+		DWORD64(*pGetCurrentGameVersion)() = (decltype(pGetCurrentGameVersion))Offsets::Get_GetCurrentGameVersion();
+		if (!pGetCurrentGameVersion)
+			return 0;
+
+		return pGetCurrentGameVersion();
+	}
+
 	static DWORD64 ShowTPPModelFunc2(LPVOID a1) {
 		DWORD64(*pShowTPPModelFunc2)(LPVOID a1) = (decltype(pShowTPPModelFunc2))Offsets::Get_ShowTPPModelFunc2();
 		if (!pShowTPPModelFunc2)
