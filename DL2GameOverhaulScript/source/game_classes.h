@@ -110,6 +110,7 @@ namespace GamePH {
 	extern const std::string GetCurrentGameVersionStr();
 	extern const DWORD64 GetCurrentGameVersion();
 	extern void ShowTPPModel(bool showTPPModel);
+	extern bool ReloadJumps();
 
 	class PlayerVariables {
 	public:

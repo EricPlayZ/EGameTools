@@ -323,6 +323,13 @@ namespace GamePH {
 		
 		ShowTPPModelFunc3Hook.pTarget(tppFunc2Addr, showTPPModel);
 	}
+	bool ReloadJumps() {
+		bool(*pReloadJumps)() = (decltype(pReloadJumps))Offsets::Get_ReloadJumps();
+		if (!pReloadJumps)
+			return false;
+
+		return pReloadJumps();
+	}
 #pragma endregion
 
 #pragma region PlayerVariables
@@ -1057,27 +1064,29 @@ namespace Engine {
 
 #pragma region CRTTIField
 	DWORD64 CRTTIField::Get_float(CRTTI* crtti, float& out) {
-		if (!Offsets::Get_CRTTIFieldTypedNative_Get_float())
-			return 0;
+		__try {
+			DWORD64(*pCRTTIFieldTypedNative_Get_float)(LPVOID pCRTTIFieldTypedNative, CRTTI * crtti, float& out) = (decltype(pCRTTIFieldTypedNative_Get_float))Utils::GetProcAddr("engine_x64_rwdi.dll", "?Get@?$CRTTIFieldTypedNative@MV?$CRTTIFieldTyped@M@@@@UEBAXPEBVCRTTIObject@@AEAM@Z");
+			if (!pCRTTIFieldTypedNative_Get_float)
+				return 0;
 
-		DWORD64(*pCRTTIFieldTypedNative_Get_float)(LPVOID pCRTTIFieldTypedNative, CRTTI* crtti, float& out) = (decltype(pCRTTIFieldTypedNative_Get_float))Offsets::Get_CRTTIFieldTypedNative_Get_float();
-		if (!pCRTTIFieldTypedNative_Get_float)
+			return pCRTTIFieldTypedNative_Get_float(this, crtti, out);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return 0;
-
-		return pCRTTIFieldTypedNative_Get_float(this, crtti, out);
+		}
 	}
 #pragma endregion
 
 #pragma region CRTTI
 	CRTTIField* CRTTI::FindField(const char* name) {
-		if (!Offsets::Get_CRTTI_FindField())
-			return nullptr;
+		__try {
+			CRTTIField* (*pCRTTI_FindField)(LPVOID pCRTTI, const char* name) = (decltype(pCRTTI_FindField))Utils::GetProcAddr("engine_x64_rwdi.dll", "?FindField@CRTTI@@QEBAPEBVCRTTIField@@PEBD@Z");
+			if (!pCRTTI_FindField)
+				return nullptr;
 
-		CRTTIField*(*pCRTTI_FindField)(LPVOID pCRTTI, const char* name) = (decltype(pCRTTI_FindField))Offsets::Get_CRTTI_FindField();
-		if (!pCRTTI_FindField)
+			return pCRTTI_FindField(this, name);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
-
-		return pCRTTI_FindField(this, name);
+		}
 	}
 #pragma endregion
 }

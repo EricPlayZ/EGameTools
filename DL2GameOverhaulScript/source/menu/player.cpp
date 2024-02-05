@@ -6298,6 +6298,12 @@ namespace Menu {
 			ImGui::Checkbox("Nightrunner Mode", &nightrunnerMode);
 			ImGui::Hotkey("##NightrunnerModeToggleKey", nightrunnerMode);
 
+			ImGui::SeparatorText("Player Jump Parameters");
+			if (ImGui::Button("Reload Jump Params")) {
+				GamePH::ReloadJumps();
+				ImGui::OpenPopup("Reloaded player jump parameters!");
+			}
+
 			ImGui::SeparatorText("Player Variables");
 			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables);
 			if (!playerVariables.GetValue())
@@ -6394,6 +6400,12 @@ namespace Menu {
 					LoadPlayerVariablesSCR();
 				}
 				ImGuiFileDialog::Instance()->Close();
+			}
+			if (ImGui::BeginPopupModal("Reloaded player jump parameters!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+				ImGui::Text("Player jump parameters have been reloaded from \"jump_parameters.scr\" located inside the \"EGameTools\\FilesToLoad\" folder!");
+				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
+					ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
 			}
 			if (ImGui::BeginPopupModal("Failed saving.", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::Text("There was an error opening a handle to the file \"%s\\player_variables.scr\"! The file is most likely already open in another program. Please close it!", saveSCRPath.c_str());
