@@ -41,5 +41,6 @@ namespace Utils {
 	extern std::string_view GetDesktopDir();
 	extern std::string_view GetDocumentsDir();
 	extern std::string GetCurrentProcDirectory();
+	extern bool FileExistsInDir(const char* fileName, const char* dir);
 	extern WindowsVersion GetWindowsVersion();
 }

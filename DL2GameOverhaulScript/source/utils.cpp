@@ -80,6 +80,13 @@ namespace Utils {
         GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
         return std::filesystem::path(buffer).parent_path().string();
     }
+    bool FileExistsInDir(const char* fileName, const char* dir) {
+        for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+            if (entry.path().filename().string() == fileName)
+                return true;
+        }
+        return false;
+    }
     WindowsVersion GetWindowsVersion() {
         OSVERSIONINFOEX info{};
         DWORDLONG dwlConditionMask = 0;

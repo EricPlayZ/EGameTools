@@ -5,6 +5,7 @@
 namespace Menu {
 	namespace World {
 		extern float time;
+		extern KeyBindOption freezeTime;
 
 		extern EWeather::TYPE weather;
 

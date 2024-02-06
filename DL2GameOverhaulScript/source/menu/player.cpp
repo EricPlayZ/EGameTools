@@ -6080,13 +6080,13 @@ namespace Menu {
 
             std::ofstream outFile(std::string(saveSCRPath) + "\\player_variables.scr", std::ios::binary);
 			if (!outFile.is_open()) {
-				ImGui::OpenPopup("Failed saving.");
+				ImGui::OpenPopup("Failed saving player variables.");
 				return;
 			}
             outFile << tempPlayerVarsSCR;
             outFile.close();
 
-			ImGui::OpenPopup("Saved!");
+			ImGui::OpenPopup("Saved player variables!");
         }
 		static void LoadPlayerVariablesSCR() {
 			if (!std::filesystem::exists(loadSCRFilePath))
@@ -6094,7 +6094,7 @@ namespace Menu {
 
 			std::ifstream file(loadSCRFilePath);
 			if (!file.is_open()) {
-				ImGui::OpenPopup("Failed loading.");
+				ImGui::OpenPopup("Failed loading player variables.");
 				return;
 			}
 
@@ -6111,7 +6111,7 @@ namespace Menu {
 			}
 			file.close();
 
-			ImGui::OpenPopup("Loaded!");
+			ImGui::OpenPopup("Loaded player variables!");
 		}
 
 		static void RestoreVariablesToDefault() {
@@ -6300,8 +6300,11 @@ namespace Menu {
 
 			ImGui::SeparatorText("Player Jump Parameters");
 			if (ImGui::Button("Reload Jump Params")) {
-				GamePH::ReloadJumps();
-				ImGui::OpenPopup("Reloaded player jump parameters!");
+				if (Utils::FileExistsInDir("jump_parameters.scr", "EGameTools\\FilesToLoad")) {
+					GamePH::ReloadJumps();
+					ImGui::OpenPopup("Reloaded player jump parameters!");
+				} else
+					ImGui::OpenPopup("Failed reloading player jump parameters.");
 			}
 
 			ImGui::SeparatorText("Player Variables");
@@ -6401,31 +6404,37 @@ namespace Menu {
 				}
 				ImGuiFileDialog::Instance()->Close();
 			}
-			if (ImGui::BeginPopupModal("Reloaded player jump parameters!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-				ImGui::Text("Player jump parameters have been reloaded from \"jump_parameters.scr\" located inside the \"EGameTools\\FilesToLoad\" folder!");
+			if (ImGui::BeginPopupModal("Failed reloading player jump parameters.", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+				ImGui::Text("Could not find any \"jump_parameters.scr\" inside \"EGameTools\\FilesToLoad\"! Please make sure a \"jump_parameters.scr\" file is present in the directory mentioned earlier.");
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}
-			if (ImGui::BeginPopupModal("Failed saving.", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			if (ImGui::BeginPopupModal("Reloaded player jump parameters!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+				ImGui::Text("Player jump parameters have been reloaded! from \"EGameTools\\FilesToLoad\"");
+				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
+					ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+			}
+			if (ImGui::BeginPopupModal("Failed saving player variables.", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::Text("There was an error opening a handle to the file \"%s\\player_variables.scr\"! The file is most likely already open in another program. Please close it!", saveSCRPath.c_str());
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}
-			if (ImGui::BeginPopupModal("Saved!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			if (ImGui::BeginPopupModal("Saved player variables!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::Text("Player variables have been saved to \"%s\\player_variables.scr\"!", saveSCRPath.c_str());
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}
-			if (ImGui::BeginPopupModal("Failed loading.", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			if (ImGui::BeginPopupModal("Failed loading player variables.", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::Text("There was an error opening the file \"%s\"! The file is most likely already open in another program. Please close it!", loadSCRFilePath.c_str());
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}
-			if (ImGui::BeginPopupModal("Loaded!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			if (ImGui::BeginPopupModal("Loaded player variables!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::Text("Player variables have been loaded from \"%s\"!", loadSCRFilePath.c_str());
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();

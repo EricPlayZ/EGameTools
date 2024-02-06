@@ -45,7 +45,7 @@ namespace Menu {
             ImGui::TextCentered(gameCompat.c_str());
             const std::string gameVer = "The game version you are currently running is v" + GamePH::GetCurrentGameVersionStr() + ".";
             ImGui::TextCentered(gameVer.c_str());
-            const std::string gameTestedVer = "This mod has been tested with version v" + GamePH::GameVerToStr(GAME_VER_COMPAT) + ".";
+            const std::string gameTestedVer = "This mod has been last tested with version v" + GamePH::GameVerToStr(GAME_VER_COMPAT) + ".";
             ImGui::TextCentered(gameTestedVer.c_str());
             if (GamePH::GetCurrentGameVersion() < 11400 || GamePH::GetCurrentGameVersion() > GAME_VER_COMPAT) {
                 const std::string gameNotCompat = "Please note that your game version has not been officially tested with this mod, therefore expect bugs, glitches or the mod to completely stop working. If so, please " + std::string(GamePH::GetCurrentGameVersion() > GAME_VER_COMPAT ? "wait for a new patch." : "upgrade your game version to one that the mod supports.");
@@ -122,7 +122,7 @@ namespace Menu {
 
         maxWndSize = defMaxWndSize * scale;
         ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
-        ImGui::Begin("EGameTools", &menuToggle.value, windowFlags); {
+        ImGui::Begin(std::string("EGameTools " + std::string(MOD_VERSION_STR)).c_str(), &menuToggle.value, windowFlags); {
             if (ImGui::BeginTabBar("##MainTabBar")) {
                 for (auto& tab : *MenuTab::GetInstances()) {
                     if (ImGui::BeginTabItem(tab.second->tabName.data())) {

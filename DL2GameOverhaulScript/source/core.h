@@ -10,7 +10,7 @@
 
 #define MOD_VERSION_STR "v1.1.0"
 #define GAME_VER_COMPAT_STR ">= v1.14.0"
-#define GAME_VER_COMPAT 11401
+#define GAME_VER_COMPAT 11400
 
 #define VK_NONE -1
 #define VK_MWHEELDOWN 0x100

@@ -167,8 +167,11 @@ namespace Core {
 	void Cleanup() {
 		exiting = true;
 
+		PrintInfo("Game request exit, running cleanup");
+		PrintInfo("Saving config to file");
 		Config::SaveConfig();
 
+		PrintInfo("Unhooking everything");
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
 	}

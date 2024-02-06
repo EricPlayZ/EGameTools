@@ -56,8 +56,6 @@ namespace Hook {
 
 		void HookLoop() override {
 			while (true) {
-				Sleep(250);
-
 				if (!pGetOffsetFunc)
 					continue;
 
@@ -67,6 +65,8 @@ namespace Hook {
 					MH_EnableHook(pTarget);
 					break;
 				}
+
+				Sleep(250);
 			}
 		}
 
@@ -83,8 +83,6 @@ namespace Hook {
 
 		void HookLoop() override {
 			while (true) {
-				Sleep(250);
-
 				if (!pGetOffsetFunc)
 					continue;
 
@@ -94,6 +92,8 @@ namespace Hook {
 					Hook::HookVT(pInstance, pDetour, reinterpret_cast<LPVOID*>(&pOriginal), offset);
 					break;
 				}
+
+				Sleep(250);
 			}
 		}
 

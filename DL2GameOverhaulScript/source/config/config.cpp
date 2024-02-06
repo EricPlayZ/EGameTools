@@ -20,6 +20,8 @@ namespace Config {
 		int code;
 	};
 	static constexpr auto virtualKeyCodes = std::to_array<VKey>({
+		{ "VK_NONE", VK_NONE },
+
 		// Function keys
 		{ "VK_F1", VK_F1 },
 		{ "VK_F2", VK_F2 },
@@ -4032,6 +4034,7 @@ namespace Config {
 		{ "Menu:Keybinds", "ThirdPersonToggleKey", std::string("VK_F1"), &Menu::Camera::thirdPersonCamera, String},
 		{ "Menu:Keybinds", "UseTPPModelToggleKey", std::string("VK_F2"), &Menu::Camera::tpUseTPPModel, String},
 		{ "Menu:Keybinds", "DisableHUDToggleKey", std::string("VK_F8"), &Menu::Misc::disableHUD, String},
+		{ "Menu:Keybinds", "FreezeTimeToggleKey", std::string("VK_NONE"), &Menu::World::freezeTime, String},
 		{ "Player:Misc", "GodMode", false, &Menu::Player::godMode, OPTION },
 		{ "Player:Misc", "DisableOutOfBoundsTimer", true, &Menu::Player::disableOutOfBoundsTimer, OPTION },
 		{ "Player:Misc", "NightrunnerMode", false, &Menu::Player::nightrunnerMode, OPTION },
