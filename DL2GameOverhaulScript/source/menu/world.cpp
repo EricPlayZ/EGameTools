@@ -8,7 +8,13 @@ namespace Menu {
 	namespace World {
 		float time = 0.0f;
 		static float timeBeforeFreeze = 0.0f;
+		float gameSpeed = 1.0f;
+		static float gameSpeedBeforeSlowMo = gameSpeed;
 		KeyBindOption freezeTime{ VK_NONE };
+		KeyBindOption slowMotion{ 'X' };
+		float slowMotionSpeed = 0.4f;
+		static float slowMotionSpeedLerp = gameSpeed;
+		float slowMotionTransitionTime = 1.0f;
 
 		EWeather::TYPE weather = EWeather::TYPE::Default;
 		static const char* const weatherItems[7] = {
@@ -20,6 +26,13 @@ namespace Menu {
 			"Rainy",
 			"Stormy"
 		};
+
+		static void UpdateDisabledOptions() {
+			GamePH::DayNightCycle* dayNightCycle = GamePH::DayNightCycle::Get();
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			freezeTime.SetChangesAreDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle);
+			slowMotion.SetChangesAreDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle);
+		}
 
 		Tab Tab::instance{};
 		void Tab::Update() {
@@ -33,52 +46,87 @@ namespace Menu {
 			if (freezeTime.HasChangedTo(true)) {
 				timeBeforeFreeze = time;
 				freezeTime.SetPrevValue(true);
+			} else if (freezeTime.HasChangedTo(false)) {
+				dayNightCycle->SetDaytime(timeBeforeFreeze);
+				freezeTime.SetPrevValue(false);
+			}
+
+			if (slowMotion.HasChangedTo(false)) {
+				static bool slowMoHasChanged = true;
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", slowMotionSpeed, gameSpeedBeforeSlowMo, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseOutSine);
+				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
+				slowMoHasChanged = false;
+
+				if (Utils::are_same(gameSpeed, gameSpeedBeforeSlowMo)) {
+					slowMoHasChanged = true;
+					slowMotion.SetPrevValue(false);
+				}
+			} else if (slowMotion.GetValue()) {
+				if (slowMotion.HasChanged()) {
+					gameSpeedBeforeSlowMo = gameSpeed;
+					slowMotionSpeedLerp = gameSpeed;
+				}
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedBeforeSlowMo, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseOutSine);
+				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
+				if (slowMotion.HasChanged())
+					slowMotion.SetPrevValue(slowMotion.GetValue());
 			}
 
 			if (!menuToggle.GetValue()) {
-				if (!freezeTime.GetValue()) {
-					if (freezeTime.HasChangedTo(false)) {
-						dayNightCycle->SetDaytime(time);
-						freezeTime.SetPrevValue(false);
-					}
-					time = dayNightCycle->time1 * 24;
-				} else if (!Utils::are_same(time, timeBeforeFreeze))
+				time = dayNightCycle->time1 * 24;
+				if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.009f))
 					dayNightCycle->SetDaytime(timeBeforeFreeze);
+
+				if (!slowMotion.GetValue() && !slowMotion.HasChanged())
+					iLevel->TimerSetSpeedUp(gameSpeed);
+				if (!Utils::are_same(iLevel->TimerGetSpeedUp(), 1.0f))
+					gameSpeed = iLevel->TimerGetSpeedUp();
 			}
 		}
 		void Tab::Render() {
 			GamePH::DayNightCycle* dayNightCycle = GamePH::DayNightCycle::Get();
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-			ImGui::SeparatorText("Misc##World");
-			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle || dayNightCycle->time1 == 0.0f); {
-				static bool sliderBeingPressed = false;
-				if (ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp) && dayNightCycle)
-					sliderBeingPressed = true;
-				else if (dayNightCycle) {
-					if (sliderBeingPressed) {
-						sliderBeingPressed = false;
+			ImGui::SeparatorText("Time##World");
+			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle); {
+				static bool timeSliderBeingPressed = false;
+				if (ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+					timeSliderBeingPressed = true;
+				else if (iLevel && iLevel->IsLoaded() && dayNightCycle) {
+					if (timeSliderBeingPressed) {
+						timeSliderBeingPressed = false;
 						timeBeforeFreeze = time;
 						dayNightCycle->SetDaytime(time);
 					}
-					if (!freezeTime.GetValue()) {
-						if (freezeTime.HasChangedTo(false)) {
-							dayNightCycle->SetDaytime(timeBeforeFreeze);
-							freezeTime.SetPrevValue(false);
-						}
-						time = dayNightCycle->time1 * 24;
-					} else if (!Utils::are_same(time, timeBeforeFreeze))
+					time = dayNightCycle->time1 * 24;
+					if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.009f))
 						dayNightCycle->SetDaytime(timeBeforeFreeze);
 				}
 
-				ImGui::Checkbox("Freeze Time", &freezeTime);
-				ImGui::Hotkey("##FreezeTimeToggleKey", freezeTime);
+				ImGui::BeginDisabled(slowMotion.GetValue()); {
+					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2f"))
+						iLevel->TimerSetSpeedUp(gameSpeed);
+					else if (iLevel && iLevel->IsLoaded()) {
+						if (!slowMotion.GetValue() && !slowMotion.HasChanged())
+							iLevel->TimerSetSpeedUp(gameSpeed);
+						if (!Utils::are_same(iLevel->TimerGetSpeedUp(), 1.0f))
+							gameSpeed = iLevel->TimerGetSpeedUp();
+					}
+					ImGui::EndDisabled();
+				}
+
+				ImGui::CheckboxHotkey("Freeze Time", &freezeTime);
+				ImGui::SameLine();
+				ImGui::CheckboxHotkey("Slow Motion", &slowMotion);
+
 				ImGui::EndDisabled();
 			}
+			ImGui::SliderFloat("Slow Motion Speed", &slowMotionSpeed, 0.01f, 0.99f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SliderFloat("Slow Motion Transition Time", &slowMotionTransitionTime, 0.00f, 5.00f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 
 			GamePH::TimeWeather::CSystem* timeWeatherSystem = GamePH::TimeWeather::CSystem::Get();
 			const bool weatherDisabledFlag = !iLevel || !iLevel->IsLoaded() || !timeWeatherSystem;
 
-			ImGui::SeparatorText("Weather");
+			ImGui::SeparatorText("Weather##World");
 			ImGui::BeginDisabled(weatherDisabledFlag); {
 				if (ImGui::Combo("Weather", reinterpret_cast<int*>(&weather), weatherItems, IM_ARRAYSIZE(weatherItems)) && timeWeatherSystem)
 					timeWeatherSystem->SetForcedWeather(static_cast<EWeather::TYPE>(weather - 1));

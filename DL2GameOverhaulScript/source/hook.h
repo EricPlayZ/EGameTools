@@ -3,6 +3,7 @@
 #include <functional>
 #include <set>
 #include "MinHook\include\MinHook.h"
+#include "print.h"
 
 namespace Hook {
 	struct DETOUR_INFO {
@@ -68,6 +69,8 @@ namespace Hook {
 
 				Sleep(250);
 			}
+
+			PrintSuccess("Hooked %s!", name.data());
 		}
 
 		OrigType pOriginal = nullptr;
@@ -95,6 +98,8 @@ namespace Hook {
 
 				Sleep(250);
 			}
+
+			PrintSuccess("Hooked %s!", name.data());
 		}
 
 		OrigType pOriginal = nullptr;

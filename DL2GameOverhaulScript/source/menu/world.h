@@ -5,7 +5,11 @@
 namespace Menu {
 	namespace World {
 		extern float time;
+		extern float gameSpeed;
 		extern KeyBindOption freezeTime;
+		extern KeyBindOption slowMotion;
+		extern float slowMotionSpeed;
+		extern float slowMotionTransitionTime;
 
 		extern EWeather::TYPE weather;
 

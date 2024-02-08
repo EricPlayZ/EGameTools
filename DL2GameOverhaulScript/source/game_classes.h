@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "core.h"
 #include "hook.h"
 #include "utils.h"
 
@@ -145,6 +146,9 @@ namespace GamePH {
 		static void ChangePlayerVar(const std::string& playerVar, const T value) {
 			static_assert(std::is_same<T, bool>::value || std::is_same<T, float>::value || std::is_same<T, std::string>::value, "Invalid type: value must be bool, float or string");
 
+			if (!gotPlayerVars)
+				return;
+
 			auto it = std::find_if(PlayerVariables::playerVars.begin(), PlayerVariables::playerVars.end(), [&playerVar](const auto& pair) {
 				return pair.first == playerVar;
 			});
@@ -174,6 +178,24 @@ namespace GamePH {
 
 				*varValue = value;
 				*(varValue + 1) = value;
+			}
+		}
+		template <typename T>
+		static void ManagePlayerVarOption(const std::string& playerVar, const T valueIfTrue, const T valueIfFalse, Option* option, const bool& usePreviousVal = true) {
+			if (!gotPlayerVars)
+				return;
+
+			static T previousPlayerVarValue = GamePH::PlayerVariables::GetPlayerVar<T>(playerVar);
+
+			if (option->GetValue()) {
+				if (!option->GetPrevValue())
+					previousPlayerVarValue = GamePH::PlayerVariables::GetPlayerVar<T>(playerVar);
+
+				GamePH::PlayerVariables::ChangePlayerVar(playerVar, valueIfTrue);
+				option->SetPrevValue(true);
+			} else if (option->GetPrevValue()) {
+				option->SetPrevValue(false);
+				GamePH::PlayerVariables::ChangePlayerVar(playerVar, usePreviousVal ? previousPlayerVarValue : valueIfFalse);
 			}
 		}
 
@@ -268,6 +290,8 @@ namespace GamePH {
 		void SetViewCamera(LPVOID viewCam);
 		float GetTimePlayed();
 		void ShowUIManager(bool enabled);
+		float TimerGetSpeedUp();
+		void TimerSetSpeedUp(float timeScale);
 		TimeWeather::CSystem* GetTimeWeatherSystem();
 
 		static LevelDI* Get();

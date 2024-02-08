@@ -62,6 +62,7 @@ struct Offsets {
 	//AddOffset(CalculateOutOfBoundsTimer, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 0F B6 99", PatternType::Address, LPVOID)
 	AddOffset(IsNotOutOfBounds, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F9 48 85 D2", PatternType::Address, LPVOID)
 	AddOffset(ReloadJumps, "gamedll_ph_x64_rwdi.dll", "48 83 EC ?? E8 ?? ?? ?? ?? 48 8D 15", PatternType::Address, LPVOID)
+	AddOffset(PlaySoundEvent, "gamedll_ph_x64_rwdi.dll", "4C 8B DC 49 89 5B ?? 49 89 73 ?? 57 48 81 EC ?? ?? ?? ?? 4C 8B 4C 24 ?? 48 8B F9 4D 8B D0 66 C7 84 24 ?? ?? ?? ?? ?? ?? 49 8B C1 66 C7 84 24", PatternType::Address, LPVOID)
 	//AddOffset(GetTimeWeatherSystem, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 49 8D 4F 38", PatternType::RelativePointer, LPVOID)
 	//AddOffset(SetForcedWeather, "engine_x64_rwdi.dll", "89 51 68 C3 CC CC CC CC CC CC CC CC CC CC CC CC", PatternType::Address, LPVOID)
 	//AddOffset(GetCurrentWeather, "engine_x64_rwdi.dll", "48 8B 41 78 48 85 C0 75 0F", PatternType::Address, LPVOID)

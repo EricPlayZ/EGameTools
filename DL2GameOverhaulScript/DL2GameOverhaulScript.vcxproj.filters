@@ -68,6 +68,9 @@
     <ClCompile Include="source\menu\misc.cpp">
       <Filter>menu</Filter>
     </ClCompile>
+    <ClCompile Include="source\ImGuiEx\Animation.cpp">
+      <Filter>ImGuiEx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\memory.h" />
@@ -166,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="source\menu\misc.h">
       <Filter>menu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImGuiEx\Animation.h">
+      <Filter>ImGuiEx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

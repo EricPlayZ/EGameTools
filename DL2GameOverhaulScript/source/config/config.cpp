@@ -4028,16 +4028,22 @@ namespace Config {
 		{ "Menu:Keybinds", "MenuToggleKey", std::string("VK_F5"), &Menu::menuToggle, String},
 		{ "Menu:Keybinds", "GodModeToggleKey", std::string("VK_F6"), &Menu::Player::godMode, String},
 		{ "Menu:Keybinds", "FreezePlayerToggleKey", std::string("VK_F7"), &Menu::Player::freezePlayer, String},
+		{ "Menu:Keybinds", "DisableOutOfBoundsTimerToggleKey", std::string("VK_NONE"), &Menu::Player::disableOutOfBoundsTimer, String},
 		{ "Menu:Keybinds", "NightrunnerModeToggleKey", std::string("VK_F9"), &Menu::Player::nightrunnerMode, String},
+		{ "Menu:Keybinds", "OneHandedModeToggleKey", std::string("VK_NONE"), &Menu::Player::oneHandedMode, String},
 		{ "Menu:Keybinds", "FreeCamToggleKey", std::string("VK_F3"), &Menu::Camera::freeCam, String},
 		{ "Menu:Keybinds", "TeleportPlayerToCameraToggleKey", std::string("VK_F4"), &Menu::Camera::teleportPlayerToCamera, String},
 		{ "Menu:Keybinds", "ThirdPersonToggleKey", std::string("VK_F1"), &Menu::Camera::thirdPersonCamera, String},
 		{ "Menu:Keybinds", "UseTPPModelToggleKey", std::string("VK_F2"), &Menu::Camera::tpUseTPPModel, String},
+		{ "Menu:Keybinds", "DisablePhotoModeLimits", std::string("VK_NONE"), &Menu::Camera::disablePhotoModeLimits, String},
+		{ "Menu:Keybinds", "DisableSafezoneFOVReduction", std::string("VK_NONE"), &Menu::Camera::disableSafezoneFOVReduction, String},
 		{ "Menu:Keybinds", "DisableHUDToggleKey", std::string("VK_F8"), &Menu::Misc::disableHUD, String},
 		{ "Menu:Keybinds", "FreezeTimeToggleKey", std::string("VK_NONE"), &Menu::World::freezeTime, String},
+		{ "Menu:Keybinds", "SlowMotionToggleKey", std::string("VK_X"), &Menu::World::slowMotion, String},
 		{ "Player:Misc", "GodMode", false, &Menu::Player::godMode, OPTION },
 		{ "Player:Misc", "DisableOutOfBoundsTimer", true, &Menu::Player::disableOutOfBoundsTimer, OPTION },
 		{ "Player:Misc", "NightrunnerMode", false, &Menu::Player::nightrunnerMode, OPTION },
+		{ "Player:Misc", "OneHandedMode", false, &Menu::Player::oneHandedMode, OPTION },
 		{ "Player:PlayerVariables", "Enabled", false, &Menu::Player::playerVariables, OPTION },
 		{ "Player:PlayerVariables", "LastSaveSCRPath", std::string(), &Menu::Player::saveSCRPath, String },
 		{ "Player:PlayerVariables", "LastLoadSCRFilePath", std::string(), &Menu::Player::loadSCRFilePath, String },
@@ -4049,7 +4055,9 @@ namespace Config {
 		{ "Camera:ThirdPerson", "HeightAbovePlayer", 1.35f, &Menu::Camera::tpHeightAbovePlayer, Float },
 		{ "Camera:ThirdPerson", "HorizontalDistanceFromPlayer", 0.0f, &Menu::Camera::tpHorizontalDistanceFromPlayer, Float },
 		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimits, OPTION },
-		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION }
+		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION },
+		{ "World:Time", "SlowMotionSpeed", 0.4f, &Menu::World::slowMotionSpeed, Float },
+		{ "World:Time", "SlowMotionTransitionTime", 1.0f, &Menu::World::slowMotionTransitionTime, Float }
 	});
 	std::vector<ConfigEntry> configVariables(configVariablesDefault.begin(), configVariablesDefault.end());
 	static const char* configFileName = "EGameTools.ini";

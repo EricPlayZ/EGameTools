@@ -1,4 +1,5 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include <Hotkey.h>
 #include <imgui_internal.h>
 #include "..\core.h"
 
@@ -80,6 +81,11 @@ namespace ImGui {
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (v->GetValue() ? ImGuiItemStatusFlags_Checked : 0));
         return pressed;
 	}
+    bool CheckboxHotkey(const char* label, KeyBindOption* v) {
+        const bool checkbox = ImGui::Checkbox(label, v);
+        ImGui::Hotkey(std::string(label + std::string("##ToggleKey")), v);
+        return checkbox;
+    }
     static const float CalculateIndentation(const float& window_width, const float& text_width, const float& min_indentation) {
         const float indentation = (window_width - text_width) * 0.5f;
         return indentation > min_indentation ? indentation : min_indentation;

@@ -8,6 +8,7 @@
 #include "menu\camera.h"
 #include "menu\misc.h"
 #include "menu\player.h"
+#include "menu\world.h"
 #include "print.h"
 #include "sigscan\offsets.h"
 #include "utils.h"
@@ -29,6 +30,7 @@ namespace GamePH {
 	static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos);
 	static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 	static void detourShowUIManager(LPVOID pLevelDI, bool enabled);
+	static DWORD64 detourPlaySoundEvent(LPVOID pCoAudioEventControl, DWORD64 name, DWORD64 a3);
 	static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
 
 #pragma region CreatePlayerHealthModule
@@ -240,6 +242,20 @@ namespace GamePH {
 	}
 #pragma endregion
 
+#pragma region PlaySoundEvent
+	static Hook::MHook<LPVOID, DWORD64(*)(LPVOID, DWORD64, DWORD64)> PlaySoundEventHook{ "PlaySoundEvent", &Offsets::Get_PlaySoundEvent, &detourPlaySoundEvent };
+
+	static DWORD64 detourPlaySoundEvent(LPVOID pCoAudioEventControl, DWORD64 name, DWORD64 a3) {
+		const char* soundName = reinterpret_cast<const char*>(name);
+		if (Menu::World::freezeTime.GetValue() &&
+			(!strcmp(soundName, "set_gp_infection_start") || !strcmp(soundName, "set_gp_infection_immune"))) {
+			return 0;
+		}
+
+		return PlaySoundEventHook.pOriginal(pCoAudioEventControl, name, a3);
+	}
+#pragma endregion
+
 #pragma region fs::open
 	static LPVOID GetFsOpen() {
 		return Utils::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
@@ -254,19 +270,19 @@ namespace GamePH {
 		if (fileName.empty())
 			return FsOpenHook.pOriginal(file, a2, a3);
 
-		for (const auto& entry : std::filesystem::directory_iterator("EGameTools\\FilesToLoad")) {
-			if (fileName.contains(".rpack"))
-				return FsOpenHook.pOriginal(file, a2, a3);
-			if (fileName.contains("player_anims_pc"))
-				return FsOpenHook.pOriginal(file, a2, a3);
-			if (fileName.contains("sfx"))
-				return FsOpenHook.pOriginal(file, a2, a3);
-			if (entry.path().filename().string().contains(fileName)) {
-				std::string finalPath = std::string("EGameTools\\FilesToLoad\\") + fileName;
-				const char* filePath2 = finalPath.c_str();
+		for (const auto& entry : std::filesystem::recursive_directory_iterator("EGameTools\\FilesToLoad")) {
+			const std::filesystem::path pathToFile = entry.path();
+			if (!std::filesystem::is_regular_file(pathToFile))
+				continue;
 
-				return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
-			}
+			const std::filesystem::path pathToFilename = pathToFile.filename();
+			if (!pathToFilename.string().contains(fileName))
+				continue;
+
+			std::string finalPath = pathToFile.string();
+			const char* filePath2 = finalPath.c_str();
+
+			return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
 		}
 		return FsOpenHook.pOriginal(file, a2, a3);
 	}
@@ -690,6 +706,28 @@ namespace GamePH {
 				return;
 
 			pShowUIManager(this, enabled);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return;
+		}
+	}
+	float LevelDI::TimerGetSpeedUp() {
+		__try {
+			float(*pTimerGetSpeedUp)(LPVOID iLevel) = (decltype(pTimerGetSpeedUp))Utils::GetProcAddr("engine_x64_rwdi.dll", "?TimerGetSpeedUp@ILevel@@QEBAMXZ");
+			if (!pTimerGetSpeedUp)
+				return -1.0f;
+
+			return pTimerGetSpeedUp(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return -1.0f;
+		}
+	}
+	void LevelDI::TimerSetSpeedUp(float timeScale) {
+		__try {
+			void(*pTimerSetSpeedUp)(LPVOID iLevel, float timeScale) = (decltype(pTimerSetSpeedUp))Utils::GetProcAddr("engine_x64_rwdi.dll", "?TimerSetSpeedUp@ILevel@@QEAAXM@Z");
+			if (!pTimerSetSpeedUp)
+				return;
+
+			pTimerSetSpeedUp(this, timeScale);
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return;
 		}

@@ -135,7 +135,7 @@ namespace Menu {
 
             ImGui::Separator();
 
-            ImGui::Hotkey("Menu Toggle Key", menuToggle);
+            ImGui::Hotkey("Menu Toggle Key", &menuToggle);
             ImGui::SliderFloat("Menu Transparency", &transparency, 0.0f, 100.0f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);
             if (ImGui::SliderFloat("Menu Scale", &scale, 1.0f, 2.5f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp)) {
                 ImGui::StyleScaleAllSizes(style, scale);

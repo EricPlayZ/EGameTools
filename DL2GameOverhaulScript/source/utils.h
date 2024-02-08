@@ -25,7 +25,8 @@ namespace Utils {
 		bool timePassed;
 	};
 
-	extern bool are_same(float a, float b);
+	extern bool are_same(float a, float b, float precision = 0.0001f);
+	extern float round_dec(float value, int decimal_places = 2);
 
 	extern bool str_replace(std::string& str, const std::string& from, const std::string& to);
 	template <typename T>
@@ -40,6 +41,7 @@ namespace Utils {
 
 	extern std::string_view GetDesktopDir();
 	extern std::string_view GetDocumentsDir();
+	extern std::filesystem::path GetCurrentProcDirectoryFS();
 	extern std::string GetCurrentProcDirectory();
 	extern bool FileExistsInDir(const char* fileName, const char* dir);
 	extern WindowsVersion GetWindowsVersion();

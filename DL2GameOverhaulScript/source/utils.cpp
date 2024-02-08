@@ -40,8 +40,12 @@ namespace Utils {
         return timePassed;
     }
 
-    bool are_same(float a, float b) {
-        return abs(a - b) < 0.0001f;
+    bool are_same(float a, float b, float precision) {
+        return abs(a - b) < precision;
+    }
+    float round_dec(float value, int decimal_places) {
+        const float multiplier = std::pow(10.0f, decimal_places);
+        return std::roundf(value * multiplier) / multiplier;
     }
 
     bool str_replace(std::string& str, const std::string& from, const std::string& to) {
@@ -75,15 +79,27 @@ namespace Utils {
 
         return path;
     }
+    std::filesystem::path GetCurrentProcDirectoryFS() {
+        char buffer[MAX_PATH];
+        GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
+        return std::filesystem::path(buffer).parent_path();
+    }
     std::string GetCurrentProcDirectory() {
         char buffer[MAX_PATH];
         GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
         return std::filesystem::path(buffer).parent_path().string();
     }
     bool FileExistsInDir(const char* fileName, const char* dir) {
-        for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-            if (entry.path().filename().string() == fileName)
-                return true;
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
+            const std::filesystem::path pathToFile = entry.path();
+            if (!std::filesystem::is_regular_file(pathToFile))
+                continue;
+
+            const std::filesystem::path pathToFilename = pathToFile.filename();
+            if (!pathToFilename.string().contains(fileName))
+                continue;
+
+            return true;
         }
         return false;
     }

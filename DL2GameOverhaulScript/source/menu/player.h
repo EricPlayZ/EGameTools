@@ -9,9 +9,10 @@ namespace Menu {
 		extern float playerMaxHealth;
 		extern KeyBindOption godMode;
 		extern KeyBindOption freezePlayer;
-		extern Option playerVariables;
-		extern Option disableOutOfBoundsTimer;
+		extern KeyBindOption disableOutOfBoundsTimer;
 		extern KeyBindOption nightrunnerMode;
+		extern KeyBindOption oneHandedMode;
+		extern Option playerVariables;
 
 		extern std::string saveSCRPath;
 		extern std::string loadSCRFilePath;

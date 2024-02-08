@@ -140,22 +140,15 @@ namespace Core {
 		PrintInfo("Initializing MinHook");
 		MH_Initialize();
 
-		PrintInfo("Hooking ReadVideoSettings");
-		const auto readVidSettingsHook = std::find_if(Hook::HookBase::GetInstances()->begin(), Hook::HookBase::GetInstances()->end(), [](const auto& item) { return item->name == "ReadVideoSettings"; });
-		if (readVidSettingsHook != Hook::HookBase::GetInstances()->end()) {
-			(*readVidSettingsHook)->HookLoop();
-			Hook::HookBase::GetInstances()->erase(readVidSettingsHook);
-			PrintSuccess("Hooked ReadVideoSettings!");
-		}
-
 		PrintInfo("Hooking DX11/DX12 renderer");
-		LoopHookRenderer();
-		PrintSuccess("Hooked DX11/DX12 renderer!");
+		std::thread([]() {
+			LoopHookRenderer();
+			PrintSuccess("Hooked DX11/DX12 renderer!");
+		}).detach();
 
 		for (auto& hook : *Hook::HookBase::GetInstances()) {
 			PrintInfo("Hooking %s", hook->name.data());
-			hook->HookLoop();
-			PrintSuccess("Hooked %s!", hook->name.data());
+			std::thread([hook]() { hook->HookLoop(); }).detach();
 		}
 
 		const HANDLE proc = GetCurrentProcess();

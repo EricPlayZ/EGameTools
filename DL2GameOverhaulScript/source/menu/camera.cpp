@@ -23,8 +23,8 @@ namespace Menu {
 		float tpHeightAbovePlayer = 1.35f;
 		float tpHorizontalDistanceFromPlayer = 0.0f;
 
-		Option disablePhotoModeLimits{};
-		Option disableSafezoneFOVReduction{};
+		KeyBindOption disablePhotoModeLimits{ VK_NONE };
+		KeyBindOption disableSafezoneFOVReduction{ VK_NONE };
 
 		static const int baseFOV = 57;
 		static const float baseSafezoneFOVReduction = -10.0f;
@@ -104,13 +104,7 @@ namespace Menu {
 			if (!GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
-			if (disableSafezoneFOVReduction.GetValue()) {
-				GamePH::PlayerVariables::ChangePlayerVar("CameraDefaultFOVReduction", 0.0f);
-				disableSafezoneFOVReduction.SetPrevValue(true);
-			} else if (disableSafezoneFOVReduction.GetPrevValue()) {
-				disableSafezoneFOVReduction.SetPrevValue(false);
-				GamePH::PlayerVariables::ChangePlayerVar("CameraDefaultFOVReduction", baseSafezoneFOVReduction);
-			}
+			GamePH::PlayerVariables::ManagePlayerVarOption("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, &disableSafezoneFOVReduction);
 		}
 		static void UpdateDisabledOptions() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
@@ -130,28 +124,24 @@ namespace Menu {
 		void Tab::Render() {
 			ImGui::SeparatorText("Free Camera");
 			ImGui::BeginDisabled(freeCam.GetChangesAreDisabled() || photoMode.GetValue()); {
-				ImGui::Checkbox("Enabled##FreeCam", &freeCam);
+				ImGui::CheckboxHotkey("Enabled##FreeCam", &freeCam);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##FreeCamToggleKey", freeCam);
 			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 			ImGui::BeginDisabled(teleportPlayerToCamera.GetChangesAreDisabled()); {
-				ImGui::Checkbox("Teleport Player to Camera", &teleportPlayerToCamera);
+				ImGui::CheckboxHotkey("Teleport Player to Camera", &teleportPlayerToCamera);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##TeleportPlayerToCamToggleKey", teleportPlayerToCamera);
 
 			ImGui::SeparatorText("Third Person Camera");
 			ImGui::BeginDisabled(thirdPersonCamera.GetChangesAreDisabled()); {
-				ImGui::Checkbox("Enabled##ThirdPerson", &thirdPersonCamera);
+				ImGui::CheckboxHotkey("Enabled##ThirdPerson", &thirdPersonCamera);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##ThirdPersonToggleKey", thirdPersonCamera);
 			ImGui::BeginDisabled(tpUseTPPModel.GetChangesAreDisabled()); {
-				ImGui::Checkbox("Use Third Person Player (TPP) Model", &tpUseTPPModel);
+				ImGui::CheckboxHotkey("Use Third Person Player (TPP) Model", &tpUseTPPModel);
 				ImGui::EndDisabled();
 			}
-			ImGui::Hotkey("##TPPModelToggleKey", tpUseTPPModel);
 			ImGui::SliderFloat("Distance behind player", &tpDistanceBehindPlayer, 1.0f, 10.0f);
 			ImGui::SliderFloat("Height above player", &tpHeightAbovePlayer, 1.0f, 3.0f);
 			ImGui::SliderFloat("Horizontal distance from player", &tpHorizontalDistanceFromPlayer, -2.0f, 2.0f);
@@ -165,8 +155,8 @@ namespace Menu {
 					FOV = static_cast<int>(pCVideoSettings->extraFOV) + baseFOV;
 				ImGui::EndDisabled();
 			}
-			ImGui::Checkbox("Disable Photo Mode Limits", &disablePhotoModeLimits);
-			ImGui::Checkbox("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction);
+			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits);
+			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction);
 		}
 	}
 }

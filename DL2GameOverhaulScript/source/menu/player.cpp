@@ -6003,9 +6003,10 @@ namespace Menu {
 		float playerMaxHealth = 80.0f;
 		KeyBindOption godMode{ VK_F6 };
 		KeyBindOption freezePlayer{ VK_F7 };
-		Option playerVariables{};
-		Option disableOutOfBoundsTimer{};
+		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
 		KeyBindOption nightrunnerMode{ VK_F9 };
+		KeyBindOption oneHandedMode{ VK_NONE };
+		Option playerVariables{};
 
 		std::string saveSCRPath{};
 		std::string loadSCRFilePath{};
@@ -6047,47 +6048,138 @@ namespace Menu {
 
 			Utils::str_replace(str, value, newValue);
         }
-        static void SaveVariablesToSCR() {
-            if (!std::filesystem::exists(saveSCRPath))
-                return;
 
-            std::string tempPlayerVarsSCR = playerVarsSCR;
+		static void PlayerPositionUpdate() {
+			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
+			if (!playerCharacter)
+				return;
 
-            std::istringstream iss(tempPlayerVarsSCR);
-            std::string line{};
-            while (std::getline(iss, line)) {
+			if (freezePlayer.GetValue() || (Camera::freeCam.GetValue() && !Camera::teleportPlayerToCamera.GetValue())) {
+				playerCharacter->FreezeCharacter();
+				return;
+			}
+
+			Engine::CBulletPhysicsCharacter::posBeforeFreeze = playerCharacter->playerPos;
+
+			if (!Camera::freeCam.GetValue() || !Camera::teleportPlayerToCamera.GetValue())
+				return;
+
+			GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
+			if (!freeCam)
+				return;
+
+			Vector3 camPos{};
+			freeCam->GetPosition(&camPos);
+			if (camPos.isDefault())
+				return;
+
+			playerCharacter->MoveCharacter(camPos);
+		}
+		static void PlayerVarsUpdate() {
+			if (!playerVariables.GetValue())
+				return;
+
+			auto bgn = GamePH::PlayerVariables::playerVars.begin();
+			for (auto it = bgn; it != GamePH::PlayerVariables::playerVars.end(); ++it) {
+				if (!it->second.first)
+					continue;
+
+				try {
+					auto& valDef = GamePH::PlayerVariables::playerVarsDefault.at(it - bgn);
+
+					if (it->second.second == "float") {
+						float* varAddr = reinterpret_cast<float*>(it->second.first);
+						if (!Utils::are_same(*varAddr, *(varAddr + 1)) && !Utils::are_same(*(varAddr + 1), std::any_cast<float>(valDef.second.first)))
+							*varAddr = *(varAddr + 1);
+					} else if (it->second.second == "bool") {
+						bool* varAddr = reinterpret_cast<bool*>(it->second.first);
+						if (*varAddr != *(varAddr + 1) && *(varAddr + 1) != std::any_cast<bool>(valDef.second.first))
+							*varAddr = *(varAddr + 1);
+					}
+				} catch (std::out_of_range& e) {
+					UNREFERENCED_PARAMETER(e);
+				}
+			}
+		}
+		static void PlayerHealthUpdate() {
+			GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
+			if (!playerHealthModule)
+				return;
+
+			playerMaxHealth = playerHealthModule->maxHealth;
+			
+			if (menuToggle.GetValue())
+				return;
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel || !iLevel->IsLoaded())
+				return;
+
+			playerHealth = playerHealthModule->health;
+		}
+		static void UpdatePlayerVars() {
+			if (!GamePH::PlayerVariables::gotPlayerVars)
+				return;
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerItemForced", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
+			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFurySmashEnabled", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
+			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFuryGroundPoundEnabled", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("LeftHandDisabled", oneHandedMode.GetValue(), !oneHandedMode.GetValue(), &oneHandedMode);
+		}
+		static void UpdateDisabledOptions() {
+			freezePlayer.SetChangesAreDisabled(!Engine::CBulletPhysicsCharacter::Get());
+		}
+
+		Tab Tab::instance{};
+		void Tab::Update() {
+			PlayerPositionUpdate();
+			PlayerVarsUpdate();
+			PlayerHealthUpdate();
+			UpdateDisabledOptions();
+			UpdatePlayerVars();
+		}
+
+		static void SaveVariablesToSCR() {
+			if (!std::filesystem::exists(saveSCRPath))
+				return;
+
+			std::string tempPlayerVarsSCR = playerVarsSCR;
+
+			std::istringstream iss(tempPlayerVarsSCR);
+			std::string line{};
+			while (std::getline(iss, line)) {
 				const std::string origLine = line;
-                const std::string paramName = getParamName(line);
-                if (paramName.empty())
-                    continue;
+				const std::string paramName = getParamName(line);
+				if (paramName.empty())
+					continue;
 
 				auto it = std::find_if(GamePH::PlayerVariables::playerVars.begin(), GamePH::PlayerVariables::playerVars.end(), [&paramName](const auto& pair) {
 					return pair.first == paramName;
 				});
-                if (it == GamePH::PlayerVariables::playerVars.end())
-                    continue;
+				if (it == GamePH::PlayerVariables::playerVars.end())
+					continue;
 
-                if (it->second.second == "float") {
-                    float value = *reinterpret_cast<float*>(it->second.first);
-                    replaceParamValue(line, std::to_string(value));
-                    
-                } else {
-                    bool value = *reinterpret_cast<bool*>(it->second.first);
-                    replaceParamValue(line, value ? "true" : "false");
-                }
+				if (it->second.second == "float") {
+					float value = *reinterpret_cast<float*>(it->second.first);
+					replaceParamValue(line, std::to_string(value));
+
+				} else {
+					bool value = *reinterpret_cast<bool*>(it->second.first);
+					replaceParamValue(line, value ? "true" : "false");
+				}
 				Utils::str_replace(tempPlayerVarsSCR, origLine, line);
-            }
+			}
 
-            std::ofstream outFile(std::string(saveSCRPath) + "\\player_variables.scr", std::ios::binary);
+			std::ofstream outFile(std::string(saveSCRPath) + "\\player_variables.scr", std::ios::binary);
 			if (!outFile.is_open()) {
 				ImGui::OpenPopup("Failed saving player variables.");
 				return;
 			}
-            outFile << tempPlayerVarsSCR;
-            outFile.close();
+			outFile << tempPlayerVarsSCR;
+			outFile.close();
 
 			ImGui::OpenPopup("Saved player variables!");
-        }
+		}
 		static void LoadPlayerVariablesSCR() {
 			if (!std::filesystem::exists(loadSCRFilePath))
 				return;
@@ -6169,150 +6261,12 @@ namespace Menu {
 			else
 				GamePH::PlayerVariables::ChangePlayerVar(varName, std::any_cast<bool>(itDef->second.first));
 		}
-
-		static void PlayerPositionUpdate() {
-			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
-			if (!playerCharacter)
-				return;
-
-			if (freezePlayer.GetValue() || (Camera::freeCam.GetValue() && !Camera::teleportPlayerToCamera.GetValue())) {
-				playerCharacter->FreezeCharacter();
-				return;
-			}
-
-			Engine::CBulletPhysicsCharacter::posBeforeFreeze = playerCharacter->playerPos;
-
-			if (!Camera::freeCam.GetValue() || !Camera::teleportPlayerToCamera.GetValue())
-				return;
-
-			GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
-			if (!freeCam)
-				return;
-
-			Vector3 camPos{};
-			freeCam->GetPosition(&camPos);
-			if (camPos.isDefault())
-				return;
-
-			playerCharacter->MoveCharacter(camPos);
-		}
-		static void PlayerVarsUpdate() {
+		static void HandlePlayerVariablesList() {
 			if (!playerVariables.GetValue())
 				return;
 
-			auto bgn = GamePH::PlayerVariables::playerVars.begin();
-			for (auto it = bgn; it != GamePH::PlayerVariables::playerVars.end(); ++it) {
-				if (!it->second.first)
-					continue;
-
-				try {
-					auto& valDef = GamePH::PlayerVariables::playerVarsDefault.at(it - bgn);
-
-					if (it->second.second == "float") {
-						float* varAddr = reinterpret_cast<float*>(it->second.first);
-						if (!Utils::are_same(*varAddr, *(varAddr + 1)) && !Utils::are_same(*(varAddr + 1), std::any_cast<float>(valDef.second.first)))
-							*varAddr = *(varAddr + 1);
-					} else if (it->second.second == "bool") {
-						bool* varAddr = reinterpret_cast<bool*>(it->second.first);
-						if (*varAddr != *(varAddr + 1) && *(varAddr + 1) != std::any_cast<bool>(valDef.second.first))
-							*varAddr = *(varAddr + 1);
-					}
-				} catch (std::out_of_range& e) {
-					UNREFERENCED_PARAMETER(e);
-				}
-			}
-		}
-		static void PlayerHealthUpdate() {
-			GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
-			if (!playerHealthModule)
-				return;
-
-			playerMaxHealth = playerHealthModule->maxHealth;
-			
-			if (menuToggle.GetValue())
-				return;
-			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-			if (!iLevel || !iLevel->IsLoaded())
-				return;
-
-			playerHealth = playerHealthModule->health;
-		}
-		static void UpdatePlayerVars() {
-			if (!GamePH::PlayerVariables::gotPlayerVars)
-				return;
-
-			static bool previousNightRunnerItemForced{};
-			static bool previousNightRunnerFurySmashEnabled{};
-			static bool previousNightRunnerFuryGroundPoundEnabled{};
-
-			if (nightrunnerMode.GetValue()) {
-				if (!nightrunnerMode.GetPrevValue()) {
-					previousNightRunnerItemForced = GamePH::PlayerVariables::GetPlayerVar<bool>("NightRunnerItemForced");
-					previousNightRunnerFurySmashEnabled = GamePH::PlayerVariables::GetPlayerVar<bool>("NightRunnerFurySmashEnabled");
-					previousNightRunnerFuryGroundPoundEnabled = GamePH::PlayerVariables::GetPlayerVar<bool>("NightRunnerFuryGroundPoundEnabled");
-				}
-
-				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerItemForced", true);
-				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFurySmashEnabled", true);
-				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFuryGroundPoundEnabled", true);
-				nightrunnerMode.SetPrevValue(true);
-			} else if (nightrunnerMode.GetPrevValue()) {
-				nightrunnerMode.SetPrevValue(false);
-				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerItemForced", previousNightRunnerItemForced);
-				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFurySmashEnabled", previousNightRunnerFurySmashEnabled);
-				GamePH::PlayerVariables::ChangePlayerVar("NightRunnerFuryGroundPoundEnabled", previousNightRunnerFuryGroundPoundEnabled);
-			}
-		}
-		static void UpdateDisabledOptions() {
-			freezePlayer.SetChangesAreDisabled(!Engine::CBulletPhysicsCharacter::Get());
-		}
-
-		Tab Tab::instance{};
-		void Tab::Update() {
-			PlayerPositionUpdate();
-			PlayerVarsUpdate();
-			PlayerHealthUpdate();
-			UpdateDisabledOptions();
-			UpdatePlayerVars();
-		}
-		void Tab::Render() {
-			ImGui::SeparatorText("Misc");
-			GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
-			ImGui::BeginDisabled(!playerHealthModule); {
-				if (ImGui::SliderFloat("Player Health", &playerHealth, 0.0f, playerMaxHealth, "%.2f") && playerHealthModule)
-					playerHealthModule->health = playerHealth;
-				else if (playerHealthModule)
-					playerHealth = playerHealthModule->health;
-				ImGui::EndDisabled();
-			}
-			ImGui::Checkbox("God Mode", &godMode);
-			ImGui::Hotkey("##GodModeToggleKey", godMode);
-			ImGui::SameLine();
-			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled()); {
-				ImGui::Checkbox("Freeze Player", &freezePlayer);
-				ImGui::EndDisabled();
-			}
-			ImGui::Hotkey("##FreezePlayerToggleKey", freezePlayer);
-
-			ImGui::Checkbox("Disable Out of Bounds Timer", &disableOutOfBoundsTimer);
-			ImGui::Checkbox("Nightrunner Mode", &nightrunnerMode);
-			ImGui::Hotkey("##NightrunnerModeToggleKey", nightrunnerMode);
-
-			ImGui::SeparatorText("Player Jump Parameters");
-			if (ImGui::Button("Reload Jump Params")) {
-				if (Utils::FileExistsInDir("jump_parameters.scr", "EGameTools\\FilesToLoad")) {
-					GamePH::ReloadJumps();
-					ImGui::OpenPopup("Reloaded player jump parameters!");
-				} else
-					ImGui::OpenPopup("Failed reloading player jump parameters.");
-			}
-
-			ImGui::SeparatorText("Player Variables");
-			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables);
-			if (!playerVariables.GetValue())
-				return;
-
-			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
+			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars);
+			{
 				if (ImGui::CollapsingHeader("Player variables list", ImGuiTreeNodeFlags_None)) {
 					ImGui::Indent();
 					if (ImGui::Button("Save variables to file"))
@@ -6331,8 +6285,7 @@ namespace Menu {
 						SaveVariablesAsDefault();
 
 					ImGui::Separator();
-
-                    ImGui::InputTextWithHint("##VarsSearch", "Search variables", playerVarsSearchFilter, 64);
+					ImGui::InputTextWithHint("##VarsSearch", "Search variables", playerVarsSearchFilter, 64);
 
 					std::string restoreBtnName{};
 					for (auto const& [key, val] : GamePH::PlayerVariables::playerVars) {
@@ -6348,7 +6301,6 @@ namespace Menu {
 
 						if (val.second == "float") {
 							float* varAddr = reinterpret_cast<float*>(val.first);
-
 							float newValue = *varAddr;
 
 							if (ImGui::InputFloat(key.data(), &newValue)) {
@@ -6365,7 +6317,6 @@ namespace Menu {
 							}
 						} else if (val.second == "bool") {
 							bool* varAddr = reinterpret_cast<bool*>(val.first);
-
 							bool newValue = *varAddr;
 
 							if (ImGui::Checkbox(key.data(), &newValue)) {
@@ -6386,7 +6337,8 @@ namespace Menu {
 				}
 				ImGui::EndDisabled();
 			}
-
+		}
+		void HandleDialogs() {
 			if (ImGuiFileDialog::Instance()->Display("ChooseSCRPath", ImGuiWindowFlags_NoCollapse, ImVec2(600.0f, 400.0f))) {
 				if (ImGuiFileDialog::Instance()->IsOk()) {
 					const std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -6452,6 +6404,43 @@ namespace Menu {
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}
+		}
+
+		void Tab::Render() {
+			ImGui::SeparatorText("Misc");
+			GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
+			ImGui::BeginDisabled(!playerHealthModule); {
+				if (ImGui::SliderFloat("Player Health", &playerHealth, 0.0f, playerMaxHealth, "%.2f") && playerHealthModule)
+					playerHealthModule->health = playerHealth;
+				else if (playerHealthModule)
+					playerHealth = playerHealthModule->health;
+				ImGui::EndDisabled();
+			}
+			ImGui::CheckboxHotkey("God Mode", &godMode);
+			ImGui::SameLine();
+			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled()); {
+				ImGui::CheckboxHotkey("Freeze Player", &freezePlayer);
+				ImGui::EndDisabled();
+			}
+
+			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer);
+			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode);
+			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode);
+
+			ImGui::SeparatorText("Player Jump Parameters");
+			if (ImGui::Button("Reload Jump Params")) {
+				if (Utils::FileExistsInDir("jump_parameters.scr", "EGameTools\\FilesToLoad")) {
+					GamePH::ReloadJumps();
+					ImGui::OpenPopup("Reloaded player jump parameters!");
+				} else
+					ImGui::OpenPopup("Failed reloading player jump parameters.");
+			}
+
+			ImGui::SeparatorText("Player Variables");
+			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables);
+			HandlePlayerVariablesList();
+
+			HandleDialogs();
 		}
 	}
 }

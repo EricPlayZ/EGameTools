@@ -16,6 +16,7 @@
     <ClCompile Include="source\dllmain.cpp" />
     <ClCompile Include="source\game_classes.cpp" />
     <ClCompile Include="source\hook.cpp" />
+    <ClCompile Include="source\ImGuiEx\Animation.cpp" />
     <ClCompile Include="source\ImGuiEx\ImGuiEx.cpp" />
     <ClCompile Include="source\ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\ImGuiHotkeys\Hotkey.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="source\core.h" />
     <ClInclude Include="source\game_classes.h" />
     <ClInclude Include="source\hook.h" />
+    <ClInclude Include="source\ImGuiEx\Animation.h" />
     <ClInclude Include="source\ImGuiEx\ImGuiEx.h" />
     <ClInclude Include="source\ImGuiFileDialog\dirent\dirent.h" />
     <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialog.h" />

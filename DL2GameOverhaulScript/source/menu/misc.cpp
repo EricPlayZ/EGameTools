@@ -35,8 +35,7 @@ namespace Menu {
 		void Tab::Render() {
 			ImGui::SeparatorText("Misc##Misc");
 			ImGui::BeginDisabled(disableHUD.GetChangesAreDisabled()); {
-				ImGui::Checkbox("Disable HUD", &disableHUD);
-				ImGui::Hotkey("##DisableHUDToggleKey", disableHUD);
+				ImGui::CheckboxHotkey("Disable HUD", &disableHUD);
 				ImGui::EndDisabled();
 			}
 		}
