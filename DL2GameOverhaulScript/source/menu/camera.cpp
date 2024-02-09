@@ -127,7 +127,7 @@ namespace Menu {
 				ImGui::CheckboxHotkey("Enabled##FreeCam", &freeCam);
 				ImGui::EndDisabled();
 			}
-			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
 			ImGui::BeginDisabled(teleportPlayerToCamera.GetChangesAreDisabled()); {
 				ImGui::CheckboxHotkey("Teleport Player to Camera", &teleportPlayerToCamera);
 				ImGui::EndDisabled();
@@ -142,9 +142,9 @@ namespace Menu {
 				ImGui::CheckboxHotkey("Use Third Person Player (TPP) Model", &tpUseTPPModel);
 				ImGui::EndDisabled();
 			}
-			ImGui::SliderFloat("Distance behind player", &tpDistanceBehindPlayer, 1.0f, 10.0f);
-			ImGui::SliderFloat("Height above player", &tpHeightAbovePlayer, 1.0f, 3.0f);
-			ImGui::SliderFloat("Horizontal distance from player", &tpHorizontalDistanceFromPlayer, -2.0f, 2.0f);
+			ImGui::SliderFloat("Distance behind player", &tpDistanceBehindPlayer, 1.0f, 10.0f, "%.2fm");
+			ImGui::SliderFloat("Height above player", &tpHeightAbovePlayer, 1.0f, 3.0f, "%.2fm");
+			ImGui::SliderFloat("Horizontal distance from player", &tpHorizontalDistanceFromPlayer, -2.0f, 2.0f, "%.2fm");
 
 			ImGui::SeparatorText("Misc");
 			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();

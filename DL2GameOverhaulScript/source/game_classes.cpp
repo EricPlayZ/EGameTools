@@ -246,8 +246,8 @@ namespace GamePH {
 	static Hook::MHook<LPVOID, DWORD64(*)(LPVOID, DWORD64, DWORD64)> PlaySoundEventHook{ "PlaySoundEvent", &Offsets::Get_PlaySoundEvent, &detourPlaySoundEvent };
 
 	static DWORD64 detourPlaySoundEvent(LPVOID pCoAudioEventControl, DWORD64 name, DWORD64 a3) {
-		const char* soundName = reinterpret_cast<const char*>(name);
-		if (Menu::World::freezeTime.GetValue() &&
+		const char* soundName = reinterpret_cast<const char*>(name & 0x1FFFFFFFFFFFFFFF); // remove first byte of addr in case it exists
+		if (Menu::World::freezeTime.GetValue() && soundName &&
 			(!strcmp(soundName, "set_gp_infection_start") || !strcmp(soundName, "set_gp_infection_immune"))) {
 			return 0;
 		}

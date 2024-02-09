@@ -74,7 +74,7 @@ namespace Menu {
 
 			if (!menuToggle.GetValue()) {
 				time = dayNightCycle->time1 * 24;
-				if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.009f))
+				if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.005f))
 					dayNightCycle->SetDaytime(timeBeforeFreeze);
 
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged())
@@ -98,12 +98,12 @@ namespace Menu {
 						dayNightCycle->SetDaytime(time);
 					}
 					time = dayNightCycle->time1 * 24;
-					if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.009f))
+					if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.005f))
 						dayNightCycle->SetDaytime(timeBeforeFreeze);
 				}
 
 				ImGui::BeginDisabled(slowMotion.GetValue()); {
-					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2f"))
+					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx"))
 						iLevel->TimerSetSpeedUp(gameSpeed);
 					else if (iLevel && iLevel->IsLoaded()) {
 						if (!slowMotion.GetValue() && !slowMotion.HasChanged())
@@ -120,8 +120,8 @@ namespace Menu {
 
 				ImGui::EndDisabled();
 			}
-			ImGui::SliderFloat("Slow Motion Speed", &slowMotionSpeed, 0.01f, 0.99f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-			ImGui::SliderFloat("Slow Motion Transition Time", &slowMotionTransitionTime, 0.00f, 5.00f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SliderFloat("Slow Motion Speed", &slowMotionSpeed, 0.01f, 0.99f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SliderFloat("Slow Motion Transition Time", &slowMotionTransitionTime, 0.00f, 5.00f, "%.2fs", ImGuiSliderFlags_AlwaysClamp);
 
 			GamePH::TimeWeather::CSystem* timeWeatherSystem = GamePH::TimeWeather::CSystem::Get();
 			const bool weatherDisabledFlag = !iLevel || !iLevel->IsLoaded() || !timeWeatherSystem;
