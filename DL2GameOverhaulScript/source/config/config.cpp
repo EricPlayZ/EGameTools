@@ -4038,6 +4038,7 @@ namespace Config {
 		{ "Menu:Keybinds", "DisablePhotoModeLimits", std::string("VK_NONE"), &Menu::Camera::disablePhotoModeLimits, String},
 		{ "Menu:Keybinds", "DisableSafezoneFOVReduction", std::string("VK_NONE"), &Menu::Camera::disableSafezoneFOVReduction, String},
 		{ "Menu:Keybinds", "DisableHUDToggleKey", std::string("VK_F8"), &Menu::Misc::disableHUD, String},
+		{ "Menu:Keybinds", "DisableGamePauseWhileAFKToggleKey", std::string("VK_NONE"), &Menu::Misc::disableGamePauseWhileAFK, String},
 		{ "Menu:Keybinds", "FreezeTimeToggleKey", std::string("VK_NONE"), &Menu::World::freezeTime, String},
 		{ "Menu:Keybinds", "SlowMotionToggleKey", std::string("VK_X"), &Menu::World::slowMotion, String},
 		{ "Player:Misc", "GodMode", false, &Menu::Player::godMode, OPTION },
@@ -4056,6 +4057,7 @@ namespace Config {
 		{ "Camera:ThirdPerson", "HorizontalDistanceFromPlayer", 0.0f, &Menu::Camera::tpHorizontalDistanceFromPlayer, Float },
 		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimits, OPTION },
 		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION },
+		{ "Misc:Misc", "DisableGamePauseWhileAFK", true, &Menu::Misc::disableGamePauseWhileAFK, OPTION },
 		{ "World:Time", "SlowMotionSpeed", 0.4f, &Menu::World::slowMotionSpeed, Float },
 		{ "World:Time", "SlowMotionTransitionTime", 1.0f, &Menu::World::slowMotionTransitionTime, Float }
 	});

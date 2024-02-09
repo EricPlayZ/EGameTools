@@ -4,6 +4,7 @@
 namespace Menu {
 	namespace Misc {
 		extern KeyBindOption disableHUD;
+		extern KeyBindOption disableGamePauseWhileAFK;
 
 		class Tab : MenuTab {
 		public:
