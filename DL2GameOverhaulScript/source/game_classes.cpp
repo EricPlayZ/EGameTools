@@ -263,10 +263,10 @@ namespace GamePH {
 	static Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ "fs::open", &GetFsOpen, &detourFsOpen };
 
 	static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
-		DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
+		const DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
 
 		const char* filePath = reinterpret_cast<const char*>(file & 0x1FFFFFFFFFFFFFFF); // remove first byte of addr in case it exists
-		std::string fileName = std::filesystem::path(filePath).filename().string();
+		const std::string fileName = std::filesystem::path(filePath).filename().string();
 		if (fileName.empty())
 			return FsOpenHook.pOriginal(file, a2, a3);
 
@@ -279,7 +279,7 @@ namespace GamePH {
 			if (!pathToFilename.string().contains(fileName))
 				continue;
 
-			std::string finalPath = pathToFile.string();
+			const std::string finalPath = pathToFile.string();
 			const char* filePath2 = finalPath.c_str();
 
 			return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
@@ -889,19 +889,19 @@ namespace GamePH {
 	}
 #pragma endregion
 
-#pragma region BackgroundModuleScreenController
-	BackgroundModuleScreenController* BackgroundModuleScreenController::Get() {
+#pragma region LogicalPlayer
+	LogicalPlayer* LogicalPlayer::Get() {
 		__try {
-			if (!Offsets::Get_g_BackgroundModuleScreenController())
+			Engine::CGSObject2* pCGSObject2 = Engine::CGSObject2::Get();
+			if (!pCGSObject2)
 				return nullptr;
 
-			BackgroundModuleScreenController* ptr = reinterpret_cast<BackgroundModuleScreenController*>(Offsets::Get_g_BackgroundModuleScreenController());
-			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll")) 
+			LogicalPlayer* ptr = pCGSObject2->pLogicalPlayer;
+			if (!Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
 
 			return ptr;
-		}
-		__except (EXCEPTION_EXECUTE_HANDLER) {
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}
 	}
@@ -919,6 +919,60 @@ namespace Engine {
 				return nullptr;
 
 			CVideoSettings* ptr = pCGame->pCVideoSettings;
+			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
+				return nullptr;
+
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+#pragma endregion
+
+#pragma region CGSObject2
+	CGSObject2* CGSObject2::Get() {
+		__try {
+			CLevel2* pCLevel2 = CLevel2::Get();
+			if (!pCLevel2)
+				return nullptr;
+
+			CGSObject2* ptr = pCLevel2->pCGSObject2;
+			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
+				return nullptr;
+
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+#pragma endregion
+
+#pragma region CLevel2
+	CLevel2* CLevel2::Get() {
+		__try {
+			CGSObject* pCGSObject = CGSObject::Get();
+			if (!pCGSObject)
+				return nullptr;
+
+			CLevel2* ptr = pCGSObject->pCLevel2;
+			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
+				return nullptr;
+
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+#pragma endregion
+
+#pragma region CGSObject
+	CGSObject* CGSObject::Get() {
+		__try {
+			CLevel* pCLevel = CLevel::Get();
+			if (!pCLevel)
+				return nullptr;
+
+			CGSObject* ptr = pCLevel->pCGSObject;
 			if (!Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
 
@@ -1101,15 +1155,29 @@ namespace Engine {
 #pragma endregion
 
 #pragma region CRTTIField
-	DWORD64 CRTTIField::Get_float(CRTTI* crtti, float& out) {
+	DWORD64 CRTTIField::Get_vec3(CRTTIObject* crtti, Vector3& out) {
 		__try {
-			DWORD64(*pCRTTIFieldTypedNative_Get_float)(LPVOID pCRTTIFieldTypedNative, CRTTI * crtti, float& out) = (decltype(pCRTTIFieldTypedNative_Get_float))Utils::GetProcAddr("engine_x64_rwdi.dll", "?Get@?$CRTTIFieldTypedNative@MV?$CRTTIFieldTyped@M@@@@UEBAXPEBVCRTTIObject@@AEAM@Z");
-			if (!pCRTTIFieldTypedNative_Get_float)
+			DWORD64(*pCRTTIFieldTypedNative_Get_vec3)(LPVOID pCRTTIFieldTypedNative, CRTTIObject* crtti, Vector3& out) = (decltype(pCRTTIFieldTypedNative_Get_vec3))Utils::GetProcAddr("engine_x64_rwdi.dll", "?Get@?$CRTTIFieldTypedNative@Vvec3@@V?$CRTTIFieldTyped@Vvec3@@@@@@UEBAXPEBVCRTTIObject@@AEAVvec3@@@Z");
+			if (!pCRTTIFieldTypedNative_Get_vec3)
 				return 0;
 
-			return pCRTTIFieldTypedNative_Get_float(this, crtti, out);
+			return pCRTTIFieldTypedNative_Get_vec3(this, crtti, out);
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return 0;
+		}
+	}
+#pragma endregion
+
+#pragma region CRTTIObject
+	CRTTIField* CRTTIObject::FindField(const char* name) {
+		__try {
+			CRTTIField*(*pCRTTI_FindField)(LPVOID pCRTTI, const char* name) = (decltype(pCRTTI_FindField))Utils::GetProcAddr("engine_x64_rwdi.dll", "?FindField@CRTTIObject@@QEBAPEBVCRTTIField@@PEBD@Z");
+			if (!pCRTTI_FindField)
+				return nullptr;
+
+			return pCRTTI_FindField(this, name);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
 		}
 	}
 #pragma endregion
@@ -1117,11 +1185,25 @@ namespace Engine {
 #pragma region CRTTI
 	CRTTIField* CRTTI::FindField(const char* name) {
 		__try {
-			CRTTIField* (*pCRTTI_FindField)(LPVOID pCRTTI, const char* name) = (decltype(pCRTTI_FindField))Utils::GetProcAddr("engine_x64_rwdi.dll", "?FindField@CRTTI@@QEBAPEBVCRTTIField@@PEBD@Z");
+			CRTTIField*(*pCRTTI_FindField)(LPVOID pCRTTI, const char* name) = (decltype(pCRTTI_FindField))Utils::GetProcAddr("engine_x64_rwdi.dll", "?FindField@CRTTI@@QEBAPEBVCRTTIField@@PEBD@Z");
 			if (!pCRTTI_FindField)
 				return nullptr;
 
 			return pCRTTI_FindField(this, name);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+#pragma endregion
+
+#pragma region CRTTIManager
+	CRTTIManager* CRTTIManager::Get() {
+		__try {
+			CRTTIManager*(*pGetRTTIManager)() = (decltype(pGetRTTIManager))Utils::GetProcAddr("engine_x64_rwdi.dll", "GetRTTIManager");
+			if (!pGetRTTIManager)
+				return nullptr;
+
+			return pGetRTTIManager();
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return nullptr;
 		}

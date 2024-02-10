@@ -45,11 +45,11 @@ struct Offsets {
 	AddOffset(g_DayNightCycle, "gamedll_ph_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? E8 ?? ?? ?? ?? 84 C0 74 ?? B0 ?? 48 83 C4 ?? C3 32 C0", PatternType::RelativePointer, LPVOID)
 	//AddOffset(g_CameraFPPDI, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 40 84 FF", PatternType::RelativePointer, PDWORD64)
 	AddOffset(g_FreeCamera, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 48 89 4C 24", PatternType::RelativePointer, PDWORD64)
-	AddStaticOffset2(g_BackgroundModuleScreenController, "gamedll_ph_x64_rwdi.dll", 0x3377760)
 	//AddOffset(CameraFPPDI_VT, "gamedll_ph_x64_rwdi.dll", "48 8D 05 [?? ?? ?? ?? 48 89 07 48 8D 4F 60", PatternType::RelativePointer, DWORD64)
 
 	// Functions
 	AddOffset(ReadVideoSettings, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B D9 45 84 C0", PatternType::Address, LPVOID)
+	AddOffset(MoveCameraFromForwardUpPos, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 49 8B C1 48 8B F9", PatternType::Address, LPVOID)
 	AddOffset(GetCurrentGameVersion, "gamedll_ph_x64_rwdi.dll", "B8 ?? ?? ?? ?? C3 CC CC CC CC CC CC CC CC CC CC 48 83 79", PatternType::Address, LPVOID)
 	AddOffset(CalculateFreeCamCollision, "gamedll_ph_x64_rwdi.dll", "48 8B C4 55 53 56 57 48 8D A8 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 83 B9", PatternType::Address, LPVOID)
 	//AddOffset(GetViewCamera, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 85 C0 74 28 48 8B C8", PatternType::RelativePointer, LPVOID)
@@ -66,7 +66,6 @@ struct Offsets {
 	//AddOffset(GetTimeWeatherSystem, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 49 8D 4F 38", PatternType::RelativePointer, LPVOID)
 	//AddOffset(SetForcedWeather, "engine_x64_rwdi.dll", "89 51 68 C3 CC CC CC CC CC CC CC CC CC CC CC CC", PatternType::Address, LPVOID)
 	//AddOffset(GetCurrentWeather, "engine_x64_rwdi.dll", "48 8B 41 78 48 85 C0 75 0F", PatternType::Address, LPVOID)
-	AddOffset(MoveCameraFromForwardUpPos, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 49 8B C1 48 8B F9", PatternType::Address, LPVOID)
 	//AddOffset(GetForwardVector, "engine_x64_rwdi.dll", "4C 8B 41 38 41 8B 40 48", PatternType::Address, LPVOID)
 	//AddOffset(IsLoading, "engine_x64_rwdi.dll", "48 8B 05 ?? ?? ?? ?? 48 8B 51 38", PatternType::Address, LPVOID)
 	//AddOffset(ShowUIManager, "engine_x64_rwdi.dll", "48 8B 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? CC CC CC CC 48 8B 49 ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC 48 8B 49 ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC 48 8B 49 ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC 48 8B 49 ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC 40 53", PatternType::Address, LPVOID)

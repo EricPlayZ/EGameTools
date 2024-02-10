@@ -93,16 +93,27 @@ namespace Engine {
 	};
 	class CoPhysicsProperty;
 	class CRTTI;
+	class CRTTIObject;
 
 	// Inheritance classes
 	class CRTTIField {
 	public:
-		DWORD64 Get_float(CRTTI* crtti, float& out);
+		DWORD64 Get_vec3(CRTTIObject* crtti, Vector3& out);
 	};
 
 	class CRTTI {
 	public:
 		CRTTIField* FindField(char const* name);
+	};
+
+	class CRTTIObject {
+	public:
+		CRTTIField* FindField(char const* name);
+	};
+	
+	class CRTTIManager {
+	public:
+		CRTTIManager* Get();
 	};
 }
 
@@ -355,9 +366,9 @@ namespace GamePH {
 		static PlayerObjProperties* Get();
 	};
 
-	class BackgroundModuleScreenController : public Engine::CRTTI {
+	class LogicalPlayer : public Engine::CRTTIObject {
 	public:
-		static BackgroundModuleScreenController* Get();
+		static LogicalPlayer* Get();
 	};
 }
 
@@ -371,10 +382,38 @@ namespace Engine {
 		static CVideoSettings* Get();
 	};
 
+	class CGSObject2 {
+	public:
+		union {
+			DEFINE_MEMBER_N(GamePH::LogicalPlayer*, pLogicalPlayer, 0x20);
+		};
+
+		static CGSObject2* Get();
+	};
+
+	class CLevel2 {
+	public:
+		union {
+			DEFINE_MEMBER_N(CGSObject2*, pCGSObject2, 0x28);
+		};
+
+		static CLevel2* Get();
+	};
+
+	class CGSObject {
+	public:
+		union {
+			DEFINE_MEMBER_N(CLevel2*, pCLevel2, 0x48);
+		};
+
+		static CGSObject* Get();
+	};
+
 	class CLevel {
 	public:
 		union {
 			DEFINE_MEMBER_N(GamePH::LevelDI*, pLevelDI, 0x20);
+			DEFINE_MEMBER_N(CGSObject*, pCGSObject, 0x30);
 		};
 
 		static CLevel* Get();

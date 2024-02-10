@@ -103,15 +103,6 @@ namespace Core {
 
 		for (auto& menuTab : *Menu::MenuTab::GetInstances())
 			menuTab.second->Update();
-
-		/*Engine::CRTTI* g_BackgroundModuleScreenController = GamePH::BackgroundModuleScreenController::Get();
-		if (!g_BackgroundModuleScreenController)
-			return;
-
-		Engine::CRTTIField* field = g_BackgroundModuleScreenController->FindField("m_LoadingProgress");
-		if (!field)
-			return;
-		*/
 	}
 
 	static void CreateSymlinkForLoadingFiles() {
