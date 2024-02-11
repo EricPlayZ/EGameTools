@@ -1,9 +1,11 @@
-#include <Hotkey.h>
-#include <ImGuiEx.h>
-#include <imgui.h>
+#include <pch.h>
 #include "..\core.h"
-#include "..\game_classes.h"
-#include "..\sigscan\offsets.h"
+#include "..\game\Engine\CVideoSettings.h"
+#include "..\game\GamePH\FreeCamera.h"
+#include "..\game\GamePH\GameDI_PH.h"
+#include "..\game\GamePH\LevelDI.h"
+#include "..\game\GamePH\PlayerVariables.h"
+#include "..\offsets.h"
 #include "camera.h"
 #include "menu.h"
 

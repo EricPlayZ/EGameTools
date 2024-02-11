@@ -1,6 +1,8 @@
 ﻿#pragma once
+#include <wtypes.h>
+
 namespace impl {
 	namespace win32 {
-		void init(HWND hwnd);
+		extern void init(HWND hwnd);
 	}
 }

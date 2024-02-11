@@ -1,14 +1,11 @@
-#include <Hotkey.h>
-#include <ImGuiEx.h>
-#include <ImGuiFileDialog.h>
-#include <algorithm>
-#include <filesystem>
-#include <fstream>
-#include <imgui.h>
-#include <sstream>
+#include <pch.h>
 #include "..\core.h"
-#include "..\game_classes.h"
-#include "..\utils.h"
+#include "..\game\Engine\CBulletPhysicsCharacter.h"
+#include "..\game\GamePH\FreeCamera.h"
+#include "..\game\GamePH\LevelDI.h"
+#include "..\game\GamePH\Other.h"
+#include "..\game\GamePH\PlayerHealthModule.h"
+#include "..\game\GamePH\PlayerVariables.h"
 #include "camera.h"
 #include "menu.h"
 #include "player.h"
@@ -6046,7 +6043,7 @@ namespace Menu {
 			if (value.empty())
 				return;
 
-			Utils::str_replace(str, value, newValue);
+			Utils::Values::str_replace(str, value, newValue);
         }
 
 		static void PlayerPositionUpdate() {
@@ -6089,7 +6086,7 @@ namespace Menu {
 
 					if (it->second.second == "float") {
 						float* varAddr = reinterpret_cast<float*>(it->second.first);
-						if (!Utils::are_same(*varAddr, *(varAddr + 1)) && !Utils::are_same(*(varAddr + 1), std::any_cast<float>(valDef.second.first)))
+						if (!Utils::Values::are_samef(*varAddr, *(varAddr + 1)) && !Utils::Values::are_samef(*(varAddr + 1), std::any_cast<float>(valDef.second.first)))
 							*varAddr = *(varAddr + 1);
 					} else if (it->second.second == "bool") {
 						bool* varAddr = reinterpret_cast<bool*>(it->second.first);
@@ -6167,7 +6164,7 @@ namespace Menu {
 					bool value = *reinterpret_cast<bool*>(it->second.first);
 					replaceParamValue(line, value ? "true" : "false");
 				}
-				Utils::str_replace(tempPlayerVarsSCR, origLine, line);
+				Utils::Values::str_replace(tempPlayerVarsSCR, origLine, line);
 			}
 
 			std::ofstream outFile(std::string(saveSCRPath) + "\\player_variables.scr", std::ios::binary);
@@ -6429,7 +6426,7 @@ namespace Menu {
 
 			ImGui::SeparatorText("Player Jump Parameters");
 			if (ImGui::Button("Reload Jump Params")) {
-				if (Utils::FileExistsInDir("jump_parameters.scr", "EGameTools\\FilesToLoad")) {
+				if (Utils::Files::FileExistsInDir("jump_parameters.scr", "EGameTools\\FilesToLoad")) {
 					GamePH::ReloadJumps();
 					ImGui::OpenPopup("Reloaded player jump parameters!");
 				} else

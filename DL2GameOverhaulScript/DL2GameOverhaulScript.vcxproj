@@ -11,55 +11,142 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="pch\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source\config\config.cpp" />
     <ClCompile Include="source\core.cpp" />
     <ClCompile Include="source\dllmain.cpp" />
-    <ClCompile Include="source\game_classes.cpp" />
-    <ClCompile Include="source\hook.cpp" />
-    <ClCompile Include="source\ImGuiEx\Animation.cpp" />
-    <ClCompile Include="source\ImGuiEx\ImGuiEx.cpp" />
-    <ClCompile Include="source\ImGuiFileDialog\ImGuiFileDialog.cpp" />
-    <ClCompile Include="source\ImGuiHotkeys\Hotkey.cpp" />
-    <ClCompile Include="source\ImGui\backends\imgui_impl_dx11.cpp" />
-    <ClCompile Include="source\ImGui\backends\imgui_impl_dx12.cpp" />
-    <ClCompile Include="source\ImGui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="source\ImGui\imgui.cpp" />
-    <ClCompile Include="source\ImGui\imgui_draw.cpp" />
-    <ClCompile Include="source\ImGui\imgui_tables.cpp" />
-    <ClCompile Include="source\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="source\game\Engine\CBaseCamera.cpp" />
+    <ClCompile Include="source\game\Engine\CBulletPhysicsCharacter.cpp" />
+    <ClCompile Include="source\game\Engine\CGame.cpp" />
+    <ClCompile Include="source\game\Engine\CGSObject.cpp" />
+    <ClCompile Include="source\game\Engine\CGSObject2.cpp" />
+    <ClCompile Include="source\game\Engine\CInput.cpp" />
+    <ClCompile Include="source\game\Engine\CLevel.cpp" />
+    <ClCompile Include="source\game\Engine\CLevel2.cpp" />
+    <ClCompile Include="source\game\Engine\CLobbySteam.cpp" />
+    <ClCompile Include="source\game\Engine\CoPhysicsProperty.cpp" />
+    <ClCompile Include="source\game\Engine\CVideoSettings.cpp" />
+    <ClCompile Include="source\game\Engine\engine_hooks.cpp" />
+    <ClCompile Include="source\game\GamePH\DayNightCycle.cpp" />
+    <ClCompile Include="source\game\GamePH\FreeCamera.cpp" />
+    <ClCompile Include="source\game\GamePH\GameDI_PH.cpp" />
+    <ClCompile Include="source\game\GamePH\GameDI_PH2.cpp" />
+    <ClCompile Include="source\game\GamePH\gen_TPPModel.cpp" />
+    <ClCompile Include="source\game\GamePH\game_hooks.cpp" />
+    <ClCompile Include="source\game\GamePH\LevelDI.cpp" />
+    <ClCompile Include="source\game\GamePH\LocalClientDI.cpp" />
+    <ClCompile Include="source\game\GamePH\LogicalPlayer.cpp" />
+    <ClCompile Include="source\game\GamePH\Other.cpp" />
+    <ClCompile Include="source\game\GamePH\PlayerHealthModule.cpp" />
+    <ClCompile Include="source\game\GamePH\PlayerObjProperties.cpp" />
+    <ClCompile Include="source\game\GamePH\PlayerState.cpp" />
+    <ClCompile Include="source\game\GamePH\PlayerVariables.cpp" />
+    <ClCompile Include="source\game\GamePH\SessionCooperativeDI.cpp" />
+    <ClCompile Include="source\game\GamePH\TimeWeather\CSystem.cpp" />
+    <ClCompile Include="source\game\GamePH\TPPCameraDI.cpp" />
+    <ClCompile Include="source\game\Vector3.cpp" />
+    <ClCompile Include="source\ImGui\backends\imgui_impl_dx11.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\backends\imgui_impl_dx12.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\backends\imgui_impl_win32.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imguiex.cpp" />
+    <ClCompile Include="source\ImGui\imguiex_animation.cpp" />
+    <ClCompile Include="source\ImGui\ImGuiFileDialog\ImGuiFileDialog.cpp" />
+    <ClCompile Include="source\ImGui\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imgui_hotkey.cpp" />
+    <ClCompile Include="source\ImGui\imgui_tables.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\ImGui\imgui_widgets.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source\ImGui\impl\d3d11_impl.cpp" />
     <ClCompile Include="source\ImGui\impl\d3d12_impl.cpp" />
     <ClCompile Include="source\ImGui\impl\win32_impl.cpp" />
     <ClCompile Include="source\kiero.cpp" />
-    <ClCompile Include="source\memory.cpp" />
     <ClCompile Include="source\menu\camera.cpp" />
     <ClCompile Include="source\menu\menu.cpp" />
     <ClCompile Include="source\menu\misc.cpp" />
     <ClCompile Include="source\menu\player.cpp" />
     <ClCompile Include="source\menu\world.cpp" />
-    <ClCompile Include="source\sigscan\sigscan.cpp" />
-    <ClCompile Include="source\utils.cpp" />
+    <ClCompile Include="source\utils\files.cpp" />
+    <ClCompile Include="source\utils\hook.cpp" />
+    <ClCompile Include="source\utils\memory.cpp" />
+    <ClCompile Include="source\utils\sigscan.cpp" />
+    <ClCompile Include="source\utils\time.cpp" />
+    <ClCompile Include="source\utils\values.cpp" />
+    <ClCompile Include="source\utils\windows.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="pch\pch.h" />
     <ClInclude Include="source\config\config.h" />
     <ClInclude Include="source\config\ini.h" />
-    <ClInclude Include="source\config\time_tools.h" />
     <ClInclude Include="source\core.h" />
-    <ClInclude Include="source\game_classes.h" />
-    <ClInclude Include="source\hook.h" />
-    <ClInclude Include="source\ImGuiEx\Animation.h" />
-    <ClInclude Include="source\ImGuiEx\ImGuiEx.h" />
-    <ClInclude Include="source\ImGuiFileDialog\dirent\dirent.h" />
-    <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialog.h" />
-    <ClInclude Include="source\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
-    <ClInclude Include="source\ImGuiFileDialog\stb\stb_image.h" />
-    <ClInclude Include="source\ImGuiFileDialog\stb\stb_image_resize.h" />
-    <ClInclude Include="source\ImGuiHotkeys\Hotkey.h" />
+    <ClInclude Include="source\game\buffer.h" />
+    <ClInclude Include="source\game\Engine\CBaseCamera.h" />
+    <ClInclude Include="source\game\Engine\CBulletPhysicsCharacter.h" />
+    <ClInclude Include="source\game\Engine\CGame.h" />
+    <ClInclude Include="source\game\Engine\CGSObject.h" />
+    <ClInclude Include="source\game\Engine\CGSObject2.h" />
+    <ClInclude Include="source\game\Engine\CInput.h" />
+    <ClInclude Include="source\game\Engine\CLevel.h" />
+    <ClInclude Include="source\game\Engine\CLevel2.h" />
+    <ClInclude Include="source\game\Engine\CLobbySteam.h" />
+    <ClInclude Include="source\game\Engine\CoPhysicsProperty.h" />
+    <ClInclude Include="source\game\Engine\CVideoSettings.h" />
+    <ClInclude Include="source\game\GamePH\CoBaseCameraProxy.h" />
+    <ClInclude Include="source\game\GamePH\DayNightCycle.h" />
+    <ClInclude Include="source\game\GamePH\FreeCamera.h" />
+    <ClInclude Include="source\game\GamePH\GameDI_PH.h" />
+    <ClInclude Include="source\game\GamePH\GameDI_PH2.h" />
+    <ClInclude Include="source\game\GamePH\gen_TPPModel.h" />
+    <ClInclude Include="source\game\GamePH\game_hooks.h" />
+    <ClInclude Include="source\game\GamePH\LevelDI.h" />
+    <ClInclude Include="source\game\GamePH\LocalClientDI.h" />
+    <ClInclude Include="source\game\GamePH\LogicalPlayer.h" />
+    <ClInclude Include="source\game\GamePH\Other.h" />
+    <ClInclude Include="source\game\GamePH\PlayerHealthModule.h" />
+    <ClInclude Include="source\game\GamePH\PlayerObjProperties.h" />
+    <ClInclude Include="source\game\GamePH\PlayerState.h" />
+    <ClInclude Include="source\game\GamePH\PlayerVariables.h" />
+    <ClInclude Include="source\game\GamePH\SessionCooperativeDI.h" />
+    <ClInclude Include="source\game\GamePH\TimeWeather\CSystem.h" />
+    <ClInclude Include="source\game\GamePH\TimeWeather\EWeather.h" />
+    <ClInclude Include="source\game\GamePH\TPPCameraDI.h" />
+    <ClInclude Include="source\game\Vector3.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_dx12.h" />
     <ClInclude Include="source\ImGui\backends\imgui_impl_win32.h" />
     <ClInclude Include="source\ImGui\imconfig.h" />
     <ClInclude Include="source\ImGui\imgui.h" />
+    <ClInclude Include="source\ImGui\imguiex.h" />
+    <ClInclude Include="source\ImGui\imguiex_animation.h" />
+    <ClInclude Include="source\ImGui\ImGuiFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="source\ImGui\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
+    <ClInclude Include="source\ImGui\imgui_hotkey.h" />
     <ClInclude Include="source\ImGui\imgui_internal.h" />
     <ClInclude Include="source\ImGui\impl\d3d11_impl.h" />
     <ClInclude Include="source\ImGui\impl\d3d12_impl.h" />
@@ -68,17 +155,21 @@
     <ClInclude Include="source\ImGui\imstb_textedit.h" />
     <ClInclude Include="source\ImGui\imstb_truetype.h" />
     <ClInclude Include="source\kiero.h" />
-    <ClInclude Include="source\memory.h" />
     <ClInclude Include="source\menu\camera.h" />
     <ClInclude Include="source\menu\menu.h" />
     <ClInclude Include="source\menu\misc.h" />
     <ClInclude Include="source\menu\player.h" />
     <ClInclude Include="source\menu\world.h" />
-    <ClInclude Include="source\MinHook\include\MinHook.h" />
-    <ClInclude Include="source\print.h" />
-    <ClInclude Include="source\sigscan\offsets.h" />
-    <ClInclude Include="source\sigscan\sigscan.h" />
-    <ClInclude Include="source\utils.h" />
+    <ClInclude Include="source\MinHook\MinHook.h" />
+    <ClInclude Include="source\offsets.h" />
+    <ClInclude Include="source\utils\files.h" />
+    <ClInclude Include="source\utils\hook.h" />
+    <ClInclude Include="source\utils\memory.h" />
+    <ClInclude Include="source\utils\print.h" />
+    <ClInclude Include="source\utils\sigscan.h" />
+    <ClInclude Include="source\utils\time.h" />
+    <ClInclude Include="source\utils\values.h" />
+    <ClInclude Include="source\utils\windows.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -142,7 +233,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;DL2GameOverhaulScript_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -150,7 +241,8 @@
       </Optimization>
       <IntrinsicFunctions>
       </IntrinsicFunctions>
-      <AdditionalIncludeDirectories>source\ImGuiEx;source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>pch;source\ImGui;source\MinHook;</AdditionalIncludeDirectories>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -176,12 +268,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>source\ImGuiEx;source\ImGuiHotkeys;source\ImGui;source\ImGuiFileDialog;source\MinHook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>pch;source\ImGui;source\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -1,17 +1,8 @@
-#include <MinHook.h>
-#include <Windows.h>
-#include <filesystem>
-#include <iostream>
-#include <thread>
-#include "ImGui\impl\d3d11_impl.h"
-#include "ImGui\impl\d3d12_impl.h"
+#include <pch.h>
 #include "config\config.h"
-#include "game_classes.h"
-#include "hook.h"
-#include "kiero.h"
+#include "core.h"
+#include "game\GamePH\PlayerVariables.h"
 #include "menu\menu.h"
-#include "print.h"
-#include "sigscan\offsets.h"
 
 #pragma region KeyBindOption
 bool KeyBindOption::wasAnyKeyPressed = false;
@@ -46,7 +37,7 @@ namespace Core {
 	bool exiting = false;
 	static bool createdConfigThread = false;
 
-	static std::string_view rendererAPI{};
+	int rendererAPI = 0;
 	static void LoopHookRenderer() {
 		while (true) {
 			if (exiting)
@@ -54,9 +45,9 @@ namespace Core {
 
 			Sleep(1000);
 
-			if (rendererAPI.empty())
+			if (!rendererAPI)
 				continue;
-			if (kiero::init(rendererAPI == "d3d11" ? kiero::RenderType::D3D11 : kiero::RenderType::D3D12) != kiero::Status::Success)
+			if (kiero::init(rendererAPI == 11 ? kiero::RenderType::D3D11 : kiero::RenderType::D3D12) != kiero::Status::Success)
 				continue;
 
 			switch (kiero::getRenderType()) {
@@ -74,21 +65,18 @@ namespace Core {
 		}
 	}
 
-	#pragma region ReadVideoSettings
-	// forward decl
-	static bool detourReadVideoSettings(LPVOID instance, LPVOID file, bool flag1);
-	static Hook::MHook<LPVOID, bool(*)(LPVOID, LPVOID, bool)> ReadVideoSettingsHook{ "ReadVideoSettings", &Offsets::Get_ReadVideoSettings, &detourReadVideoSettings};
+	static void CreateSymlinkForLoadingFiles() {
+		std::filesystem::create_directories("EGameTools\\FilesToLoad");
 
-	static bool detourReadVideoSettings(LPVOID instance, LPVOID file, bool flag1) {
-		if (!rendererAPI.empty())
-			return ReadVideoSettingsHook.pOriginal(instance, file, flag1);
-
-		DWORD renderer = *reinterpret_cast<PDWORD>(reinterpret_cast<DWORD64>(instance) + 0x7C);
-		rendererAPI = !renderer ? "d3d11" : "d3d12";
-
-		return ReadVideoSettingsHook.pOriginal(instance, file, flag1);
+		for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data")) {
+			if (entry.path().filename().string() == "EGameTools" && is_symlink(entry.symlink_status())) {
+				if (std::filesystem::equivalent("..\\..\\data\\EGameTools", "EGameTools"))
+					return;
+				std::filesystem::remove(entry.path());
+			}
+		}
+		std::filesystem::create_directory_symlink(Utils::Files::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
 	}
-	#pragma endregion
 
 	void OnPostUpdate() {
 		if (!createdConfigThread) {
@@ -104,41 +92,27 @@ namespace Core {
 		for (auto& menuTab : *Menu::MenuTab::GetInstances())
 			menuTab.second->Update();
 	}
-
-	static void CreateSymlinkForLoadingFiles() {
-		std::filesystem::create_directories("EGameTools\\FilesToLoad");
-
-		for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data")) {
-			if (entry.path().filename().string() == "EGameTools" && is_symlink(entry.symlink_status())) {
-				if (std::filesystem::equivalent("..\\..\\data\\EGameTools", "EGameTools"))
-					return;
-				std::filesystem::remove(entry.path());
-			}
-		}
-		std::filesystem::create_directory_symlink(Utils::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
-	}
-
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
 
-		PrintInfo("Initializing config");
+		Utils::PrintInfo("Initializing config");
 		Config::InitConfig();
-		PrintInfo("Creating \"EGameTools\\FilesToLoad\"");
+		Utils::PrintInfo("Creating \"EGameTools\\FilesToLoad\"");
 		CreateSymlinkForLoadingFiles();
-		PrintInfo("Sorting Player Variables");
+		Utils::PrintInfo("Sorting Player Variables");
 		GamePH::PlayerVariables::SortPlayerVars();
 
-		PrintInfo("Initializing MinHook");
+		Utils::PrintInfo("Initializing MinHook");
 		MH_Initialize();
 
-		PrintInfo("Hooking DX11/DX12 renderer");
+		Utils::PrintInfo("Hooking DX11/DX12 renderer");
 		std::thread([]() {
 			LoopHookRenderer();
-			PrintSuccess("Hooked DX11/DX12 renderer!");
+			Utils::PrintSuccess("Hooked DX11/DX12 renderer!");
 		}).detach();
 
-		for (auto& hook : *Hook::HookBase::GetInstances()) {
-			PrintInfo("Hooking %s", hook->name.data());
+		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
+			Utils::PrintInfo("Hooking %s", hook->name.data());
 			std::thread([hook]() { hook->HookLoop(); }).detach();
 		}
 
@@ -151,11 +125,11 @@ namespace Core {
 	void Cleanup() {
 		exiting = true;
 
-		PrintInfo("Game request exit, running cleanup");
-		PrintInfo("Saving config to file");
+		Utils::PrintInfo("Game request exit, running cleanup");
+		Utils::PrintInfo("Saving config to file");
 		Config::SaveConfig();
 
-		PrintInfo("Unhooking everything");
+		Utils::PrintInfo("Unhooking everything");
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
 	}

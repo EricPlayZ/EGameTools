@@ -1,12 +1,15 @@
 #pragma once
-#include <Windows.h>
-#include <array>
+#include <ShlObj.h>
 #include <imgui.h>
+#include <ranges>
 #include <set>
-#include <string_view>
-#include "utils.h"
+#include "..\utils\values.h"
+
 #ifndef VK_NONE
+
+#ifdef _DEBUG
 #define LLMH_IMPL_DISABLE_DEBUG     // this is for disabling low-level mouse hook in case ure trying to debug and u dont want ur pc to die lol
+#endif
 
 #define MOD_VERSION_STR "v1.1.0"
 #define GAME_VER_COMPAT_STR ">= v1.14.0"
@@ -70,7 +73,7 @@ public:
         if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
             ChangeKeyBind(VK_NONE);
             return true;
-        } else if (!Utils::are_same(ImGui::GetIO().MouseWheel, 0.0f)) {
+        } else if (!Utils::Values::are_samef(ImGui::GetIO().MouseWheel, 0.0f)) {
             ChangeKeyBind(ImGui::GetIO().MouseWheel < 0.0f ? VK_MWHEELDOWN : VK_MWHEELUP);
             return true;
         } else if (GetKeyState(VK_LSHIFT) & 0x8000) {
@@ -221,10 +224,8 @@ private:
 };
 
 namespace Core {
-	extern void DisableConsole();
-
 	extern bool exiting;
-	extern DWORD64 WINAPI MainThread(HMODULE hModule);
 
-	extern void Cleanup();
+    extern int rendererAPI;
+    extern void OnPostUpdate();
 }

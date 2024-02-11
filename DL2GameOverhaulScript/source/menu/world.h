@@ -1,5 +1,5 @@
 #pragma once
-#include "..\game_classes.h"
+#include "..\game\GamePH\TimeWeather\EWeather.h"
 #include "menu.h"
 	
 namespace Menu {
@@ -11,7 +11,7 @@ namespace Menu {
 		extern float slowMotionSpeed;
 		extern float slowMotionTransitionTime;
 
-		extern EWeather::TYPE weather;
+		extern GamePH::TimeWeather::EWeather::TYPE weather;
 
 		class Tab : MenuTab {
 		public:

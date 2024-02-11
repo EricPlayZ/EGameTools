@@ -1,6 +1,6 @@
-#include <Hotkey.h>
-#include <ImGuiEx.h>
-#include "..\game_classes.h"
+#include <pch.h>
+#include "..\game\GamePH\GameDI_PH.h"
+#include "..\game\GamePH\LevelDI.h"
 #include "misc.h"
 
 namespace Menu {

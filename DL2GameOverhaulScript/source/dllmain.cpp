@@ -1,4 +1,11 @@
-#include "core.h"
+#include <pch.h>
+
+namespace Core {
+    extern void DisableConsole();
+
+    extern DWORD64 WINAPI MainThread(HMODULE hModule);
+    extern void Cleanup();
+}
 
 static HANDLE hMainThread{};
 

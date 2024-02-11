@@ -1,18 +1,18 @@
-#include <any>
-#include <array>
-#include <filesystem>
-#include <functional>
+#include <pch.h>
 #include "..\menu\camera.h"
 #include "..\menu\menu.h"
 #include "..\menu\misc.h"
 #include "..\menu\player.h"
 #include "..\menu\world.h"
-#include "..\print.h"
-#include "..\utils.h"
 #include "config.h"
-#include "ini.h"
 
 namespace Config {
+	enum ValueType {
+		OPTION,
+		Float,
+		String
+	};
+
 	struct VKey {
 		constexpr VKey(std::string_view name, int code) : name(name), code(code) {}
 
@@ -4089,7 +4089,7 @@ namespace Config {
 	static void LoadDefaultConfig() {
 		reader = inih::INIReader();
 
-		const std::filesystem::path desktopPath = Utils::GetDesktopDir();
+		const std::filesystem::path desktopPath = Utils::Files::GetDesktopDir();
 		std::string desktopPathStr = desktopPath.string();
 		if (!desktopPath.empty() && !(std::filesystem::is_directory(desktopPath.parent_path()) && std::filesystem::is_directory(desktopPath)))
 			desktopPathStr = {};
@@ -4130,14 +4130,14 @@ namespace Config {
 			inih::INIWriter writer{};
 			writer.write(configFileName, reader);
 		} catch (const std::runtime_error& e) {
-			configError = PrintError("Error writing file %s: %s", configFileName, e.what());
+			configError = Utils::PrintError("Error writing file %s: %s", configFileName, e.what());
 		}
 	}
 	static bool ConfigExists() {
 		return std::filesystem::exists(configFileName);
 	}
 	static void CreateConfig() {
-		configStatus = PrintWarning("%s does not exist (will create now); using default config values", configFileName);
+		configStatus = Utils::PrintWarning("%s does not exist (will create now); using default config values", configFileName);
 
 		LoadAndWriteDefaultConfig();
 	}
@@ -4145,7 +4145,7 @@ namespace Config {
 		try {
 			reader = inih::INIReader(configFileName);
 
-			const std::filesystem::path desktopPath = Utils::GetDesktopDir();
+			const std::filesystem::path desktopPath = Utils::Files::GetDesktopDir();
 			std::string desktopPathStr = desktopPath.string();
 			if (!desktopPath.empty() && !(std::filesystem::is_directory(desktopPath.parent_path()) && std::filesystem::is_directory(desktopPath)))
 				desktopPathStr = {};
@@ -4198,9 +4198,9 @@ namespace Config {
 				}
 			}
 
-			configStatus = PrintSuccess(configUpdate ? "Successfully read updated config!" : "Successfully read config!");
+			configStatus = Utils::PrintSuccess(configUpdate ? "Successfully read updated config!" : "Successfully read config!");
 		} catch (const std::runtime_error& e) {
-			configError = PrintSuccess("Error writing file %s; using default config values: %s", configFileName, e.what());
+			configError = Utils::PrintSuccess("Error writing file %s; using default config values: %s", configFileName, e.what());
 
 			LoadDefaultConfig();
 		}
@@ -4237,7 +4237,7 @@ namespace Config {
 
 			savedConfig = true;
 		} catch (const std::runtime_error& e) {
-			configError = PrintError("Error saving to file %s: %s", configFileName, e.what());
+			configError = Utils::PrintError("Error saving to file %s: %s", configFileName, e.what());
 		}
 	}
 	void InitConfig() {

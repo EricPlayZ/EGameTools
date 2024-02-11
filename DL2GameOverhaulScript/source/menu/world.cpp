@@ -1,7 +1,8 @@
-#include <Hotkey.h>
-#include <ImGuiEx.h>
-#include <imgui.h>
-#include "..\game_classes.h"
+#include <pch.h>
+#include "..\game\GamePH\DayNightCycle.h"
+#include "..\game\GamePH\LevelDI.h"
+#include "..\game\GamePH\TimeWeather\CSystem.h"
+#include "..\game\GamePH\TimeWeather\EWeather.h"
 #include "world.h"
 
 namespace Menu {
@@ -16,7 +17,7 @@ namespace Menu {
 		static float slowMotionSpeedLerp = gameSpeed;
 		float slowMotionTransitionTime = 1.0f;
 
-		EWeather::TYPE weather = EWeather::TYPE::Default;
+		GamePH::TimeWeather::EWeather::TYPE weather = GamePH::TimeWeather::EWeather::TYPE::Default;
 		static const char* const weatherItems[7] = {
 			"Default",
 			"Foggy",
@@ -57,7 +58,7 @@ namespace Menu {
 				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
 				slowMoHasChanged = false;
 
-				if (Utils::are_same(gameSpeed, gameSpeedBeforeSlowMo)) {
+				if (Utils::Values::are_samef(gameSpeed, gameSpeedBeforeSlowMo)) {
 					slowMoHasChanged = true;
 					slowMotion.SetPrevValue(false);
 				}
@@ -73,13 +74,13 @@ namespace Menu {
 			}
 
 			if (!menuToggle.GetValue()) {
-				time = dayNightCycle->time1 * 24;
-				if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.005f))
+				time = dayNightCycle->time1 * 24.0f;
+				if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.005f))
 					dayNightCycle->SetDaytime(timeBeforeFreeze);
 
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged())
 					iLevel->TimerSetSpeedUp(gameSpeed);
-				if (!Utils::are_same(iLevel->TimerGetSpeedUp(), 1.0f))
+				if (!Utils::Values::are_samef(iLevel->TimerGetSpeedUp(), 1.0f))
 					gameSpeed = iLevel->TimerGetSpeedUp();
 			}
 		}
@@ -97,8 +98,8 @@ namespace Menu {
 						timeBeforeFreeze = time;
 						dayNightCycle->SetDaytime(time);
 					}
-					time = dayNightCycle->time1 * 24;
-					if (freezeTime.GetValue() && !Utils::are_same(time, timeBeforeFreeze, 0.005f))
+					time = dayNightCycle->time1 * 24.0f;
+					if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.005f))
 						dayNightCycle->SetDaytime(timeBeforeFreeze);
 				}
 
@@ -108,7 +109,7 @@ namespace Menu {
 					else if (iLevel && iLevel->IsLoaded()) {
 						if (!slowMotion.GetValue() && !slowMotion.HasChanged())
 							iLevel->TimerSetSpeedUp(gameSpeed);
-						if (!Utils::are_same(iLevel->TimerGetSpeedUp(), 1.0f))
+						if (!Utils::Values::are_samef(iLevel->TimerGetSpeedUp(), 1.0f))
 							gameSpeed = iLevel->TimerGetSpeedUp();
 					}
 					ImGui::EndDisabled();
@@ -129,7 +130,7 @@ namespace Menu {
 			ImGui::SeparatorText("Weather##World");
 			ImGui::BeginDisabled(weatherDisabledFlag); {
 				if (ImGui::Combo("Weather", reinterpret_cast<int*>(&weather), weatherItems, IM_ARRAYSIZE(weatherItems)) && timeWeatherSystem)
-					timeWeatherSystem->SetForcedWeather(static_cast<EWeather::TYPE>(weather - 1));
+					timeWeatherSystem->SetForcedWeather(static_cast<GamePH::TimeWeather::EWeather::TYPE>(weather - 1));
 				ImGui::Text("Setting weather to: %s", !weatherDisabledFlag ? weatherItems[weather] : "");
 				ImGui::Text("Current weather: %s", !weatherDisabledFlag ? weatherItems[timeWeatherSystem->GetCurrentWeather() + 1] : "");
 				ImGui::EndDisabled();

@@ -1,7 +1,5 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <Hotkey.h>
-#include <ImGuiEx.h>
-#include "..\game_classes.h"
+#include <pch.h>
+#include "..\game\GamePH\Other.h"
 #include "menu.h"
 
 namespace Menu {
@@ -18,7 +16,7 @@ namespace Menu {
     float transparency = 99.0f;
     float scale = 1.0f;
 
-    static Utils::Timer timePassedFromWelcomeScreen{};
+    static Utils::Time::Timer timePassedFromWelcomeScreen{};
     static bool firstTimeRunningFunc = true;
     Option firstTimeRunning{};
 
@@ -27,7 +25,7 @@ namespace Menu {
             return;
         if (firstTimeRunningFunc) {
             firstTimeRunningFunc = false;
-            timePassedFromWelcomeScreen = Utils::Timer(10000);
+            timePassedFromWelcomeScreen = Utils::Time::Timer(10000);
             menuToggle.SetChangesAreDisabled(true);
             ImGui::OpenPopup("EGameTools - Welcome!");
         }

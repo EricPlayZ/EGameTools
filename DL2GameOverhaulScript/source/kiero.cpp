@@ -1,6 +1,4 @@
-#include "kiero.h"
-#include <Windows.h>
-#include <assert.h>
+#include <pch.h>
 
 #if KIERO_INCLUDE_D3D9
 # include <d3d9.h>
@@ -28,10 +26,6 @@
 
 #if KIERO_INCLUDE_VULKAN
 # include <vulkan/vulkan.h>
-#endif
-
-#if KIERO_USE_MINHOOK
-# include "MinHook/include/MinHook.h"
 #endif
 
 #ifdef _UNICODE
