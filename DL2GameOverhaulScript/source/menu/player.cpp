@@ -6050,15 +6050,18 @@ namespace Menu {
 			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 			if (!playerCharacter)
 				return;
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel)
+				return;
 
-			if (freezePlayer.GetValue() || (Camera::freeCam.GetValue() && !Camera::teleportPlayerToCamera.GetValue())) {
+			if ((freezePlayer.GetValue() || (Camera::freeCam.GetValue() && !Camera::teleportPlayerToCamera.GetValue())) && !iLevel->IsTimerFrozen()) {
 				playerCharacter->FreezeCharacter();
 				return;
 			}
 
 			Engine::CBulletPhysicsCharacter::posBeforeFreeze = playerCharacter->playerPos;
 
-			if (!Camera::freeCam.GetValue() || !Camera::teleportPlayerToCamera.GetValue())
+			if (iLevel->IsTimerFrozen() || !Camera::freeCam.GetValue() || !Camera::teleportPlayerToCamera.GetValue())
 				return;
 
 			GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();

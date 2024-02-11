@@ -89,6 +89,9 @@ namespace GamePH {
 
 			if (!Menu::Camera::freeCam.GetValue())
 				return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
+			LevelDI* iLevel = LevelDI::Get();
+			if (!iLevel || iLevel->IsTimerFrozen())
+				return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
 			GameDI_PH* pGameDI_PH = GameDI_PH::Get();
 			if (!pGameDI_PH)
 				return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
@@ -107,23 +110,27 @@ namespace GamePH {
 
 #pragma region ShowTPPModelFunc3
 		Option wannaUseTPPModel{};
+		static bool prevUseTPPModel;
 		static void detourShowTPPModelFunc3(DWORD64 tppFunc2Addr, bool showTPPModel);
 		static Utils::Hook::MHook<LPVOID, void(*)(DWORD64, bool)> ShowTPPModelFunc3Hook{ "ShowTPPModelFunc3", &Offsets::Get_ShowTPPModelFunc3, &detourShowTPPModelFunc3 };
 
 		static void detourShowTPPModelFunc3(DWORD64 tppFunc2Addr, bool showTPPModel) {
-			wannaUseTPPModel.Set(showTPPModel);
-
 			gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
 			if (!pgen_TPPModel) {
 				ShowTPPModelFunc3Hook.pOriginal(tppFunc2Addr, showTPPModel);
 				return;
 			}
-			if (wannaUseTPPModel.HasChangedTo(false)) {
-				wannaUseTPPModel.SetPrevValue(false);
+			
+			if (!showTPPModel && prevUseTPPModel) {
 				pgen_TPPModel->enableTPPModel2 = true;
 				pgen_TPPModel->enableTPPModel1 = true;
 			}
 			ShowTPPModelFunc3Hook.pOriginal(tppFunc2Addr, showTPPModel);
+			if (showTPPModel && prevUseTPPModel) {
+				pgen_TPPModel->enableTPPModel2 = false;
+				pgen_TPPModel->enableTPPModel1 = false;
+			} else
+				prevUseTPPModel = showTPPModel;
 		}
 #pragma endregion
 

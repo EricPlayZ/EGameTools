@@ -15,6 +15,7 @@ namespace GamePH {
 		void SetViewCamera(LPVOID viewCam);
 		float GetTimePlayed();
 		void ShowUIManager(bool enabled);
+		bool IsTimerFrozen();
 		float TimerGetSpeedUp();
 		void TimerSetSpeedUp(float timeScale);
 		TimeWeather::CSystem* GetTimeWeatherSystem();

@@ -2,7 +2,6 @@
 #include "..\GamePH\GameDI_PH.h"
 #include "..\GamePH\LevelDI.h"
 #include "..\GamePH\Other.h"
-#include "..\GamePH\game_hooks.h"
 #include "..\GamePH\gen_TPPModel.h"
 #include "..\core.h"
 #include "..\menu\camera.h"
@@ -30,68 +29,19 @@ namespace Engine {
 		static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos);
 		static Utils::Hook::MHook<LPVOID, void(*)(LPVOID, float*, float*, Vector3*)> MoveCameraFromForwardUpPosHook{ "MoveCameraFromForwardUpPos", &Offsets::Get_MoveCameraFromForwardUpPos, &detourMoveCameraFromForwardUpPos };
 
+		bool switchedFreeCamByGamePause = false;
+		Vector3 freeCamPosBeforeGamePause{};
+
 		static void detourMoveCameraFromForwardUpPos(LPVOID pCBaseCamera, float* a3, float* a4, Vector3* pos) {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-			if (!iLevel || !iLevel->IsLoaded())
+			if (!iLevel || !iLevel->IsLoaded() || iLevel->IsTimerFrozen())
 				return MoveCameraFromForwardUpPosHook.pOriginal(pCBaseCamera, a3, a4, pos);
 
-			GamePH::gen_TPPModel* pgen_TPPModel = GamePH::gen_TPPModel::Get();
-			if (pgen_TPPModel) {
-				if (GamePH::Hooks::wannaUseTPPModel.GetValue()) {
-					GamePH::Hooks::wannaUseTPPModel.SetPrevValue(true);
-					if (Menu::Camera::thirdPersonCamera.GetValue() && Menu::Camera::tpUseTPPModel.GetValue()) {
-						pgen_TPPModel->enableTPPModel2 = false;
-						pgen_TPPModel->enableTPPModel1 = false;
-					}
-				}
-
-				if (Menu::Camera::photoMode.HasChangedTo(false) && !GamePH::Hooks::wannaUseTPPModel.GetValue()) {
-					if (!Menu::Camera::freeCam.GetValue() && !Menu::Camera::tpUseTPPModel.GetValue()) {
-						Menu::Camera::photoMode.SetPrevValue(false);
-						GamePH::ShowTPPModel(false);
-					} else if (Menu::Camera::freeCam.GetValue() || (Menu::Camera::tpUseTPPModel.GetValue() && Menu::Camera::thirdPersonCamera.GetValue())) {
-						Menu::Camera::photoMode.SetPrevValue(true);
-						GamePH::ShowTPPModel(true);
-					}
-				} else if (Menu::Camera::photoMode.HasChangedTo(true)) {
-					Menu::Camera::photoMode.SetPrevValue(true);
-					GamePH::ShowTPPModel(true);
-				} else if (Menu::Camera::freeCam.HasChangedTo(false)) {
-					if (!Menu::Camera::photoMode.GetValue() && !Menu::Camera::thirdPersonCamera.GetValue()) {
-						Menu::Camera::freeCam.SetPrevValue(false);
-						GamePH::ShowTPPModel(false);
-					} else if (Menu::Camera::photoMode.GetValue() || (Menu::Camera::tpUseTPPModel.GetValue() && Menu::Camera::thirdPersonCamera.GetValue())) {
-						Menu::Camera::freeCam.SetPrevValue(true);
-						GamePH::ShowTPPModel(true);
-					}
-				} else if (Menu::Camera::freeCam.HasChangedTo(true)) {
-					Menu::Camera::freeCam.SetPrevValue(true);
-					GamePH::ShowTPPModel(true);
-				} else if (Menu::Camera::thirdPersonCamera.HasChangedTo(false)) {
-					if (!Menu::Camera::freeCam.GetValue() && !Menu::Camera::photoMode.GetValue()) {
-						Menu::Camera::thirdPersonCamera.SetPrevValue(false);
-						GamePH::ShowTPPModel(false);
-					} else if (Menu::Camera::freeCam.GetValue() || Menu::Camera::photoMode.GetValue()) {
-						Menu::Camera::thirdPersonCamera.SetPrevValue(true);
-						GamePH::ShowTPPModel(true);
-					}
-				} else if (Menu::Camera::thirdPersonCamera.HasChangedTo(true) && Menu::Camera::tpUseTPPModel.GetValue()) {
-					Menu::Camera::thirdPersonCamera.SetPrevValue(true);
-					GamePH::ShowTPPModel(true);
-				} else if (Menu::Camera::tpUseTPPModel.HasChangedTo(false)) {
-					if (!Menu::Camera::freeCam.GetValue() && !Menu::Camera::photoMode.GetValue()) {
-						Menu::Camera::tpUseTPPModel.SetPrevValue(false);
-						GamePH::ShowTPPModel(false);
-					} else if (Menu::Camera::freeCam.GetValue() || Menu::Camera::photoMode.GetValue()) {
-						Menu::Camera::tpUseTPPModel.SetPrevValue(true);
-						GamePH::ShowTPPModel(true);
-					}
-				} else if (Menu::Camera::tpUseTPPModel.HasChangedTo(true) && Menu::Camera::thirdPersonCamera.GetValue()) {
-					Menu::Camera::tpUseTPPModel.SetPrevValue(true);
-					GamePH::ShowTPPModel(true);
-				}
+			if (Menu::Camera::freeCam.GetValue() && switchedFreeCamByGamePause) {
+				switchedFreeCamByGamePause = false;
+				*pos = freeCamPosBeforeGamePause;
+				return MoveCameraFromForwardUpPosHook.pOriginal(pCBaseCamera, a3, a4, pos);
 			}
-
 			if (!Menu::Camera::thirdPersonCamera.GetValue() || Menu::Camera::photoMode.GetValue() || Menu::Camera::freeCam.GetValue() || !pos)
 				return MoveCameraFromForwardUpPosHook.pOriginal(pCBaseCamera, a3, a4, pos);
 

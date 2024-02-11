@@ -334,9 +334,6 @@
     <ClInclude Include="source\game\GamePH\gen_TPPModel.h">
       <Filter>game\GamePH</Filter>
     </ClInclude>
-    <ClInclude Include="source\game\GamePH\game_hooks.h">
-      <Filter>game\GamePH</Filter>
-    </ClInclude>
     <ClInclude Include="source\game\GamePH\LevelDI.h">
       <Filter>game\GamePH</Filter>
     </ClInclude>
@@ -377,6 +374,9 @@
       <Filter>game\GamePH\TimeWeather</Filter>
     </ClInclude>
     <ClInclude Include="pch\pch.h" />
+    <ClInclude Include="source\game\Engine\engine_hooks.h">
+      <Filter>game\Engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">

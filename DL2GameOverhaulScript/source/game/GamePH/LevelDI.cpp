@@ -16,17 +16,19 @@ namespace GamePH {
 		}
 	}
 	bool LevelDI::IsLoaded() {
-		static float loadDeltaTime = 0.0f;
+		static Utils::Time::Timer loadTimer{ 7500 };
+		static bool isStillLoading = false;
+
 		if (IsLoading() || !GamePH::PlayerObjProperties::Get()) {
-			loadDeltaTime = 0.0f;
+			isStillLoading = true;
 			return false;
 		}
+		if (isStillLoading) {
+			isStillLoading = false;
+			loadTimer = Utils::Time::Timer(7500);
+		}
 
-		loadDeltaTime += GetTimeDelta();
-		if (loadDeltaTime > 3.0f)
-			return true;
-
-		return false;
+		return loadTimer.DidTimePass();
 	}
 	LPVOID LevelDI::GetViewCamera() {
 		__try {
@@ -57,6 +59,17 @@ namespace GamePH {
 			pShowUIManager(this, enabled);
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			return;
+		}
+	}
+	bool LevelDI::IsTimerFrozen() {
+		__try {
+			bool(*pIsTimerFrozen)(LPVOID iLevel) = (decltype(pIsTimerFrozen))Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?IsTimerFrozen@ILevel@@QEBA_NXZ");
+			if (!pIsTimerFrozen)
+				return false;
+
+			return pIsTimerFrozen(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return false;
 		}
 	}
 	float LevelDI::TimerGetSpeedUp() {

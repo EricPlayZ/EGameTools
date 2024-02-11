@@ -1,10 +1,13 @@
 #include <pch.h>
 #include "..\core.h"
 #include "..\game\Engine\CVideoSettings.h"
+#include "..\game\Engine\engine_hooks.h"
 #include "..\game\GamePH\FreeCamera.h"
 #include "..\game\GamePH\GameDI_PH.h"
 #include "..\game\GamePH\LevelDI.h"
+#include "..\game\GamePH\Other.h"
 #include "..\game\GamePH\PlayerVariables.h"
+#include "..\game\GamePH\gen_TPPModel.h"
 #include "..\offsets.h"
 #include "camera.h"
 #include "menu.h"
@@ -57,7 +60,7 @@ namespace Menu {
 			if (!pFreeCam)
 				return;
 
-			if (freeCam.GetValue()) {
+			if (freeCam.GetValue() && !iLevel->IsTimerFrozen()) {
 				if (viewCam == pFreeCam) {
 					pFreeCam->enableSpeedMultiplier1 = true;
 
@@ -81,6 +84,8 @@ namespace Menu {
 					else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt))
 						pFreeCam->speedMultiplier /= 2.0f;
 
+					pFreeCam->GetPosition(&Engine::Hooks::freeCamPosBeforeGamePause);
+
 					return;
 				}
 
@@ -89,6 +94,8 @@ namespace Menu {
 
 				freeCam.SetPrevValue(true);
 			} else {
+				Engine::Hooks::switchedFreeCamByGamePause = freeCam.GetValue() && iLevel->IsTimerFrozen();
+
 				if (freeCam.GetPrevValue()) {
 					pFreeCam->enableSpeedMultiplier1 = false;
 					pFreeCam->speedMultiplier = 0.1f;
@@ -100,6 +107,23 @@ namespace Menu {
 				pFreeCam->AllowCameraMovement(0);
 
 				freeCam.SetPrevValue(false);
+			}
+		}
+		static void UpdateTPPModel() {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel || !iLevel->IsLoaded())
+				return;
+
+			GamePH::gen_TPPModel* pgen_TPPModel = GamePH::gen_TPPModel::Get();
+			if (pgen_TPPModel) {
+				if (Menu::Camera::photoMode.GetValue() || (Menu::Camera::freeCam.GetValue() && !iLevel->IsTimerFrozen()))
+					GamePH::ShowTPPModel(true);
+				else if (Menu::Camera::freeCam.GetValue() && iLevel->IsTimerFrozen() && !photoMode.GetValue())
+					GamePH::ShowTPPModel(false);
+				else if (Menu::Camera::thirdPersonCamera.GetValue() && Menu::Camera::tpUseTPPModel.GetValue())
+					GamePH::ShowTPPModel(true);
+				else if (!photoMode.GetValue())
+					GamePH::ShowTPPModel(false);
 			}
 		}
 		static void UpdatePlayerVars() {
@@ -120,6 +144,7 @@ namespace Menu {
 		void Tab::Update() {
 			UpdateFOV();
 			FreeCamUpdate();
+			UpdateTPPModel();
 			UpdatePlayerVars();
 			UpdateDisabledOptions();
 		}

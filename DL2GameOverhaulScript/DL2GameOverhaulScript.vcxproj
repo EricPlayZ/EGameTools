@@ -117,13 +117,13 @@
     <ClInclude Include="source\game\Engine\CLobbySteam.h" />
     <ClInclude Include="source\game\Engine\CoPhysicsProperty.h" />
     <ClInclude Include="source\game\Engine\CVideoSettings.h" />
+    <ClInclude Include="source\game\Engine\engine_hooks.h" />
     <ClInclude Include="source\game\GamePH\CoBaseCameraProxy.h" />
     <ClInclude Include="source\game\GamePH\DayNightCycle.h" />
     <ClInclude Include="source\game\GamePH\FreeCamera.h" />
     <ClInclude Include="source\game\GamePH\GameDI_PH.h" />
     <ClInclude Include="source\game\GamePH\GameDI_PH2.h" />
     <ClInclude Include="source\game\GamePH\gen_TPPModel.h" />
-    <ClInclude Include="source\game\GamePH\game_hooks.h" />
     <ClInclude Include="source\game\GamePH\LevelDI.h" />
     <ClInclude Include="source\game\GamePH\LocalClientDI.h" />
     <ClInclude Include="source\game\GamePH\LogicalPlayer.h" />
