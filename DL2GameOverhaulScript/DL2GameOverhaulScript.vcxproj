@@ -102,6 +102,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h" />
+    <ClInclude Include="source\changelog.h" />
     <ClInclude Include="source\config\config.h" />
     <ClInclude Include="source\config\ini.h" />
     <ClInclude Include="source\core.h" />

@@ -1,6 +1,7 @@
 #include <pch.h>
 #include "config\config.h"
 #include "core.h"
+#include "game\GamePH\LevelDI.h"
 #include "game\GamePH\PlayerVariables.h"
 #include "menu\menu.h"
 
@@ -66,7 +67,7 @@ namespace Core {
 	}
 
 	static void CreateSymlinkForLoadingFiles() {
-		std::filesystem::create_directories("EGameTools\\FilesToLoad");
+		std::filesystem::create_directories("EGameTools\\UserModFiles");
 
 		for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data")) {
 			if (entry.path().filename().string() == "EGameTools" && is_symlink(entry.symlink_status())) {
@@ -75,6 +76,7 @@ namespace Core {
 				std::filesystem::remove(entry.path());
 			}
 		}
+		Utils::PrintWarning("Creating game shortcut for \"EGameTools\"");
 		std::filesystem::create_directory_symlink(Utils::Files::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
 	}
 
@@ -97,7 +99,6 @@ namespace Core {
 
 		Utils::PrintInfo("Initializing config");
 		Config::InitConfig();
-		Utils::PrintInfo("Creating \"EGameTools\\FilesToLoad\"");
 		CreateSymlinkForLoadingFiles();
 		Utils::PrintInfo("Sorting Player Variables");
 		GamePH::PlayerVariables::SortPlayerVars();
@@ -125,7 +126,7 @@ namespace Core {
 	void Cleanup() {
 		exiting = true;
 
-		Utils::PrintInfo("Game request exit, running cleanup");
+		Utils::PrintInfo("Game requested exit, running cleanup");
 		Utils::PrintInfo("Saving config to file");
 		Config::SaveConfig();
 

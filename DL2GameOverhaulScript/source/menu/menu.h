@@ -21,6 +21,7 @@ namespace Menu {
 	extern float scale;
 
     extern Option firstTimeRunning;
+    extern Option hasSeenChangelog;
 
     extern void FirstTimeRunning();
 	extern void Render();

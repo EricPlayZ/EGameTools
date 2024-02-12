@@ -6357,13 +6357,13 @@ namespace Menu {
 				ImGuiFileDialog::Instance()->Close();
 			}
 			if (ImGui::BeginPopupModal("Failed reloading player jump parameters.", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-				ImGui::Text("Could not find any \"jump_parameters.scr\" inside \"EGameTools\\FilesToLoad\"! Please make sure a \"jump_parameters.scr\" file is present in the directory mentioned earlier.");
+				ImGui::Text("Could not find any \"jump_parameters.scr\" inside \"EGameTools\\UserModFiles\"! Please make sure a \"jump_parameters.scr\" file is present in the directory mentioned earlier.");
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}
 			if (ImGui::BeginPopupModal("Reloaded player jump parameters!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-				ImGui::Text("Player jump parameters have been reloaded! from \"EGameTools\\FilesToLoad\"");
+				ImGui::Text("Player jump parameters have been reloaded! from \"EGameTools\\UserModFiles\"");
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
@@ -6429,7 +6429,7 @@ namespace Menu {
 
 			ImGui::SeparatorText("Player Jump Parameters");
 			if (ImGui::Button("Reload Jump Params")) {
-				if (Utils::Files::FileExistsInDir("jump_parameters.scr", "EGameTools\\FilesToLoad")) {
+				if (Utils::Files::FileExistsInDir("jump_parameters.scr", "EGameTools\\UserModFiles")) {
 					GamePH::ReloadJumps();
 					ImGui::OpenPopup("Reloaded player jump parameters!");
 				} else

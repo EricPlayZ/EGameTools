@@ -12,7 +12,7 @@ namespace Menu {
 		float gameSpeed = 1.0f;
 		static float gameSpeedBeforeSlowMo = gameSpeed;
 		KeyBindOption freezeTime{ VK_NONE };
-		KeyBindOption slowMotion{ 'X' };
+		KeyBindOption slowMotion{ '4' };
 		float slowMotionSpeed = 0.4f;
 		static float slowMotionSpeedLerp = gameSpeed;
 		float slowMotionTransitionTime = 1.0f;

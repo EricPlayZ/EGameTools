@@ -73,6 +73,23 @@ namespace Engine {
 		static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
 		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ "fs::open", &GetFsOpen, &detourFsOpen };
 
+		static std::vector<std::string> cachedUserModDirs{};
+		static void CacheUserModDirs() {
+			Utils::PrintInfo("Recaching user mod directories");
+
+			if (!cachedUserModDirs.empty())
+				cachedUserModDirs.clear();
+
+			for (const auto& entry : std::filesystem::recursive_directory_iterator("EGameTools\\UserModFiles")) {
+				const std::filesystem::path pathToDir = entry.path();
+				if (!std::filesystem::is_directory(pathToDir))
+					continue;
+
+				cachedUserModDirs.push_back(pathToDir.string());
+			}
+		}
+
+		static Utils::Time::Timer timeSinceCache{ 0 };
 		static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
 			const DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
 
@@ -81,17 +98,18 @@ namespace Engine {
 			if (fileName.empty())
 				return FsOpenHook.pOriginal(file, a2, a3);
 
-			for (const auto& entry : std::filesystem::recursive_directory_iterator("EGameTools\\FilesToLoad")) {
-				const std::filesystem::path pathToFile = entry.path();
-				if (!std::filesystem::is_regular_file(pathToFile))
+			if (timeSinceCache.DidTimePass()) {
+				CacheUserModDirs();
+				timeSinceCache = Utils::Time::Timer(5000);
+			}
+
+			for (const auto& entry : cachedUserModDirs) {
+				const std::string finalPath = entry + "\\" + fileName;
+				if (!std::filesystem::exists(finalPath))
 					continue;
 
-				const std::filesystem::path pathToFilename = pathToFile.filename();
-				if (!pathToFilename.string().contains(fileName))
-					continue;
-
-				const std::string finalPath = pathToFile.string();
 				const char* filePath2 = finalPath.c_str();
+				Utils::PrintWarning("Loading user mod file \"%s\"", filePath2);
 
 				return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
 			}

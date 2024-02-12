@@ -5,20 +5,22 @@
 #include <set>
 #include "..\utils\values.h"
 
+
 #ifndef VK_NONE
 
 #ifdef _DEBUG
 #define LLMH_IMPL_DISABLE_DEBUG     // this is for disabling low-level mouse hook in case ure trying to debug and u dont want ur pc to die lol
 #endif
 
-#define MOD_VERSION_STR "v1.1.0"
-#define GAME_VER_COMPAT_STR ">= v1.14.0"
-#define GAME_VER_COMPAT 11400
-
 #define VK_NONE -1
 #define VK_MWHEELDOWN 0x100
 #define VK_MWHEELUP 0x101
 #endif
+
+constexpr auto MOD_VERSION_STR = "v1.1.0";
+constexpr auto MOD_VERSION = 10100;
+constexpr auto GAME_VER_COMPAT_STR = ">= v1.14.0";
+constexpr auto GAME_VER_COMPAT = 11400;
 
 struct Key {
     constexpr Key(std::string_view name, int code, ImGuiKey imGuiCode) : name(name), code(code), imGuiCode(imGuiCode) {}

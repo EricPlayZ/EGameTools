@@ -377,6 +377,7 @@
     <ClInclude Include="source\game\Engine\engine_hooks.h">
       <Filter>game\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="source\changelog.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">

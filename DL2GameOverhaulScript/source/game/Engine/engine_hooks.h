@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+#include <vector>
 #include "..\Vector3.h"
 
 namespace Engine {
