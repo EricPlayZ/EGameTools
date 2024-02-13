@@ -20,7 +20,7 @@ namespace GamePH {
 	}
 	const std::string GetCurrentGameVersionStr() {
 		if (!GetCurrentGameVersion())
-			return {};
+			return "UNKNOWN";
 
 		DWORD64 version = GetCurrentGameVersion();
 

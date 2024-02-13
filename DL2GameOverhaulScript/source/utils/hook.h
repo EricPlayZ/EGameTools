@@ -2,7 +2,6 @@
 #include <functional>
 #include <set>
 #include "..\MinHook\MinHook.h"
-#include "print.h"
 
 namespace Utils {
 	namespace Hook {
@@ -49,11 +48,7 @@ namespace Utils {
 						MH_EnableHook(pTarget);
 						break;
 					}
-
-					Sleep(250);
 				}
-
-				PrintSuccess("Hooked %s!", name.data());
 			}
 
 			OrigType pOriginal = nullptr;
@@ -78,11 +73,7 @@ namespace Utils {
 						HookVT(pInstance, pDetour, reinterpret_cast<LPVOID*>(&pOriginal), offset);
 						break;
 					}
-
-					Sleep(250);
 				}
-
-				PrintSuccess("Hooked %s!", name.data());
 			}
 
 			OrigType pOriginal = nullptr;

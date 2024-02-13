@@ -2,16 +2,23 @@
 
 namespace Utils {
     namespace Files {
-        const std::string_view GetDesktopDir() {
+        const std::string GetDesktopDir() {
             char path[MAX_PATH + 1]{};
             if (!SHGetSpecialFolderPathA(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE))
                 return {};
 
             return path;
         }
-        const std::string_view GetDocumentsDir() {
+        const std::string GetDocumentsDir() {
             char path[MAX_PATH + 1]{};
             if (SHGetFolderPathA(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, path) != S_OK)
+                return {};
+
+            return path;
+        }
+        const std::string GetLocalAppDataDir() {
+            char path[MAX_PATH + 1]{};
+            if (SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, path) != S_OK)
                 return {};
 
             return path;

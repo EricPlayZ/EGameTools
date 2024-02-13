@@ -114,7 +114,10 @@ namespace Core {
 
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
 			Utils::PrintInfo("Hooking %s", hook->name.data());
-			std::thread([hook]() { hook->HookLoop(); }).detach();
+			std::thread([&hook]() {
+				hook->HookLoop();
+				Utils::PrintSuccess("Hooked %s!", hook->name.data());
+			}).detach();
 		}
 
 		const HANDLE proc = GetCurrentProcess();

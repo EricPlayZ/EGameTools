@@ -46,16 +46,18 @@ namespace impl {
 			if (!pCInput)
 				return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
 
-			ImGui::GetIO().MouseDrawCursor = Menu::firstTimeRunning.GetValue() || Menu::menuToggle.GetValue();
+			ImGui::GetIO().MouseDrawCursor = !Menu::hasSeenChangelog.GetValue() || Menu::firstTimeRunning.GetValue() || Menu::menuToggle.GetValue();
 			ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam);
 
-			if (Menu::firstTimeRunning.GetValue() || Menu::menuToggle.GetValue()) {
+			if (!Menu::hasSeenChangelog.GetValue() || Menu::firstTimeRunning.GetValue() || Menu::menuToggle.GetValue()) {
 				pCInput->BlockGameInput();
 
 				if (Menu::menuToggle.GetValue())
 					Menu::menuToggle.SetPrevValue(true);
-			} else if (Menu::firstTimeRunning.GetPrevValue() || Menu::menuToggle.GetPrevValue()) {
-				if (Menu::firstTimeRunning.GetPrevValue())
+			} else if (!Menu::hasSeenChangelog.GetPrevValue() || Menu::firstTimeRunning.GetPrevValue() || Menu::menuToggle.GetPrevValue()) {
+				if (!Menu::hasSeenChangelog.GetPrevValue())
+					Menu::hasSeenChangelog.SetPrevValue(true);
+				else if (Menu::firstTimeRunning.GetPrevValue())
 					Menu::firstTimeRunning.SetPrevValue(false);
 				else if (Menu::menuToggle.GetPrevValue())
 					Menu::menuToggle.SetPrevValue(false);

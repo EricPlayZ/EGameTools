@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <mutex>
 #include "time.h"
 
 namespace Utils {
@@ -22,16 +23,20 @@ namespace Utils {
 		c_brightwhite
 	};
 
+	static std::mutex printMutex{};
+
 	template<typename... Args> const std::string PrintError(std::string f, Args... args) {
 		f.append("\n");
 		std::ostringstream oss = Utils::Time::GetTimestamp();
 		oss << f;
 		const std::string ossStr = oss.str();
 
+		printMutex.lock();
 		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTextAttribute(hConsole, c_red);
 		printf(ossStr.c_str(), args...);
 		SetConsoleTextAttribute(hConsole, c_white);
+		printMutex.unlock();
 
 		return oss.str();
 	}
@@ -41,10 +46,12 @@ namespace Utils {
 		oss << f;
 		const std::string ossStr = oss.str();
 
+		printMutex.lock();
 		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTextAttribute(hConsole, c_yellow);
 		printf(ossStr.c_str(), args...);
 		SetConsoleTextAttribute(hConsole, c_white);
+		printMutex.unlock();
 
 		return oss.str();
 	}
@@ -54,10 +61,12 @@ namespace Utils {
 		oss << f;
 		const std::string ossStr = oss.str();
 
+		printMutex.lock();
 		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTextAttribute(hConsole, c_green);
 		printf(ossStr.c_str(), args...);
 		SetConsoleTextAttribute(hConsole, c_white);
+		printMutex.unlock();
 
 		return oss.str();
 	}
@@ -67,10 +76,12 @@ namespace Utils {
 		oss << f;
 		const std::string ossStr = oss.str();
 
+		printMutex.lock();
 		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTextAttribute(hConsole, c_brightwhite);
 		printf(ossStr.c_str(), args...);
 		SetConsoleTextAttribute(hConsole, c_white);
+		printMutex.unlock();
 
 		return oss.str();
 	}
@@ -80,10 +91,12 @@ namespace Utils {
 		oss << f;
 		const std::string ossStr = oss.str();
 
+		printMutex.lock();
 		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTextAttribute(hConsole, c_gray);
 		printf(ossStr.c_str(), args...);
 		SetConsoleTextAttribute(hConsole, c_white);
+		printMutex.unlock();
 
 		return oss.str();
 	}
@@ -93,10 +106,12 @@ namespace Utils {
 		oss << f;
 		const std::string ossStr = oss.str();
 
+		printMutex.lock();
 		const HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTextAttribute(hConsole, color);
 		printf(ossStr.c_str(), args...);
 		SetConsoleTextAttribute(hConsole, c_white);
+		printMutex.unlock();
 
 		return oss.str();
 	}

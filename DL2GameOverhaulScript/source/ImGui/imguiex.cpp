@@ -89,9 +89,9 @@ namespace ImGui {
         const float indentation = (window_width - text_width) * 0.5f;
         return indentation > min_indentation ? indentation : min_indentation;
     }
-    void TextCentered(const char* text) {
+    void TextCentered(const char* text, const bool calculateWithScrollbar) {
         const float min_indentation = 20.0f;
-        const float window_width = ImGui::GetWindowSize().x - ImGui::GetStyle().ScrollbarSize - min_indentation;
+        const float window_width = ImGui::GetWindowSize().x - (calculateWithScrollbar ? ImGui::GetStyle().ScrollbarSize : 0.0f);
         const float wrap_pos = window_width - min_indentation;
 
         std::istringstream iss(text);
@@ -117,9 +117,9 @@ namespace ImGui {
             ImGui::NewLine();
         }
     }
-    void TextCenteredColored(const char* text, const ImU32 col) {
+    void TextCenteredColored(const char* text, const ImU32 col, const bool calculateWithScrollbar) {
         const float min_indentation = 20.0f;
-        const float window_width = ImGui::GetWindowSize().x - ImGui::GetStyle().ScrollbarSize - min_indentation;
+        const float window_width = ImGui::GetWindowSize().x - (calculateWithScrollbar ? ImGui::GetStyle().ScrollbarSize : 0.0f);
         const float wrap_pos = window_width - min_indentation;
 
         std::istringstream iss(text);
