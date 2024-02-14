@@ -10,11 +10,11 @@ R"(- You can now load custom mod files from "EGameTools\UserModFiles"! Please re
 
 - Added "Reload Jump Params", using the directory mentioned earlier (Player)
 - Added "One-handed Mode" (Player)
-- Added "Nightrunner Mode" (Player)
+- Added "Nightrunner Mode", default button is "F9" (Player)
 - Added "Disable Game Pause While AFK" (Misc)
 - Added "Freeze Time" (World)
 - Added "Game Speed" slider (World)
-- Added "Slow Motion" (World)
+- Added "Slow Motion", default button is "4" (World)
 
 - Fixed having a weird offset of the entire map view when FreeCam is enabled
 - Fixed player dying from switching FreeCam off after flying to high altitudes/through walls with “Teleport Player to Camera” option)" }
