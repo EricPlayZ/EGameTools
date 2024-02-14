@@ -16,6 +16,7 @@ R"(- You can now load custom mod files from "EGameTools\UserModFiles"! Please re
 - Added "Game Speed" slider (World)
 - Added "Slow Motion" (World)
 
-- Fixed having FreeCam enabled while in the Map view would cause a weird offset of the entire Map view)" }
+- Fixed having a weird offset of the entire map view when FreeCam is enabled
+- Fixed player dying from switching FreeCam off after flying to high altitudes/through walls with “Teleport Player to Camera” option)" }
 	};
 }

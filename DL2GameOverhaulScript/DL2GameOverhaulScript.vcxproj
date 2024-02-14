@@ -40,6 +40,7 @@
     <ClCompile Include="source\game\GamePH\LocalClientDI.cpp" />
     <ClCompile Include="source\game\GamePH\LogicalPlayer.cpp" />
     <ClCompile Include="source\game\GamePH\Other.cpp" />
+    <ClCompile Include="source\game\GamePH\PlayerDI_PH.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerHealthModule.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerObjProperties.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerState.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="source\game\GamePH\LocalClientDI.h" />
     <ClInclude Include="source\game\GamePH\LogicalPlayer.h" />
     <ClInclude Include="source\game\GamePH\Other.h" />
+    <ClInclude Include="source\game\GamePH\PlayerDI_PH.h" />
     <ClInclude Include="source\game\GamePH\PlayerHealthModule.h" />
     <ClInclude Include="source\game\GamePH\PlayerObjProperties.h" />
     <ClInclude Include="source\game\GamePH\PlayerState.h" />

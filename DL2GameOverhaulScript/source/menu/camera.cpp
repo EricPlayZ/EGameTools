@@ -31,8 +31,8 @@ namespace Menu {
 		KeyBindOption disablePhotoModeLimits{ VK_NONE };
 		KeyBindOption disableSafezoneFOVReduction{ VK_NONE };
 
-		static const int baseFOV = 57;
-		static const float baseSafezoneFOVReduction = -10.0f;
+		static constexpr int baseFOV = 57;
+		static constexpr float baseSafezoneFOVReduction = -10.0f;
 
 		static void UpdateFOV() {
 			if (menuToggle.GetValue())
@@ -60,6 +60,7 @@ namespace Menu {
 			if (!pFreeCam)
 				return;
 
+			static bool prevFreeCam = freeCam.GetValue();
 			if (freeCam.GetValue() && !iLevel->IsTimerFrozen()) {
 				if (viewCam == pFreeCam) {
 					pFreeCam->enableSpeedMultiplier1 = true;
@@ -91,12 +92,10 @@ namespace Menu {
 
 				pGameDI_PH->TogglePhotoMode();
 				pFreeCam->AllowCameraMovement(2);
-
-				freeCam.SetPrevValue(true);
 			} else {
 				Engine::Hooks::switchedFreeCamByGamePause = freeCam.GetValue() && iLevel->IsTimerFrozen();
 
-				if (freeCam.GetPrevValue()) {
+				if (prevFreeCam) {
 					pFreeCam->enableSpeedMultiplier1 = false;
 					pFreeCam->speedMultiplier = 0.1f;
 				}
@@ -105,9 +104,9 @@ namespace Menu {
 
 				pGameDI_PH->TogglePhotoMode();
 				pFreeCam->AllowCameraMovement(0);
-
-				freeCam.SetPrevValue(false);
 			}
+
+			prevFreeCam = freeCam.GetValue();
 		}
 		static void UpdateTPPModel() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();

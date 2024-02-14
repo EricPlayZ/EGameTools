@@ -106,20 +106,25 @@ namespace Menu {
             ImGui::SeparatorTextColored("Menu Sliders", IM_COL32(200, 0, 0, 255));
             ImGui::NewLine();
             ImGui::TextCentered("To manually change the value of a slider option, hold \"CTRL\" while clicking the slider.");
-            ImGui::TextCentered("This will let you input a value manually into the slider, which can even surpass the option's slider limit, given I allowed the option to do so.");
+            ImGui::TextCentered("This will let you input a value manually into the slider, which can also go beyond the option's slider limit, given I allow the option to do so.");
 
             ImGui::SeparatorTextColored("Custom File Loading", IM_COL32(200, 0, 0, 255));
             ImGui::NewLine();
             ImGui::TextCentered("The mod always creates a folder \"EGameTools\\UserModFiles\" inside the same folder as the game executable (exe) or in the same folder as the mod file.");
             ImGui::TextCentered("This folder is used for custom file loading. This has only been tested with a few mods that change some .scr files, gpufx files, and other files included inside .pak game archives, or files like .rpack files.");
             ImGui::TextCentered("Files in this folder must have the same names as the ones from the game files, otherwise the game won't know it should load those files. Files in subfolders of the \"EGameTools\\UserModFiles\" folder will automatically be detected, so you can sort all your mods in different folders!");
+            ImGui::Spacing(ImVec2(0.0f, 5.0f));
             ImGui::TextCentered("The game will reload a lot of the files upon a load of your savegame, so if you want to edit those files and reload them without having to restart the game, just reload your savegame and the game should automatically reload most of those files!");
             ImGui::TextCentered("Just make sure that if you add new, additional files while you're in-game, please wait AT LEAST 5 seconds before reloading your savegame, otherwise additional files will not get detected.");
             ImGui::TextCentered("Also, if there are multiple files of the same exact name, the game will pick the first instance of that file it finds in the folder.");
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
             ImGui::TextCentered("The gist of it is, you now don't have to use dataX.pak mods anymore! You can open the pak files, extract their files in the \"EGameTools\\UserModFiles\" folder and start the game!");
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
-            ImGui::TextCentered("Please try not to touch \"EGameTools\\DefaultModFiles\"! Those are mods that come with EGameTools by default, and you should only ever touch those if I can't update them in time to make them work with the latest game version.");
+            ImGui::TextCenteredColored("FOR MOD DEVELOPERS", IM_COL32(200, 0, 0, 255));
+            ImGui::TextCentered("If you want to make mods for EGameTools to load, please try to use as few folders as you possibly can. For example, your mod should only have one folder, something like \"EGameTools\\UserModFiles\\2019 Weather Mod\".");
+            ImGui::TextCentered("The reason is, my mod continuously checks for new files in the directory, and many folders can slow down the process, and therefore slow down game loading times. So just keep this in mind!");
+            ImGui::Spacing(ImVec2(0.0f, 5.0f));
+            ImGui::TextCentered("If you want to officially include one of your mods as part of EGameTools, please contact me on NexusMods or on Discord (@EricPlayZ).");
 
             ImGui::SeparatorTextColored("Game Variables Reloading", IM_COL32(200, 0, 0, 255));
             ImGui::NewLine();

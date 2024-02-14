@@ -9,6 +9,7 @@
 #include "GameDI_PH2.h"
 #include "LevelDI.h"
 #include "PlayerHealthModule.h"
+#include "PlayerDI_PH.h"
 #include "gen_TPPModel.h"
 
 namespace GamePH {
@@ -158,6 +159,22 @@ namespace GamePH {
 			}
 
 			return PlaySoundEventHook.pOriginal(pCoAudioEventControl, name, a3);
+		}
+#pragma endregion
+
+#pragma region CalculateFallHeight
+		static DWORD64 detourCalculateFallHeight(LPVOID pInstance, float height);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(LPVOID, float)> CalculateFallHeightHook{ "CalculateFallHeight", &Offsets::Get_CalculateFallHeight, &detourCalculateFallHeight };
+
+		static DWORD64 detourCalculateFallHeight(LPVOID pInstance, float height) {
+			static bool prevFreeCam = Menu::Camera::freeCam.GetPrevValue();
+			prevFreeCam = Menu::Camera::freeCam.GetPrevValue();
+			if (!Menu::Camera::freeCam.GetValue() && prevFreeCam) {
+				prevFreeCam = false;
+				return 0;
+			}
+
+			return CalculateFallHeightHook.pOriginal(pInstance, height);
 		}
 #pragma endregion
 	}
