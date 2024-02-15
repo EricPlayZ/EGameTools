@@ -15,7 +15,9 @@ R"(- You can now load custom mod files from "EGameTools\UserModFiles"! Please re
 - Added "Freeze Time" (World)
 - Added "Game Speed" slider (World)
 - Added "Slow Motion", default button is "4" (World)
+- Added a "Debug" menu tab (mainly used for troubleshooting)
 
+- Changed "Menu Transparency" to "Menu Opacity"
 - Fixed having a weird offset of the entire map view when FreeCam is enabled
 - Fixed player dying from switching FreeCam off after flying to high altitudes/through walls with “Teleport Player to Camera” option)" }
 	};
