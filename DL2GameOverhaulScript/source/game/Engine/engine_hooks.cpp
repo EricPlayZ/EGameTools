@@ -80,6 +80,7 @@ namespace Engine {
 			if (!cachedUserModDirs.empty())
 				cachedUserModDirs.clear();
 
+			cachedUserModDirs.push_back("EGameTools\\UserModFiles");
 			for (const auto& entry : std::filesystem::recursive_directory_iterator("EGameTools\\UserModFiles")) {
 				const std::filesystem::path pathToDir = entry.path();
 				if (!std::filesystem::is_directory(pathToDir))

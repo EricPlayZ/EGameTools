@@ -17,7 +17,7 @@ namespace Menu {
     };
 
 	extern KeyBindOption menuToggle;
-	extern float transparency;
+	extern float opacity;
 	extern float scale;
 
     extern Option firstTimeRunning;

@@ -86,6 +86,7 @@
     <ClCompile Include="source\ImGui\impl\win32_impl.cpp" />
     <ClCompile Include="source\kiero.cpp" />
     <ClCompile Include="source\menu\camera.cpp" />
+    <ClCompile Include="source\menu\debug.cpp" />
     <ClCompile Include="source\menu\menu.cpp" />
     <ClCompile Include="source\menu\misc.cpp" />
     <ClCompile Include="source\menu\player.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="source\ImGui\imstb_truetype.h" />
     <ClInclude Include="source\kiero.h" />
     <ClInclude Include="source\menu\camera.h" />
+    <ClInclude Include="source\menu\debug.h" />
     <ClInclude Include="source\menu\menu.h" />
     <ClInclude Include="source\menu\misc.h" />
     <ClInclude Include="source\menu\player.h" />

@@ -179,6 +179,9 @@
     <ClCompile Include="source\game\GamePH\PlayerDI_PH.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
+    <ClCompile Include="source\menu\debug.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -383,6 +386,9 @@
     <ClInclude Include="source\changelog.h" />
     <ClInclude Include="source\game\GamePH\PlayerDI_PH.h">
       <Filter>game\GamePH</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\debug.h">
+      <Filter>menu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

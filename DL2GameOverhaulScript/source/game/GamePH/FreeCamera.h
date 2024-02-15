@@ -12,6 +12,7 @@ namespace GamePH {
 			buffer<0x38, Engine::CBaseCamera*> pCBaseCamera;
 			buffer<0x42, bool> enableSpeedMultiplier1;
 			buffer<0x43, bool> enableSpeedMultiplier2;
+			buffer<0x1B4, float> FOV;
 			buffer<0x1CC, float> speedMultiplier;
 		};
 

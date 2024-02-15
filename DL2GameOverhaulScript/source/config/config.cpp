@@ -4022,7 +4022,7 @@ namespace Config {
 		ValueType type;
 	};
 	static const auto configVariablesDefault = std::to_array<ConfigEntry>({
-		{ "Menu", "Transparency", 99.0f, &Menu::transparency, Float },
+		{ "Menu", "Opacity", 99.0f, &Menu::opacity, Float },
 		{ "Menu", "Scale", 1.0f, &Menu::scale, Float },
 		{ "Menu", "FirstTimeRunning", true, &Menu::firstTimeRunning, OPTION },
 		{ "Menu", "HasSeenChangelog", false, &Menu::hasSeenChangelog, OPTION },

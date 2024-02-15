@@ -18,7 +18,7 @@ namespace Menu {
     static ImVec2 maxWndSize = defMaxWndSize;
 
     KeyBindOption menuToggle = KeyBindOption(VK_F5);
-    float transparency = 99.0f;
+    float opacity = 99.0f;
     float scale = 1.0f;
 
     static Utils::Time::Timer timePassedFromWelcomeScreen{};
@@ -200,7 +200,7 @@ namespace Menu {
     }
 	void Render() {
         maxWndSize = defMaxWndSize * scale;
-        ImGui::SetNextWindowBgAlpha(static_cast<float>(transparency) / 100.0f);
+        ImGui::SetNextWindowBgAlpha(static_cast<float>(opacity) / 100.0f);
         ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
         ImGui::Begin(title.c_str(), &menuToggle.value, windowFlags); {
             if (ImGui::BeginTabBar("##MainTabBar")) {
@@ -216,7 +216,7 @@ namespace Menu {
             ImGui::Separator();
 
             ImGui::Hotkey("Menu Toggle Key", &menuToggle);
-            ImGui::SliderFloat("Menu Transparency", &transparency, 0.0f, 100.0f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderFloat("Menu Opacity", &opacity, 0.0f, 100.0f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);
             if (ImGui::SliderFloat("Menu Scale", &scale, 1.0f, 2.5f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp)) {
                 ImGui::StyleScaleAllSizes(&ImGui::GetStyle(), scale);
                 ImGui::GetIO().FontGlobalScale = scale;
