@@ -188,6 +188,9 @@
     <ClCompile Include="source\ImGui\misc\freetype\imgui_freetype.cpp">
       <Filter>ImGui\misc\freetype</Filter>
     </ClCompile>
+    <ClCompile Include="source\menu\init.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -401,6 +404,9 @@
     </ClInclude>
     <ClInclude Include="source\ImGui\misc\freetype\imgui_freetype.h">
       <Filter>ImGui\misc\freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\init.h">
+      <Filter>menu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

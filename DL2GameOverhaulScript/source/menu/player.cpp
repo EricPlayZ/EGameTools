@@ -6299,38 +6299,53 @@ namespace Menu {
 						if (lowerSearch.find(std::string(lowerFilter)) == std::string::npos)
 							continue;
 
+						float* floatVarAddr = nullptr;
+						bool* boolVarAddr = nullptr;
+
 						if (val.second == "float") {
-							float* varAddr = reinterpret_cast<float*>(val.first);
-							float newValue = *varAddr;
+							floatVarAddr = reinterpret_cast<float*>(val.first);
+							float newValue = *floatVarAddr;
 
 							if (ImGui::InputFloat(key.data(), &newValue)) {
-								*varAddr = newValue;
-								*(varAddr + 1) = newValue;
-							}
-							ImGui::SameLine();
-							restoreBtnName = std::string("Restore##") + std::string(key);
-							if (ImGui::Button(restoreBtnName.c_str()))
-								RestoreVariableToDefault(key);
-							if (debugEnabled) {
-								ImGui::SameLine();
-								ImGui::Text("0x%p", varAddr);
+								*floatVarAddr = newValue;
+								*(floatVarAddr + 1) = newValue;
 							}
 						} else if (val.second == "bool") {
-							bool* varAddr = reinterpret_cast<bool*>(val.first);
-							bool newValue = *varAddr;
+							boolVarAddr = reinterpret_cast<bool*>(val.first);
+							bool newValue = *boolVarAddr;
 
 							if (ImGui::Checkbox(key.data(), &newValue)) {
-								*varAddr = newValue;
-								*(varAddr + 1) = newValue;
+								*boolVarAddr = newValue;
+								*(boolVarAddr + 1) = newValue;
 							}
+						}
+
+						ImGui::SameLine();
+						restoreBtnName = std::string("Restore##") + std::string(key);
+						if (ImGui::Button(restoreBtnName.c_str()))
+							RestoreVariableToDefault(key);
+						if (debugEnabled) {
+							static float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
+							static std::string labelID{};
+							labelID = "##DebugAddrInputText" + std::string(key);
+							const DWORD64 finalAddr = floatVarAddr ? reinterpret_cast<DWORD64>(floatVarAddr) : reinterpret_cast<DWORD64>(boolVarAddr);
+
+							std::stringstream ss{};
+							if (finalAddr)
+								ss << "0x" << std::uppercase << std::hex << finalAddr;
+							else
+								ss << "NULL";
+
+							static std::string addrString{};
+							addrString = ss.str();
+
 							ImGui::SameLine();
-							restoreBtnName = std::string("Restore##") + std::string(key);
-							if (ImGui::Button(restoreBtnName.c_str()))
-								RestoreVariableToDefault(key);
-							if (debugEnabled) {
-								ImGui::SameLine();
-								ImGui::Text("0x%p", varAddr);
-							}
+
+							ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
+							ImGui::SetNextItemWidth(maxInputTextWidth);
+							ImGui::PushStyleColor(ImGuiCol_Text, finalAddr ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+							ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), strlen(addrString.c_str()), ImGuiInputTextFlags_ReadOnly);
+							ImGui::PopStyleColor();
 						}
 					}
 					ImGui::Unindent();

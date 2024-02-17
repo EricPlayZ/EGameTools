@@ -31,42 +31,77 @@
 
 namespace Menu {
 	namespace Debug {
+		static const std::vector<std::pair<std::string_view, LPVOID(*)()>> GamePHClassAddrMap = {
+			{ "TimeWeather\\CSystem", reinterpret_cast<LPVOID(*)()>(&GamePH::TimeWeather::CSystem::Get)},
+			{ "DayNightCycle", reinterpret_cast<LPVOID(*)()>(&GamePH::DayNightCycle::Get) },
+			{ "FreeCamera", reinterpret_cast<LPVOID(*)()>(&GamePH::FreeCamera::Get) },
+			{ "GameDI_PH", reinterpret_cast<LPVOID(*)()>(&GamePH::GameDI_PH::Get) },
+			{ "GameDI_PH2", reinterpret_cast<LPVOID(*)()>(&GamePH::GameDI_PH2::Get) },
+			{ "gen_TPPModel", reinterpret_cast<LPVOID(*)()>(&GamePH::gen_TPPModel::Get) },
+			{ "LevelDI", reinterpret_cast<LPVOID(*)()>(&GamePH::LevelDI::Get) },
+			{ "LocalClientDI", reinterpret_cast<LPVOID(*)()>(&GamePH::LocalClientDI::Get) },
+			{ "LogicalPlayer", reinterpret_cast<LPVOID(*)()>(&GamePH::LogicalPlayer::Get) },
+			{ "PlayerDI_PH", reinterpret_cast<LPVOID(*)()>(&GamePH::PlayerDI_PH::Get) },
+			{ "PlayerHealthModule", reinterpret_cast<LPVOID(*)()>(&GamePH::PlayerHealthModule::Get) },
+			{ "PlayerObjProperties", reinterpret_cast<LPVOID(*)()>(&GamePH::PlayerObjProperties::Get) },
+			{ "PlayerState", reinterpret_cast<LPVOID(*)()>(&GamePH::PlayerState::Get) },
+			{ "PlayerVariables", reinterpret_cast<LPVOID(*)()>(&GamePH::PlayerVariables::Get) },
+			{ "SessionCooperativeDI", reinterpret_cast<LPVOID(*)()>(&GamePH::SessionCooperativeDI::Get) },
+			{ "TPPCameraDI", reinterpret_cast<LPVOID(*)()>(&GamePH::TPPCameraDI::Get) }
+		};
+		static const std::vector<std::pair<std::string_view, LPVOID(*)()>> EngineClassAddrMap = {
+			{ "CBulletPhysicsCharacter", reinterpret_cast<LPVOID(*)()>(&Engine::CBulletPhysicsCharacter::Get) },
+			{ "CGSObject", reinterpret_cast<LPVOID(*)()>(&Engine::CGSObject::Get) },
+			{ "CGSObject2", reinterpret_cast<LPVOID(*)()>(&Engine::CGSObject2::Get) },
+			{ "CGame", reinterpret_cast<LPVOID(*)()>(&Engine::CGame::Get) },
+			{ "CInput", reinterpret_cast<LPVOID(*)()>(&Engine::CInput::Get) },
+			{ "CLevel", reinterpret_cast<LPVOID(*)()>(&Engine::CLevel::Get) },
+			{ "CLevel2", reinterpret_cast<LPVOID(*)()>(&Engine::CLevel2::Get) },
+			{ "CLobbySteam", reinterpret_cast<LPVOID(*)()>(&Engine::CLobbySteam::Get) },
+			{ "CVideoSettings", reinterpret_cast<LPVOID(*)()>(&Engine::CVideoSettings::Get) },
+			{ "CoPhysicsProperty", reinterpret_cast<LPVOID(*)()>(&Engine::CoPhysicsProperty::Get) }
+		};
+
+		static void RenderClassAddrPair(const std::pair<std::string_view, LPVOID(*)()>* pair) {
+			static float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
+			static std::string labelID{};
+			labelID = "##DebugAddrInputText" + std::string(pair->first);
+
+			std::stringstream ss{};
+			if (pair->second())
+				ss << "0x" << std::uppercase << std::hex << reinterpret_cast<DWORD64>(pair->second());
+			else
+				ss << "NULL";
+
+			static std::string addrString{};
+			addrString = ss.str();
+
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
+			ImGui::Text(pair->first.data());
+
+			ImGui::SameLine();
+
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
+			ImGui::SetNextItemWidth(maxInputTextWidth);
+			ImGui::PushStyleColor(ImGuiCol_Text, pair->second() ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+			ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), strlen(addrString.c_str()), ImGuiInputTextFlags_ReadOnly);
+			ImGui::PopStyleColor();
+		}
+
 		Tab Tab::instance{};
 		void Tab::Update() {}
 		void Tab::Render() {
 			ImGui::SeparatorText("Class addresses##Debug");
 			if (ImGui::CollapsingHeader("GamePH", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
-				ImGui::Text("TimeWeather\\CSystem: 0x%p", GamePH::TimeWeather::CSystem::Get());
-				ImGui::Text("DayNightCycle: 0x%p", GamePH::DayNightCycle::Get());
-				ImGui::Text("FreeCamera: 0x%p", GamePH::FreeCamera::Get());
-				ImGui::Text("GameDI_PH: 0x%p", GamePH::GameDI_PH::Get());
-				ImGui::Text("GameDI_PH2: 0x%p", GamePH::GameDI_PH2::Get());
-				ImGui::Text("gen_TPPModel: 0x%p", GamePH::gen_TPPModel::Get());
-				ImGui::Text("LevelDI: 0x%p", GamePH::LevelDI::Get());
-				ImGui::Text("LocalClientDI: 0x%p", GamePH::LocalClientDI::Get());
-				ImGui::Text("LogicalPlayer: 0x%p", GamePH::LogicalPlayer::Get());
-				ImGui::Text("PlayerDI_PH: 0x%p", GamePH::PlayerDI_PH::Get());
-				ImGui::Text("PlayerHealthModule: 0x%p", GamePH::PlayerHealthModule::Get());
-				ImGui::Text("PlayerObjProperties: 0x%p", GamePH::PlayerObjProperties::Get());
-				ImGui::Text("PlayerState: 0x%p", GamePH::PlayerState::Get());
-				ImGui::Text("PlayerVariables: 0x%p", GamePH::PlayerVariables::Get());
-				ImGui::Text("SessionCooperativeDI: 0x%p", GamePH::SessionCooperativeDI::Get());
-				ImGui::Text("TPPCameraDI: 0x%p", GamePH::TPPCameraDI::Get());
+				for (auto& pair : GamePHClassAddrMap)
+					RenderClassAddrPair(&pair);
 				ImGui::Unindent();
 			}
 			if (ImGui::CollapsingHeader("Engine", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
-				ImGui::Text("CBulletPhysicsCharacter: 0x%p", Engine::CBulletPhysicsCharacter::Get());
-				ImGui::Text("CGSObject: 0x%p", Engine::CGSObject::Get());
-				ImGui::Text("CGSObject2: 0x%p", Engine::CGSObject2::Get());
-				ImGui::Text("CGame: 0x%p", Engine::CGame::Get());
-				ImGui::Text("CInput: 0x%p", Engine::CInput::Get());
-				ImGui::Text("CLevel: 0x%p", Engine::CLevel::Get());
-				ImGui::Text("CLevel2: 0x%p", Engine::CLevel2::Get());
-				ImGui::Text("CLobbySteam: 0x%p", Engine::CLobbySteam::Get());
-				ImGui::Text("CVideoSettings: 0x%p", Engine::CVideoSettings::Get());
-				ImGui::Text("CoPhysicsProperty: 0x%p", Engine::CoPhysicsProperty::Get());
+				for (auto& pair : EngineClassAddrMap)
+					RenderClassAddrPair(&pair);
 				ImGui::Unindent();
 			}
 		}

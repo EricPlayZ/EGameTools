@@ -49,10 +49,10 @@
 #include <impl\d3d11_impl.h>
 #include <impl\d3d12_impl.h>
 #include <impl\win32_impl.h>
-#include <ImGuiFileDialog\dirent\dirent.h>
+#include <misc\dirent\dirent.h>
+#include <misc\fonts\Ruda-Bold.embed>
 #include <ImGuiFileDialog\ImGuiFileDialog.h>
 #include <ImGuiFileDialog\ImGuiFileDialogConfig.h>
-#include <misc\fonts\Ruda-Bold.embed>
 #include <imconfig.h>
 #include <imgui_hotkey.h>
 #include <imgui_internal.h>

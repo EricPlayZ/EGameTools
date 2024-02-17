@@ -1,5 +1,6 @@
 ﻿#include <pch.h>
 #include "..\menu\menu.h"
+#include "..\menu\init.h"
 
 namespace impl {
 	namespace d3d11 {
@@ -29,7 +30,7 @@ namespace impl {
 				ImGui_ImplWin32_Init(desc.OutputWindow);
 				ImGui_ImplDX11_Init(d3d11Device, d3d11DeviceContext);
 
-				Menu::InitImGuiStyle();
+				Menu::InitImGui();
 
 				init = true;
 			}

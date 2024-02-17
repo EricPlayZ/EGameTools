@@ -3,7 +3,8 @@
 
 namespace ImGui {
 	extern void StyleScaleAllSizes(ImGuiStyle* style, const float scale_factor, ImGuiStyle* defStyle = nullptr);
-	extern void SpanTabsAcrossWidth(const float width, const size_t tabs = 1);
+	extern void SpanNextTabAcrossWidth(const float width, const size_t tabs = 1);
+	extern void EndTabBarEx();
 	extern bool Checkbox(const char* label, Option* v);
 	extern bool CheckboxHotkey(const char* label, KeyBindOption* v);
 	extern void TextCentered(const char* text, const bool calculateWithScrollbar = true);

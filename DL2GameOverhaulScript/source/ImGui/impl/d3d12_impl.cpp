@@ -1,5 +1,6 @@
 ﻿#include <pch.h>
 #include "..\menu\menu.h"
+#include "..\menu\init.h"
 
 namespace impl {
 	namespace d3d12 {
@@ -98,7 +99,7 @@ namespace impl {
 				ImGui_ImplDX12_Init(d3d12Device, buffersCounts, DXGI_FORMAT_R8G8B8A8_UNORM, d3d12DescriptorHeapImGuiRender, d3d12DescriptorHeapImGuiRender->GetCPUDescriptorHandleForHeapStart(), d3d12DescriptorHeapImGuiRender->GetGPUDescriptorHandleForHeapStart());
 				ImGui_ImplDX12_CreateDeviceObjects();
 
-				Menu::InitImGuiStyle();
+				Menu::InitImGui();
 				ImGui_ImplDX12_InvalidateDeviceObjects();
 
 				init = true;

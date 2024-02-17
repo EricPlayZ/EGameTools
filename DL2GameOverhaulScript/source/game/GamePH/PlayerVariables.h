@@ -17,6 +17,16 @@ namespace GamePH {
 		static void GetPlayerVars();
 		static void SortPlayerVars();
 
+		template <typename T> static T getDefaultValue() {
+			if constexpr (std::is_same<T, std::string>::value)
+				return {};
+			else if constexpr (std::is_same<T, bool>::value)
+				return false;
+			else if constexpr (std::is_same<T, float>::value)
+				return -404.0f;
+			else
+				return T();
+		}
 		template <typename T> static T GetPlayerVar(const std::string& playerVar) {
 			static_assert(std::is_same<T, bool>::value || std::is_same<T, float>::value || std::is_same<T, std::string>::value, "Invalid type: value must be bool, float or string");
 
@@ -24,14 +34,8 @@ namespace GamePH {
 				return pair.first == playerVar;
 			});
 
-			if (it == PlayerVariables::playerVars.end()) {
-				if (std::is_same<T, std::string>::value)
-					return {};
-				else if (std::is_same<T, float>::value)
-					return -404.0f;
-				else
-					return false;
-			}
+			if (it == PlayerVariables::playerVars.end())
+				return getDefaultValue<T>();
 
 			return *reinterpret_cast<T*>(it->second.first);
 		}

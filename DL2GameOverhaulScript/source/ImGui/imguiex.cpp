@@ -4,6 +4,8 @@
 
 namespace ImGui {
     static ImGuiStyle defImGuiStyle{};
+    static size_t tabIndex = 1;
+
     void StyleScaleAllSizes(ImGuiStyle* style, const float scale_factor, ImGuiStyle* defStyle) {
         if (!defStyle)
             defStyle = &defImGuiStyle;
@@ -33,13 +35,17 @@ namespace ImGui {
         style->DisplaySafeAreaPadding = ImFloor(defStyle->DisplaySafeAreaPadding * scale_factor);
         style->MouseCursorScale = ImFloor(defStyle->MouseCursorScale * scale_factor);
     }
-    void SpanTabsAcrossWidth(const float width, const size_t tabs) {
+    void SpanNextTabAcrossWidth(const float width, const size_t tabs) {
         if (width <= 0.0f)
             return;
 
         const float oneTabWidthWithSpacing = width / tabs;
-        const float oneTabWidth = oneTabWidthWithSpacing - (GImGui->Style.ItemSpacing.x / 2.0f);
+        const float oneTabWidth = oneTabWidthWithSpacing - (tabIndex == tabs ? 0.0f : GImGui->Style.ItemSpacing.x / 2.0f);
         ImGui::SetNextItemWidth(oneTabWidth);
+    }
+    void EndTabBarEx() {
+        ImGui::EndTabBar();
+        tabIndex = 1;
     }
 	bool Checkbox(const char* label, Option* v) {
         ImGuiWindow* window = GetCurrentWindow();

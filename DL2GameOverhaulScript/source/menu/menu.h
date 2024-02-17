@@ -16,6 +16,10 @@ namespace Menu {
         int tabIndex{};
     };
 
+    extern const std::string title;
+    extern ImGuiStyle defStyle;
+    extern ImTextureID EGTLogoTexture;
+
 	extern KeyBindOption menuToggle;
 	extern float opacity;
 	extern float scale;
@@ -23,8 +27,5 @@ namespace Menu {
     extern Option firstTimeRunning;
     extern Option hasSeenChangelog;
 
-    extern void InitImGuiStyle();
-
-    extern void FirstTimeRunning();
 	extern void Render();
 }
