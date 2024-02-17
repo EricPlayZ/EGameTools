@@ -3,6 +3,9 @@
 
 namespace impl {
 	namespace d3d11 {
+		ID3D11Device* d3d11Device = nullptr;
+		static ID3D11DeviceContext* d3d11DeviceContext = nullptr;
+
 		HRESULT(__stdcall* oPresent)(IDXGISwapChain*, UINT, UINT);
 		HRESULT __stdcall hkPresent11(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
 			static bool init = false;
@@ -11,11 +14,8 @@ namespace impl {
 				DXGI_SWAP_CHAIN_DESC desc{};
 				pSwapChain->GetDesc(&desc);
 
-				ID3D11Device* device = nullptr;
-				pSwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&device);
-
-				ID3D11DeviceContext* context = nullptr;
-				device->GetImmediateContext(&context);
+				pSwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&d3d11Device);
+				d3d11Device->GetImmediateContext(&d3d11DeviceContext);
 
 #ifndef LLMH_IMPL_DISABLE_DEBUG
 				std::thread([&desc]() { impl::win32::init(desc.OutputWindow); }).detach();
@@ -27,7 +27,9 @@ namespace impl {
 				ImGui::GetIO().IniFilename = nullptr;
 
 				ImGui_ImplWin32_Init(desc.OutputWindow);
-				ImGui_ImplDX11_Init(device, context);
+				ImGui_ImplDX11_Init(d3d11Device, d3d11DeviceContext);
+
+				Menu::InitImGuiStyle();
 
 				init = true;
 			}

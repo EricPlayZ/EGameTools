@@ -52,6 +52,7 @@
 #include <ImGuiFileDialog\dirent\dirent.h>
 #include <ImGuiFileDialog\ImGuiFileDialog.h>
 #include <ImGuiFileDialog\ImGuiFileDialogConfig.h>
+#include <misc\fonts\Ruda-Bold.embed>
 #include <imconfig.h>
 #include <imgui_hotkey.h>
 #include <imgui_internal.h>
@@ -70,7 +71,10 @@
 #include "..\source\utils\memory.h"
 #include "..\source\utils\print.h"
 #include "..\source\utils\sigscan.h"
+#include "..\source\utils\texture.h"
 #include "..\source\utils\time.h"
 #include "..\source\utils\values.h"
 #include "..\source\utils\windows.h"
 #include "..\source\kiero.h"
+
+#include "..\textures\EGTWhiteLogo.embed"

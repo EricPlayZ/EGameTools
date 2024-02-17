@@ -6,16 +6,20 @@
 namespace Menu {
     static const std::string title = "EGameTools (" + std::string(MOD_VERSION_STR) + ")";
 
+    static ImGuiStyle defStyle{};
 	static constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar;
+
+    static constexpr ImVec2 minWndSize = ImVec2(0.0f, 0.0f);
+    static constexpr ImVec2 defMaxWndSize = ImVec2(900.0f, 675.0f);
+    static ImVec2 maxWndSize = defMaxWndSize;
+
 	static constexpr ImGuiWindowFlags welcomeWindowFlags = (windowFlags | ImGuiWindowFlags_NoMove) & ~ImGuiWindowFlags_HorizontalScrollbar;
     static constexpr ImVec2 minChangelogWndSize = ImVec2(400.0f, 0.0f);
     static constexpr ImVec2 defMaxChangelogWndSize = ImVec2(400.0f, 700.0f);
     static constexpr ImVec2 minWelcomeWndSize = ImVec2(700.0f, 0.0f);
     static constexpr ImVec2 defMaxWelcomeWndSize = ImVec2(700.0f, 700.0f);
 
-    static constexpr ImVec2 minWndSize = ImVec2(0.0f, 0.0f);
-    static constexpr ImVec2 defMaxWndSize = ImVec2(900.0f, 675.0f);
-    static ImVec2 maxWndSize = defMaxWndSize;
+    ImTextureID EGTLogoTexture{};
 
     KeyBindOption menuToggle = KeyBindOption(VK_F5);
     float opacity = 99.0f;
@@ -24,6 +28,72 @@ namespace Menu {
     static Utils::Time::Timer timePassedFromWelcomeScreen{};
     Option firstTimeRunning{};
     Option hasSeenChangelog{};
+
+    void InitImGuiStyle() {
+        ImGuiStyle* style = &ImGui::GetStyle();
+
+        style->WindowPadding = ImVec2(15, 15);
+        style->WindowRounding = 5.0f;
+        style->FramePadding = ImVec2(5, 5);
+        style->FrameRounding = 4.0f;
+        style->ItemSpacing = ImVec2(12, 8);
+        style->ItemInnerSpacing = ImVec2(8, 6);
+        style->IndentSpacing = 25.0f;
+        style->ScrollbarSize = 15.0f;
+        style->ScrollbarRounding = 9.0f;
+        style->GrabMinSize = 5.0f;
+        style->GrabRounding = 3.0f;
+
+        style->Colors[ImGuiCol_Text] = ImVec4(0.80f, 0.80f, 0.83f, 1.00f);
+        style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
+        style->Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+        style->Colors[ImGuiCol_ChildBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
+        style->Colors[ImGuiCol_PopupBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
+        style->Colors[ImGuiCol_Border] = ImVec4(0.80f, 0.80f, 0.83f, 0.88f);
+        style->Colors[ImGuiCol_BorderShadow] = ImVec4(0.92f, 0.91f, 0.88f, 0.00f);
+        style->Colors[ImGuiCol_FrameBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+        style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
+        style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+        style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 0.98f, 0.95f, 0.75f);
+        style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
+        style->Colors[ImGuiCol_MenuBarBg] = ImVec4(0.13f, 0.12f, 0.15f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_Button] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+        style->Colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_ButtonActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_Header] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_HeaderActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_Tab] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_TabHovered] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_TabActive] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        style->Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
+        style->Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+        style->Colors[ImGuiCol_PlotLines] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
+        style->Colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
+        style->Colors[ImGuiCol_PlotHistogram] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
+        style->Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
+        style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
+
+        defStyle = *style;
+
+        ImGuiIO& io = ImGui::GetIO();
+        ImFontConfig fontConfig{};
+        fontConfig.FontDataOwnedByAtlas = false;
+        io.FontDefault = io.Fonts->AddFontFromMemoryTTF((void*)g_FontRudaBold, sizeof(g_FontRudaBold), 12.0f + 6.0f, &fontConfig);
+        io.Fonts->Build();
+
+        EGTLogoTexture = Utils::Texture::LoadImGuiTexture(g_EGTWhiteLogo, sizeof(g_EGTWhiteLogo));
+    }
 
     static void CreateChangelogFile() {
         const std::string localAppDataDir = Utils::Files::GetLocalAppDataDir();
@@ -203,6 +273,9 @@ namespace Menu {
         ImGui::SetNextWindowBgAlpha(static_cast<float>(opacity) / 100.0f);
         ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
         ImGui::Begin(title.c_str(), &menuToggle.value, windowFlags); {
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.0f) - 278.0f / 2.0f);
+            ImGui::Image(EGTLogoTexture, ImVec2(278.0f, 100.0f));
+
             if (ImGui::BeginTabBar("##MainTabBar")) {
                 for (auto& tab : *MenuTab::GetInstances()) {
                     if (ImGui::BeginTabItem(tab.second->tabName.data())) {
@@ -218,7 +291,7 @@ namespace Menu {
             ImGui::Hotkey("Menu Toggle Key", &menuToggle);
             ImGui::SliderFloat("Menu Opacity", &opacity, 0.0f, 100.0f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);
             if (ImGui::SliderFloat("Menu Scale", &scale, 1.0f, 2.5f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp)) {
-                ImGui::StyleScaleAllSizes(&ImGui::GetStyle(), scale);
+                ImGui::StyleScaleAllSizes(&ImGui::GetStyle(), scale, &defStyle);
                 ImGui::GetIO().FontGlobalScale = scale;
             }
             ImGui::End();

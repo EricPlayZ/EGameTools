@@ -12,7 +12,8 @@ namespace impl {
 		static UINT buffersCounts = -1;
 		static FrameContext* frameContext = nullptr;
 
-		static ID3D12Device* device = nullptr;
+		ID3D12Device* d3d12Device = nullptr;
+		ID3D12DescriptorHeap* d3d12DescriptorHeapTextures = nullptr;
 		static ID3D12DescriptorHeap* d3d12DescriptorHeapBackBuffers = nullptr;
 		static ID3D12DescriptorHeap* d3d12DescriptorHeapImGuiRender = nullptr;
 		static ID3D12GraphicsCommandList* d3d12CommandList = nullptr;
@@ -27,7 +28,7 @@ namespace impl {
 					descTarget.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 					descTarget.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-					device->CreateRenderTargetView(pBackBuffer, &descTarget, frameContext[i].main_render_target_descriptor);
+					d3d12Device->CreateRenderTargetView(pBackBuffer, &descTarget, frameContext[i].main_render_target_descriptor);
 					frameContext[i].main_render_target_resource = pBackBuffer;
 				}
 			}
@@ -39,7 +40,7 @@ namespace impl {
 			if (!init) {
 				DXGI_SWAP_CHAIN_DESC desc{};
 				pSwapChain->GetDesc(&desc);
-				pSwapChain->GetDevice(__uuidof(ID3D12Device), (void**)&device);
+				pSwapChain->GetDevice(__uuidof(ID3D12Device), (void**)&d3d12Device);
 
 				buffersCounts = desc.BufferCount;
 				frameContext = new FrameContext[buffersCounts];
@@ -49,10 +50,10 @@ namespace impl {
 				descriptorBackBuffers.NumDescriptors = buffersCounts;
 				descriptorBackBuffers.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 				descriptorBackBuffers.NodeMask = 1;
-				if (device->CreateDescriptorHeap(&descriptorBackBuffers, IID_PPV_ARGS(&d3d12DescriptorHeapBackBuffers)) != S_OK)
+				if (d3d12Device->CreateDescriptorHeap(&descriptorBackBuffers, IID_PPV_ARGS(&d3d12DescriptorHeapBackBuffers)) != S_OK)
 					return;
 
-				SIZE_T rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+				SIZE_T rtvDescriptorSize = d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 				D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = d3d12DescriptorHeapBackBuffers->GetCPUDescriptorHandleForHeapStart();
 				for (UINT i = 0; i < buffersCounts; ++i) {
 					frameContext[i].main_render_target_descriptor = rtvHandle;
@@ -63,18 +64,25 @@ namespace impl {
 				descriptorImGuiRender.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 				descriptorImGuiRender.NumDescriptors = 1;
 				descriptorImGuiRender.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-				if (device->CreateDescriptorHeap(&descriptorImGuiRender, IID_PPV_ARGS(&d3d12DescriptorHeapImGuiRender)) != S_OK)
+				if (d3d12Device->CreateDescriptorHeap(&descriptorImGuiRender, IID_PPV_ARGS(&d3d12DescriptorHeapImGuiRender)) != S_OK)
+					return;
+
+				D3D12_DESCRIPTOR_HEAP_DESC descriptorTextures{};
+				descriptorTextures.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+				descriptorTextures.NumDescriptors = 100;
+				descriptorTextures.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+				if (impl::d3d12::d3d12Device->CreateDescriptorHeap(&descriptorTextures, IID_PPV_ARGS(&d3d12DescriptorHeapTextures)) != S_OK)
 					return;
 
 				for (size_t i = 0; i < buffersCounts; i++) {
 					ID3D12CommandAllocator* allocator = nullptr;
-					if (device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&allocator)) != S_OK)
+					if (d3d12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&allocator)) != S_OK)
 						return;
 
 					frameContext[i].commandAllocator = allocator;
 				}
 
-				if (device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, frameContext[0].commandAllocator, NULL, IID_PPV_ARGS(&d3d12CommandList)) != S_OK || d3d12CommandList->Close() != S_OK)
+				if (d3d12Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, frameContext[0].commandAllocator, NULL, IID_PPV_ARGS(&d3d12CommandList)) != S_OK || d3d12CommandList->Close() != S_OK)
 					return;
 
 #ifndef LLMH_IMPL_DISABLE_DEBUG
@@ -87,8 +95,11 @@ namespace impl {
 				ImGui::GetIO().IniFilename = nullptr;
 
 				ImGui_ImplWin32_Init(desc.OutputWindow);
-				ImGui_ImplDX12_Init(device, buffersCounts, DXGI_FORMAT_R8G8B8A8_UNORM, d3d12DescriptorHeapImGuiRender, d3d12DescriptorHeapImGuiRender->GetCPUDescriptorHandleForHeapStart(), d3d12DescriptorHeapImGuiRender->GetGPUDescriptorHandleForHeapStart());
+				ImGui_ImplDX12_Init(d3d12Device, buffersCounts, DXGI_FORMAT_R8G8B8A8_UNORM, d3d12DescriptorHeapImGuiRender, d3d12DescriptorHeapImGuiRender->GetCPUDescriptorHandleForHeapStart(), d3d12DescriptorHeapImGuiRender->GetGPUDescriptorHandleForHeapStart());
 				ImGui_ImplDX12_CreateDeviceObjects();
+
+				Menu::InitImGuiStyle();
+				ImGui_ImplDX12_InvalidateDeviceObjects();
 
 				init = true;
 			}

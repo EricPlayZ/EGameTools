@@ -2,7 +2,7 @@
 #include "..\core.h"
 
 namespace ImGui {
-	extern void StyleScaleAllSizes(ImGuiStyle* style, const float scale_factor);
+	extern void StyleScaleAllSizes(ImGuiStyle* style, const float scale_factor, ImGuiStyle* defStyle = nullptr);
 	extern bool Checkbox(const char* label, Option* v);
 	extern bool CheckboxHotkey(const char* label, KeyBindOption* v);
 	extern void TextCentered(const char* text, const bool calculateWithScrollbar = true);

@@ -7,6 +7,7 @@ namespace Changelog {
 		{ "v1.1.0",
 R"(- You can now load custom mod files from "EGameTools\UserModFiles"! Please read the new "Welcome" screen which explains how to use this feature and how to use the rest of the mod menu
 - By using the directory mentioned earlier for mod files, you can reload most of them by just reloading the savegame!
+- Mod menu UI revamp
 
 - Added "Reload Jump Params", using the directory mentioned earlier (Player)
 - Added "One-handed Mode" (Player)
