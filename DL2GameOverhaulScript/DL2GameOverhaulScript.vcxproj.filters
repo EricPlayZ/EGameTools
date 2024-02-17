@@ -185,6 +185,9 @@
     <ClCompile Include="source\utils\texture.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="source\ImGui\misc\freetype\imgui_freetype.cpp">
+      <Filter>ImGui\misc\freetype</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -396,8 +399,8 @@
     <ClInclude Include="source\utils\texture.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="source\ImGui\impl\d3dx12.h">
-      <Filter>ImGui\impl</Filter>
+    <ClInclude Include="source\ImGui\misc\freetype\imgui_freetype.h">
+      <Filter>ImGui\misc\freetype</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -436,6 +439,12 @@
     </Filter>
     <Filter Include="game\Engine">
       <UniqueIdentifier>{06a6e99d-eb6b-4430-bd86-76f3aed2ab32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\misc">
+      <UniqueIdentifier>{838a40a1-3f7e-49e0-949c-07c534592052}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\misc\freetype">
+      <UniqueIdentifier>{122420d5-ac60-4778-80bf-1384697fcc44}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

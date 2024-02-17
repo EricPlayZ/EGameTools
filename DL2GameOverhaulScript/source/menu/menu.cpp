@@ -7,17 +7,17 @@ namespace Menu {
     static const std::string title = "EGameTools (" + std::string(MOD_VERSION_STR) + ")";
 
     static ImGuiStyle defStyle{};
-	static constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar;
+	static constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar;
 
-    static constexpr ImVec2 minWndSize = ImVec2(0.0f, 0.0f);
-    static constexpr ImVec2 defMaxWndSize = ImVec2(900.0f, 675.0f);
+    static constexpr ImVec2 minWndSize = ImVec2(425.0f, 700.0f);
+    static constexpr ImVec2 defMaxWndSize = ImVec2(900.0f, 700.0f);
     static ImVec2 maxWndSize = defMaxWndSize;
 
-	static constexpr ImGuiWindowFlags welcomeWindowFlags = (windowFlags | ImGuiWindowFlags_NoMove) & ~ImGuiWindowFlags_HorizontalScrollbar;
+	static constexpr ImGuiWindowFlags welcomeWindowFlags = (windowFlags | ImGuiWindowFlags_NoMove) & ~(ImGuiWindowFlags_NoScrollbar);
     static constexpr ImVec2 minChangelogWndSize = ImVec2(400.0f, 0.0f);
     static constexpr ImVec2 defMaxChangelogWndSize = ImVec2(400.0f, 700.0f);
-    static constexpr ImVec2 minWelcomeWndSize = ImVec2(700.0f, 0.0f);
-    static constexpr ImVec2 defMaxWelcomeWndSize = ImVec2(700.0f, 700.0f);
+    static constexpr ImVec2 minWelcomeWndSize = ImVec2(800.0f, 0.0f);
+    static constexpr ImVec2 defMaxWelcomeWndSize = ImVec2(800.0f, 700.0f);
 
     ImTextureID EGTLogoTexture{};
 
@@ -32,8 +32,10 @@ namespace Menu {
     void InitImGuiStyle() {
         ImGuiStyle* style = &ImGui::GetStyle();
 
+        style->WindowTitleAlign = ImVec2(0.5f, 0.5f);
         style->WindowPadding = ImVec2(15, 15);
         style->WindowRounding = 5.0f;
+        style->ChildRounding = 4.0f;
         style->FramePadding = ImVec2(5, 5);
         style->FrameRounding = 4.0f;
         style->ItemSpacing = ImVec2(12, 8);
@@ -274,19 +276,29 @@ namespace Menu {
         ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
         ImGui::Begin(title.c_str(), &menuToggle.value, windowFlags); {
             ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.0f) - 278.0f / 2.0f);
-            ImGui::Image(EGTLogoTexture, ImVec2(278.0f, 100.0f));
+            ImGui::Image(EGTLogoTexture, ImVec2(278.0f * scale, 100.0f * scale));
+
+            const float footerHeight = ImGui::GetFrameHeightWithSpacing() * 3.0f + GImGui->Style.WindowPadding.y * 2.0f + GImGui->Style.FramePadding.y * 2.0f;
+            const float remainingHeight = ImGui::GetContentRegionAvail().y - footerHeight;
 
             if (ImGui::BeginTabBar("##MainTabBar")) {
                 for (auto& tab : *MenuTab::GetInstances()) {
+                    static float childWidth = 0.0f;
+                    ImGui::SpanTabsAcrossWidth(childWidth, MenuTab::GetInstances()->size());
+
                     if (ImGui::BeginTabItem(tab.second->tabName.data())) {
-                        tab.second->Render();
+                        ImGui::SetNextWindowBgAlpha(static_cast<float>(opacity) / 100.0f);
+                        ImGui::SetNextWindowSizeConstraints(ImVec2(minWndSize.x - GImGui->Style.WindowPadding.x * 2.0f, remainingHeight), ImVec2(maxWndSize.x - GImGui->Style.WindowPadding.x * 2.0f, remainingHeight));
+                        if (ImGui::BeginChild("##TabChild", ImVec2(0.0f, 0.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_Border)) {
+                            childWidth = ImGui::GetItemRectSize().x;
+                            tab.second->Render();
+                            ImGui::EndChild();
+                        }
                         ImGui::EndTabItem();
                     }
                 }
                 ImGui::EndTabBar();
             }
-
-            ImGui::Separator();
 
             ImGui::Hotkey("Menu Toggle Key", &menuToggle);
             ImGui::SliderFloat("Menu Opacity", &opacity, 0.0f, 100.0f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);

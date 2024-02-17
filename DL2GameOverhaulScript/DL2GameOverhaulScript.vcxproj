@@ -84,6 +84,10 @@
     <ClCompile Include="source\ImGui\impl\d3d11_impl.cpp" />
     <ClCompile Include="source\ImGui\impl\d3d12_impl.cpp" />
     <ClCompile Include="source\ImGui\impl\win32_impl.cpp" />
+    <ClCompile Include="source\ImGui\misc\freetype\imgui_freetype.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source\kiero.cpp" />
     <ClCompile Include="source\menu\camera.cpp" />
     <ClCompile Include="source\menu\debug.cpp" />
@@ -155,11 +159,11 @@
     <ClInclude Include="source\ImGui\imgui_internal.h" />
     <ClInclude Include="source\ImGui\impl\d3d11_impl.h" />
     <ClInclude Include="source\ImGui\impl\d3d12_impl.h" />
-    <ClInclude Include="source\ImGui\impl\d3dx12.h" />
     <ClInclude Include="source\ImGui\impl\win32_impl.h" />
     <ClInclude Include="source\ImGui\imstb_rectpack.h" />
     <ClInclude Include="source\ImGui\imstb_textedit.h" />
     <ClInclude Include="source\ImGui\imstb_truetype.h" />
+    <ClInclude Include="source\ImGui\misc\freetype\imgui_freetype.h" />
     <ClInclude Include="source\kiero.h" />
     <ClInclude Include="source\menu\camera.h" />
     <ClInclude Include="source\menu\debug.h" />
@@ -250,19 +254,19 @@
       </Optimization>
       <IntrinsicFunctions>
       </IntrinsicFunctions>
-      <AdditionalIncludeDirectories>pch;source\ImGui;source\MinHook;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>pch;source\ImGui\freetype\include;source\ImGui;source\MinHook;</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>libMinHook-x64-v141-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype-mtd.lib;libMinHook-x64-v141-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>source\MinHook\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>source\ImGui\freetype\lib;source\MinHook\lib;</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
@@ -280,7 +284,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>pch;source\ImGui;source\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>pch;source\ImGui\freetype\include;source\ImGui;source\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>
@@ -291,8 +295,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>source\MinHook\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libMinHook-x64-v141-mtd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>source\ImGui\freetype\lib;source\MinHook\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freetype-mt.lib;libMinHook-x64-v141-mt.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary />
       <AdditionalOptions>/NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
     </Link>

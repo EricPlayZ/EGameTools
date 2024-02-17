@@ -33,6 +33,14 @@ namespace ImGui {
         style->DisplaySafeAreaPadding = ImFloor(defStyle->DisplaySafeAreaPadding * scale_factor);
         style->MouseCursorScale = ImFloor(defStyle->MouseCursorScale * scale_factor);
     }
+    void SpanTabsAcrossWidth(const float width, const size_t tabs) {
+        if (width <= 0.0f)
+            return;
+
+        const float oneTabWidthWithSpacing = width / tabs;
+        const float oneTabWidth = oneTabWidthWithSpacing - (GImGui->Style.ItemSpacing.x / 2.0f);
+        ImGui::SetNextItemWidth(oneTabWidth);
+    }
 	bool Checkbox(const char* label, Option* v) {
         ImGuiWindow* window = GetCurrentWindow();
         if (window->SkipItems)
