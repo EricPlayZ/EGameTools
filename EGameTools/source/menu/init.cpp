@@ -118,6 +118,11 @@ namespace Menu {
             ImGui::NewLine();
             ImGui::TextCentered("Log files will be stored in the EGameTools folder as \"log.x.txt\", x being the number of the previous log file. The most recent log file will be called \"log.txt\".");
 
+            ImGui::SeparatorTextColored("Multiplayer", IM_COL32(200, 0, 0, 255));
+            ImGui::NewLine();
+            ImGui::TextCentered("Currently, this mod has been designed with singleplayer in mind. That means certain features might glitch out or completely stop working in multiplayer.");
+            ImGui::TextCentered("If that happens, please open a bug report!");
+
             ImGui::Separator();
             ImGui::NewLine();
             ImGui::TextCentered("Finally, if you've got any issue, no matter how small, please make sure to report it! I will try my best to fix it. I want this mod to be polished and enjoyable to use!");
