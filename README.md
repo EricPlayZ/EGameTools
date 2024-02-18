@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://i.imgur.com/s6ZV1cz.png"/><br>
+<img src="https://i.imgur.com/7d2flWr.png"/><br>
 <b>EGameTools (short for Eric's Game Tools) is a mod menu developed in C++ which aims to add additional features such as FreeCam, Third Person, Weather and Time control, etc. which the game does not provide by default and also to help ease mod developers in the process of creating mods.</b><br>
 <img src="https://i.imgur.com/M9VP0cv.png"/><br>
 <b>PLAYER</b><br>
