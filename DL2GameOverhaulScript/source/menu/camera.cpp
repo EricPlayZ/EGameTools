@@ -124,7 +124,7 @@ namespace Menu {
 
 			GamePH::gen_TPPModel* pgen_TPPModel = GamePH::gen_TPPModel::Get();
 			if (pgen_TPPModel) {
-				if (Menu::Camera::photoMode.GetValue() || (Menu::Camera::freeCam.GetValue() && !iLevel->IsTimerFrozen()))
+				if (Menu::Camera::freeCam.GetValue() && !iLevel->IsTimerFrozen())
 					GamePH::ShowTPPModel(true);
 				else if (Menu::Camera::freeCam.GetValue() && iLevel->IsTimerFrozen() && !photoMode.GetValue())
 					GamePH::ShowTPPModel(false);
