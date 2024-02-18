@@ -31,9 +31,9 @@
 - Weather control<br><br>
 <b>Check <a href="https://trello.com/b/oRaJQEOi/egametools-dying-light-2">EGameTools' Trello﻿﻿</a> page to see what features or bug fixes I'm working on/planning to add!</b><br>
 <img src="https://i.imgur.com/kOyrZYC.png"/><br>
-<b>STEP 1: </b>Download the archive from the <a href="https://github.com/EricPlayZ/EGameTools/releases">Releases</a> section<br>
-<b>STEP 2: </b>Extract the files from inside the archive to the game's exe folder (<b>Dying Light 2\ph\work\bin\x64</b>).<br><br>
-To uninstall, delete <b>winmm.dll</b>, <b>EGameTools.asi</b> and <b>EGameTools.ini</b> from the game's exe folder (<b>Dying Light 2\ph\work\bin\x64</b>).<br>
+<b>STEP 1: </b>Download the archive from the <b><a href="https://github.com/EricPlayZ/EGameTools/releases">Releases</a></b> section<br>
+<b>STEP 2: </b>Extract the files from inside the archive to the game's exe folder (<b>`Dying Light 2\ph\work\bin\x64`</b>).<br><br>
+To uninstall, delete <b>`winmm.dll`</b>, <b>`EGameTools.asi`</b> and <b>`EGameTools.ini`</b> from the game's exe folder (<b>`Dying Light 2\ph\work\bin\x64`</b>).<br>
 <img src="https://i.imgur.com/CRAQXjm.png"/><br>
 ﻿﻿When you launch the game, a console window will appear. When it does, <b>DON'T CLOSE IT!</b> Closing it will also close the game.<br><br>
 <b>MENU TOGGLE</b><br>
@@ -63,7 +63,7 @@ If you want to officially include one of your mods as part of <b>EGameTools</b>,
 You can also reload <b>Player Variables</b> from a file specified by you, or reload <b>Jump Parameters</b> from <b>`EGameTools\UserModFiles`</b>.<br><br>
 <b>HOTKEYS</b><br>
 Most mod menu options are toggleable by a hotkey that you can change by clicking the hotkey button for the respective option and then pressing a key on your keyboard.<br>
-To change those hotkeys through the config file, visit the <a href="https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes">Virtual-Key Codes</a>﻿ page from Microsoft which contains a list of all virtual key codes. Simply write the name of the keycode you want to use for each hotkey and save the config file.<br><br>
+To change those hotkeys through the config file, visit the <b><a href="https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes">Virtual-Key Codes</a>﻿</b> page from Microsoft which contains a list of all virtual key codes. Simply write the name of the keycode you want to use for each hotkey and save the config file.<br><br>
 <b>CONFIG</b><br>
 A config file <b>`EGameTools.ini`</b> is stored in the same folder as the game executable (exe) or in the same folder as the mod file.<br>
 The config file stores the mod menu's options and hotkeys.<br><br>
