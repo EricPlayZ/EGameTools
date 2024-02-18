@@ -70,10 +70,10 @@ namespace Menu {
 
 					if (KeyBindOption::scrolledMouseWheelUp) {
 						KeyBindOption::scrolledMouseWheelUp = false;
-						freeCamSpeed += 0.5f;
+						freeCamSpeed += 0.1f;
 					} else if (KeyBindOption::scrolledMouseWheelDown) {
 						KeyBindOption::scrolledMouseWheelDown = false;
-						freeCamSpeed -= 0.5f;
+						freeCamSpeed -= 0.1f;
 					}
 
 					if (freeCamSpeed < 0.1f)
