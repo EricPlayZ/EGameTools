@@ -76,9 +76,9 @@ namespace Core {
 				std::filesystem::remove(entry.path());
 			}
 		}
-		Utils::PrintWarning("Creating game shortcut for \"EGameTools\"");
+		spdlog::warn("Creating game shortcut for \"EGameTools\"");
 		std::filesystem::create_directory_symlink(Utils::Files::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
-		Utils::PrintInfo("Game shortcut created");
+		spdlog::info("Game shortcut created");
 	}
 
 	static void InitLogger() {
@@ -112,28 +112,28 @@ namespace Core {
 		EnableConsole();
 		InitLogger();
 
-		Utils::PrintWarning("Initializing config");
+		spdlog::warn("Initializing config");
 		Config::InitConfig();
 		CreateSymlinkForLoadingFiles();
-		Utils::PrintWarning("Sorting Player Variables");
+		spdlog::warn("Sorting Player Variables");
 		GamePH::PlayerVariables::SortPlayerVars();
-		Utils::PrintInfo("Player Variables sorted");
+		spdlog::info("Player Variables sorted");
 
-		Utils::PrintWarning("Initializing MinHook");
+		spdlog::warn("Initializing MinHook");
 		MH_Initialize();
-		Utils::PrintInfo("Initialized MinHook");
+		spdlog::info("Initialized MinHook");
 
-		Utils::PrintWarning("Hooking DX11/DX12 renderer");
+		spdlog::warn("Hooking DX11/DX12 renderer");
 		std::thread([]() {
 			LoopHookRenderer();
-			Utils::PrintInfo("Hooked \"DX11/DX12 renderer\"!");
+			spdlog::info("Hooked \"DX11/DX12 renderer\"!");
 		}).detach();
 
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
-			Utils::PrintWarning("Hooking \"{}\"", hook->name.data());
+			spdlog::warn("Hooking \"{}\"", hook->name.data());
 			std::thread([&hook]() {
 				hook->HookLoop();
-				Utils::PrintInfo("Hooked \"{}\"!", hook->name.data());
+				spdlog::info("Hooked \"{}\"!", hook->name.data());
 			}).detach();
 		}
 
@@ -146,14 +146,14 @@ namespace Core {
 	void Cleanup() {
 		exiting = true;
 
-		Utils::PrintWarning("Game requested exit, running cleanup");
-		Utils::PrintWarning("Saving config to file");
+		spdlog::warn("Game requested exit, running cleanup");
+		spdlog::warn("Saving config to file");
 		Config::SaveConfig();
-		Utils::PrintInfo("Config saved to file");
+		spdlog::info("Config saved to file");
 
-		Utils::PrintWarning("Unhooking everything");
+		spdlog::warn("Unhooking everything");
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
-		Utils::PrintInfo("Unhooked everything");
+		spdlog::info("Unhooked everything");
 	}
 }

@@ -22,6 +22,7 @@ R"(- You can now load custom mod files from "EGameTools\UserModFiles"! Please re
 - Changed "Menu Transparency" to "Menu Opacity"
 - Fixed having a weird offset of the entire map view when FreeCam is enabled
 - Fixed player dying from switching FreeCam off after flying to high altitudes/through walls with "Teleport Player to Camera" option
+- Fixed FOV slider not changing FOV while using FreeCam
 
 That's it for this update! The next few updates will include some more bug fixes rather than new, big features, so stay tuned!)" }
 	};

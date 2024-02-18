@@ -61,6 +61,9 @@ namespace Menu {
 				return;
 
 			static bool prevFreeCam = freeCam.GetValue();
+			static bool prevEanbleSpeedMultiplier = pFreeCam->enableSpeedMultiplier1;
+			static float prevSpeedMultiplier = pFreeCam->speedMultiplier;
+			static float prevFOV = pFreeCam->FOV;
 			if (freeCam.GetValue() && !iLevel->IsTimerFrozen()) {
 				if (viewCam == pFreeCam) {
 					pFreeCam->enableSpeedMultiplier1 = true;
@@ -79,6 +82,7 @@ namespace Menu {
 						freeCamSpeed = 200.0f;
 
 					pFreeCam->speedMultiplier = freeCamSpeed;
+					pFreeCam->FOV = static_cast<float>(FOV);
 
 					if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
 						pFreeCam->speedMultiplier *= 2.0f;
@@ -90,14 +94,19 @@ namespace Menu {
 					return;
 				}
 
+				prevEanbleSpeedMultiplier = pFreeCam->enableSpeedMultiplier1;
+				prevSpeedMultiplier = pFreeCam->speedMultiplier;
+				prevFOV = pFreeCam->FOV;
+
 				pGameDI_PH->TogglePhotoMode();
 				pFreeCam->AllowCameraMovement(2);
 			} else {
 				Engine::Hooks::switchedFreeCamByGamePause = freeCam.GetValue() && iLevel->IsTimerFrozen();
 
 				if (prevFreeCam) {
-					pFreeCam->enableSpeedMultiplier1 = false;
-					pFreeCam->speedMultiplier = 0.1f;
+					pFreeCam->enableSpeedMultiplier1 = prevEanbleSpeedMultiplier;
+					pFreeCam->speedMultiplier = prevSpeedMultiplier;
+					pFreeCam->FOV = prevFOV;
 				}
 				if (viewCam != pFreeCam)
 					return;

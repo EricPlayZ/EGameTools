@@ -4129,14 +4129,14 @@ namespace Config {
 			inih::INIWriter writer{};
 			writer.write(configFileName, reader);
 		} catch (const std::runtime_error& e) {
-			Utils::PrintError("Error writing file {}: {}", configFileName, e.what());
+			spdlog::error("Error writing file {}: {}", configFileName, e.what());
 		}
 	}
 	static bool ConfigExists() {
 		return std::filesystem::exists(configFileName);
 	}
 	static void CreateConfig() {
-		Utils::PrintWarning("{} does not exist (will create now); using default config values", configFileName);
+		spdlog::warn("{} does not exist (will create now); using default config values", configFileName);
 		LoadAndWriteDefaultConfig();
 	}
 	static void ReadConfig(const bool configUpdate = false) {
@@ -4196,9 +4196,9 @@ namespace Config {
 				}
 			}
 
-			Utils::PrintInfo(configUpdate ? "Successfully read updated config!" : "Successfully read config!");
+			spdlog::info(configUpdate ? "Successfully read updated config!" : "Successfully read config!");
 		} catch (const std::runtime_error& e) {
-			Utils::PrintError("Error writing file {}; using default config values: {}", configFileName, e.what());
+			spdlog::error("Error writing file {}; using default config values: {}", configFileName, e.what());
 			LoadDefaultConfig();
 		}
 	}
@@ -4234,7 +4234,7 @@ namespace Config {
 
 			savedConfig = true;
 		} catch (const std::runtime_error& e) {
-			Utils::PrintError("Error saving to file {}: {}", configFileName, e.what());
+			spdlog::error("Error saving to file {}: {}", configFileName, e.what());
 		}
 	}
 	void InitConfig() {

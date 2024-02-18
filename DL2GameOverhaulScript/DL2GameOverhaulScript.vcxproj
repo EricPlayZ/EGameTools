@@ -178,7 +178,6 @@
     <ClInclude Include="source\utils\files.h" />
     <ClInclude Include="source\utils\hook.h" />
     <ClInclude Include="source\utils\memory.h" />
-    <ClInclude Include="source\utils\print.h" />
     <ClInclude Include="source\utils\sigscan.h" />
     <ClInclude Include="source\utils\texture.h" />
     <ClInclude Include="source\utils\time.h" />

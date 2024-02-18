@@ -261,9 +261,6 @@
     <ClInclude Include="source\utils\windows.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="source\utils\print.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="source\utils\time.h">
       <Filter>utils</Filter>
     </ClInclude>

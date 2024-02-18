@@ -75,7 +75,7 @@ namespace Engine {
 
 		static std::vector<std::string> cachedUserModDirs{};
 		static void CacheUserModDirs() {
-			Utils::PrintWarning("Recaching user mod directories");
+			spdlog::warn("Recaching user mod directories");
 
 			if (!cachedUserModDirs.empty())
 				cachedUserModDirs.clear();
@@ -110,7 +110,7 @@ namespace Engine {
 					continue;
 
 				const char* filePath2 = finalPath.c_str();
-				Utils::PrintWarning("Loading user mod file \"{}\"", filePath2);
+				spdlog::warn("Loading user mod file \"{}\"", filePath2);
 
 				return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
 			}
