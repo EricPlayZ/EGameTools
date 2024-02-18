@@ -2,10 +2,10 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs/DL2GameOverhaulScript
+/.vs/EGameTools
 /x64
-/DL2GameOverhaulScript/x64
-/DL2GameOverhaulScript/DL2GameOverhaulScript.vcxproj.user
+/EGameTools/x64
+/EGameTools/DL2GameOverhaulScript.vcxproj.user
 /Tools/ExtractPlayerVarsFromDecompiledFunc/bin
 /Tools/ExtractPlayerVarsFromDecompiledFunc/.vs
 /Tools/ExtractPlayerVarsFromDecompiledFunc/ExtractPlayerVarsFromDecompiledFunc/bin
