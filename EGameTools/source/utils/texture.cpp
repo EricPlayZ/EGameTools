@@ -19,7 +19,7 @@ namespace Utils {
     namespace Texture {
         static int descriptor_index = 1;
         
-        ImTextureID LoadImGuiTextureD3D11(const unsigned char* rawData, const int rawSize) {
+        static ImTextureID LoadImGuiTextureD3D11(const unsigned char* rawData, const int rawSize) {
             int image_width = 0;
             int image_height = 0;
             unsigned char* image_data = stbi_load_from_memory(rawData, rawSize, &image_width, &image_height, nullptr, 4);
@@ -62,7 +62,7 @@ namespace Utils {
 
             return static_cast<ImTextureID>(my_texture);
         }
-        ImTextureID LoadImGuiTextureD3D12(const unsigned char* rawData, const int rawSize) {
+        static ImTextureID LoadImGuiTextureD3D12(const unsigned char* rawData, const int rawSize) {
             int image_width = 0;
             int image_height = 0;
             unsigned char* image_data = stbi_load_from_memory(rawData, rawSize, &image_width, &image_height, nullptr, 4);
