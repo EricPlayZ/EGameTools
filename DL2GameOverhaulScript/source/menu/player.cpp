@@ -6325,7 +6325,7 @@ namespace Menu {
 						if (ImGui::Button(restoreBtnName.c_str()))
 							RestoreVariableToDefault(key);
 						if (debugEnabled) {
-							static float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
+							const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
 							static std::string labelID{};
 							labelID = "##DebugAddrInputText" + std::string(key);
 							const DWORD64 finalAddr = floatVarAddr ? reinterpret_cast<DWORD64>(floatVarAddr) : reinterpret_cast<DWORD64>(boolVarAddr);

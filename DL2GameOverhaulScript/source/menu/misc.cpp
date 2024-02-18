@@ -5,8 +5,8 @@
 
 namespace Menu {
 	namespace Misc {
-		KeyBindOption disableHUD{ VK_F8 };
 		KeyBindOption disableGamePauseWhileAFK{ VK_NONE };
+		KeyBindOption disableHUD{ VK_F8 };
 
 		static void UpdateDisabledOptions() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
@@ -39,12 +39,11 @@ namespace Menu {
 		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Misc##Misc");
+			ImGui::CheckboxHotkey("Disable Game Pause While AFK", &disableGamePauseWhileAFK);
 			ImGui::BeginDisabled(disableHUD.GetChangesAreDisabled()); {
 				ImGui::CheckboxHotkey("Disable HUD", &disableHUD);
 				ImGui::EndDisabled();
 			}
-			ImGui::SameLine();
-			ImGui::CheckboxHotkey("Disable Game Pause While AFK", &disableGamePauseWhileAFK);
 		}
 	}
 }

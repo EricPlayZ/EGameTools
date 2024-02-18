@@ -78,6 +78,20 @@ namespace Core {
 		}
 		Utils::PrintWarning("Creating game shortcut for \"EGameTools\"");
 		std::filesystem::create_directory_symlink(Utils::Files::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
+		Utils::PrintInfo("Game shortcut created");
+	}
+
+	static void InitLogger() {
+		constexpr size_t maxSize = static_cast<size_t>(1048576) * 100;
+		constexpr size_t maxFiles = 10;
+
+		static std::vector<spdlog::sink_ptr> sinks{};
+		sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("EGameTools\\log.txt", maxSize, maxFiles, true));
+		sinks.push_back(std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>());
+		std::shared_ptr<spdlog::logger> combined_logger = std::make_shared<spdlog::logger>("EGameTools", std::begin(sinks), std::end(sinks));
+		combined_logger->flush_on(spdlog::level::trace);
+
+		spdlog::set_default_logger(combined_logger);
 	}
 
 	void OnPostUpdate() {
@@ -96,27 +110,30 @@ namespace Core {
 	}
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
+		InitLogger();
 
-		Utils::PrintInfo("Initializing config");
+		Utils::PrintWarning("Initializing config");
 		Config::InitConfig();
 		CreateSymlinkForLoadingFiles();
-		Utils::PrintInfo("Sorting Player Variables");
+		Utils::PrintWarning("Sorting Player Variables");
 		GamePH::PlayerVariables::SortPlayerVars();
+		Utils::PrintInfo("Player Variables sorted");
 
-		Utils::PrintInfo("Initializing MinHook");
+		Utils::PrintWarning("Initializing MinHook");
 		MH_Initialize();
+		Utils::PrintInfo("Initialized MinHook");
 
-		Utils::PrintInfo("Hooking DX11/DX12 renderer");
+		Utils::PrintWarning("Hooking DX11/DX12 renderer");
 		std::thread([]() {
 			LoopHookRenderer();
-			Utils::PrintSuccess("Hooked DX11/DX12 renderer!");
+			Utils::PrintInfo("Hooked \"DX11/DX12 renderer\"!");
 		}).detach();
 
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
-			Utils::PrintInfo("Hooking %s", hook->name.data());
+			Utils::PrintWarning("Hooking \"{}\"", hook->name.data());
 			std::thread([&hook]() {
 				hook->HookLoop();
-				Utils::PrintSuccess("Hooked %s!", hook->name.data());
+				Utils::PrintInfo("Hooked \"{}\"!", hook->name.data());
 			}).detach();
 		}
 
@@ -129,12 +146,14 @@ namespace Core {
 	void Cleanup() {
 		exiting = true;
 
-		Utils::PrintInfo("Game requested exit, running cleanup");
-		Utils::PrintInfo("Saving config to file");
+		Utils::PrintWarning("Game requested exit, running cleanup");
+		Utils::PrintWarning("Saving config to file");
 		Config::SaveConfig();
+		Utils::PrintInfo("Config saved to file");
 
-		Utils::PrintInfo("Unhooking everything");
+		Utils::PrintWarning("Unhooking everything");
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
+		Utils::PrintInfo("Unhooked everything");
 	}
 }

@@ -63,7 +63,7 @@ namespace Menu {
 		};
 
 		static void RenderClassAddrPair(const std::pair<std::string_view, LPVOID(*)()>* pair) {
-			static float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
+			const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
 			static std::string labelID{};
 			labelID = "##DebugAddrInputText" + std::string(pair->first);
 

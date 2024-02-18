@@ -5,7 +5,6 @@
 #include <set>
 #include "..\utils\values.h"
 
-
 #ifndef VK_NONE
 
 #ifdef _DEBUG

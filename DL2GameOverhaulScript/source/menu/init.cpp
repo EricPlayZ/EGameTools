@@ -4,14 +4,14 @@
 #include "menu.h"
 
 namespace Menu {
-    static const std::string welcomeTitle = std::string(title + " - Welcome!");
-    static const std::string changelogTitle = std::string(title + " - Update Changelog");
+    static std::string welcomeTitle{};
+    static std::string changelogTitle{};
 
     static constexpr ImGuiWindowFlags welcomeWindowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove;
-    static constexpr ImVec2 minChangelogWndSize = ImVec2(400.0f, 0.0f);
-    static constexpr ImVec2 defMaxChangelogWndSize = ImVec2(400.0f, 700.0f);
-    static constexpr ImVec2 minWelcomeWndSize = ImVec2(800.0f, 0.0f);
-    static constexpr ImVec2 defMaxWelcomeWndSize = ImVec2(800.0f, 700.0f);
+    static constexpr ImVec2 defMinWndSize = ImVec2(800.0f, 0.0f);
+    static ImVec2 minWndSize = defMinWndSize;
+    static constexpr ImVec2 defMaxWndSize = ImVec2(800.0f, 700.0f);
+    static ImVec2 maxWndSize = defMaxWndSize;
 
     static Utils::Time::Timer timePassedFromWelcomeScreen{};
 
@@ -39,7 +39,7 @@ namespace Menu {
 
     static void RenderWelcomeScreen() {
         ImGui::SetNextWindowBgAlpha(1.0f);
-        ImGui::SetNextWindowSizeConstraints(minWelcomeWndSize, defMaxWelcomeWndSize);
+        ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
         if (ImGui::BeginPopupModal(welcomeTitle.c_str(), nullptr, welcomeWindowFlags)) {
             ImGui::TextCenteredColored("PLEASE read the following text!", IM_COL32(230, 0, 0, 255));
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
@@ -114,6 +114,10 @@ namespace Menu {
             ImGui::TextCentered("You DO NOT NEED to restart the game for the changes in the config to be applied!");
             ImGui::TextCentered("If you want to regenerate the config file, delete it and it will automatically be regenerated.");
 
+            ImGui::SeparatorTextColored("Logging", IM_COL32(200, 0, 0, 255));
+            ImGui::NewLine();
+            ImGui::TextCentered("Log files will be stored in the EGameTools folder as \"log.x.txt\", x being the number of the previous log file. The most recent log file will be called \"log.txt\".");
+
             ImGui::Separator();
             ImGui::NewLine();
             ImGui::TextCentered("Finally, if you've got any issue, no matter how small, please make sure to report it! I will try my best to fix it. I want this mod to be polished and enjoyable to use!");
@@ -123,7 +127,7 @@ namespace Menu {
             ImGui::BeginDisabled(!timePassedFromWelcomeScreen.DidTimePass());
             {
                 const std::string btnText = "Let me play!" + (!timePassedFromWelcomeScreen.DidTimePass() ? (" (" + std::to_string(10 - (timePassedFromWelcomeScreen.GetTimePassed() / 1000)) + ")") : "");
-                if (ImGui::ButtonCentered(btnText.c_str(), ImVec2(0.0f, 30.0f))) {
+                if (ImGui::ButtonCentered(btnText.c_str(), ImVec2(0.0f, 30.0f) * scale)) {
                     ImGui::CloseCurrentPopup();
                     firstTimeRunning.Set(false);
                     if (hasSeenChangelog.GetValue())
@@ -136,7 +140,7 @@ namespace Menu {
     }
     static void RenderChangelog() {
         ImGui::SetNextWindowBgAlpha(1.0f);
-        ImGui::SetNextWindowSizeConstraints(minChangelogWndSize, defMaxChangelogWndSize);
+        ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
         if (ImGui::BeginPopupModal(changelogTitle.c_str(), nullptr, welcomeWindowFlags)) {
             const std::string subTitle = "This is what the " + std::string(MOD_VERSION_STR) + " update brings:";
             ImGui::TextCenteredColored(subTitle.c_str(), IM_COL32(230, 0, 0, 255), false);
@@ -152,7 +156,7 @@ namespace Menu {
                 ImGui::TextCentered(line.c_str(), false);
             }
 
-            if (ImGui::ButtonCentered("Close", ImVec2(0.0f, 30.0f))) {
+            if (ImGui::ButtonCentered("Close", ImVec2(0.0f, 30.0f) * scale)) {
                 ImGui::CloseCurrentPopup();
                 menuToggle.SetChangesAreDisabled(false);
                 hasSeenChangelog.Set(true);
@@ -172,10 +176,18 @@ namespace Menu {
             return;
         }
 
+        ImGui::StyleScaleAllSizes(&ImGui::GetStyle(), scale, &defStyle);
+        ImGui::GetIO().FontGlobalScale = scale;
+        minWndSize = defMinWndSize * scale;
+        maxWndSize = defMaxWndSize * scale;
+
         if (firstTimeRunningFunc) {
             firstTimeRunningFunc = false;
             timePassedFromWelcomeScreen = Utils::Time::Timer(10000);
             menuToggle.SetChangesAreDisabled(true);
+
+            welcomeTitle = std::string(title + " - Welcome!");
+            changelogTitle = std::string(title + " - Update Changelog");
 
             if (firstTimeRunning.GetValue())
                 ImGui::OpenPopup(welcomeTitle.c_str());

@@ -4063,12 +4063,10 @@ namespace Config {
 		{ "World:Time", "SlowMotionTransitionTime", 1.0f, &Menu::World::slowMotionTransitionTime, Float }
 	});
 	std::vector<ConfigEntry> configVariables(configVariablesDefault.begin(), configVariablesDefault.end());
-	static const char* configFileName = "EGameTools.ini";
+	static constexpr const char* configFileName = "EGameTools.ini";
 	static std::filesystem::file_time_type configPreviousWriteTime{};
 	static std::filesystem::file_time_type configLastWriteTime{};
 
-	std::string configStatus{};
-	std::string configError{};
 	static bool savedConfig = false;
 
 	static inih::INIReader reader{};
@@ -4131,15 +4129,14 @@ namespace Config {
 			inih::INIWriter writer{};
 			writer.write(configFileName, reader);
 		} catch (const std::runtime_error& e) {
-			configError = Utils::PrintError("Error writing file %s: %s", configFileName, e.what());
+			Utils::PrintError("Error writing file {}: {}", configFileName, e.what());
 		}
 	}
 	static bool ConfigExists() {
 		return std::filesystem::exists(configFileName);
 	}
 	static void CreateConfig() {
-		configStatus = Utils::PrintWarning("%s does not exist (will create now); using default config values", configFileName);
-
+		Utils::PrintWarning("{} does not exist (will create now); using default config values", configFileName);
 		LoadAndWriteDefaultConfig();
 	}
 	static void ReadConfig(const bool configUpdate = false) {
@@ -4199,10 +4196,9 @@ namespace Config {
 				}
 			}
 
-			configStatus = Utils::PrintSuccess(configUpdate ? "Successfully read updated config!" : "Successfully read config!");
+			Utils::PrintInfo(configUpdate ? "Successfully read updated config!" : "Successfully read config!");
 		} catch (const std::runtime_error& e) {
-			configError = Utils::PrintSuccess("Error writing file %s; using default config values: %s", configFileName, e.what());
-
+			Utils::PrintError("Error writing file {}; using default config values: {}", configFileName, e.what());
 			LoadDefaultConfig();
 		}
 	}
@@ -4238,7 +4234,7 @@ namespace Config {
 
 			savedConfig = true;
 		} catch (const std::runtime_error& e) {
-			configError = Utils::PrintError("Error saving to file %s: %s", configFileName, e.what());
+			Utils::PrintError("Error saving to file {}: {}", configFileName, e.what());
 		}
 	}
 	void InitConfig() {

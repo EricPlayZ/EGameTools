@@ -3,8 +3,8 @@
 	
 namespace Menu {
 	namespace Misc {
-		extern KeyBindOption disableHUD;
 		extern KeyBindOption disableGamePauseWhileAFK;
+		extern KeyBindOption disableHUD;
 
 		class Tab : MenuTab {
 		public:
