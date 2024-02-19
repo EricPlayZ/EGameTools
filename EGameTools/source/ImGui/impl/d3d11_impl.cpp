@@ -74,22 +74,32 @@ namespace impl {
 				init = true;
 			}
 
-			ImGui_ImplDX11_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
+			for (int retries = 0;; retries++) {
+				try {
+					ImGui_ImplDX11_NewFrame();
+					ImGui_ImplWin32_NewFrame();
+					ImGui::NewFrame();
 
-			Menu::FirstTimeRunning();
-			if (Menu::menuToggle.GetValue())
-				Menu::Render();
+					Menu::FirstTimeRunning();
+					if (Menu::menuToggle.GetValue())
+						Menu::Render();
 
-			ImGui::EndFrame();
-			ImGui::Render();
+					ImGui::EndFrame();
+					ImGui::Render();
 
-			if (d3d11RenderTargetView)
-				d3d11DeviceContext->OMSetRenderTargets(1, &d3d11RenderTargetView, nullptr);
-			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+					if (d3d11RenderTargetView)
+						d3d11DeviceContext->OMSetRenderTargets(1, &d3d11RenderTargetView, nullptr);
+					ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-			return oPresent(pSwapChain, SyncInterval, Flags);
+					return oPresent(pSwapChain, SyncInterval, Flags);
+				} catch (const std::exception& e) {
+					spdlog::error("Exception thrown rendering ImGui in DX11: {}", e.what());
+					if (retries >= 6) {
+						spdlog::error("Retried rendering ImGui in DX11 6 times, game will exit now.");
+						IM_ASSERT(retries < 6 && "Retried rendering ImGui in DX11 6 times, game will exit now.");
+					}
+				}
+			}
 		}
 
 		HRESULT(__stdcall* oResizeBuffers)(IDXGISwapChain*, UINT, UINT, UINT, DXGI_FORMAT, UINT);

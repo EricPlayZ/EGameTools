@@ -67,31 +67,48 @@ namespace Core {
 	}
 
 	static void CreateSymlinkForLoadingFiles() {
-		std::filesystem::create_directories("EGameTools\\UserModFiles");
+		try {
+			const char* userModFilesPath = "..\\..\\..\\source\\data\\EGameTools\\UserModFiles";
+			const char* EGameToolsPath = "..\\..\\..\\source\\data\\EGameTools";
+			if (!std::filesystem::exists(userModFilesPath))
+				std::filesystem::create_directories(userModFilesPath);
 
-		for (const auto& entry : std::filesystem::directory_iterator("..\\..\\data")) {
-			if (entry.path().filename().string() == "EGameTools" && is_symlink(entry.symlink_status())) {
-				if (std::filesystem::equivalent("..\\..\\data\\EGameTools", "EGameTools"))
-					return;
-				std::filesystem::remove(entry.path());
+			for (const auto& entry : std::filesystem::directory_iterator(".")) {
+				if (entry.path().filename().string() == "EGameTools") {
+					if (is_symlink(entry.symlink_status()) && std::filesystem::equivalent("EGameTools", EGameToolsPath))
+						return;
+					
+					std::filesystem::remove(entry.path());
+				}
 			}
+			spdlog::warn("Creating folder shortcut \"EGameTools\" for \"Dying Light 2\\ph\\source\\data\\EGameTools\" folder");
+			std::filesystem::create_directory_symlink(EGameToolsPath, Utils::Files::GetCurrentProcDirectory() + "\\EGameTools");
+			spdlog::info("Game shortcut created");
+		} catch (const std::exception& e) {
+			spdlog::error("Exception thrown while trying to create folder shortcut: {}", e.what());
+			spdlog::warn("This error should NOT affect any features of my mod. The shortcut is only a way for the user to easily access the folder \"Dying Light 2\\ph\\source\\data\\EGameTools\".");
 		}
-		spdlog::warn("Creating game shortcut for \"EGameTools\"");
-		std::filesystem::create_directory_symlink(Utils::Files::GetCurrentProcDirectory() + "\\EGameTools", "..\\..\\data\\EGameTools");
-		spdlog::info("Game shortcut created");
 	}
 
 	static void InitLogger() {
 		constexpr size_t maxSize = static_cast<size_t>(1048576) * 100;
 		constexpr size_t maxFiles = 10;
 
-		static std::vector<spdlog::sink_ptr> sinks{};
-		sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("EGameTools\\log.txt", maxSize, maxFiles, true));
-		sinks.push_back(std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>());
-		std::shared_ptr<spdlog::logger> combined_logger = std::make_shared<spdlog::logger>("EGameTools", std::begin(sinks), std::end(sinks));
-		combined_logger->flush_on(spdlog::level::trace);
+		try {
+			static std::vector<spdlog::sink_ptr> sinks{};
+			sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("..\\..\\..\\source\\data\\EGameTools\\log.txt", maxSize, maxFiles, true));
+			sinks.push_back(std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>());
+			std::shared_ptr<spdlog::logger> combined_logger = std::make_shared<spdlog::logger>("EGameTools", std::begin(sinks), std::end(sinks));
+			combined_logger->flush_on(spdlog::level::trace);
 
-		spdlog::set_default_logger(combined_logger);
+			spdlog::set_default_logger(combined_logger);
+		} catch (const std::exception& e) {
+			UNREFERENCED_PARAMETER(e);
+			std::cout << "Failed creating spdlog instance! Please contact mod author, this is not supposed to happen!" << std::endl;
+			std::cout << "Game will exit in 30 seconds. Close this window once you've read the text." << std::endl;
+			Sleep(30000);
+			exit(0);
+		}
 	}
 
 	void OnPostUpdate() {

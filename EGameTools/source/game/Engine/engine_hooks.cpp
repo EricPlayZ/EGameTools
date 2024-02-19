@@ -67,21 +67,18 @@ namespace Engine {
 #pragma endregion
 
 #pragma region fs::open
-		static LPVOID GetFsOpen() {
-			return Utils::Memory::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
-		}
-		static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
-		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ "fs::open", &GetFsOpen, &detourFsOpen };
-
 		static std::vector<std::string> cachedUserModDirs{};
+		static Utils::Time::Timer timeSinceCache{ 0 };
 		static void CacheUserModDirs() {
 			spdlog::warn("Recaching user mod directories");
 
 			if (!cachedUserModDirs.empty())
 				cachedUserModDirs.clear();
 
-			cachedUserModDirs.push_back("EGameTools\\UserModFiles");
-			for (const auto& entry : std::filesystem::recursive_directory_iterator("EGameTools\\UserModFiles")) {
+			const char* userModFilesPath = "..\\..\\..\\source\\data\\EGameTools\\UserModFiles";
+
+			cachedUserModDirs.push_back(userModFilesPath);
+			for (const auto& entry : std::filesystem::recursive_directory_iterator(userModFilesPath)) {
 				const std::filesystem::path pathToDir = entry.path();
 				if (!std::filesystem::is_directory(pathToDir))
 					continue;
@@ -90,13 +87,18 @@ namespace Engine {
 			}
 		}
 
-		static Utils::Time::Timer timeSinceCache{ 0 };
+		static LPVOID GetFsOpen() {
+			return Utils::Memory::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
+		}
+		static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ "fs::open", &GetFsOpen, &detourFsOpen };
+
 		static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
 			const DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
 
 			const char* filePath = reinterpret_cast<const char*>(file & 0x1FFFFFFFFFFFFFFF); // remove first byte of addr in case it exists
 			const std::string fileName = std::filesystem::path(filePath).filename().string();
-			if (fileName.empty())
+			if (fileName.empty() || fileName.contains("EGameTools") || fileName.ends_with(".model"))
 				return FsOpenHook.pOriginal(file, a2, a3);
 
 			if (timeSinceCache.DidTimePass()) {
@@ -104,15 +106,27 @@ namespace Engine {
 				timeSinceCache = Utils::Time::Timer(5000);
 			}
 
-			for (const auto& entry : cachedUserModDirs) {
-				const std::string finalPath = entry + "\\" + fileName;
-				if (!std::filesystem::exists(finalPath))
-					continue;
+			std::string finalPath{};
 
-				const char* filePath2 = finalPath.c_str();
-				spdlog::warn("Loading user mod file \"{}\"", filePath2);
+			try {
+				for (const auto& entry : cachedUserModDirs) {
+					finalPath = entry + "\\" + fileName;
+					if (!std::filesystem::exists(finalPath))
+						continue;
 
-				return FsOpenHook.pOriginal(firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2), a2, a3); // restores first byte of addr if first byte was not 0
+					const std::string finalPath2 = std::filesystem::absolute(finalPath).string();
+					const char* filePath2 = finalPath2.c_str();
+					spdlog::warn("Loading user mod file \"{}\"", finalPath.c_str());
+
+					const DWORD64 finalAddr = firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2); // restores first byte of addr if first byte was not 0
+
+					const DWORD64 result = FsOpenHook.pOriginal(finalAddr, a2, a3);
+					if (!result)
+						spdlog::error("fs::open returned 0! Something went wrong with loading user mod file \"{}\"!", finalPath.c_str());
+					return result;
+				}
+			} catch (const std::exception& e) {
+				spdlog::error("Exception thrown while loading user mod file \"{}\": {}", finalPath.c_str(), e.what());
 			}
 			return FsOpenHook.pOriginal(file, a2, a3);
 		}
