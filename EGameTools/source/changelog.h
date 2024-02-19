@@ -26,7 +26,9 @@ R"(- You can now load custom mod files from "EGameTools\UserModFiles"! Please re
 
 That's it for this update! The next few updates will include some more bug fixes rather than new, big features, so stay tuned!)" },
 		{ "v1.1.1",
-		R"(- Fixed frequent crashes when using DX12, sometimes DX11 too.
+		R"(- Added a message box that warns the user of shortcut creation failure
+
+- Fixed frequent crashes when using DX12, sometimes DX11 too.
 - Fixed frequent crashing at game startup
 - Fixed crashing when trying to use ".model" mods with the custom file loading system; PLEASE keep in mind that I haven't found a fix for this yet! Custom ".model" files will not get loaded from "UserModFiles"
 - Fixed Slow Motion not changing back to the original game speed when deactivated

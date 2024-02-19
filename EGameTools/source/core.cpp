@@ -66,6 +66,38 @@ namespace Core {
 		}
 	}
 
+	static bool WarnMsgSeenFileExists() {
+		try {
+			const std::string localAppDataDir = Utils::Files::GetLocalAppDataDir();
+			if (localAppDataDir.empty())
+				return false;
+			const std::string finalPath = std::string(localAppDataDir) + "\\EGameTools\\" + "WarnMsgBoxSeen";
+
+			return std::filesystem::exists(finalPath);
+		} catch (const std::exception& e) {
+			spdlog::error("Exception thrown while trying to check if WarnMsgBoxSeen file exists: {}", e.what());
+			return false;
+		}
+	}
+	static void CreateWarnMsgSeenFile() {
+		try {
+			const std::string localAppDataDir = Utils::Files::GetLocalAppDataDir();
+			if (localAppDataDir.empty())
+				return;
+			const std::string dirPath = std::string(localAppDataDir) + "\\EGameTools\\";
+			std::filesystem::create_directories(dirPath);
+
+			const std::string finalPath = dirPath + "WarnMsgBoxSeen";
+			if (!std::filesystem::exists(finalPath)) {
+				std::ofstream outFile(finalPath.c_str(), std::ios::binary);
+				if (!outFile.is_open())
+					return;
+				outFile.close();
+			}
+		} catch (const std::exception& e) {
+			spdlog::error("Exception thrown while trying to create WarnMsgBoxSeen file: {}", e.what());
+		}
+	}
 	static void CreateSymlinkForLoadingFiles() {
 		try {
 			const char* userModFilesPath = "..\\..\\..\\source\\data\\EGameTools\\UserModFiles";
@@ -87,6 +119,21 @@ namespace Core {
 		} catch (const std::exception& e) {
 			spdlog::error("Exception thrown while trying to create folder shortcut: {}", e.what());
 			spdlog::warn("This error should NOT affect any features of my mod. The shortcut is only a way for the user to easily access the folder \"Dying Light 2\\ph\\source\\data\\EGameTools\".");
+
+			if (WarnMsgSeenFileExists())
+				return;
+
+			std::thread([]() {
+				int msgBoxResult = MessageBoxA(nullptr, "EGameTools has failed creating a folder shortcut \"EGameTools\" inside \"Dying Light 2\\ph\\work\\bin\\x64\".\n\nIn order to install mods inside the \"UserModFiles\" folder, please manually navigate to \"Dying Light 2\\ph\\source\\data\\EGameTools\\UserModFiles\".\n\nAlternatively, run the game once as administrator from the exe and once a shortcut has been created, close the game and open up the game from Steam or whatever platform you're using.\n\nDo you want to continue seeing this warning message every game launch?", "Error creating EGameTools folder shortcut", MB_ICONWARNING | MB_YESNO | MB_SETFOREGROUND);
+
+				switch (msgBoxResult) {
+				case IDNO:
+					CreateWarnMsgSeenFile();
+					break;
+				default:
+					break;
+				}
+			}).detach();
 		}
 	}
 
