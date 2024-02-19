@@ -30,6 +30,6 @@ That's it for this update! The next few updates will include some more bug fixes
 - Fixed frequent crashing at game startup
 - Fixed crashing when trying to use ".model" mods with the custom file loading system; PLEASE keep in mind that I haven't found a fix for this yet! Custom ".model" files will not get loaded from "UserModFiles"
 - Fixed Slow Motion not changing back to the original game speed when deactivated
-- Fixed certain features like Use TPP Model or Player Variables not working at all for some users)" }
+- (Hopefully) fixed certain features like Use TPP Model or Player Variables not working at all for some users (if it still happens, please let me know!))" }
 	};
 }
