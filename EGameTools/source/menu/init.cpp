@@ -16,18 +16,22 @@ namespace Menu {
     static Utils::Time::Timer timePassedFromWelcomeScreen{};
 
     static void CreateChangelogFile() {
-        const std::string localAppDataDir = Utils::Files::GetLocalAppDataDir();
-        if (localAppDataDir.empty())
-            return;
-        const std::string dirPath = std::string(localAppDataDir) + "\\EGameTools\\";
-        std::filesystem::create_directories(dirPath);
-
-        const std::string finalPath = dirPath + MOD_VERSION_STR + ".changelog";
-        if (!std::filesystem::exists(finalPath)) {
-            std::ofstream outFile(finalPath.c_str(), std::ios::binary);
-            if (!outFile.is_open())
+        try {
+            const std::string localAppDataDir = Utils::Files::GetLocalAppDataDir();
+            if (localAppDataDir.empty())
                 return;
-            outFile.close();
+            const std::string dirPath = std::string(localAppDataDir) + "\\EGameTools\\";
+            std::filesystem::create_directories(dirPath);
+
+            const std::string finalPath = dirPath + MOD_VERSION_STR + ".changelog";
+            if (!std::filesystem::exists(finalPath)) {
+                std::ofstream outFile(finalPath.c_str(), std::ios::binary);
+                if (!outFile.is_open())
+                    return;
+                outFile.close();
+            }
+        } catch (const std::exception& e) {
+            spdlog::error("Exception thrown while trying to create changelog file: {}", e.what());
         }
     }
     static bool DoesChangelogFileExist() {
