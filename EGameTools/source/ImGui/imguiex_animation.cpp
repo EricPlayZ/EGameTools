@@ -3,8 +3,9 @@
 namespace ImGui {
     std::unordered_map<std::string_view, float> AnimValueStack{};
 
-    const float AnimEaseInSine(const float blendPoint) { return 1 - std::cos((blendPoint * static_cast<float>(M_PI)) / 2); }
+    const float AnimEaseInSine(const float blendPoint) { return 1.0f - std::cos((blendPoint * static_cast<float>(M_PI)) / 2.0f); }
     const float AnimEaseOutSine(const float blendPoint) { return std::sin((blendPoint * static_cast<float>(M_PI)) / 2.0f); }
+    const float AnimEaseInOutSine(const float blendPoint) { return -(std::cos(static_cast<float>(M_PI) * blendPoint) - 1.0f) / 2.0f; }
 
     static const float SetAnimTime(const std::string_view& valueName, const float animSpeed, const bool resetBlendPoint = false, const float (*easingFunction)(float) = nullptr) {
         const ImGuiContext& g = *GImGui;

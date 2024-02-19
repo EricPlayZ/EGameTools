@@ -52,9 +52,13 @@ namespace Menu {
 				freezeTime.SetPrevValue(false);
 			}
 
+			static bool slowMoHasChanged = true;
 			if (slowMotion.HasChangedTo(false)) {
-				static bool slowMoHasChanged = true;
-				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", slowMotionSpeed, gameSpeedBeforeSlowMo, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseOutSine);
+				static float gameSpeedAfterChange = 0.0f;
+				if (slowMoHasChanged)
+					gameSpeedAfterChange = gameSpeed;
+
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, gameSpeedBeforeSlowMo, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseInOutSine);
 				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
 				slowMoHasChanged = false;
 
@@ -63,14 +67,20 @@ namespace Menu {
 					slowMotion.SetPrevValue(false);
 				}
 			} else if (slowMotion.GetValue()) {
+				static float gameSpeedAfterChange = 0.0f;
 				if (slowMotion.HasChanged()) {
-					gameSpeedBeforeSlowMo = gameSpeed;
-					slowMotionSpeedLerp = gameSpeed;
+					if (slowMoHasChanged)
+						gameSpeedBeforeSlowMo = gameSpeed;
+					gameSpeedAfterChange = gameSpeed;
 				}
-				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedBeforeSlowMo, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseOutSine);
+
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseInOutSine);
 				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
-				if (slowMotion.HasChanged())
+
+				if (slowMotion.HasChanged()) {
+					slowMoHasChanged = true;
 					slowMotion.SetPrevValue(slowMotion.GetValue());
+				}
 			}
 
 			if (!menuToggle.GetValue()) {
@@ -80,8 +90,7 @@ namespace Menu {
 
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged())
 					iLevel->TimerSetSpeedUp(gameSpeed);
-				if (!Utils::Values::are_samef(iLevel->TimerGetSpeedUp(), 1.0f))
-					gameSpeed = iLevel->TimerGetSpeedUp();
+				gameSpeed = iLevel->TimerGetSpeedUp();
 			}
 		}
 		void Tab::Render() {
@@ -109,8 +118,7 @@ namespace Menu {
 					else if (iLevel && iLevel->IsLoaded()) {
 						if (!slowMotion.GetValue() && !slowMotion.HasChanged())
 							iLevel->TimerSetSpeedUp(gameSpeed);
-						if (!Utils::Values::are_samef(iLevel->TimerGetSpeedUp(), 1.0f))
-							gameSpeed = iLevel->TimerGetSpeedUp();
+						gameSpeed = iLevel->TimerGetSpeedUp();
 					}
 					ImGui::EndDisabled();
 				}

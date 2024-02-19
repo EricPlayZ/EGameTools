@@ -8,6 +8,7 @@ namespace ImGui {
 
     const float AnimEaseInSine(const float blendPoint);
     const float AnimEaseOutSine(const float blendPoint);
+    const float AnimEaseInOutSine(const float blendPoint);
 
     extern const float AnimateLerp(const std::string_view& valueName, const float a, const float b, const float animSpeed, const bool resetBlendPoint = false, const float (*easingFunction)(float) = nullptr);
 }
