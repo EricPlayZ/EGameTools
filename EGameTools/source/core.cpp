@@ -172,9 +172,36 @@ namespace Core {
 		for (auto& menuTab : *Menu::MenuTab::GetInstances())
 			menuTab.second->Update();
 	}
+	/*static bool WriteMiniDump(PEXCEPTION_POINTERS pExceptionPointers) {
+		HANDLE hFile = CreateFileA("EGameTools-dump.dmp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (hFile == INVALID_HANDLE_VALUE)
+			return false;
+
+		MINIDUMP_EXCEPTION_INFORMATION mdei{};
+		mdei.ThreadId = GetCurrentThreadId();
+		mdei.ExceptionPointers = pExceptionPointers;
+		mdei.ClientPointers = false;
+
+		int success = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &mdei, nullptr, nullptr);
+		CloseHandle(hFile);
+
+		return success;
+	}
+	static long WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo) {
+		spdlog::error("VEH threw an exception with code {}. Trying to continue execution, writing mini-dump in the mean time.", ExceptionInfo->ExceptionRecord->ExceptionCode);
+
+		if (WriteMiniDump(ExceptionInfo))
+			spdlog::info("Mini-dump written to \"EGameTools-dump.dmp\". Please send this to mod author for further help!");
+		else
+			spdlog::error("Failed to write mini-dump.");
+
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}*/
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
 		InitLogger();
+
+		//AddVectoredExceptionHandler(0, &VectoredExceptionHandler);
 
 		spdlog::warn("Initializing config");
 		Config::InitConfig();

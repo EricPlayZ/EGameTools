@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <DbgHelp.h>
 #include <any>
 #include <filesystem>
 #include <exception>
