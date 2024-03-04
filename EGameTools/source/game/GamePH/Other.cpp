@@ -22,13 +22,7 @@ namespace GamePH {
 		if (!GetCurrentGameVersion())
 			return "UNKNOWN";
 
-		DWORD64 version = GetCurrentGameVersion();
-
-		DWORD64 major = version / 10000;
-		DWORD64 minor = (version / 100) % 100;
-		DWORD64 patch = version % 100;
-
-		return std::string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch));
+		return GameVerToStr(GetCurrentGameVersion());
 	}
 	
 	static DWORD64 ShowTPPModelFunc2(GameDI_PH* pGameDI_PH) {

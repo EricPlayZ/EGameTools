@@ -15,10 +15,10 @@ namespace GamePH {
 		}
 	}
 	DWORD64 GameDI_PH::GetCurrentGameVersion() {
-		return Utils::Memory::CallVT<225, DWORD64>(this);
+		return Utils::Memory::CallVT<228, DWORD64>(this);
 	}
 	void GameDI_PH::TogglePhotoMode(bool doNothing, bool setAsOptionalCamera) {
-		Utils::Memory::CallVT<258>(this, doNothing, setAsOptionalCamera);
+		Utils::Memory::CallVT<260>(this, doNothing, setAsOptionalCamera);
 	}
 
 	GameDI_PH* GameDI_PH::Get() {

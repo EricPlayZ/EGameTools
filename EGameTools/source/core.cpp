@@ -2,6 +2,7 @@
 #include "config\config.h"
 #include "core.h"
 #include "game\GamePH\LevelDI.h"
+#include "game\GamePH\Other.h"
 #include "game\GamePH\PlayerVariables.h"
 #include "menu\menu.h"
 
@@ -124,7 +125,7 @@ namespace Core {
 				return;
 
 			std::thread([]() {
-				int msgBoxResult = MessageBoxA(nullptr, "EGameTools has failed creating a folder shortcut \"EGameTools\" inside \"Dying Light 2\\ph\\work\\bin\\x64\".\n\nIn order to install mods inside the \"UserModFiles\" folder, please manually navigate to \"Dying Light 2\\ph\\source\\data\\EGameTools\\UserModFiles\".\n\nAlternatively, run the game once as administrator from the exe and once a shortcut has been created, close the game and open up the game from Steam or whatever platform you're using.\n\nDo you want to continue seeing this warning message every game launch?", "Error creating EGameTools folder shortcut", MB_ICONWARNING | MB_YESNO | MB_SETFOREGROUND);
+				int msgBoxResult = MessageBoxA(nullptr, "EGameTools has failed creating a folder shortcut \"EGameTools\" inside \"Dying Light 2\\ph\\work\\bin\\x64\".\n\nTo fix this, please open Windows Settings and, for Windows 11, go to System -> For developers and enable \"Developer Mode\", or for Windows 10, go to Update & Security -> For developers and enable \"Developer Mode\".\nAfter doing this, restart the game and there should be no issues with shortcut creation anymore.\n\nIf the above solution doesn't work, then in order to install mods inside the \"UserModFiles\" folder, please manually navigate to \"Dying Light 2\\ph\\source\\data\\EGameTools\\UserModFiles\".\n\nAlternatively, run the game once as administrator from the exe and once a shortcut has been created, close the game and open up the game from Steam or whatever platform you're using.\n\nDo you want to continue seeing this warning message every game launch?", "Error creating EGameTools folder shortcut", MB_ICONWARNING | MB_YESNO | MB_SETFOREGROUND);
 
 				switch (msgBoxResult) {
 				case IDNO:
@@ -155,6 +156,20 @@ namespace Core {
 			std::cout << "Game will exit in 30 seconds. Close this window once you've read the text." << std::endl;
 			Sleep(30000);
 			exit(0);
+		}
+	}
+
+	DWORD64 gameVer = 0;
+	static void LoopGetGameVer() {
+		while (true) {
+			if (exiting)
+				return;
+
+			gameVer = GamePH::GetCurrentGameVersion();
+			if (!gameVer)
+				continue;
+
+			break;
 		}
 	}
 
@@ -213,6 +228,15 @@ namespace Core {
 		spdlog::warn("Initializing MinHook");
 		MH_Initialize();
 		spdlog::info("Initialized MinHook");
+
+		spdlog::warn("Getting game version");
+		std::thread([]() {
+			LoopGetGameVer();
+			spdlog::info("Got game version: v{}", GamePH::GameVerToStr(gameVer));
+			if (Core::gameVer != GAME_VER_COMPAT) {
+				spdlog::error("Please note that your game version has not been officially tested with this mod, therefore expect bugs, glitches or the mod to completely stop working. If so, please {}", Core::gameVer > GAME_VER_COMPAT ? "wait for a new patch." : "upgrade your game version to one that the mod supports.");
+			}
+		}).detach();
 
 		spdlog::warn("Hooking DX11/DX12 renderer");
 		std::thread([]() {

@@ -16,10 +16,9 @@
 #define VK_MWHEELUP 0x101
 #endif
 
-constexpr auto MOD_VERSION_STR = "v1.1.1";
-constexpr auto MOD_VERSION = 10101;
-constexpr auto GAME_VER_COMPAT_STR = ">= v1.14.0";
-constexpr auto GAME_VER_COMPAT = 11400;
+constexpr auto MOD_VERSION_STR = "v1.1.2";
+constexpr auto MOD_VERSION = 10102;
+constexpr auto GAME_VER_COMPAT = 11502;
 
 struct Key {
     constexpr Key(std::string_view name, int code, ImGuiKey imGuiCode) : name(name), code(code), imGuiCode(imGuiCode) {}
@@ -228,5 +227,6 @@ namespace Core {
 	extern bool exiting;
 
     extern int rendererAPI;
+    extern DWORD64 gameVer;
     extern void OnPostUpdate();
 }

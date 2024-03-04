@@ -42,13 +42,37 @@ namespace GamePH {
 		}
 	}
 	float LevelDI::GetTimeDelta() {
-		return Utils::Memory::CallVT<176, float>(this);
+		__try {
+			float(*pGetTimeDelta)(LPVOID iLevel) = (decltype(pGetTimeDelta))Utils::Memory::GetProcAddr("gamedll_ph_x64_rwdi.dll", "?GetTimeDelta@IGSObject@@UEBAMXZ");
+			if (!pGetTimeDelta)
+				return 0.0f;
+
+			return pGetTimeDelta(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return 0.0f;
+		}
 	}
 	void LevelDI::SetViewCamera(LPVOID viewCam) {
-		Utils::Memory::CallVT<289, void>(this, viewCam);
+		__try {
+			void(*pSetViewCamera)(LPVOID iLevel, LPVOID viewCam) = (decltype(pSetViewCamera))Utils::Memory::GetProcAddr("gamedll_ph_x64_rwdi.dll", "?SetViewCamera@ILevel@@UEAAXPEAVIBaseCamera@@@Z_0");
+			if (!pSetViewCamera)
+				return;
+
+			pSetViewCamera(this, viewCam);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return;
+		}
 	}
 	float LevelDI::GetTimePlayed() {
-		return Utils::Memory::CallVT<317, float>(this);
+		__try {
+			float(*pGetTimePlayed)(LPVOID iLevel) = (decltype(pGetTimePlayed))Utils::Memory::GetProcAddr("gamedll_ph_x64_rwdi.dll", "?GetTimePlayed@ILevel@@UEBAMXZ");
+			if (!pGetTimePlayed)
+				return 0.0f;
+
+			return pGetTimePlayed(this);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return 0.0f;
+		}
 	}
 	void LevelDI::ShowUIManager(bool enabled) {
 		__try {
@@ -96,7 +120,7 @@ namespace GamePH {
 	}
 	TimeWeather::CSystem* LevelDI::GetTimeWeatherSystem() {
 		__try {
-			TimeWeather::CSystem* (*pGetTimeWeatherSystem)(LevelDI * iLevel) = (decltype(pGetTimeWeatherSystem))Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?GetTimeWeatherSystem@ILevel@@QEBAPEAVCSystem@TimeWeather@@XZ");
+			TimeWeather::CSystem* (*pGetTimeWeatherSystem)(LevelDI* iLevel) = (decltype(pGetTimeWeatherSystem))Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?GetTimeWeatherSystem@ILevel@@QEBAPEAVCSystem@TimeWeather@@XZ");
 			if (!pGetTimeWeatherSystem)
 				return nullptr;
 

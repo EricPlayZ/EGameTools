@@ -4,8 +4,6 @@
 namespace GamePH {
 	class PlayerDI_PH {
 	public:
-		bool IsInAir();
-
 		static PlayerDI_PH* Get();
 	};
 }

@@ -66,7 +66,6 @@ struct Offsets {
 	AddOffset(CalculateFallHeight, "gamedll_ph_x64_rwdi.dll", "40 55 56 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 9C 24", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(HandleFallHeight, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 0F B6 FA 48 8B D9 0F B6 91", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(HandlePlayerFall, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 0F 29 74 24 ?? 48 8B FA 0F 28 F2", Utils::SigScan::PatternType::Address, LPVOID)
-	AddOffset(IsInAir, "gamedll_ph_x64_rwdi.dll", "40 53 48 83 EC ?? 83 B9 ?? ?? ?? ?? ?? 48 8B D9 75 ?? 8B 15", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(GetTimeWeatherSystem, "engine_x64_rwdi.dll", "E8 [?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 49 8D 4F 38", PatternType::RelativePointer, LPVOID)
 	//AddOffset(SetForcedWeather, "engine_x64_rwdi.dll", "89 51 68 C3 CC CC CC CC CC CC CC CC CC CC CC CC", PatternType::Address, LPVOID)
 	//AddOffset(GetCurrentWeather, "engine_x64_rwdi.dll", "48 8B 41 78 48 85 C0 75 0F", PatternType::Address, LPVOID)

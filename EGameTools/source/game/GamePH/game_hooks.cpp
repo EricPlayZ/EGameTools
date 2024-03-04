@@ -9,7 +9,6 @@
 #include "GameDI_PH2.h"
 #include "LevelDI.h"
 #include "PlayerHealthModule.h"
-#include "PlayerDI_PH.h"
 #include "gen_TPPModel.h"
 
 namespace GamePH {

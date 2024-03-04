@@ -4,14 +4,6 @@
 #include "PlayerDI_PH.h"
 
 namespace GamePH {
-	bool PlayerDI_PH::IsInAir() {
-		bool(*pIsInAir)(LPVOID instance) = (decltype(pIsInAir))Offsets::Get_IsInAir();
-		if (!pIsInAir)
-			return false;
-
-		return pIsInAir(this);
-	}
-
 	PlayerDI_PH* PlayerDI_PH::Get() {
 		__try {
 			LevelDI* iLevel = LevelDI::Get();

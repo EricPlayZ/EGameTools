@@ -52,14 +52,12 @@ namespace Menu {
             ImGui::TextCentered(thankYou.c_str());
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
 
-            const std::string gameCompat = "This version of the mod is compatible with game version " + std::string(GAME_VER_COMPAT_STR) + ".";
+            const std::string gameCompat = "This version of the mod is compatible with game version v" + GamePH::GameVerToStr(GAME_VER_COMPAT) + ".";
             ImGui::TextCentered(gameCompat.c_str());
-            const std::string gameVer = "The game version you are currently running is v" + GamePH::GetCurrentGameVersionStr() + ".";
+            const std::string gameVer = "The game version you are currently running is v" + GamePH::GameVerToStr(Core::gameVer) + ".";
             ImGui::TextCentered(gameVer.c_str());
-            const std::string gameTestedVer = "This mod has last been tested with version v" + GamePH::GameVerToStr(GAME_VER_COMPAT) + ".";
-            ImGui::TextCentered(gameTestedVer.c_str());
-            if (GamePH::GetCurrentGameVersion() < 11400 || GamePH::GetCurrentGameVersion() > GAME_VER_COMPAT) {
-                const std::string gameNotCompat = "Please note that your game version has not been officially tested with this mod, therefore expect bugs, glitches or the mod to completely stop working. If so, please " + std::string(GamePH::GetCurrentGameVersion() > GAME_VER_COMPAT ? "wait for a new patch." : "upgrade your game version to one that the mod supports.");
+            if (Core::gameVer != GAME_VER_COMPAT) {
+                const std::string gameNotCompat = "Please note that your game version has not been officially tested with this mod, therefore expect bugs, glitches or the mod to completely stop working. If so, please " + std::string(Core::gameVer > GAME_VER_COMPAT ? "wait for a new patch." : "upgrade your game version to one that the mod supports.");
                 ImGui::TextCenteredColored(gameNotCompat.c_str(), IM_COL32(200, 0, 0, 255));
             }
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
