@@ -159,14 +159,23 @@ namespace Core {
 		}
 	}
 
-	DWORD64 gameVer = 0;
+	uint16_t gameVer = 0;
 	static void LoopGetGameVer() {
+
+		auto str = GamePH::GetCurrentGameVersionStr();
+		auto end = str.c_str() + std::char_traits<char>::length(str.c_str());
+
 		while (true) {
 			if (exiting)
 				return;
 
-			gameVer = GamePH::GetCurrentGameVersion();
-			if (!gameVer)
+			uint16_t value;
+			std::from_chars(str.c_str(), end, value);
+
+			if(value!=0)
+			gameVer = value;
+
+			if (gameVer == 0)
 				continue;
 
 			break;
@@ -236,7 +245,7 @@ namespace Core {
 			if (Core::gameVer != GAME_VER_COMPAT) {
 				spdlog::error("Please note that your game version has not been officially tested with this mod, therefore expect bugs, glitches or the mod to completely stop working. If so, please {}", Core::gameVer > GAME_VER_COMPAT ? "wait for a new patch." : "upgrade your game version to one that the mod supports.");
 			}
-		}).detach();
+			}).detach();
 
 		spdlog::warn("Hooking DX11/DX12 renderer");
 		std::thread([]() {
