@@ -6096,8 +6096,9 @@ namespace Menu {
 						if (*varAddr != *(varAddr + 1) && *(varAddr + 1) != std::any_cast<bool>(valDef.second.first))
 							*varAddr = *(varAddr + 1);
 					}
-				} catch (std::out_of_range& e) {
+				} catch (std::exception& e) {
 					UNREFERENCED_PARAMETER(e);
+					spdlog::error("PlayerVarsUpdate() threw an exception! If this error message appears, please open a bug report.");
 				}
 			}
 		}

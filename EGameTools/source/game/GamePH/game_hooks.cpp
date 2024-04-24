@@ -43,7 +43,9 @@ namespace GamePH {
 
 			LifeSetHealthHook.pOriginal(pLifeHealth, health);
 		}
+#pragma endregion
 
+#pragma region IsNotOutOfBounds
 		static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfBoundsHook{ "IsNotOutOfBounds", &Offsets::Get_IsNotOutOfBounds, &detourIsNotOutOfBounds };
 
@@ -81,30 +83,30 @@ namespace GamePH {
 #pragma endregion
 
 #pragma region TogglePhotoMode
-		static void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled);
-		static Utils::Hook::MHook<LPVOID, void(*)(LPVOID, bool)> TogglePhotoModeHook{ "TogglePhotoMode", &Offsets::Get_TogglePhotoMode, &detourTogglePhotoMode };
+		static void detourTogglePhotoMode1(LPVOID guiPhotoModeData, bool enabled);
+		static Utils::Hook::MHook<LPVOID, void(*)(LPVOID, bool)> TogglePhotoMode1Hook{ "TogglePhotoMode1", &Offsets::Get_TogglePhotoMode1, &detourTogglePhotoMode1 };
 
-		static void detourTogglePhotoMode(LPVOID guiPhotoModeData, bool enabled) {
+		static void detourTogglePhotoMode1(LPVOID guiPhotoModeData, bool enabled) {
 			Menu::Camera::photoMode.Set(enabled);
 
 			if (!Menu::Camera::freeCam.GetValue())
-				return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
+				return TogglePhotoMode1Hook.pOriginal(guiPhotoModeData, enabled);
 			LevelDI* iLevel = LevelDI::Get();
 			if (!iLevel || iLevel->IsTimerFrozen())
-				return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
+				return TogglePhotoMode1Hook.pOriginal(guiPhotoModeData, enabled);
 			GameDI_PH* pGameDI_PH = GameDI_PH::Get();
 			if (!pGameDI_PH)
-				return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
+				return TogglePhotoMode1Hook.pOriginal(guiPhotoModeData, enabled);
 			FreeCamera* pFreeCam = FreeCamera::Get();
 			if (!pFreeCam)
-				return TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
+				return TogglePhotoMode1Hook.pOriginal(guiPhotoModeData, enabled);
 
 			if (enabled) {
 				pGameDI_PH->TogglePhotoMode();
 				pFreeCam->AllowCameraMovement(0);
 			}
 
-			TogglePhotoModeHook.pOriginal(guiPhotoModeData, enabled);
+			TogglePhotoMode1Hook.pOriginal(guiPhotoModeData, enabled);
 		}
 #pragma endregion
 
