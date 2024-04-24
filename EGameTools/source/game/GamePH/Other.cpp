@@ -4,59 +4,46 @@
 #include "gen_TPPModel.h"
 
 namespace GamePH {
-	const std::tuple<uint16_t, uint16_t, uint16_t, uint16_t> GetCurrentGameVersion() {
-		WCHAR inBuf[MAX_PATH] = { 0 };
-		GetModuleFileNameW(GetModuleHandleW(nullptr), inBuf, static_cast<DWORD>(std::size(inBuf)));
-		std::wstring fileStr = inBuf;
+	const DWORD GetCurrentGameVersion() {
+		char exePath[MAX_PATH]{};
+		GetModuleFileNameA(GetModuleHandleA(nullptr), exePath, sizeof(exePath));
 
-		DWORD verHandle;
-		DWORD verSz = GetFileVersionInfoSizeW(fileStr.data(), &verHandle);
+		DWORD dummy{};
+		DWORD size = GetFileVersionInfoSizeA(exePath, &dummy);
+		if (!size)
+			return 0;
 
-		if (verSz != 0 && verHandle == 0) {
+		std::vector<BYTE> data(size);
+		if (!GetFileVersionInfoA(exePath, 0, size, data.data()))
+			return 0;
 
-			std::vector<uint8_t> verData(verSz);
+		VS_FIXEDFILEINFO* fileInfo = nullptr;
+		UINT fileInfoSize = 0;
+		if (!VerQueryValueA(data.data(), "\\", reinterpret_cast<void**>(&fileInfo), &fileInfoSize))
+			return 0;
+		if (fileInfo == nullptr)
+			return 0;
 
-			if (GetFileVersionInfoW(fileStr.data(), verHandle, verSz, verData.data())) {
+		const DWORD major = HIWORD(fileInfo->dwFileVersionMS);
+		const DWORD minor = LOWORD(fileInfo->dwFileVersionMS);
+		const DWORD patch = HIWORD(fileInfo->dwFileVersionLS);
 
-				LPVOID buffer;
-				UINT bufferLength;
-
-				if (VerQueryValueW(verData.data(), L"\\", &buffer, &bufferLength) && bufferLength != 0) {
-
-					VS_FIXEDFILEINFO* verInfo = reinterpret_cast<VS_FIXEDFILEINFO*>(buffer);
-
-					if (verInfo->dwSignature == 0xFEEF04BD) {
-						const auto major = (verInfo->dwFileVersionMS >> 16) & 0xFFFF;
-						const auto minor = verInfo->dwFileVersionMS & 0xFFFF;
-						const auto build = (verInfo->dwFileVersionLS >> 16) & 0xFFFF;
-						const auto revision = verInfo->dwFileVersionLS & 0xFFFF;
-						return { major, minor, build, revision };
-					}
-				}
-			}
-		}
-
-		return { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+		return major * 10000 + minor * 100 + patch;
 	}
+	const std::string GameVerToStr(DWORD version) {
+		DWORD major = version / 10000;
+		DWORD minor = (version / 100) % 100;
+		DWORD patch = version % 100;
 
+		return std::string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch));
+	}
 	const std::string GetCurrentGameVersionStr() {
-		auto [major, minor, build, revision] = GetCurrentGameVersion();
-
-		if (major == 0xFFFF || minor == 0xFFFF || build == 0xFFFF || revision == 0xFFFF)
+		if (!GetCurrentGameVersion())
 			return "UNKNOWN";
 
-		return std::string(std::to_string(major) + std::to_string(minor) + std::to_string(build) + std::to_string(revision));
+		return GameVerToStr(GetCurrentGameVersion());
 	}
-
-	const std::string GameVerToStr(uint16_t version) {
-		uint16_t major = version / 10000;
-		uint16_t minor = (version / 100) % 100;
-		uint16_t build = (version / 10) % 10;
-		uint16_t revision = version % 10;
-
-		return std::string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(build) + "." + std::to_string(revision));
-	}
-
+	
 	static DWORD64 ShowTPPModelFunc2(GameDI_PH* pGameDI_PH) {
 		DWORD64(*pShowTPPModelFunc2)(LPVOID pGameDI_PH) = (decltype(pShowTPPModelFunc2))Offsets::Get_ShowTPPModelFunc2();
 		if (!pShowTPPModelFunc2)
