@@ -43,7 +43,9 @@ namespace GamePH {
 
 			LifeSetHealthHook.pOriginal(pLifeHealth, health);
 		}
+#pragma endregion
 
+#pragma region IsNotOutOfBounds
 		static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfBoundsHook{ "IsNotOutOfBounds", &Offsets::Get_IsNotOutOfBounds, &detourIsNotOutOfBounds };
 

@@ -9,7 +9,7 @@ namespace GamePH {
 		GetModuleFileNameA(GetModuleHandleA(nullptr), exePath, sizeof(exePath));
 
 		DWORD dummy{};
-		DWORD size = GetFileVersionInfoSizeA(exePath, &dummy);
+		const DWORD size = GetFileVersionInfoSizeA(exePath, &dummy);
 		if (!size)
 			return 0;
 
@@ -19,9 +19,7 @@ namespace GamePH {
 
 		VS_FIXEDFILEINFO* fileInfo = nullptr;
 		UINT fileInfoSize = 0;
-		if (!VerQueryValueA(data.data(), "\\", reinterpret_cast<void**>(&fileInfo), &fileInfoSize))
-			return 0;
-		if (fileInfo == nullptr)
+		if (!VerQueryValueA(data.data(), "\\", reinterpret_cast<LPVOID*>(&fileInfo), &fileInfoSize) || !fileInfo)
 			return 0;
 
 		const DWORD major = HIWORD(fileInfo->dwFileVersionMS);
