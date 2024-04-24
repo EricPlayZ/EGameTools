@@ -38,7 +38,13 @@ namespace Utils {
 			MHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour) {}
 
 			void HookLoop() override {
+				timeSpentHooking = Utils::Time::Timer(60000);
+
 				while (true) {
+					if (timeSpentHooking.DidTimePass()) {
+						spdlog::error("Failed hooking function \"{}\" after 60 seconds", name);
+						break;
+					}
 					if (!pGetOffsetFunc)
 						continue;
 
@@ -56,6 +62,8 @@ namespace Utils {
 		private:
 			GetTargetOffsetRetType(*pGetOffsetFunc)() = nullptr;
 			OrigType pDetour = nullptr;
+
+			Utils::Time::Timer timeSpentHooking{ 60000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class VTHook : HookBase {
@@ -63,7 +71,13 @@ namespace Utils {
 			VTHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour, DWORD offset) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour), offset(offset) {}
 
 			void HookLoop() override {
+				timeSpentHooking = Utils::Time::Timer(60000);
+
 				while (true) {
+					if (timeSpentHooking.DidTimePass()) {
+						spdlog::error("Failed hooking function \"{}\" after 60 seconds", name);
+						break;
+					}
 					if (!pGetOffsetFunc)
 						continue;
 
@@ -81,6 +95,8 @@ namespace Utils {
 			GetTargetOffsetRetType(*pGetOffsetFunc)() = nullptr;
 			LPVOID pInstance = nullptr;
 			OrigType pDetour = nullptr;
+
+			Utils::Time::Timer timeSpentHooking{ 60000 };
 
 			DWORD offset = 0x0;
 		};

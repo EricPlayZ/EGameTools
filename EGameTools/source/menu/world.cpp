@@ -9,6 +9,7 @@ namespace Menu {
 	namespace World {
 		float time = 0.0f;
 		static float timeBeforeFreeze = 0.0f;
+		float worldSpeed = 1.0f;
 		float gameSpeed = 1.0f;
 		static float gameSpeedBeforeSlowMo = gameSpeed;
 		KeyBindOption freezeTime{ VK_NONE };
@@ -88,7 +89,7 @@ namespace Menu {
 				if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.009999f))
 					dayNightCycle->SetDaytime(timeBeforeFreeze);
 
-				if (!slowMotion.GetValue() && !slowMotion.HasChanged())
+				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
 					iLevel->TimerSetSpeedUp(gameSpeed);
 				gameSpeed = iLevel->TimerGetSpeedUp();
 			}
@@ -116,7 +117,7 @@ namespace Menu {
 					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx"))
 						iLevel->TimerSetSpeedUp(gameSpeed);
 					else if (iLevel && iLevel->IsLoaded()) {
-						if (!slowMotion.GetValue() && !slowMotion.HasChanged())
+						if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
 							iLevel->TimerSetSpeedUp(gameSpeed);
 						gameSpeed = iLevel->TimerGetSpeedUp();
 					}

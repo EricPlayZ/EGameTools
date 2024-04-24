@@ -4,7 +4,15 @@
 
 namespace GamePH {
 	void FreeCamera::AllowCameraMovement(int mode) {
-		Utils::Memory::CallVT<187>(this, mode);
+		__try {
+			void(*pAllowCameraMovement)(LPVOID pGameDI_PH, int mode) = (decltype(pAllowCameraMovement))Offsets::Get_AllowCameraMovement();
+			if (!pAllowCameraMovement)
+				return;
+
+			pAllowCameraMovement(this, mode);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return;
+		}
 	}
 
 	FreeCamera* FreeCamera::Get() {

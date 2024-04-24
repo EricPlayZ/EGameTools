@@ -1,6 +1,7 @@
 #include <pch.h>
 #include "..\Engine\CGame.h"
 #include "GameDI_PH.h"
+#include "..\offsets.h"
 
 namespace GamePH {
 	float GameDI_PH::GetGameTimeDelta() {
@@ -14,11 +15,16 @@ namespace GamePH {
 			return -1.0f;
 		}
 	}
-	DWORD64 GameDI_PH::GetCurrentGameVersion() {
-		return Utils::Memory::CallVT<228, DWORD64>(this);
-	}
 	void GameDI_PH::TogglePhotoMode(bool doNothing, bool setAsOptionalCamera) {
-		Utils::Memory::CallVT<260>(this, doNothing, setAsOptionalCamera);
+		__try {
+			void(*pTogglePhotoMode)(LPVOID pGameDI_PH, bool doNothing, bool setAsOptionalCamera) = (decltype(pTogglePhotoMode))Offsets::Get_TogglePhotoMode2();
+			if (!pTogglePhotoMode)
+				return;
+
+			pTogglePhotoMode(this, doNothing, setAsOptionalCamera);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return;
+		}
 	}
 
 	GameDI_PH* GameDI_PH::Get() {
