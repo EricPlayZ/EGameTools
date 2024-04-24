@@ -44,6 +44,11 @@ So e.g. 5 months from now, I'd want the latest mod version to support the latest
 Unfortunately, I haven't found a way to do this yet, so I will be setting this aside for some other time. For now, I'll release this compatibility patch!
 
 You should also expect less updates in the future, as I'm going to be pretty busy this year, with my final exam, driving school, and so many other things!
-Thank you everyone for the support <3)" }
+Thank you everyone for the support <3)" },
+		{ "v1.1.3",
+		R"(- Added compatibility with v1.16.0 "Nightmare Mode" update
+- Fixed really fast player speed when executing a slow motion kill, dodging or ground pounding at 1.00x game speed (will still happen at any other game speed unfortunately)
+- Added function hooking timeout for easier debugging
+- Fetch game version using Windows' API instead of using the game's function)" }
 	};
 }
