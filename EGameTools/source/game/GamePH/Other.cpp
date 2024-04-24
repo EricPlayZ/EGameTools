@@ -4,17 +4,36 @@
 #include "gen_TPPModel.h"
 
 namespace GamePH {
-	const DWORD64 GetCurrentGameVersion() {
-		DWORD64(*pGetCurrentGameVersion)() = (decltype(pGetCurrentGameVersion))Offsets::Get_GetCurrentGameVersion();
-		if (!pGetCurrentGameVersion)
+	const DWORD GetCurrentGameVersion() {
+		char exePath[MAX_PATH]{};
+		GetModuleFileNameA(GetModuleHandleA(nullptr), exePath, sizeof(exePath));
+
+		DWORD dummy{};
+		DWORD size = GetFileVersionInfoSizeA(exePath, &dummy);
+		if (!size)
 			return 0;
 
-		return pGetCurrentGameVersion();
+		std::vector<BYTE> data(size);
+		if (!GetFileVersionInfoA(exePath, 0, size, data.data()))
+			return 0;
+
+		VS_FIXEDFILEINFO* fileInfo = nullptr;
+		UINT fileInfoSize = 0;
+		if (!VerQueryValueA(data.data(), "\\", reinterpret_cast<void**>(&fileInfo), &fileInfoSize))
+			return 0;
+		if (fileInfo == nullptr)
+			return 0;
+
+		const DWORD major = HIWORD(fileInfo->dwFileVersionMS);
+		const DWORD minor = LOWORD(fileInfo->dwFileVersionMS);
+		const DWORD patch = HIWORD(fileInfo->dwFileVersionLS);
+
+		return major * 10000 + minor * 100 + patch;
 	}
-	const std::string GameVerToStr(DWORD64 version) {
-		DWORD64 major = version / 10000;
-		DWORD64 minor = (version / 100) % 100;
-		DWORD64 patch = version % 100;
+	const std::string GameVerToStr(DWORD version) {
+		DWORD major = version / 10000;
+		DWORD minor = (version / 100) % 100;
+		DWORD patch = version % 100;
 
 		return std::string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch));
 	}

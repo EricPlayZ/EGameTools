@@ -40,6 +40,8 @@ namespace Core {
 	static bool createdConfigThread = false;
 
 	int rendererAPI = 0;
+	DWORD gameVer = 0;
+
 	static void LoopHookRenderer() {
 		while (true) {
 			if (exiting)
@@ -159,20 +161,6 @@ namespace Core {
 		}
 	}
 
-	DWORD64 gameVer = 0;
-	static void LoopGetGameVer() {
-		while (true) {
-			if (exiting)
-				return;
-
-			gameVer = GamePH::GetCurrentGameVersion();
-			if (!gameVer)
-				continue;
-
-			break;
-		}
-	}
-
 	void OnPostUpdate() {
 		if (!createdConfigThread) {
 			std::thread(Config::ConfigLoop).detach();
@@ -212,6 +200,20 @@ namespace Core {
 
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}*/
+	static void GameVersionCheck() {
+		try {
+			gameVer = GamePH::GetCurrentGameVersion();
+		} catch (const std::exception& e) {
+			spdlog::error("Failed to get game version, EXCEPTION: {}", e.what());
+			spdlog::error("This shouldn't happen! Contact developer.");
+			return;
+		}
+
+		spdlog::info("Got game version: v{}", GamePH::GameVerToStr(gameVer));
+		if (Core::gameVer != GAME_VER_COMPAT) {
+			spdlog::error("Please note that your game version has not been officially tested with this mod, therefore expect bugs, glitches or the mod to completely stop working. If so, please {}", Core::gameVer > GAME_VER_COMPAT ? "wait for a new patch." : "upgrade your game version to one that the mod supports.");
+		}
+	}
 	DWORD64 WINAPI MainThread(HMODULE hModule) {
 		EnableConsole();
 		InitLogger();
@@ -230,13 +232,7 @@ namespace Core {
 		spdlog::info("Initialized MinHook");
 
 		spdlog::warn("Getting game version");
-		std::thread([]() {
-			LoopGetGameVer();
-			spdlog::info("Got game version: v{}", GamePH::GameVerToStr(gameVer));
-			if (Core::gameVer != GAME_VER_COMPAT) {
-				spdlog::error("Please note that your game version has not been officially tested with this mod, therefore expect bugs, glitches or the mod to completely stop working. If so, please {}", Core::gameVer > GAME_VER_COMPAT ? "wait for a new patch." : "upgrade your game version to one that the mod supports.");
-			}
-		}).detach();
+		GameVersionCheck();
 
 		spdlog::warn("Hooking DX11/DX12 renderer");
 		std::thread([]() {

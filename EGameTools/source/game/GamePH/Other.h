@@ -3,8 +3,8 @@
 #include <basetsd.h>
 
 namespace GamePH {
-	extern const DWORD64 GetCurrentGameVersion();
-	extern const std::string GameVerToStr(DWORD64 version);
+	extern const DWORD GetCurrentGameVersion();
+	extern const std::string GameVerToStr(DWORD version);
 	extern const std::string GetCurrentGameVersionStr();
 	extern void ShowTPPModel(bool showTPPModel);
 	extern bool ReloadJumps();
