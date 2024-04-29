@@ -3,7 +3,7 @@
 namespace Engine {
 	namespace GameSpeedHandler {
 		float speed = 1.0;
-		bool initialised = false;
+		bool initialized = false;
 
 #pragma region GetTickCount64Hook
 		ULONGLONG GTC64_BaseTime = 0;
@@ -16,7 +16,7 @@ namespace Engine {
 		static Utils::Hook::MHook<LPVOID, ULONGLONG(WINAPI*)()> GetTickCount64Hook{ "GetTickCount64", &GetGetTickCount64, &detourGetTickCount64 };
 
 		ULONGLONG WINAPI detourGetTickCount64() {
-			return GTC64_OffsetTime + ((GetTickCount64Hook.pOriginal() - GTC64_BaseTime) * speed);
+			return GTC64_OffsetTime + ((GetTickCount64Hook.pOriginal() - GTC64_BaseTime) * static_cast<double>(speed));
 		}
 #pragma endregion
 
@@ -33,24 +33,27 @@ namespace Engine {
 		BOOL WINAPI detourQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount) {
 			LARGE_INTEGER x;
 			QueryPerformanceCounterHook.pOriginal(&x);
-			lpPerformanceCount->QuadPart = QPC_OffsetTime.QuadPart + ((x.QuadPart - QPC_BaseTime.QuadPart) * speed);
+			lpPerformanceCount->QuadPart = QPC_OffsetTime.QuadPart + ((x.QuadPart - QPC_BaseTime.QuadPart) * static_cast<double>(speed));
 
 			return true;
 		}
 #pragma endregion
 
 		void Setup() {
+			if (!GetTickCount64Hook.pOriginal || !QueryPerformanceCounterHook.pOriginal || initialized)
+				return;
+
 			GTC64_BaseTime = GetTickCount64Hook.pOriginal();
 			GTC64_OffsetTime = GTC64_BaseTime;
 
 			QueryPerformanceCounterHook.pOriginal(&QPC_BaseTime);
 			QPC_OffsetTime.QuadPart = QPC_BaseTime.QuadPart;
 
-			initialised = true;
+			initialized = true;
 		}
 
 		void SetGameSpeed(float gameSpeed) {
-			if (initialised) {
+			if (initialized) {
 				GTC64_OffsetTime = detourGetTickCount64();
 				GTC64_BaseTime = GetTickCount64Hook.pOriginal();
 

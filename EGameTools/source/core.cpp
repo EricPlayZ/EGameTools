@@ -248,6 +248,13 @@ namespace Core {
 			}).detach();
 		}
 
+		std::thread([]() {
+			while (!Engine::GameSpeedHandler::initialized)
+				Engine::GameSpeedHandler::Setup();
+
+			spdlog::info("GameSpeedHandler has been set up successfully!");
+		}).detach();
+
 		const HANDLE proc = GetCurrentProcess();
 		WaitForSingleObject(proc, INFINITE);
 

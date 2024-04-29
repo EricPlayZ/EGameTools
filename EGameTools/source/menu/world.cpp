@@ -10,8 +10,6 @@ namespace Menu {
 		float time = 0.0f;
 		static float timeBeforeFreeze = 0.0f;
 		float gameSpeed = 1.0f;
-		static float actualGameSpeed = gameSpeed;
-		static float gameSpeedBeforeSlowMo = gameSpeed;
 		KeyBindOption freezeTime{ VK_NONE };
 		KeyBindOption slowMotion{ '4' };
 		float slowMotionSpeed = 0.4f;
@@ -54,29 +52,25 @@ namespace Menu {
 			}
 
 			static bool slowMoHasChanged = true;
+			static float initialGameSpeed = Engine::GameSpeedHandler::speed;
 			if (slowMotion.HasChangedTo(false)) {
-				static float gameSpeedAfterChange = 0.0f;
 				if (slowMoHasChanged)
-					gameSpeedAfterChange = actualGameSpeed;
+					initialGameSpeed = Engine::GameSpeedHandler::speed;
 
-				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, gameSpeedBeforeSlowMo, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseInOutSine);
-				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", initialGameSpeed, gameSpeed, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseInOutSine);
+				Engine::GameSpeedHandler::SetGameSpeed(slowMotionSpeedLerp);
 				slowMoHasChanged = false;
 
-				if (Utils::Values::are_samef(actualGameSpeed, gameSpeedBeforeSlowMo)) {
+				if (Utils::Values::are_samef(Engine::GameSpeedHandler::speed, gameSpeed)) {
 					slowMoHasChanged = true;
 					slowMotion.SetPrevValue(false);
 				}
 			} else if (slowMotion.GetValue()) {
-				static float gameSpeedAfterChange = 0.0f;
-				if (slowMotion.HasChanged()) {
-					if (slowMoHasChanged)
-						gameSpeedBeforeSlowMo = actualGameSpeed;
-					gameSpeedAfterChange = actualGameSpeed;
-				}
+				if (slowMotion.HasChanged())
+					initialGameSpeed = Engine::GameSpeedHandler::speed;
 
-				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseInOutSine);
-				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", initialGameSpeed, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseInOutSine);
+				Engine::GameSpeedHandler::SetGameSpeed(slowMotionSpeedLerp);
 
 				if (slowMotion.HasChanged()) {
 					slowMoHasChanged = true;
@@ -88,10 +82,6 @@ namespace Menu {
 				time = dayNightCycle->time1 * 24.0f;
 				if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.009999f))
 					dayNightCycle->SetDaytime(timeBeforeFreeze);
-
-				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
-					iLevel->TimerSetSpeedUp(gameSpeed);
-				actualGameSpeed = iLevel->TimerGetSpeedUp();
 			}
 		}
 		void Tab::Render() {
@@ -115,12 +105,7 @@ namespace Menu {
 
 				ImGui::BeginDisabled(slowMotion.GetValue()); {
 					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx"))
-						iLevel->TimerSetSpeedUp(gameSpeed);
-					else if (iLevel && iLevel->IsLoaded()) {
-						if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
-							iLevel->TimerSetSpeedUp(gameSpeed);
-						actualGameSpeed = iLevel->TimerGetSpeedUp();
-					}
+						Engine::GameSpeedHandler::SetGameSpeed(gameSpeed);
 					ImGui::EndDisabled();
 				}
 
