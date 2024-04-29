@@ -62,7 +62,7 @@ namespace Menu {
             ImGui::SliderFloat("Menu Scale", &scale, 1.0f, 2.5f, "%.1f%%", ImGuiSliderFlags_AlwaysClamp);
             if (Core::gameVer != GAME_VER_COMPAT) {
                 ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "Incompatible game version detected!");
-                ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "Compatible game version: v%s", GamePH::GameVerToStr(GAME_VER_COMPAT));
+                ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "Compatible game version: v%s", GamePH::GameVerToStr(GAME_VER_COMPAT).c_str());
             }
             ImGui::End();
         }

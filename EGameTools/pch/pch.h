@@ -67,6 +67,7 @@
 #include <MinHook.h>
 
 #include "..\source\config\ini.h"
+#include "..\source\game\Engine\GameSpeedHandler.h"
 #include "..\source\game\Vector3.h"
 #include "..\source\game\buffer.h"
 #include "..\source\utils\files.h"

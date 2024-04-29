@@ -30,6 +30,7 @@
     <ClCompile Include="source\game\Engine\CoPhysicsProperty.cpp" />
     <ClCompile Include="source\game\Engine\CVideoSettings.cpp" />
     <ClCompile Include="source\game\Engine\engine_hooks.cpp" />
+    <ClCompile Include="source\game\Engine\GameSpeedHandler.cpp" />
     <ClCompile Include="source\game\GamePH\DayNightCycle.cpp" />
     <ClCompile Include="source\game\GamePH\FreeCamera.cpp" />
     <ClCompile Include="source\game\GamePH\GameDI_PH.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="source\game\Engine\CoPhysicsProperty.h" />
     <ClInclude Include="source\game\Engine\CVideoSettings.h" />
     <ClInclude Include="source\game\Engine\engine_hooks.h" />
+    <ClInclude Include="source\game\Engine\GameSpeedHandler.h" />
     <ClInclude Include="source\game\GamePH\CoBaseCameraProxy.h" />
     <ClInclude Include="source\game\GamePH\DayNightCycle.h" />
     <ClInclude Include="source\game\GamePH\FreeCamera.h" />

@@ -171,6 +171,7 @@ namespace GamePH {
 			static bool prevFreeCam = Menu::Camera::freeCam.GetPrevValue();
 			prevFreeCam = Menu::Camera::freeCam.GetPrevValue();
 			if (!Menu::Camera::freeCam.GetValue() && prevFreeCam) {
+				Menu::Camera::freeCam.SetPrevValue(false);
 				prevFreeCam = false;
 				return 0;
 			}

@@ -9,8 +9,8 @@ namespace Menu {
 	namespace World {
 		float time = 0.0f;
 		static float timeBeforeFreeze = 0.0f;
-		float worldSpeed = 1.0f;
 		float gameSpeed = 1.0f;
+		static float actualGameSpeed = gameSpeed;
 		static float gameSpeedBeforeSlowMo = gameSpeed;
 		KeyBindOption freezeTime{ VK_NONE };
 		KeyBindOption slowMotion{ '4' };
@@ -57,13 +57,13 @@ namespace Menu {
 			if (slowMotion.HasChangedTo(false)) {
 				static float gameSpeedAfterChange = 0.0f;
 				if (slowMoHasChanged)
-					gameSpeedAfterChange = gameSpeed;
+					gameSpeedAfterChange = actualGameSpeed;
 
 				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, gameSpeedBeforeSlowMo, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseInOutSine);
 				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
 				slowMoHasChanged = false;
 
-				if (Utils::Values::are_samef(gameSpeed, gameSpeedBeforeSlowMo)) {
+				if (Utils::Values::are_samef(actualGameSpeed, gameSpeedBeforeSlowMo)) {
 					slowMoHasChanged = true;
 					slowMotion.SetPrevValue(false);
 				}
@@ -71,8 +71,8 @@ namespace Menu {
 				static float gameSpeedAfterChange = 0.0f;
 				if (slowMotion.HasChanged()) {
 					if (slowMoHasChanged)
-						gameSpeedBeforeSlowMo = gameSpeed;
-					gameSpeedAfterChange = gameSpeed;
+						gameSpeedBeforeSlowMo = actualGameSpeed;
+					gameSpeedAfterChange = actualGameSpeed;
 				}
 
 				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseInOutSine);
@@ -91,7 +91,7 @@ namespace Menu {
 
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
 					iLevel->TimerSetSpeedUp(gameSpeed);
-				gameSpeed = iLevel->TimerGetSpeedUp();
+				actualGameSpeed = iLevel->TimerGetSpeedUp();
 			}
 		}
 		void Tab::Render() {
@@ -119,7 +119,7 @@ namespace Menu {
 					else if (iLevel && iLevel->IsLoaded()) {
 						if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
 							iLevel->TimerSetSpeedUp(gameSpeed);
-						gameSpeed = iLevel->TimerGetSpeedUp();
+						actualGameSpeed = iLevel->TimerGetSpeedUp();
 					}
 					ImGui::EndDisabled();
 				}

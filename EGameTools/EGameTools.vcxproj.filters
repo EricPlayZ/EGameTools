@@ -191,6 +191,9 @@
     <ClCompile Include="source\menu\init.cpp">
       <Filter>menu</Filter>
     </ClCompile>
+    <ClCompile Include="source\game\Engine\GameSpeedHandler.cpp">
+      <Filter>game\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -404,6 +407,9 @@
     </ClInclude>
     <ClInclude Include="source\menu\init.h">
       <Filter>menu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\game\Engine\GameSpeedHandler.h">
+      <Filter>game\Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

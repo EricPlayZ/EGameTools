@@ -49,6 +49,10 @@ Thank you everyone for the support <3)" },
 		R"(- Added compatibility with v1.16.0 "Nightmare Mode" update
 - Fixed really fast player speed when executing a slow motion kill, dodging or ground pounding at 1.00x game speed (will still happen at any other game speed unfortunately)
 - Added function hooking timeout for easier debugging
-- Fetch game version using Windows' API instead of using the game's function)" }
+- Fetch game version using Windows' API instead of using the game's function)" },
+		{ "v1.1.4",
+		R"(- Added compatibility with v1.16.1 hotfix update
+- Fixed God Mode staying enabled after toggling FreeCam off
+- Fixed player variables saving and loading using old version of player_variables.scr (which makes Max Health drop to negative infinite))" }
 	};
 }
