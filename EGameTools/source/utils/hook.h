@@ -38,6 +38,8 @@ namespace Utils {
 			MHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour) {}
 
 			void HookLoop() override {
+				if (pOriginal)
+					return;
 				timeSpentHooking = Utils::Time::Timer(60000);
 
 				while (true) {
@@ -71,6 +73,8 @@ namespace Utils {
 			VTHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), OrigType pDetour, DWORD offset) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), pDetour(pDetour), offset(offset) {}
 
 			void HookLoop() override {
+				if (pOriginal)
+					return;
 				timeSpentHooking = Utils::Time::Timer(60000);
 
 				while (true) {

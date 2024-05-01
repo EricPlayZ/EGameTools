@@ -10,6 +10,8 @@ namespace Menu {
 		float time = 0.0f;
 		static float timeBeforeFreeze = 0.0f;
 		float gameSpeed = 1.0f;
+		static float actualGameSpeed = gameSpeed;
+		static float gameSpeedBeforeSlowMo = gameSpeed;
 		KeyBindOption freezeTime{ VK_NONE };
 		KeyBindOption slowMotion{ '4' };
 		float slowMotionSpeed = 0.4f;
@@ -52,25 +54,29 @@ namespace Menu {
 			}
 
 			static bool slowMoHasChanged = true;
-			static float initialGameSpeed = Engine::GameSpeedHandler::speed;
 			if (slowMotion.HasChangedTo(false)) {
+				static float gameSpeedAfterChange = 0.0f;
 				if (slowMoHasChanged)
-					initialGameSpeed = Engine::GameSpeedHandler::speed;
+					gameSpeedAfterChange = actualGameSpeed;
 
-				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", initialGameSpeed, gameSpeed, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseInOutSine);
-				Engine::GameSpeedHandler::SetGameSpeed(slowMotionSpeedLerp);
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, gameSpeedBeforeSlowMo, slowMotionTransitionTime, slowMoHasChanged, &ImGui::AnimEaseInOutSine);
+				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
 				slowMoHasChanged = false;
 
-				if (Utils::Values::are_samef(Engine::GameSpeedHandler::speed, gameSpeed)) {
+				if (Utils::Values::are_samef(actualGameSpeed, gameSpeedBeforeSlowMo)) {
 					slowMoHasChanged = true;
 					slowMotion.SetPrevValue(false);
 				}
 			} else if (slowMotion.GetValue()) {
-				if (slowMotion.HasChanged())
-					initialGameSpeed = Engine::GameSpeedHandler::speed;
+				static float gameSpeedAfterChange = 0.0f;
+				if (slowMotion.HasChanged()) {
+					if (slowMoHasChanged)
+						gameSpeedBeforeSlowMo = actualGameSpeed;
+					gameSpeedAfterChange = actualGameSpeed;
+				}
 
-				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", initialGameSpeed, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseInOutSine);
-				Engine::GameSpeedHandler::SetGameSpeed(slowMotionSpeedLerp);
+				slowMotionSpeedLerp = ImGui::AnimateLerp("slowMotionSpeedLerp", gameSpeedAfterChange, slowMotionSpeed, slowMotionTransitionTime, slowMotion.HasChanged(), &ImGui::AnimEaseInOutSine);
+				iLevel->TimerSetSpeedUp(slowMotionSpeedLerp);
 
 				if (slowMotion.HasChanged()) {
 					slowMoHasChanged = true;
@@ -82,13 +88,18 @@ namespace Menu {
 				time = dayNightCycle->time1 * 24.0f;
 				if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.009999f))
 					dayNightCycle->SetDaytime(timeBeforeFreeze);
+
+				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
+					iLevel->TimerSetSpeedUp(gameSpeed);
+				actualGameSpeed = iLevel->TimerGetSpeedUp();
 			}
 		}
 		void Tab::Render() {
 			GamePH::DayNightCycle* dayNightCycle = GamePH::DayNightCycle::Get();
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			ImGui::SeparatorText("Time##World");
-			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle); {
+			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle);
+			{
 				static bool timeSliderBeingPressed = false;
 				if (ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
 					timeSliderBeingPressed = true;
@@ -103,9 +114,15 @@ namespace Menu {
 						dayNightCycle->SetDaytime(timeBeforeFreeze);
 				}
 
-				ImGui::BeginDisabled(slowMotion.GetValue()); {
+				ImGui::BeginDisabled(slowMotion.GetValue());
+				{
 					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx"))
-						Engine::GameSpeedHandler::SetGameSpeed(gameSpeed);
+						iLevel->TimerSetSpeedUp(gameSpeed);
+					else if (iLevel && iLevel->IsLoaded()) {
+						if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
+							iLevel->TimerSetSpeedUp(gameSpeed);
+						actualGameSpeed = iLevel->TimerGetSpeedUp();
+					}
 					ImGui::EndDisabled();
 				}
 
@@ -122,7 +139,8 @@ namespace Menu {
 			const bool weatherDisabledFlag = !iLevel || !iLevel->IsLoaded() || !timeWeatherSystem;
 
 			ImGui::SeparatorText("Weather##World");
-			ImGui::BeginDisabled(weatherDisabledFlag); {
+			ImGui::BeginDisabled(weatherDisabledFlag);
+			{
 				if (ImGui::Combo("Weather", reinterpret_cast<int*>(&weather), weatherItems, IM_ARRAYSIZE(weatherItems)) && timeWeatherSystem)
 					timeWeatherSystem->SetForcedWeather(static_cast<GamePH::TimeWeather::EWeather::TYPE>(weather - 1));
 				ImGui::Text("Setting weather to: %s", !weatherDisabledFlag ? weatherItems[weather] : "");

@@ -220,25 +220,12 @@ namespace Core {
 
 		//AddVectoredExceptionHandler(0, &VectoredExceptionHandler);
 
-		spdlog::warn("Initializing config");
-		Config::InitConfig();
-		CreateSymlinkForLoadingFiles();
-		spdlog::warn("Sorting Player Variables");
-		GamePH::PlayerVariables::SortPlayerVars();
-		spdlog::info("Player Variables sorted");
-
-		spdlog::warn("Initializing MinHook");
-		MH_Initialize();
-		spdlog::info("Initialized MinHook");
-
 		spdlog::warn("Getting game version");
 		GameVersionCheck();
 
-		spdlog::warn("Hooking DX11/DX12 renderer");
-		std::thread([]() {
-			LoopHookRenderer();
-			spdlog::info("Hooked \"DX11/DX12 renderer\"!");
-		}).detach();
+		spdlog::warn("Initializing config");
+		Config::InitConfig();
+		CreateSymlinkForLoadingFiles();
 
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
 			spdlog::warn("Hooking \"{}\"", hook->name.data());
@@ -248,11 +235,14 @@ namespace Core {
 			}).detach();
 		}
 
-		std::thread([]() {
-			while (!Engine::GameSpeedHandler::initialized)
-				Engine::GameSpeedHandler::Setup();
+		spdlog::warn("Sorting Player Variables");
+		GamePH::PlayerVariables::SortPlayerVars();
+		spdlog::info("Player Variables sorted");
 
-			spdlog::info("GameSpeedHandler has been set up successfully!");
+		spdlog::warn("Hooking DX11/DX12 renderer");
+		std::thread([]() {
+			LoopHookRenderer();
+			spdlog::info("Hooked \"DX11/DX12 renderer\"!");
 		}).detach();
 
 		const HANDLE proc = GetCurrentProcess();

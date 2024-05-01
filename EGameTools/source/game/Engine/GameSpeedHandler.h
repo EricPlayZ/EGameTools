@@ -4,7 +4,7 @@ namespace Engine {
 		extern float speed;
 		extern bool initialized;
 
-		void Setup();
-		void SetGameSpeed(float gameSpeed);
+		/*void Setup();
+		void SetGameSpeed(float gameSpeed);*/
 	}
 }

@@ -5,7 +5,7 @@ namespace Engine {
 		float speed = 1.0;
 		bool initialized = false;
 
-#pragma region GetTickCount64Hook
+/*#pragma region GetTickCount64Hook
 		ULONGLONG GTC64_BaseTime = 0;
 		ULONGLONG GTC64_OffsetTime = 0;
 
@@ -62,6 +62,6 @@ namespace Engine {
 			}
 
 			speed = gameSpeed;
-		}
+		}*/
 	}
 }

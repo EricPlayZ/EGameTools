@@ -53,6 +53,8 @@ Thank you everyone for the support <3)" },
 		{ "v1.1.4",
 		R"(- Added compatibility with v1.16.1 hotfix update
 - Fixed God Mode staying enabled after toggling FreeCam off
-- Fixed player variables saving and loading using old version of player_variables.scr (which makes Max Health drop to negative infinite))" }
+- Fixed player variables saving and loading using old version of player_variables.scr (which makes Max Health drop to negative infinite)
+- Fixed long paths to mods inside UserModFiles causing a game crash or causing the mods to not load at all
+- Added the possibility of adding more than 8 paks (up to 200 paks!) in "ph\source" (e.g. data8.pak, data9.pak, data10.pak, etc.))" }
 	};
 }

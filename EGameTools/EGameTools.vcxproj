@@ -222,7 +222,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetExt>.asi</TargetExt>
     <TargetName>EGameTools</TargetName>
-    <GenerateManifest>false</GenerateManifest>
+    <GenerateManifest>true</GenerateManifest>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>

@@ -49,6 +49,7 @@ struct Offsets {
 
 	// Functions
 	AddOffset(ReadVideoSettings, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B D9 45 84 C0", Utils::SigScan::PatternType::Address, LPVOID)
+	AddOffset(MountDataPaks, "engine_x64_rwdi.dll", "4C 8B DC 4D 89 4B ?? 45 89 43 ?? 89 54 24 ?? 49 89 4B", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(MoveCameraFromForwardUpPos, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 49 8B C1 48 8B F9", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(CalculateFreeCamCollision, "gamedll_ph_x64_rwdi.dll", "48 8B C4 55 53 56 57 48 8D A8 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 83 B9", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(AllowCameraMovement, "gamedll_ph_x64_rwdi.dll", "89 91 ?? ?? ?? ?? C3 CC CC CC CC CC CC CC CC CC 48 8B C4 55 56", Utils::SigScan::PatternType::Address, LPVOID)

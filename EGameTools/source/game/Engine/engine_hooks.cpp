@@ -67,6 +67,8 @@ namespace Engine {
 #pragma endregion
 
 #pragma region fs::open
+		static const std::string userModFilesFullPath = "\\\\?\\" + std::filesystem::absolute("..\\..\\..\\source\\data\\EGameTools\\UserModFiles").string();
+
 		static std::vector<std::string> cachedUserModDirs{};
 		static Utils::Time::Timer timeSinceCache{ 0 };
 		static void CacheUserModDirs() {
@@ -75,15 +77,18 @@ namespace Engine {
 			if (!cachedUserModDirs.empty())
 				cachedUserModDirs.clear();
 
-			const char* userModFilesPath = "..\\..\\..\\source\\data\\EGameTools\\UserModFiles";
+			cachedUserModDirs.push_back(userModFilesFullPath);
+			try {
+				const auto rdi = std::filesystem::recursive_directory_iterator(userModFilesFullPath);
+				for (auto entry = std::filesystem::begin(rdi); entry != std::filesystem::end(rdi); ++entry) {
+					const std::filesystem::path pathToDir = entry->path();
+					if (!std::filesystem::is_directory(pathToDir))
+						continue;
 
-			cachedUserModDirs.push_back(userModFilesPath);
-			for (const auto& entry : std::filesystem::recursive_directory_iterator(userModFilesPath)) {
-				const std::filesystem::path pathToDir = entry.path();
-				if (!std::filesystem::is_directory(pathToDir))
-					continue;
-
-				cachedUserModDirs.push_back(pathToDir.string());
+					cachedUserModDirs.push_back(pathToDir.string());
+				}
+			} catch (const std::exception& e) {
+				spdlog::error("Exception thrown while caching user mod directories: {}", e.what());
 			}
 		}
 
@@ -91,7 +96,7 @@ namespace Engine {
 			return Utils::Memory::GetProcAddr("filesystem_x64_rwdi.dll", "?open@fs@@YAPEAUSFsFile@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W45FFSOpenFlags@@@Z");
 		}
 		static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3);
-		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ "fs::open", &GetFsOpen, &detourFsOpen };
+		Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook{ "fs::open", &GetFsOpen, &detourFsOpen };
 
 		static DWORD64 detourFsOpen(DWORD64 file, DWORD a2, DWORD a3) {
 			const DWORD64 firstByte = (file >> 56) & 0xFF; // get first byte of addr
@@ -107,28 +112,151 @@ namespace Engine {
 			}
 
 			std::string finalPath{};
-
 			try {
 				for (const auto& entry : cachedUserModDirs) {
 					finalPath = entry + "\\" + fileName;
 					if (!std::filesystem::exists(finalPath))
 						continue;
-
-					const std::string finalPath2 = std::filesystem::absolute(finalPath).string();
-					const char* filePath2 = finalPath2.c_str();
+					
+					finalPath.replace(0, userModFilesFullPath.size() + 1, ""); // replace entire path until mod folder with nothing
+					const char* filePath2 = finalPath.c_str();
 					spdlog::warn("Loading user mod file \"{}\"", finalPath.c_str());
 
 					const DWORD64 finalAddr = firstByte != 0x0 ? (reinterpret_cast<DWORD64>(filePath2) | (firstByte << 56)) : reinterpret_cast<DWORD64>(filePath2); // restores first byte of addr if first byte was not 0
 
 					const DWORD64 result = FsOpenHook.pOriginal(finalAddr, a2, a3);
-					if (!result)
-						spdlog::error("fs::open returned 0! Something went wrong with loading user mod file \"{}\"!", finalPath.c_str());
+					if (!result) {
+						spdlog::error("fs::open returned 0! Something went wrong with loading user mod file \"{}\"!\nPlease make sure the path to the file is no longer than 260 characters!", finalPath.c_str());
+					}
 					return result;
 				}
 			} catch (const std::exception& e) {
 				spdlog::error("Exception thrown while loading user mod file \"{}\": {}", finalPath.c_str(), e.what());
 			}
 			return FsOpenHook.pOriginal(file, a2, a3);
+		}
+#pragma endregion
+
+/*#pragma region FsNativeOpen
+		static LPVOID GetFsNativeOpen() {
+			return Utils::Memory::GetProcAddr("filesystem_x64_rwdi.dll", "?open@native@fs@@YAPEAUSFsFile@@PEAVCFsMount@@V?$string_const@D@ttl@@W4TYPE@EFSMode@@W47FFSOpenFlags@@@Z");
+		}
+		static DWORD64 detourFsNativeOpen(DWORD64 a1, DWORD64 a2, UINT a3, UINT a4);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD64, UINT, UINT)> FsNativeOpenHook{ "FsNativeOpen", &GetFsNativeOpen, &detourFsNativeOpen };
+
+		static DWORD64 detourFsNativeOpen(DWORD64 a1, DWORD64 a2, UINT a3, UINT a4) {
+			return FsNativeOpenHook.pOriginal(a1, a2, a3, a4);
+		}
+#pragma endregion
+
+#pragma region LoadDataPaks
+		struct CPath {
+		public:
+			union {
+				const char* gamePath;
+				buffer<0x8, const char*> pakPath;
+				buffer<0x10, const char*> fullPakPath;
+			};
+		};
+		static LPVOID GetLoadDataPaks() {
+			return reinterpret_cast<LPVOID>(reinterpret_cast<DWORD64>(GetModuleHandleA("filesystem_x64_rwdi.dll")) + 0x29580);
+		}
+		static bool detourLoadDataPaks(DWORD64 a1, DWORD64 a2, DWORD64 a3);
+		static Utils::Hook::MHook<LPVOID, bool(*)(DWORD64, DWORD64, DWORD64)> LoadDataPaksHook{ "LoadDataPaks", &GetLoadDataPaks, &detourLoadDataPaks };
+
+		static bool detourLoadDataPaks(DWORD64 a1, DWORD64 a2, DWORD64 a3) {
+			CPath* cPath = reinterpret_cast<CPath*>(a2);
+			if ((cPath->fullPakPath & 0x1FFFFFFFFFFFFFFF) != 0) {
+				const DWORD64 firstByte = (cPath->fullPakPath >> 56) & 0xFF; // get first byte of addr
+				std::string gamePath = reinterpret_cast<const char*>(reinterpret_cast<DWORD64>(cPath->gamePath) & 0x1FFFFFFFFFFFFFFF);
+				DWORD64 origPakPath = reinterpret_cast<DWORD64>(const_cast<char*>(cPath->pakPath.data));
+				std::string pakPath = reinterpret_cast<const char*>(cPath->pakPath & 0x1FFFFFFFFFFFFFFF);
+				DWORD64 origFullPakPath = reinterpret_cast<DWORD64>(const_cast<char*>(cPath->fullPakPath.data));
+				std::string fullPakPath = reinterpret_cast<const char*>(cPath->fullPakPath & 0x1FFFFFFFFFFFFFFF);
+
+				if (pakPath == "ph/source/data0.pak") {
+					pakPath = "ph/source/data/EGameTools/UserModFiles/data8.pak";
+					const char* pakPathCStr = pakPath.c_str();
+					fullPakPath.replace(gamePath.size() + 1, fullPakPath.size(), "ph/source/data/EGameTools/UserModFiles/data8.pak");
+					const char* fullPakPathCStr = fullPakPath.c_str();
+
+					const DWORD64 finalAddrPakPath = firstByte != 0x0 ? (reinterpret_cast<DWORD64>(pakPathCStr) | (firstByte << 56)) : reinterpret_cast<DWORD64>(pakPathCStr);
+					const DWORD64 finalAddrFullPakPath= firstByte != 0x0 ? (reinterpret_cast<DWORD64>(fullPakPathCStr) | (firstByte << 56)) : reinterpret_cast<DWORD64>(fullPakPathCStr);
+
+					cPath->pakPath = reinterpret_cast<const char*>(finalAddrPakPath);
+					cPath->fullPakPath = reinterpret_cast<const char*>(finalAddrFullPakPath);
+					bool ret = LoadDataPaksHook.pOriginal(a1, a2, a3);
+					cPath->pakPath = reinterpret_cast<const char*>(origPakPath);
+					cPath->fullPakPath = reinterpret_cast<const char*>(origFullPakPath);
+				}
+
+				int i = 0;
+			}
+			
+			return LoadDataPaksHook.pOriginal(a1, a2, a3);
+		}
+#pragma endregion*/
+
+#pragma region MountDataPaks
+		static DWORD64 detourMountDataPaks(DWORD64 a1, UINT a2, UINT a3, DWORD64* a4, DWORD64(*a5)(DWORD64, DWORD, DWORD64, char*, int), INT16 a6, DWORD64 a7, UINT a8);
+		Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, UINT, UINT, DWORD64*, DWORD64(*)(DWORD64, DWORD, DWORD64, char*, int), INT16, DWORD64, UINT)> MountDataPaksHook{ "MountDataPaks", &Offsets::Get_MountDataPaks, &detourMountDataPaks };
+
+		static DWORD64 detourMountDataPaks(DWORD64 a1, UINT a2, UINT a3, DWORD64* a4, DWORD64(*a5)(DWORD64, DWORD, DWORD64, char*, int), INT16 a6, DWORD64 a7, UINT a8) {
+			return MountDataPaksHook.pOriginal(a1, a2, a3, a4, a5, a6, a7, 200);
+		}
+#pragma endregion
+
+#pragma region FsCalcFileCrc
+		static LPVOID GetFsCalcFileCrc() {
+			return Utils::Memory::GetProcAddr("filesystem_x64_rwdi.dll", "?calc_file_crc@fs@@YA_NAEAUcrc_calc_args@1@@Z");
+		}
+		static bool detourFsCalcFileCrc(LPVOID instance, LPVOID crcCalcArgs);
+		Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, LPVOID)> FsCalcFileCrcHook{ "FsCalcFileCrc", &GetFsCalcFileCrc, &detourFsCalcFileCrc };
+
+		static bool detourFsCalcFileCrc(LPVOID instance, LPVOID crcCalcArgs) {
+			return true;
+		}
+#pragma endregion
+
+#pragma region FsCheckZipCrc
+		static LPVOID GetFsCheckZipCrc() {
+			return Utils::Memory::GetProcAddr("filesystem_x64_rwdi.dll", "?check_zip_crc@izipped_buffer_file@fs@@QEAA_NXZ");
+		}
+		static bool detourFsCheckZipCrc(LPVOID instance);
+		Utils::Hook::MHook<LPVOID, bool(*)(LPVOID)> FsCheckZipCrcHook{ "FsCheckZipCrc", &GetFsCheckZipCrc, &detourFsCheckZipCrc };
+
+		static bool detourFsCheckZipCrc(LPVOID instance) {
+			return true;
+		}
+#pragma endregion
+
+#pragma region AuthenticateDataAddNewFile
+		static LPVOID GetAuthenticateDataAddNewFile() {
+			return Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?AddNewFile@Results@AuthenticateData@@QEAAAEAVFile@12@XZ");
+		}
+		static void AuthenticateDataResultsClear(LPVOID instance) {
+			void(*func)(LPVOID instance) = reinterpret_cast<decltype(func)>(Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?Clear@Results@AuthenticateData@@QEAAXXZ"));
+			func(instance);
+		}
+		static LPVOID detourAuthenticateDataAddNewFile(LPVOID instance);
+		Utils::Hook::MHook<LPVOID, LPVOID(*)(LPVOID)> AuthenticateDataAddNewFileHook{ "AuthenticateDataAddNewFile", &GetAuthenticateDataAddNewFile, &detourAuthenticateDataAddNewFile };
+
+		static LPVOID detourAuthenticateDataAddNewFile(LPVOID instance) {
+			LPVOID result = AuthenticateDataAddNewFileHook.pOriginal(instance);
+			AuthenticateDataResultsClear(instance);
+			return result;
+		}
+#pragma endregion
+
+#pragma region AuthenticateDataAnalyze
+		static LPVOID GetAuthenticateDataAnalyze() {
+			return Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?Analyze@Results@AuthenticateData@@QEAAXXZ");
+		}
+		static void detourAuthenticateDataAnalyze(LPVOID instance);
+		Utils::Hook::MHook<LPVOID, void(*)(LPVOID)> AuthenticateDataAnalyzeHook{ "AuthenticateDataAnalyze", &GetAuthenticateDataAnalyze, &detourAuthenticateDataAnalyze };
+
+		static void detourAuthenticateDataAnalyze(LPVOID instance) {
+			AuthenticateDataAnalyzeHook.pOriginal(instance);
 		}
 #pragma endregion
 	}
