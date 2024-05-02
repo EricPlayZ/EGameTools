@@ -4374,6 +4374,9 @@ namespace Config {
 		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimits, OPTION },
 		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION },
 		{ "Misc:Misc", "DisableGamePauseWhileAFK", true, &Menu::Misc::disableGamePauseWhileAFK, OPTION },
+		{ "Misc:Misc", "DisableSavegameCRCCheck", true, &Menu::Misc::disableSavegameCRCCheck, OPTION },
+		{ "Misc:Misc", "DisableDataPAKsCRCCheck", true, &Menu::Misc::disableDataPAKsCRCCheck, OPTION },
+		{ "Misc:Misc", "IncreaseDataPAKsLimit", true, &Menu::Misc::increaseDataPAKsLimit, OPTION },
 		{ "World:Time", "SlowMotionSpeed", 0.4f, &Menu::World::slowMotionSpeed, Float },
 		{ "World:Time", "SlowMotionTransitionTime", 1.0f, &Menu::World::slowMotionTransitionTime, Float }
 	});
@@ -4518,6 +4521,48 @@ namespace Config {
 		}
 	}
 
+	bool CheckForChangesInMem() {
+		try {
+			reader = inih::INIReader(configFileName);
+
+			std::string strValue{};
+			for (auto& entry : configVariablesDefault) {
+				switch (entry.type) {
+				case OPTION:
+					if (reader.Get(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value)) != reinterpret_cast<Option*>(entry.optionPtr)->GetValue())
+						return true;
+					break;
+				case Float:
+					if (!Utils::Values::are_samef(reader.Get(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value)), *reinterpret_cast<float*>(entry.optionPtr)))
+						return true;
+					break;
+				case String:
+					strValue = reader.Get(entry.section.data(), entry.key.data(), std::any_cast<std::string>(entry.value));
+
+					if (entry.section == "Menu:Keybinds") {
+						KeyBindOption* option = reinterpret_cast<KeyBindOption*>(entry.optionPtr);
+
+						const auto itConfigVal = std::ranges::find(virtualKeyCodes, strValue, &Config::VKey::name);
+						const auto itMemVal = std::ranges::find(virtualKeyCodes, option->GetKeyBind(), &Config::VKey::code);
+						if (itConfigVal == virtualKeyCodes.end() || itMemVal == virtualKeyCodes.end())
+							break;
+
+						if (strValue != itMemVal->name)
+							return true;
+						break;
+					}
+
+					if (strValue != *reinterpret_cast<std::string*>(entry.optionPtr))
+						return true;
+					break;
+				}
+			}
+			return false;
+		} catch (const std::runtime_error& e) {
+			spdlog::error("Error checking for changes in memory: {}", e.what());
+			return false;
+		}
+	}
 	void SaveConfig() {
 		for (auto& entry : configVariables) {
 			switch (entry.type) {
@@ -4547,6 +4592,8 @@ namespace Config {
 			inih::INIWriter writer{};
 			writer.write(configFileName, reader);
 
+			spdlog::info("Successfully updated config!");
+
 			savedConfig = true;
 		} catch (const std::runtime_error& e) {
 			spdlog::error("Error saving to file {}: {}", configFileName, e.what());
@@ -4559,45 +4606,29 @@ namespace Config {
 		configLastWriteTime = configPreviousWriteTime;
 	}
 	void ConfigLoop() {
-		while (true) {
-			if (Core::exiting)
-				return;
-
-			Sleep(200);
+		while (!Core::exiting) {
+			Sleep(2000);
 
 			if (!ConfigExists()) {
 				CreateConfig();
 				Sleep(750);
 				configPreviousWriteTime = std::filesystem::last_write_time(configFileName);
+				continue;
 			}
 
 			// Check for config changes
 			configLastWriteTime = std::filesystem::last_write_time(configFileName);
 			if (configLastWriteTime != configPreviousWriteTime && !savedConfig) {
 				configPreviousWriteTime = configLastWriteTime;
-
-				Sleep(750);
 				ReadConfig(true);
+				continue;
 			} else if (configLastWriteTime != configPreviousWriteTime && savedConfig) {
 				configPreviousWriteTime = configLastWriteTime;
 				savedConfig = false;
 			}
-		}
-	}
-	void ConfigSaveLoop() {
-		while (true) {
-			if (Core::exiting)
-				return;
 
-			Sleep(10000);
-
-			if (!ConfigExists()) {
-				CreateConfig();
-				Sleep(200);
-				configPreviousWriteTime = std::filesystem::last_write_time(configFileName);
-			}
-
-			SaveConfig();
+			if (CheckForChangesInMem())
+				SaveConfig();
 		}
 	}
 }

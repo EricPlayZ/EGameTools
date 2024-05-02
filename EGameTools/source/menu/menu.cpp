@@ -1,5 +1,5 @@
 #include <pch.h>
-#include "..\game\GamePH\Other.h"
+#include "..\game\GamePH\gameph_misc.h"
 #include "menu.h"
 
 namespace Menu {

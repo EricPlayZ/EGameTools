@@ -148,7 +148,7 @@
     <ClCompile Include="source\game\GamePH\LogicalPlayer.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
-    <ClCompile Include="source\game\GamePH\Other.cpp">
+    <ClCompile Include="source\game\GamePH\gameph_misc.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
     <ClCompile Include="source\game\GamePH\PlayerHealthModule.cpp">
@@ -191,7 +191,7 @@
     <ClCompile Include="source\menu\init.cpp">
       <Filter>menu</Filter>
     </ClCompile>
-    <ClCompile Include="source\game\Engine\GameSpeedHandler.cpp">
+    <ClCompile Include="source\game\Engine\engine_misc.cpp">
       <Filter>game\Engine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -358,7 +358,7 @@
     <ClInclude Include="source\game\GamePH\LogicalPlayer.h">
       <Filter>game\GamePH</Filter>
     </ClInclude>
-    <ClInclude Include="source\game\GamePH\Other.h">
+    <ClInclude Include="source\game\GamePH\gameph_misc.h">
       <Filter>game\GamePH</Filter>
     </ClInclude>
     <ClInclude Include="source\game\GamePH\PlayerHealthModule.h">
@@ -408,7 +408,7 @@
     <ClInclude Include="source\menu\init.h">
       <Filter>menu</Filter>
     </ClInclude>
-    <ClInclude Include="source\game\Engine\GameSpeedHandler.h">
+    <ClInclude Include="source\game\Engine\engine_misc.h">
       <Filter>game\Engine</Filter>
     </ClInclude>
   </ItemGroup>

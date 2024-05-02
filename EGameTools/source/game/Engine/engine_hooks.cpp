@@ -1,12 +1,14 @@
 #include <pch.h>
 #include "..\GamePH\GameDI_PH.h"
 #include "..\GamePH\LevelDI.h"
-#include "..\GamePH\Other.h"
+#include "..\GamePH\gameph_misc.h"
 #include "..\GamePH\gen_TPPModel.h"
 #include "..\core.h"
 #include "..\menu\camera.h"
+#include "..\menu\misc.h"
 #include "..\offsets.h"
 #include "CBaseCamera.h"
+#include "engine_misc.h"
 
 namespace Engine {
 	namespace Hooks {
@@ -202,19 +204,15 @@ namespace Engine {
 		Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, UINT, UINT, DWORD64*, DWORD64(*)(DWORD64, DWORD, DWORD64, char*, int), INT16, DWORD64, UINT)> MountDataPaksHook{ "MountDataPaks", &Offsets::Get_MountDataPaks, &detourMountDataPaks };
 
 		static DWORD64 detourMountDataPaks(DWORD64 a1, UINT a2, UINT a3, DWORD64* a4, DWORD64(*a5)(DWORD64, DWORD, DWORD64, char*, int), INT16 a6, DWORD64 a7, UINT a8) {
-			return MountDataPaksHook.pOriginal(a1, a2, a3, a4, a5, a6, a7, 200);
-		}
-#pragma endregion
+			static int i = 0;
+			if (a8 == 8)
+				i++;
+			else if (i < 3)
+				spdlog::error("MountDataPaks hook ran less than 3 times with the data PAKs limit set to 8. This means the increased data PAKs limit might not work correctly! If this error message appears and your data PAKs past \"data7.pak\" have not loaded, please contact author.");
 
-#pragma region FsCalcFileCrc
-		static LPVOID GetFsCalcFileCrc() {
-			return Utils::Memory::GetProcAddr("filesystem_x64_rwdi.dll", "?calc_file_crc@fs@@YA_NAEAUcrc_calc_args@1@@Z");
-		}
-		static bool detourFsCalcFileCrc(LPVOID instance, LPVOID crcCalcArgs);
-		Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, LPVOID)> FsCalcFileCrcHook{ "FsCalcFileCrc", &GetFsCalcFileCrc, &detourFsCalcFileCrc };
-
-		static bool detourFsCalcFileCrc(LPVOID instance, LPVOID crcCalcArgs) {
-			return true;
+			if (Menu::Misc::increaseDataPAKsLimit.GetValue())
+				a8 = 200;
+			return MountDataPaksHook.pOriginal(a1, a2, a3, a4, a5, a6, a7, a8);
 		}
 #pragma endregion
 
@@ -226,7 +224,7 @@ namespace Engine {
 		Utils::Hook::MHook<LPVOID, bool(*)(LPVOID)> FsCheckZipCrcHook{ "FsCheckZipCrc", &GetFsCheckZipCrc, &detourFsCheckZipCrc };
 
 		static bool detourFsCheckZipCrc(LPVOID instance) {
-			return true;
+			return Menu::Misc::disableSavegameCRCCheck.GetValue() ? true : FsCheckZipCrcHook.pOriginal(instance);
 		}
 #pragma endregion
 
@@ -234,29 +232,14 @@ namespace Engine {
 		static LPVOID GetAuthenticateDataAddNewFile() {
 			return Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?AddNewFile@Results@AuthenticateData@@QEAAAEAVFile@12@XZ");
 		}
-		static void AuthenticateDataResultsClear(LPVOID instance) {
-			void(*func)(LPVOID instance) = reinterpret_cast<decltype(func)>(Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?Clear@Results@AuthenticateData@@QEAAXXZ"));
-			func(instance);
-		}
 		static LPVOID detourAuthenticateDataAddNewFile(LPVOID instance);
 		Utils::Hook::MHook<LPVOID, LPVOID(*)(LPVOID)> AuthenticateDataAddNewFileHook{ "AuthenticateDataAddNewFile", &GetAuthenticateDataAddNewFile, &detourAuthenticateDataAddNewFile };
 
 		static LPVOID detourAuthenticateDataAddNewFile(LPVOID instance) {
 			LPVOID result = AuthenticateDataAddNewFileHook.pOriginal(instance);
-			AuthenticateDataResultsClear(instance);
+			if (Menu::Misc::disableDataPAKsCRCCheck.GetValue())
+				AuthenticateDataResultsClear(instance);
 			return result;
-		}
-#pragma endregion
-
-#pragma region AuthenticateDataAnalyze
-		static LPVOID GetAuthenticateDataAnalyze() {
-			return Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?Analyze@Results@AuthenticateData@@QEAAXXZ");
-		}
-		static void detourAuthenticateDataAnalyze(LPVOID instance);
-		Utils::Hook::MHook<LPVOID, void(*)(LPVOID)> AuthenticateDataAnalyzeHook{ "AuthenticateDataAnalyze", &GetAuthenticateDataAnalyze, &detourAuthenticateDataAnalyze };
-
-		static void detourAuthenticateDataAnalyze(LPVOID instance) {
-			AuthenticateDataAnalyzeHook.pOriginal(instance);
 		}
 #pragma endregion
 	}

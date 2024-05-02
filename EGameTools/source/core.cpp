@@ -2,8 +2,8 @@
 #include "config\config.h"
 #include "core.h"
 #include "game\GamePH\LevelDI.h"
-#include "game\GamePH\Other.h"
 #include "game\GamePH\PlayerVariables.h"
+#include "game\GamePH\gameph_misc.h"
 #include "menu\menu.h"
 
 #pragma region KeyBindOption
@@ -37,7 +37,6 @@ namespace Core {
 
 	// Core
 	bool exiting = false;
-	static bool createdConfigThread = false;
 
 	int rendererAPI = 0;
 	DWORD gameVer = 0;
@@ -162,13 +161,6 @@ namespace Core {
 	}
 
 	void OnPostUpdate() {
-		if (!createdConfigThread) {
-			std::thread(Config::ConfigLoop).detach();
-			std::thread(Config::ConfigSaveLoop).detach();
-
-			createdConfigThread = true;
-		}
-
 		if (!GamePH::PlayerVariables::gotPlayerVars)
 			GamePH::PlayerVariables::GetPlayerVars();
 
@@ -225,6 +217,8 @@ namespace Core {
 
 		spdlog::warn("Initializing config");
 		Config::InitConfig();
+		std::thread(Config::ConfigLoop).detach();
+
 		CreateSymlinkForLoadingFiles();
 
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {

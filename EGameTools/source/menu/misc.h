@@ -5,6 +5,9 @@ namespace Menu {
 	namespace Misc {
 		extern KeyBindOption disableGamePauseWhileAFK;
 		extern KeyBindOption disableHUD;
+		extern Option disableSavegameCRCCheck;
+		extern Option disableDataPAKsCRCCheck;
+		extern Option increaseDataPAKsLimit;
 
 		class Tab : MenuTab {
 		public:

@@ -30,7 +30,7 @@
     <ClCompile Include="source\game\Engine\CoPhysicsProperty.cpp" />
     <ClCompile Include="source\game\Engine\CVideoSettings.cpp" />
     <ClCompile Include="source\game\Engine\engine_hooks.cpp" />
-    <ClCompile Include="source\game\Engine\GameSpeedHandler.cpp" />
+    <ClCompile Include="source\game\Engine\engine_misc.cpp" />
     <ClCompile Include="source\game\GamePH\DayNightCycle.cpp" />
     <ClCompile Include="source\game\GamePH\FreeCamera.cpp" />
     <ClCompile Include="source\game\GamePH\GameDI_PH.cpp" />
@@ -40,7 +40,7 @@
     <ClCompile Include="source\game\GamePH\LevelDI.cpp" />
     <ClCompile Include="source\game\GamePH\LocalClientDI.cpp" />
     <ClCompile Include="source\game\GamePH\LogicalPlayer.cpp" />
-    <ClCompile Include="source\game\GamePH\Other.cpp" />
+    <ClCompile Include="source\game\GamePH\gameph_misc.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerDI_PH.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerHealthModule.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerObjProperties.cpp" />
@@ -128,7 +128,7 @@
     <ClInclude Include="source\game\Engine\CoPhysicsProperty.h" />
     <ClInclude Include="source\game\Engine\CVideoSettings.h" />
     <ClInclude Include="source\game\Engine\engine_hooks.h" />
-    <ClInclude Include="source\game\Engine\GameSpeedHandler.h" />
+    <ClInclude Include="source\game\Engine\engine_misc.h" />
     <ClInclude Include="source\game\GamePH\CoBaseCameraProxy.h" />
     <ClInclude Include="source\game\GamePH\DayNightCycle.h" />
     <ClInclude Include="source\game\GamePH\FreeCamera.h" />
@@ -138,7 +138,7 @@
     <ClInclude Include="source\game\GamePH\LevelDI.h" />
     <ClInclude Include="source\game\GamePH\LocalClientDI.h" />
     <ClInclude Include="source\game\GamePH\LogicalPlayer.h" />
-    <ClInclude Include="source\game\GamePH\Other.h" />
+    <ClInclude Include="source\game\GamePH\gameph_misc.h" />
     <ClInclude Include="source\game\GamePH\PlayerDI_PH.h" />
     <ClInclude Include="source\game\GamePH\PlayerHealthModule.h" />
     <ClInclude Include="source\game\GamePH\PlayerObjProperties.h" />

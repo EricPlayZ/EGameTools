@@ -10,11 +10,9 @@ namespace Core {
 namespace Engine {
     namespace Hooks {
         extern Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, UINT, UINT, DWORD64*, DWORD64(*)(DWORD64, DWORD, DWORD64, char*, int), INT16, DWORD64, UINT)> MountDataPaksHook;
-        extern Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook;
-        extern Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, LPVOID)> FsCalcFileCrcHook;
         extern Utils::Hook::MHook<LPVOID, LPVOID(*)(LPVOID)> AuthenticateDataAddNewFileHook;
-        extern Utils::Hook::MHook<LPVOID, void(*)(LPVOID)> AuthenticateDataAnalyzeHook;
         extern Utils::Hook::MHook<LPVOID, bool(*)(LPVOID)> FsCheckZipCrcHook;
+        extern Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD, DWORD)> FsOpenHook;
     }
 }
 
@@ -25,10 +23,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD64 ul_reason_for_call, LPVOID lpRese
     case DLL_PROCESS_ATTACH: {
         MH_Initialize();
         Engine::Hooks::MountDataPaksHook.HookLoop();
-        Engine::Hooks::AuthenticateDataAnalyzeHook.HookLoop();
         Engine::Hooks::AuthenticateDataAddNewFileHook.HookLoop();
         Engine::Hooks::FsCheckZipCrcHook.HookLoop();
-        Engine::Hooks::FsCalcFileCrcHook.HookLoop();
         Engine::Hooks::FsOpenHook.HookLoop();
 
         DisableThreadLibraryCalls(hModule);

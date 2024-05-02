@@ -7,6 +7,9 @@ namespace Menu {
 	namespace Misc {
 		KeyBindOption disableGamePauseWhileAFK{ VK_NONE };
 		KeyBindOption disableHUD{ VK_F8 };
+		Option disableSavegameCRCCheck{};
+		Option disableDataPAKsCRCCheck{};
+		Option increaseDataPAKsLimit{};
 
 		static void UpdateDisabledOptions() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
@@ -44,6 +47,11 @@ namespace Menu {
 				ImGui::CheckboxHotkey("Disable HUD", &disableHUD);
 				ImGui::EndDisabled();
 			}
+			ImGui::Checkbox("Disable Savegame CRC Check *", &disableSavegameCRCCheck);
+			ImGui::Checkbox("Disable Data PAKs CRC Check *", &disableDataPAKsCRCCheck);
+			ImGui::Checkbox("Increase Data PAKs Limit *", &increaseDataPAKsLimit);
+			ImGui::Separator();
+			ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "* Option requires game restart to apply");
 		}
 	}
 }
