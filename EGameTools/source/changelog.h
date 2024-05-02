@@ -52,13 +52,14 @@ Thank you everyone for the support <3)" },
 - Fetch game version using Windows' API instead of using the game's function)" },
 		{ "v1.1.4",
 		R"(- Added compatibility with v1.16.1 hotfix update
-- Fixed God Mode staying enabled after toggling FreeCam off
-- Fixed player variables saving and loading using old version of player_variables.scr (which makes Max Health drop to negative infinite)
+- Fixed "God Mode" (Player) staying enabled after toggling FreeCam off
+- Fixed player variables saving and loading using old version of player_variables.scr (which made Max Health drop to negative infinite)
 - Fixed long paths to mods inside UserModFiles causing a game crash or causing the mods to not load at all
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
-- Added "Disable Data PAKs CRC Check" (Misc requires game restart to apply) - stops the game from detecting data PAKs, which allows you to use data PAK mods in multiplayer as well
-- Added "Disable Savegame CRC Check" (Misc requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
+- Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from detecting data PAKs, which allows you to use data PAK mods in multiplayer as well
+- Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
 - Fixed "God Mode" (Player) not working properly or at all in multiplayer
+- Fixed volatiles still being able to kill you when they jump on top of you while "God Mode" (Player) is enabled
 - Changed the config system to only write to the config file whenever there's a change in the mod menu)" }
 	};
 }

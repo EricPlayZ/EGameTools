@@ -46,6 +46,24 @@ namespace GamePH {
 		}
 #pragma endregion
 
+#pragma region PlayerHealthModuleKillPlayer
+		static DWORD64 detourPlayerHealthModuleKillPlayer(LPVOID playerHealthModule);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(LPVOID)> PlayerHealthModuleKillPlayerHook{ "PlayerHealthModuleKillPlayer", &Offsets::Get_PlayerHealthModuleKillPlayer, &detourPlayerHealthModuleKillPlayer };
+
+		static DWORD64 detourPlayerHealthModuleKillPlayer(LPVOID playerHealthModule) {
+			if (!Menu::Player::godMode.GetValue() && !Menu::Camera::freeCam.GetValue())
+				return PlayerHealthModuleKillPlayerHook.pOriginal(playerHealthModule);
+
+			PlayerHealthModule* pPlayerHealthModule = PlayerHealthModule::Get();
+			if (!pPlayerHealthModule)
+				return PlayerHealthModuleKillPlayerHook.pOriginal(playerHealthModule);
+			if (pPlayerHealthModule == playerHealthModule)
+				return 0;
+
+			return PlayerHealthModuleKillPlayerHook.pOriginal(playerHealthModule);
+		}
+#pragma endregion
+
 #pragma region IsNotOutOfBounds
 		static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
 		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfBoundsHook{ "IsNotOutOfBounds", &Offsets::Get_IsNotOutOfBounds, &detourIsNotOutOfBounds };
