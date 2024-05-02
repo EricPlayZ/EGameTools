@@ -18,7 +18,8 @@ namespace GamePH {
 		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerHealthModuleHook{ "CreatePlayerHealthModule", &Offsets::Get_CreatePlayerHealthModule, &detourCreatePlayerHealthModule };
 
 		static DWORD64 detourCreatePlayerHealthModule(DWORD64 playerHealthModule) {
-			PlayerHealthModule::pPlayerHealthModule = reinterpret_cast<PlayerHealthModule*>(playerHealthModule);
+			PlayerHealthModule::playerHealthModulePtrList.emplace_back(reinterpret_cast<PlayerHealthModule*>(playerHealthModule));
+
 			return CreatePlayerHealthModuleHook.pOriginal(playerHealthModule);
 		}
 #pragma endregion

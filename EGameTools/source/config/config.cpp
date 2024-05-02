@@ -4521,7 +4521,7 @@ namespace Config {
 		}
 	}
 
-	bool CheckForChangesInMem() {
+	static bool CheckForChangesInMem() {
 		try {
 			reader = inih::INIReader(configFileName);
 

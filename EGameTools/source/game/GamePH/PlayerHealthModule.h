@@ -12,7 +12,11 @@ namespace GamePH {
 			buffer<0x3C, float> maxHealth;
 		};
 		
-		static PlayerHealthModule* pPlayerHealthModule;
+		static std::vector<PlayerHealthModule*> playerHealthModulePtrList;
+
 		static PlayerHealthModule* Get();
+		static void Set(LPVOID instance);
+
+		static void UpdateClassAddr();
 	};
 }

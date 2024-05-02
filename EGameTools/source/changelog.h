@@ -58,6 +58,7 @@ Thank you everyone for the support <3)" },
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc requires game restart to apply) - stops the game from detecting data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
+- Fixed "God Mode" (Player) not working properly or at all in multiplayer
 - Changed the config system to only write to the config file whenever there's a change in the mod menu)" }
 	};
 }

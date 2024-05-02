@@ -2,6 +2,7 @@
 #include "config\config.h"
 #include "core.h"
 #include "game\GamePH\LevelDI.h"
+#include "game\GamePH\PlayerHealthModule.h"
 #include "game\GamePH\PlayerVariables.h"
 #include "game\GamePH\gameph_misc.h"
 #include "menu\menu.h"
@@ -166,6 +167,8 @@ namespace Core {
 
 		for (auto& menuTab : *Menu::MenuTab::GetInstances())
 			menuTab.second->Update();
+
+		GamePH::PlayerHealthModule::UpdateClassAddr();
 	}
 	/*static bool WriteMiniDump(PEXCEPTION_POINTERS pExceptionPointers) {
 		HANDLE hFile = CreateFileA("EGameTools-dump.dmp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
