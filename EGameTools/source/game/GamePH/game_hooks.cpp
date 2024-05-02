@@ -64,15 +64,27 @@ namespace GamePH {
 		}
 #pragma endregion
 
-#pragma region IsNotOutOfBounds
-		static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2);
-		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfBoundsHook{ "IsNotOutOfBounds", &Offsets::Get_IsNotOutOfBounds, &detourIsNotOutOfBounds };
+#pragma region IsNotOutOfMapBounds
+		static bool detourIsNotOutOfMapBounds(LPVOID pInstance, DWORD64 a2);
+		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfMapBoundsHook{ "IsNotOutOfMapBounds", &Offsets::Get_IsNotOutOfMapBounds, &detourIsNotOutOfMapBounds };
 
-		static bool detourIsNotOutOfBounds(LPVOID pInstance, DWORD64 a2) {
+		static bool detourIsNotOutOfMapBounds(LPVOID pInstance, DWORD64 a2) {
 			if (Menu::Player::disableOutOfBoundsTimer.GetValue())
 				return true;
 
-			return IsNotOutOfBoundsHook.pOriginal(pInstance, a2);
+			return IsNotOutOfMapBoundsHook.pOriginal(pInstance, a2);
+		}
+#pragma endregion
+
+#pragma region IsNotOutOfMissionBounds
+		static bool detourIsNotOutOfMissionBounds(LPVOID pInstance, DWORD64 a2);
+		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, DWORD64)> IsNotOutOfMissionBoundsHook{ "IsNotOutOfMissionBounds", &Offsets::Get_IsNotOutOfMissionBounds, &detourIsNotOutOfMissionBounds };
+
+		static bool detourIsNotOutOfMissionBounds(LPVOID pInstance, DWORD64 a2) {
+			if (Menu::Player::disableOutOfBoundsTimer.GetValue())
+				return true;
+
+			return IsNotOutOfMissionBoundsHook.pOriginal(pInstance, a2);
 		}
 #pragma endregion
 

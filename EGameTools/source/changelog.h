@@ -60,6 +60,7 @@ Thank you everyone for the support <3)" },
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
 - Fixed "God Mode" (Player) not working properly or at all in multiplayer
 - Fixed volatiles still being able to kill you when they jump on top of you while "God Mode" (Player) is enabled
+- Fixed "Disable Out of Bounds Timer" (Player) not working in missions
 - Changed the config system to only write to the config file whenever there's a change in the mod menu)" }
 	};
 }
