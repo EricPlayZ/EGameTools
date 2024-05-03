@@ -33,9 +33,9 @@ namespace Utils {
 			const std::string_view name;
 		};
 		template <typename GetTargetOffsetRetType>
-		class BytesHook : HookBase {
+		class ByteHook : HookBase {
 		public:
-			BytesHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), unsigned char* patchBytes, size_t bytesAmount, Option* optionRef = nullptr) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), patchBytes(patchBytes), bytesAmount(bytesAmount), optionRef(optionRef) {}
+			ByteHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), unsigned char* patchBytes, size_t bytesAmount, Option* optionRef = nullptr) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), patchBytes(patchBytes), bytesAmount(bytesAmount), optionRef(optionRef) {}
 
 			bool HookLoop() override {
 				if (hooked || (optionRef && !optionRef->GetValue()))

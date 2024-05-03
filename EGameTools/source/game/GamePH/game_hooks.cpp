@@ -9,6 +9,7 @@
 #include "GameDI_PH2.h"
 #include "LevelDI.h"
 #include "PlayerHealthModule.h"
+#include "PlayerInfectionModule.h"
 #include "gen_TPPModel.h"
 
 namespace GamePH {
@@ -21,6 +22,17 @@ namespace GamePH {
 			PlayerHealthModule::playerHealthModulePtrList.emplace_back(reinterpret_cast<PlayerHealthModule*>(playerHealthModule));
 
 			return CreatePlayerHealthModuleHook.pOriginal(playerHealthModule);
+		}
+#pragma endregion
+
+#pragma region CreatePlayerInfectionModule
+		static DWORD64 detourCreatePlayerInfectionModule(DWORD64 playerInfectionModule);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64)> CreatePlayerInfectionModuleHook{ "CreatePlayerInfectionModule", &Offsets::Get_CreatePlayerInfectionModule, &detourCreatePlayerInfectionModule };
+
+		static DWORD64 detourCreatePlayerInfectionModule(DWORD64 playerInfectionModule) {
+			PlayerInfectionModule::playerInfectionModulePtrList.emplace_back(reinterpret_cast<PlayerInfectionModule*>(playerInfectionModule));
+
+			return CreatePlayerInfectionModuleHook.pOriginal(playerInfectionModule);
 		}
 #pragma endregion
 
@@ -219,15 +231,15 @@ namespace GamePH {
 
 		static float detourCompareAndUpdateFloat(float result, float a1, float a2) {
 			if (funcHandlePlayerImmunityRunning) {
-				static float immunityTimerBeforeFreeze = -1.0f;
+				LevelDI* iLevel = LevelDI::Get();
+				if (!iLevel || !iLevel->IsLoaded())
+					return CompareAndUpdateFloatHook.pOriginal(result, a1, a2);
+				GamePH::PlayerInfectionModule* playerInfectionModule = GamePH::PlayerInfectionModule::Get();
+				if (!playerInfectionModule)
+					return CompareAndUpdateFloatHook.pOriginal(result, a1, a2);
 
-				if (Menu::Player::unlimitedImmunity.GetValue()) {
-					if (Utils::Values::are_samef(immunityTimerBeforeFreeze, -1.0f))
-						immunityTimerBeforeFreeze = result > a2 ? a2 : result;
-					return immunityTimerBeforeFreeze;
-				}
-
-				immunityTimerBeforeFreeze = -1.0f;
+				if (Menu::Player::unlimitedImmunity.GetValue())
+					return playerInfectionModule->immunity;
 			}
 
 			return CompareAndUpdateFloatHook.pOriginal(result, a1, a2);
@@ -245,9 +257,20 @@ namespace GamePH {
 		}
 #pragma endregion
 
+#pragma region HandlePlayerImmunity2
+		static void detourHandlePlayerImmunity2(LPVOID pInstance, DWORD64 a2, bool a3);
+		static Utils::Hook::MHook<LPVOID, void(*)(LPVOID, DWORD64 a2, bool a3)> HandlePlayerImmunity2Hook{ "HandlePlayerImmunity2", &Offsets::Get_HandlePlayerImmunity2, &detourHandlePlayerImmunity2 };
+
+		static void detourHandlePlayerImmunity2(LPVOID pInstance, DWORD64 a2, bool a3) {
+			funcHandlePlayerImmunityRunning = true;
+			HandlePlayerImmunity2Hook.pOriginal(pInstance, a2, a3);
+			funcHandlePlayerImmunityRunning = false;
+		}
+#pragma endregion
+
 #pragma region ByteHooks
 		static unsigned char SaveGameCRCBoolCheckBytes[3] = { 0xB3, 0x01, 0x90 }; // mov bl, 01
-		Utils::Hook::BytesHook<LPVOID> SaveGameCRCBoolCheckHook{ "SaveGameCRCBoolCheck", &Offsets::Get_SaveGameCRCBoolCheck, SaveGameCRCBoolCheckBytes, sizeof(SaveGameCRCBoolCheckBytes), &Menu::Misc::disableSavegameCRCCheck }; // and bl, dil
+		Utils::Hook::ByteHook<LPVOID> SaveGameCRCBoolCheckHook{ "SaveGameCRCBoolCheck", &Offsets::Get_SaveGameCRCBoolCheck, SaveGameCRCBoolCheckBytes, sizeof(SaveGameCRCBoolCheckBytes), &Menu::Misc::disableSavegameCRCCheck }; // and bl, dil
 #pragma endregion
 	}
 }

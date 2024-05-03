@@ -4,6 +4,7 @@
 #include "..\game\GamePH\FreeCamera.h"
 #include "..\game\GamePH\LevelDI.h"
 #include "..\game\GamePH\PlayerHealthModule.h"
+#include "..\game\GamePH\PlayerInfectionModule.h"
 #include "..\game\GamePH\PlayerVariables.h"
 #include "..\game\GamePH\gameph_misc.h"
 #include "camera.h"
@@ -6432,6 +6433,8 @@ namespace Menu {
         
 		float playerHealth = 80.0f;
 		float playerMaxHealth = 80.0f;
+		float playerImmunity = 80.0f;
+		float playerMaxImmunity = 80.0f;
 		KeyBindOption godMode{ VK_F6 };
 		KeyBindOption unlimitedImmunity{ VK_NONE };
 		KeyBindOption freezePlayer{ VK_F7 };
@@ -6552,6 +6555,21 @@ namespace Menu {
 
 			playerHealth = playerHealthModule->health;
 		}
+		static void PlayerImmunityUpdate() {
+			GamePH::PlayerInfectionModule* playerInfectionModule = GamePH::PlayerInfectionModule::Get();
+			if (!playerInfectionModule)
+				return;
+
+			playerMaxImmunity = playerInfectionModule->maxImmunity * 100.0f;
+
+			if (menuToggle.GetValue())
+				return;
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel || !iLevel->IsLoaded())
+				return;
+
+			playerImmunity = playerInfectionModule->immunity * 100.0f;
+		}
 		static void UpdatePlayerVars() {
 			if (!GamePH::PlayerVariables::gotPlayerVars)
 				return;
@@ -6571,6 +6589,7 @@ namespace Menu {
 			PlayerPositionUpdate();
 			PlayerVarsUpdate();
 			PlayerHealthUpdate();
+			PlayerImmunityUpdate();
 			UpdateDisabledOptions();
 			UpdatePlayerVars();
 		}
@@ -6865,6 +6884,15 @@ namespace Menu {
 					playerHealthModule->health = playerHealth;
 				else if (playerHealthModule)
 					playerHealth = playerHealthModule->health;
+				ImGui::EndDisabled();
+			}
+			GamePH::PlayerInfectionModule* playerInfectionModule = GamePH::PlayerInfectionModule::Get();
+			ImGui::BeginDisabled(!playerInfectionModule);
+			{
+				if (ImGui::SliderFloat("Player Immunity", &playerImmunity, 0.0f, playerMaxImmunity, "%.2f") && playerInfectionModule)
+					playerInfectionModule->immunity = playerImmunity / 100.0f;
+				else if (playerInfectionModule)
+					playerImmunity = playerInfectionModule->immunity * 100.0f;
 				ImGui::EndDisabled();
 			}
 			ImGui::CheckboxHotkey("God Mode", &godMode);

@@ -6,6 +6,8 @@ namespace Menu {
 	namespace Player {
 		extern float playerHealth;
 		extern float playerMaxHealth;
+		extern float playerImmunity;
+		extern float playerMaxImmunity;
 		extern KeyBindOption godMode;
 		extern KeyBindOption unlimitedImmunity;
 		extern KeyBindOption freezePlayer;

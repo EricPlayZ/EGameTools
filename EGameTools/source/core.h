@@ -16,8 +16,8 @@
 #define VK_MWHEELUP 0x101
 #endif
 
-constexpr const char* MOD_VERSION_STR = "v1.1.4";
-constexpr DWORD MOD_VERSION = 10104;
+constexpr const char* MOD_VERSION_STR = "v1.2.0";
+constexpr DWORD MOD_VERSION = 10200;
 constexpr DWORD GAME_VER_COMPAT = 11601;
 
 struct Key {

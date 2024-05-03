@@ -4,7 +4,7 @@
 #include "misc.h"
 
 namespace GamePH::Hooks {
-	extern Utils::Hook::BytesHook<LPVOID> SaveGameCRCBoolCheckHook;
+	extern Utils::Hook::ByteHook<LPVOID> SaveGameCRCBoolCheckHook;
 }
 
 namespace Menu {

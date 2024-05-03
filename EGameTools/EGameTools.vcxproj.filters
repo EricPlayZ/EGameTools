@@ -194,6 +194,9 @@
     <ClCompile Include="source\game\Engine\engine_misc.cpp">
       <Filter>game\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="source\game\GamePH\PlayerInfectionModule.cpp">
+      <Filter>game\GamePH</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -410,6 +413,9 @@
     </ClInclude>
     <ClInclude Include="source\game\Engine\engine_misc.h">
       <Filter>game\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="source\game\GamePH\PlayerInfectionModule.h">
+      <Filter>game\GamePH</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
