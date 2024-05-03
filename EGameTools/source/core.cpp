@@ -227,8 +227,8 @@ namespace Core {
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
 			spdlog::warn("Hooking \"{}\"", hook->name.data());
 			std::thread([&hook]() {
-				hook->HookLoop();
-				spdlog::info("Hooked \"{}\"!", hook->name.data());
+				if (hook->HookLoop())
+					spdlog::info("Hooked \"{}\"!", hook->name.data());
 			}).detach();
 		}
 

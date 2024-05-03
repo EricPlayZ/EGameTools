@@ -244,5 +244,10 @@ namespace GamePH {
 			funcHandlePlayerImmunityRunning = false;
 		}
 #pragma endregion
+
+#pragma region ByteHooks
+		static unsigned char SaveGameCRCBoolCheckBytes[3] = { 0xB3, 0x01, 0x90 }; // mov bl, 01
+		Utils::Hook::BytesHook<LPVOID> SaveGameCRCBoolCheckHook{ "SaveGameCRCBoolCheck", &Offsets::Get_SaveGameCRCBoolCheck, SaveGameCRCBoolCheckBytes, sizeof(SaveGameCRCBoolCheckBytes), &Menu::Misc::disableSavegameCRCCheck }; // and bl, dil
+#pragma endregion
 	}
 }

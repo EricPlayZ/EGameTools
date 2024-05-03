@@ -23,16 +23,16 @@ static DWORD64 Get_## name () {\
 
 struct Offsets {
 	// ntdll.dll
-	//AddOffset(LdrpCallInitRoutine, "ntdll.dll", "[48 89 5C 24 08 44 89 44 24 18 48", PatternType::Address, PDWORD64)
-	//AddOffset(LdrpRunInitializeRoutines, "ntdll.dll", "[48 89 4C 24 08 53 56 57 41 54 41 55 41 56 41 57 48 81 EC 90", PatternType::Address, PDWORD64) // for win7
+	//AddOffset(LdrpCallInitRoutine, "ntdll.dll", "[48 89 5C 24 08 44 89 44 24 18 48", PatternType::Address, DWORD64*)
+	//AddOffset(LdrpRunInitializeRoutines, "ntdll.dll", "[48 89 4C 24 08 53 56 57 41 54 41 55 41 56 41 57 48 81 EC 90", PatternType::Address, DWORD64*) // for win7
 
 	// Input related
-	AddOffset(g_CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 84 D2", Utils::SigScan::PatternType::RelativePointer, PDWORD64*)
+	AddOffset(g_CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 84 D2", Utils::SigScan::PatternType::RelativePointer, DWORD64**)
 	//AddOffset(WndProc, "engine_x64_rwdi.dll", "40 55 56 57 41 54 41 56 48 83 EC ?? 49 8B E9", PatternType::Address, LPVOID)
 
 	// Player vars related
 	AddStaticOffset(LoadPlayerVariableFunc_size, 0x14E)
-	//AddOffset(LoadPlayerFloatVariable, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B D0 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 94 24 ?? ?? ?? ?? 48 8B 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 84 24 ?? ?? ?? ??", PatternType::RelativePointer, PDWORD64);
+	//AddOffset(LoadPlayerFloatVariable, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B D0 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 94 24 ?? ?? ?? ?? 48 8B 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 84 24 ?? ?? ?? ??", PatternType::RelativePointer, DWORD64*);
 	AddOffset(InitializePlayerVariables, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B F0 48 8B CF", Utils::SigScan::PatternType::RelativePointer, DWORD64)
 	AddStaticOffset(initPlayerFloatVarsInstr_offset, 0x99);
 	AddStaticOffset(initPlayerBoolVarsInstr_offset, 0x2E7);
@@ -43,9 +43,10 @@ struct Offsets {
 	AddOffset(CLobbySteam, "engine_x64_rwdi.dll", "48 8B 05 [?? ?? ?? ?? 48 85 C0 74 ?? 48 83 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 	AddOffset(g_PlayerObjProperties, "gamedll_ph_x64_rwdi.dll", "48 89 0D [?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 	AddOffset(g_DayNightCycle, "gamedll_ph_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? E8 ?? ?? ?? ?? 84 C0 74 ?? B0 ?? 48 83 C4 ?? C3 32 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
-	//AddOffset(g_CameraFPPDI, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 40 84 FF", PatternType::RelativePointer, PDWORD64)
-	AddOffset(g_FreeCamera, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 48 89 4C 24", Utils::SigScan::PatternType::RelativePointer, PDWORD64)
+	//AddOffset(g_CameraFPPDI, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 40 84 FF", PatternType::RelativePointer, DWORD64*)
+	AddOffset(g_FreeCamera, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 48 89 4C 24", Utils::SigScan::PatternType::RelativePointer, DWORD64*)
 	//AddOffset(CameraFPPDI_VT, "gamedll_ph_x64_rwdi.dll", "48 8D 05 [?? ?? ?? ?? 48 89 07 48 8D 4F 60", PatternType::RelativePointer, DWORD64)
+	AddOffset(SaveGameCRCBoolCheck, "gamedll_ph_x64_rwdi.dll", "FF 50 ?? [40 22 DF 0F 85 ?? ?? ?? ?? 0F B6 05 ?? ?? ?? ?? 48 8D 3D", Utils::SigScan::PatternType::Address, LPVOID)
 
 	// Functions
 	AddOffset(ReadVideoSettings, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B D9 45 84 C0", Utils::SigScan::PatternType::Address, LPVOID)

@@ -16,6 +16,7 @@ namespace GamePH {
 			return pPlayerHealthModule;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 			pPlayerHealthModule = nullptr;
+			playerHealthModulePtrList.clear();
 			return nullptr;
 		}
 	}

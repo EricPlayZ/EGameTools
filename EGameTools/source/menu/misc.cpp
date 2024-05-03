@@ -3,6 +3,10 @@
 #include "..\game\GamePH\LevelDI.h"
 #include "misc.h"
 
+namespace GamePH::Hooks {
+	extern Utils::Hook::BytesHook<LPVOID> SaveGameCRCBoolCheckHook;
+}
+
 namespace Menu {
 	namespace Misc {
 		KeyBindOption disableGamePauseWhileAFK{ VK_NONE };
@@ -47,7 +51,8 @@ namespace Menu {
 				ImGui::CheckboxHotkey("Disable HUD", &disableHUD);
 				ImGui::EndDisabled();
 			}
-			ImGui::Checkbox("Disable Savegame CRC Check *", &disableSavegameCRCCheck);
+			if (ImGui::Checkbox("Disable Savegame CRC Check *", &disableSavegameCRCCheck))
+				GamePH::Hooks::SaveGameCRCBoolCheckHook.Toggle();
 			ImGui::Checkbox("Disable Data PAKs CRC Check *", &disableDataPAKsCRCCheck);
 			ImGui::Checkbox("Increase Data PAKs Limit *", &increaseDataPAKsLimit);
 			ImGui::Separator();
