@@ -223,51 +223,6 @@ namespace GamePH {
 		}
 #pragma endregion
 
-#pragma region CompareAndUpdateFloat
-		static bool funcHandlePlayerImmunityRunning = false;
-
-		static float detourCompareAndUpdateFloat(float result, float a1, float a2);
-		static Utils::Hook::MHook<LPVOID, float(*)(float, float, float)> CompareAndUpdateFloatHook{ "CompareAndUpdateFloat", &Offsets::Get_CompareAndUpdateFloat, &detourCompareAndUpdateFloat };
-
-		static float detourCompareAndUpdateFloat(float result, float a1, float a2) {
-			if (funcHandlePlayerImmunityRunning) {
-				LevelDI* iLevel = LevelDI::Get();
-				if (!iLevel || !iLevel->IsLoaded())
-					return CompareAndUpdateFloatHook.pOriginal(result, a1, a2);
-				GamePH::PlayerInfectionModule* playerInfectionModule = GamePH::PlayerInfectionModule::Get();
-				if (!playerInfectionModule)
-					return CompareAndUpdateFloatHook.pOriginal(result, a1, a2);
-
-				if (Menu::Player::unlimitedImmunity.GetValue())
-					return playerInfectionModule->immunity;
-			}
-
-			return CompareAndUpdateFloatHook.pOriginal(result, a1, a2);
-		}
-#pragma endregion
-
-#pragma region HandlePlayerImmunity
-		static void detourHandlePlayerImmunity(LPVOID pInstance, float a2);
-		static Utils::Hook::MHook<LPVOID, void(*)(LPVOID, float)> HandlePlayerImmunityHook{ "HandlePlayerImmunity", &Offsets::Get_HandlePlayerImmunity, &detourHandlePlayerImmunity };
-
-		static void detourHandlePlayerImmunity(LPVOID pInstance, float a2) {
-			funcHandlePlayerImmunityRunning = true;
-			HandlePlayerImmunityHook.pOriginal(pInstance, a2);
-			funcHandlePlayerImmunityRunning = false;
-		}
-#pragma endregion
-
-#pragma region HandlePlayerImmunity2
-		static void detourHandlePlayerImmunity2(LPVOID pInstance, DWORD64 a2, bool a3);
-		static Utils::Hook::MHook<LPVOID, void(*)(LPVOID, DWORD64 a2, bool a3)> HandlePlayerImmunity2Hook{ "HandlePlayerImmunity2", &Offsets::Get_HandlePlayerImmunity2, &detourHandlePlayerImmunity2 };
-
-		static void detourHandlePlayerImmunity2(LPVOID pInstance, DWORD64 a2, bool a3) {
-			funcHandlePlayerImmunityRunning = true;
-			HandlePlayerImmunity2Hook.pOriginal(pInstance, a2, a3);
-			funcHandlePlayerImmunityRunning = false;
-		}
-#pragma endregion
-
 #pragma region ByteHooks
 		static unsigned char SaveGameCRCBoolCheckBytes[3] = { 0xB3, 0x01, 0x90 }; // mov bl, 01
 		Utils::Hook::ByteHook<LPVOID> SaveGameCRCBoolCheckHook{ "SaveGameCRCBoolCheck", &Offsets::Get_SaveGameCRCBoolCheck, SaveGameCRCBoolCheckBytes, sizeof(SaveGameCRCBoolCheckBytes), &Menu::Misc::disableSavegameCRCCheck }; // and bl, dil

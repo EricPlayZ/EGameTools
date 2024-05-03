@@ -6438,6 +6438,7 @@ namespace Menu {
 		KeyBindOption godMode{ VK_F6 };
 		KeyBindOption unlimitedImmunity{ VK_NONE };
 		KeyBindOption freezePlayer{ VK_F7 };
+		KeyBindOption invisibleToEnemies{ VK_NONE };
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
 		KeyBindOption nightrunnerMode{ VK_F9 };
 		KeyBindOption oneHandedMode{ VK_NONE };
@@ -6577,6 +6578,10 @@ namespace Menu {
 			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerItemForced", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
 			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFurySmashEnabled", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
 			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFuryGroundPoundEnabled", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("AntizinDrainBlocked", unlimitedImmunity.GetValue(), !unlimitedImmunity.GetValue(), &unlimitedImmunity);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("InVisibleToEnemies", invisibleToEnemies.GetValue(), !invisibleToEnemies.GetValue(), &invisibleToEnemies);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("LeftHandDisabled", oneHandedMode.GetValue(), !oneHandedMode.GetValue(), &oneHandedMode);
 		}
@@ -6887,8 +6892,7 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 			GamePH::PlayerInfectionModule* playerInfectionModule = GamePH::PlayerInfectionModule::Get();
-			ImGui::BeginDisabled(!playerInfectionModule);
-			{
+			ImGui::BeginDisabled(!playerInfectionModule); {
 				if (ImGui::SliderFloat("Player Immunity", &playerImmunity, 0.0f, playerMaxImmunity, "%.2f") && playerInfectionModule)
 					playerInfectionModule->immunity = playerImmunity / 100.0f;
 				else if (playerInfectionModule)
@@ -6903,6 +6907,7 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 			ImGui::SameLine();
+			ImGui::CheckboxHotkey("Invisible to Enemies", &invisibleToEnemies);
 			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer);
 			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode);
 			ImGui::SameLine();

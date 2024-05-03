@@ -54,6 +54,7 @@ Thank you everyone for the support <3)" },
 		R"(- Added compatibility with v1.16.1 hotfix update
 - Added "Player Immunity" slider (Player)
 - Added "Unlimited Immunity" (Player)
+- Added "Invisible to Enemies" (Player)
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from detecting data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it

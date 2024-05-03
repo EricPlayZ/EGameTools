@@ -11,6 +11,7 @@ namespace Menu {
 		extern KeyBindOption godMode;
 		extern KeyBindOption unlimitedImmunity;
 		extern KeyBindOption freezePlayer;
+		extern KeyBindOption invisibleToEnemies;
 		extern KeyBindOption disableOutOfBoundsTimer;
 		extern KeyBindOption nightrunnerMode;
 		extern KeyBindOption oneHandedMode;
