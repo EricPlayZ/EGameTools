@@ -210,5 +210,39 @@ namespace GamePH {
 			return CalculateFallHeightHook.pOriginal(pInstance, height);
 		}
 #pragma endregion
+
+#pragma region CompareAndUpdateFloat
+		static bool funcHandlePlayerImmunityRunning = false;
+
+		static float detourCompareAndUpdateFloat(float result, float a1, float a2);
+		static Utils::Hook::MHook<LPVOID, float(*)(float, float, float)> CompareAndUpdateFloatHook{ "CompareAndUpdateFloat", &Offsets::Get_CompareAndUpdateFloat, &detourCompareAndUpdateFloat };
+
+		static float detourCompareAndUpdateFloat(float result, float a1, float a2) {
+			if (funcHandlePlayerImmunityRunning) {
+				static float immunityTimerBeforeFreeze = -1.0f;
+
+				if (Menu::Player::unlimitedImmunity.GetValue()) {
+					if (Utils::Values::are_samef(immunityTimerBeforeFreeze, -1.0f))
+						immunityTimerBeforeFreeze = result > a2 ? a2 : result;
+					return immunityTimerBeforeFreeze;
+				}
+
+				immunityTimerBeforeFreeze = -1.0f;
+			}
+
+			return CompareAndUpdateFloatHook.pOriginal(result, a1, a2);
+		}
+#pragma endregion
+
+#pragma region HandlePlayerImmunity
+		static void detourHandlePlayerImmunity(LPVOID pInstance, float a2);
+		static Utils::Hook::MHook<LPVOID, void(*)(LPVOID, float)> HandlePlayerImmunityHook{ "HandlePlayerImmunity", &Offsets::Get_HandlePlayerImmunity, &detourHandlePlayerImmunity };
+
+		static void detourHandlePlayerImmunity(LPVOID pInstance, float a2) {
+			funcHandlePlayerImmunityRunning = true;
+			HandlePlayerImmunityHook.pOriginal(pInstance, a2);
+			funcHandlePlayerImmunityRunning = false;
+		}
+#pragma endregion
 	}
 }

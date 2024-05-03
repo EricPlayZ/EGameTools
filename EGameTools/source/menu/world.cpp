@@ -86,7 +86,7 @@ namespace Menu {
 
 			if (!menuToggle.GetValue()) {
 				time = dayNightCycle->time1 * 24.0f;
-				if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.009999f))
+				if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
 					dayNightCycle->SetDaytime(timeBeforeFreeze);
 
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
@@ -110,7 +110,7 @@ namespace Menu {
 						dayNightCycle->SetDaytime(time);
 					}
 					time = dayNightCycle->time1 * 24.0f;
-					if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.009999f))
+					if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
 						dayNightCycle->SetDaytime(timeBeforeFreeze);
 				}
 

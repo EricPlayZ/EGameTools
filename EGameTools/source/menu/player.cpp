@@ -6433,6 +6433,7 @@ namespace Menu {
 		float playerHealth = 80.0f;
 		float playerMaxHealth = 80.0f;
 		KeyBindOption godMode{ VK_F6 };
+		KeyBindOption unlimitedImmunity{ VK_NONE };
 		KeyBindOption freezePlayer{ VK_F7 };
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
 		KeyBindOption nightrunnerMode{ VK_F9 };
@@ -6868,13 +6869,15 @@ namespace Menu {
 			}
 			ImGui::CheckboxHotkey("God Mode", &godMode);
 			ImGui::SameLine();
+			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity);
 			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled()); {
 				ImGui::CheckboxHotkey("Freeze Player", &freezePlayer);
 				ImGui::EndDisabled();
 			}
-
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer);
 			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode);
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode);
 
 			ImGui::SeparatorText("Player Jump Parameters");

@@ -7,6 +7,7 @@ namespace Menu {
 		extern float playerHealth;
 		extern float playerMaxHealth;
 		extern KeyBindOption godMode;
+		extern KeyBindOption unlimitedImmunity;
 		extern KeyBindOption freezePlayer;
 		extern KeyBindOption disableOutOfBoundsTimer;
 		extern KeyBindOption nightrunnerMode;

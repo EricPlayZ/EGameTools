@@ -162,17 +162,19 @@ namespace Menu {
 				ImGui::CheckboxHotkey("Enabled##FreeCam", &freeCam);
 				ImGui::EndDisabled();
 			}
-			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SameLine();
 			ImGui::BeginDisabled(teleportPlayerToCamera.GetChangesAreDisabled()); {
 				ImGui::CheckboxHotkey("Teleport Player to Camera", &teleportPlayerToCamera);
 				ImGui::EndDisabled();
 			}
+			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
 
 			ImGui::SeparatorText("Third Person Camera");
 			ImGui::BeginDisabled(thirdPersonCamera.GetChangesAreDisabled()); {
 				ImGui::CheckboxHotkey("Enabled##ThirdPerson", &thirdPersonCamera);
 				ImGui::EndDisabled();
 			}
+			ImGui::SameLine();
 			ImGui::BeginDisabled(tpUseTPPModel.GetChangesAreDisabled()); {
 				ImGui::CheckboxHotkey("Use Third Person Player (TPP) Model", &tpUseTPPModel);
 				ImGui::EndDisabled();
