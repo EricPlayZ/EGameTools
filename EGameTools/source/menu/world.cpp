@@ -1,6 +1,7 @@
 #include <pch.h>
 #include "..\game\GamePH\DayNightCycle.h"
 #include "..\game\GamePH\LevelDI.h"
+#include "..\game\GamePH\PlayerVariables.h"
 #include "..\game\GamePH\TimeWeather\CSystem.h"
 #include "..\game\GamePH\TimeWeather\EWeather.h"
 #include "world.h"
@@ -98,24 +99,30 @@ namespace Menu {
 			GamePH::DayNightCycle* dayNightCycle = GamePH::DayNightCycle::Get();
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			ImGui::SeparatorText("Time##World");
-			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle);
-			{
-				static bool timeSliderBeingPressed = false;
-				if (ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
-					timeSliderBeingPressed = true;
+			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle); {
+				static bool previousAntizinDrainBlocked = false;
+				static bool haveResetAntizinDrainBlocked = true;
+				if (ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
+					if (haveResetAntizinDrainBlocked)
+						previousAntizinDrainBlocked = GamePH::PlayerVariables::GetPlayerVar<bool>("AntizinDrainBlocked");
+					GamePH::PlayerVariables::ChangePlayerVar("AntizinDrainBlocked", true);
+					haveResetAntizinDrainBlocked = false;
+
+					timeBeforeFreeze = time;
+					dayNightCycle->SetDaytime(time);
+				}
 				else if (iLevel && iLevel->IsLoaded() && dayNightCycle) {
-					if (timeSliderBeingPressed) {
-						timeSliderBeingPressed = false;
-						timeBeforeFreeze = time;
-						dayNightCycle->SetDaytime(time);
+					if (!haveResetAntizinDrainBlocked) {
+						GamePH::PlayerVariables::ChangePlayerVar("AntizinDrainBlocked", previousAntizinDrainBlocked);
+						haveResetAntizinDrainBlocked = true;
 					}
+
 					time = dayNightCycle->time1 * 24.0f;
 					if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
 						dayNightCycle->SetDaytime(timeBeforeFreeze);
 				}
 
-				ImGui::BeginDisabled(slowMotion.GetValue());
-				{
+				ImGui::BeginDisabled(slowMotion.GetValue()); {
 					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx"))
 						iLevel->TimerSetSpeedUp(gameSpeed);
 					else if (iLevel && iLevel->IsLoaded()) {
@@ -139,8 +146,7 @@ namespace Menu {
 			const bool weatherDisabledFlag = !iLevel || !iLevel->IsLoaded() || !timeWeatherSystem;
 
 			ImGui::SeparatorText("Weather##World");
-			ImGui::BeginDisabled(weatherDisabledFlag);
-			{
+			ImGui::BeginDisabled(weatherDisabledFlag); {
 				if (ImGui::Combo("Weather", reinterpret_cast<int*>(&weather), weatherItems, IM_ARRAYSIZE(weatherItems)) && timeWeatherSystem)
 					timeWeatherSystem->SetForcedWeather(static_cast<GamePH::TimeWeather::EWeather::TYPE>(weather - 1));
 				ImGui::Text("Setting weather to: %s", !weatherDisabledFlag ? weatherItems[weather] : "");

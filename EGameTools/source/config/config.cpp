@@ -4360,6 +4360,7 @@ namespace Config {
 		{ "Menu:Keybinds", "SlowMotionToggleKey", std::string("VK_4"), &Menu::World::slowMotion, String},
 		{ "Player:Misc", "GodMode", false, &Menu::Player::godMode, OPTION },
 		{ "Player:Misc", "UnlimitedImmunity", false, &Menu::Player::unlimitedImmunity, OPTION },
+		{ "Player:Misc", "InvisibleToEnemies", true, &Menu::Player::invisibleToEnemies, OPTION },
 		{ "Player:Misc", "DisableOutOfBoundsTimer", true, &Menu::Player::disableOutOfBoundsTimer, OPTION },
 		{ "Player:Misc", "NightrunnerMode", false, &Menu::Player::nightrunnerMode, OPTION },
 		{ "Player:Misc", "OneHandedMode", false, &Menu::Player::oneHandedMode, OPTION },
