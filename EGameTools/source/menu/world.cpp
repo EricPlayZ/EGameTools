@@ -133,9 +133,9 @@ namespace Menu {
 					ImGui::EndDisabled();
 				}
 
-				ImGui::CheckboxHotkey("Freeze Time", &freezeTime);
+				ImGui::CheckboxHotkey("Freeze Time", &freezeTime, "Freezes time");
 				ImGui::SameLine();
-				ImGui::CheckboxHotkey("Slow Motion", &slowMotion);
+				ImGui::CheckboxHotkey("Slow Motion", &slowMotion, "Slows the game down to the speed specified on the \"Slow Motion Speed\" slider");
 
 				ImGui::EndDisabled();
 			}

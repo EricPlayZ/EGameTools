@@ -6437,6 +6437,7 @@ namespace Menu {
 		float playerMaxImmunity = 80.0f;
 		KeyBindOption godMode{ VK_F6 };
 		KeyBindOption unlimitedImmunity{ VK_NONE };
+		KeyBindOption unlimitedStamina{ VK_NONE };
 		KeyBindOption freezePlayer{ VK_F7 };
 		KeyBindOption invisibleToEnemies{ VK_NONE };
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
@@ -6575,15 +6576,17 @@ namespace Menu {
 			if (!GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
-			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerItemForced", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
-			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFurySmashEnabled", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
-			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFuryGroundPoundEnabled", nightrunnerMode.GetValue(), !nightrunnerMode.GetValue(), &nightrunnerMode);
+			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerItemForced", true, false, &nightrunnerMode);
+			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFurySmashEnabled", true, false, &nightrunnerMode);
+			GamePH::PlayerVariables::ManagePlayerVarOption("NightRunnerFuryGroundPoundEnabled", true, false, &nightrunnerMode);
 
-			GamePH::PlayerVariables::ManagePlayerVarOption("AntizinDrainBlocked", unlimitedImmunity.GetValue(), !unlimitedImmunity.GetValue(), &unlimitedImmunity);
+			GamePH::PlayerVariables::ManagePlayerVarOption("AntizinDrainBlocked", true, false, &unlimitedImmunity);
 
-			GamePH::PlayerVariables::ManagePlayerVarOption("InVisibleToEnemies", invisibleToEnemies.GetValue(), !invisibleToEnemies.GetValue(), &invisibleToEnemies);
+			GamePH::PlayerVariables::ManagePlayerVarOption("InfiniteStamina", true, false, &unlimitedStamina);
 
-			GamePH::PlayerVariables::ManagePlayerVarOption("LeftHandDisabled", oneHandedMode.GetValue(), !oneHandedMode.GetValue(), &oneHandedMode);
+			GamePH::PlayerVariables::ManagePlayerVarOption("InVisibleToEnemies", true, false, &invisibleToEnemies);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("LeftHandDisabled", true, false, &oneHandedMode);
 		}
 		static void UpdateDisabledOptions() {
 			freezePlayer.SetChangesAreDisabled(!Engine::CBulletPhysicsCharacter::Get());
@@ -6729,19 +6732,19 @@ namespace Menu {
 			{
 				if (ImGui::CollapsingHeader("Player variables list", ImGuiTreeNodeFlags_None)) {
 					ImGui::Indent();
-					if (ImGui::Button("Save variables to file"))
+					if (ImGui::Button("Save variables to file", "Saves current player variables to chosen file inside the file dialog"))
 						ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRPath", "Choose Folder", nullptr, saveSCRPath.empty() ? "." : saveSCRPath);
 					ImGui::SameLine();
-					if (ImGui::Button("Load variables from file"))
+					if (ImGui::Button("Load variables from file", "Loads player variables from chosen file inside the file dialog"))
 						ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRLoadPath", "Choose File", ".scr", loadSCRFilePath.empty() ? "." : loadSCRFilePath);
 
-					ImGui::Checkbox("Restore variables to saved variables", &restoreVarsToSavedVarsEnabled);
-					ImGui::Checkbox("Debug (show memory addresses)", &debugEnabled);
+					ImGui::Checkbox("Restore variables to saved variables", &restoreVarsToSavedVarsEnabled, "Sets whether or not \"Restore variables to default\" should restore variables to the ones saved by \"Save current variables as default\"");
+					ImGui::Checkbox("Debug Mode", &debugEnabled, "Shows text boxes alongside player variables, which will show the address in memory of each variable");
 
 					if (ImGui::Button("Restore variables to default"))
 						RestoreVariablesToDefault();
 					ImGui::SameLine();
-					if (ImGui::Button("Save current variables as default"))
+					if (ImGui::Button("Save current variables as default", "Saves the current player variables as default for whenever you use \"Restore variables to default\""))
 						SaveVariablesAsDefault();
 
 					ImGui::Separator();
@@ -6782,7 +6785,7 @@ namespace Menu {
 
 						ImGui::SameLine();
 						restoreBtnName = std::string("Restore##") + std::string(key);
-						if (ImGui::Button(restoreBtnName.c_str()))
+						if (ImGui::Button(restoreBtnName.c_str(), "Restores player variable to default"))
 							RestoreVariableToDefault(key);
 						if (debugEnabled) {
 							const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
@@ -6899,22 +6902,24 @@ namespace Menu {
 					playerImmunity = playerInfectionModule->immunity * 100.0f;
 				ImGui::EndDisabled();
 			}
-			ImGui::CheckboxHotkey("God Mode", &godMode);
+			ImGui::CheckboxHotkey("God Mode", &godMode, "Makes the player invincible");
 			ImGui::SameLine();
-			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity);
+			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity, "Stops immunity from draining");
+			ImGui::CheckboxHotkey("Unlimited Stamina", &unlimitedStamina, "Stops stamina from draining");
+			ImGui::SameLine();
 			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled()); {
-				ImGui::CheckboxHotkey("Freeze Player", &freezePlayer);
+				ImGui::CheckboxHotkey("Freeze Player", &freezePlayer, "Freezes player position");
 				ImGui::EndDisabled();
 			}
+			ImGui::CheckboxHotkey("Invisible to Enemies", &invisibleToEnemies, "Makes the player invisible to the enemies");
 			ImGui::SameLine();
-			ImGui::CheckboxHotkey("Invisible to Enemies", &invisibleToEnemies);
-			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer);
-			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode);
+			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer, "Disables the timer that runs when out of map bounds or mission bounds");
+			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode, "Makes Aiden super-human/infected");
 			ImGui::SameLine();
-			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode);
+			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode, "Removes Aiden's left hand");
 
 			ImGui::SeparatorText("Player Jump Parameters");
-			if (ImGui::Button("Reload Jump Params")) {
+			if (ImGui::Button("Reload Jump Params", "Reloads jump_parameters.scr from any mod located inside EGameTools\\UserModFiles")) {
 				if (Utils::Files::FileExistsInDir("jump_parameters.scr", "EGameTools\\UserModFiles")) {
 					GamePH::ReloadJumps();
 					ImGui::OpenPopup("Reloaded player jump parameters!");
@@ -6923,7 +6928,7 @@ namespace Menu {
 			}
 
 			ImGui::SeparatorText("Player Variables");
-			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables);
+			ImGui::Checkbox("Enabled##PlayerVars", &playerVariables, "Shows the list of player variables");
 			HandlePlayerVariablesList();
 
 			HandleDialogs();

@@ -46,15 +46,15 @@ namespace Menu {
 		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Misc##Misc");
-			ImGui::CheckboxHotkey("Disable Game Pause While AFK", &disableGamePauseWhileAFK);
+			ImGui::CheckboxHotkey("Disable Game Pause While AFK", &disableGamePauseWhileAFK, "Prevents the game from pausing while you're afk");
 			ImGui::BeginDisabled(disableHUD.GetChangesAreDisabled()); {
-				ImGui::CheckboxHotkey("Disable HUD", &disableHUD);
+				ImGui::CheckboxHotkey("Disable HUD", &disableHUD, "Disables the entire HUD, including any sort of menus like the pause menu");
 				ImGui::EndDisabled();
 			}
-			if (ImGui::Checkbox("Disable Savegame CRC Check *", &disableSavegameCRCCheck))
+			if (ImGui::Checkbox("Disable Savegame CRC Check *", &disableSavegameCRCCheck, "Stops the game from falsely saying your savegame is corrupt whenever you modify it outside of the game using a save editor"))
 				GamePH::Hooks::SaveGameCRCBoolCheckHook.Toggle();
-			ImGui::Checkbox("Disable Data PAKs CRC Check *", &disableDataPAKsCRCCheck);
-			ImGui::Checkbox("Increase Data PAKs Limit *", &increaseDataPAKsLimit);
+			ImGui::Checkbox("Disable Data PAKs CRC Check *", &disableDataPAKsCRCCheck, "Stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well");
+			ImGui::Checkbox("Increase Data PAKs Limit *", &increaseDataPAKsLimit, "Allows you to add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total");
 			ImGui::Separator();
 			ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "* Option requires game restart to apply");
 		}

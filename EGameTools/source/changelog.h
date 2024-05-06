@@ -54,10 +54,12 @@ Thank you everyone for the support <3)" },
 		R"(- Added compatibility with v1.16.1 hotfix update
 - Added "Player Immunity" slider (Player)
 - Added "Unlimited Immunity" (Player)
+- Added "Unlimited Stamina" (Player)
 - Added "Invisible to Enemies" (Player)
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
-- Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from detecting data PAKs, which allows you to use data PAK mods in multiplayer as well
+- Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
+- Added tooltips when hovering over buttons inside the mod menu
 
 - Fixed "God Mode" (Player) staying enabled after toggling FreeCam off
 - Fixed player variables saving and loading using old version of player_variables.scr (which made Max Health drop to negative infinite)
@@ -65,7 +67,7 @@ Thank you everyone for the support <3)" },
 - Fixed "God Mode" (Player) not working properly or at all in multiplayer
 - Fixed volatiles still being able to kill you when they jump on top of you while "God Mode" (Player) is enabled
 - Fixed "Disable Out of Bounds Timer" (Player) not working in missions
-- Fixed immunity drastically being lowered while rapidly changing the time forward with the "Time" slider (World) at night
+- Fixed immunity drastically being lowered while rapidly changing the time forward with the "Time" slider (World) at night or while in a dark zone
 - Changed the config system to only write to the config file whenever there's a change in the mod menu)" }
 	};
 }

@@ -159,24 +159,24 @@ namespace Menu {
 		void Tab::Render() {
 			ImGui::SeparatorText("Free Camera");
 			ImGui::BeginDisabled(freeCam.GetChangesAreDisabled() || photoMode.GetValue()); {
-				ImGui::CheckboxHotkey("Enabled##FreeCam", &freeCam);
+				ImGui::CheckboxHotkey("Enabled##FreeCam", &freeCam, "Enables free camera which allows you to travel anywhere with the camera");
 				ImGui::EndDisabled();
 			}
 			ImGui::SameLine();
 			ImGui::BeginDisabled(teleportPlayerToCamera.GetChangesAreDisabled()); {
-				ImGui::CheckboxHotkey("Teleport Player to Camera", &teleportPlayerToCamera);
+				ImGui::CheckboxHotkey("Teleport Player to Camera", &teleportPlayerToCamera, "Teleports the player to the camera while Free Camera is activated");
 				ImGui::EndDisabled();
 			}
 			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
 
 			ImGui::SeparatorText("Third Person Camera");
 			ImGui::BeginDisabled(thirdPersonCamera.GetChangesAreDisabled()); {
-				ImGui::CheckboxHotkey("Enabled##ThirdPerson", &thirdPersonCamera);
+				ImGui::CheckboxHotkey("Enabled##ThirdPerson", &thirdPersonCamera, "Enables the third person camera");
 				ImGui::EndDisabled();
 			}
 			ImGui::SameLine();
 			ImGui::BeginDisabled(tpUseTPPModel.GetChangesAreDisabled()); {
-				ImGui::CheckboxHotkey("Use Third Person Player (TPP) Model", &tpUseTPPModel);
+				ImGui::CheckboxHotkey("Use Third Person Player (TPP) Model", &tpUseTPPModel, "Uses Aiden's TPP (Third Person Player) model while the third person camera is enabled");
 				ImGui::EndDisabled();
 			}
 			ImGui::SliderFloat("Distance behind player", &tpDistanceBehindPlayer, 1.0f, 10.0f, "%.2fm");
@@ -192,8 +192,8 @@ namespace Menu {
 					FOV = static_cast<int>(pCVideoSettings->extraFOV) + baseFOV;
 				ImGui::EndDisabled();
 			}
-			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits);
-			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction);
+			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits, "Disables the invisible box while in Photo Mode");
+			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction, "Disables the FOV reduction that happens while you're in a safezone");
 		}
 	}
 }
