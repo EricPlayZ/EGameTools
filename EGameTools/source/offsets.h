@@ -70,6 +70,7 @@ struct Offsets {
 	AddOffset(PlaySoundEvent, "gamedll_ph_x64_rwdi.dll", "4C 8B DC 49 89 5B ?? 49 89 73 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 44 24 ?? 48 8B F9 48 8B DA", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(CalculateFallHeight, "gamedll_ph_x64_rwdi.dll", "40 55 56 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 9C 24", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(PlayerHealthModuleKillPlayer, "gamedll_ph_x64_rwdi.dll", "40 53 48 83 EC ?? 48 8B 01 48 8B D9 FF 90 ?? ?? ?? ?? 84 C0 74 ?? 48 8B 4B ?? 48 81 C1 ?? ?? ?? ?? 48 8B 01 FF 50", Utils::SigScan::PatternType::Address, LPVOID)
+	AddOffset(CanUseGrappleHook, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B 01 0F B6 FA 48 8B D9 FF 90 ?? ?? ?? ?? F6 80", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(CompareAndUpdateFloat, "gamedll_ph_x64_rwdi.dll", "0F 2F C1 73 ?? 0F 28 C1 C3", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(HandlePlayerImmunity, "gamedll_ph_x64_rwdi.dll", "48 8B C4 53 56 57 41 56 41 57", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(HandlePlayerImmunity2, "gamedll_ph_x64_rwdi.dll", "40 55 56 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B F1 45 0F B6 F0", Utils::SigScan::PatternType::Address, LPVOID)

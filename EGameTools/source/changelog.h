@@ -52,10 +52,12 @@ Thank you everyone for the support <3)" },
 - Fetch game version using Windows' API instead of using the game's function)" },
 		{ "v1.2.0",
 		R"(- Added compatibility with v1.16.1 hotfix update
+- Added the ability of using .PAK mods inside "EGameTools\UserModFiles"; just drag and drop a .PAK inside the folder, rename it to whatever you like and enjoy! CREDITS TO @12brendon34 on Discord for finding out how to implement this feature!
 - Added "Player Immunity" slider (Player)
 - Added "Unlimited Immunity" (Player)
 - Added "Unlimited Stamina" (Player)
 - Added "Invisible to Enemies" (Player)
+- Added "Allow Grapple Hook in Safezone" (Player)
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
@@ -68,6 +70,8 @@ Thank you everyone for the support <3)" },
 - Fixed volatiles still being able to kill you when they jump on top of you while "God Mode" (Player) is enabled
 - Fixed "Disable Out of Bounds Timer" (Player) not working in missions
 - Fixed immunity drastically being lowered while rapidly changing the time forward with the "Time" slider (World) at night or while in a dark zone
-- Changed the config system to only write to the config file whenever there's a change in the mod menu)" }
+- Changed the config system to only write to the config file whenever there's a change in the mod menu
+
+NOTE: Any mods that are put inside "EGameTools\UserModFiles" as a regular file (.scr or any other file that is usually present in .PAK mods) and NOT a .PAK file will make the game ignore the same files that are present in any of the .PAK mods inside "EGameTools\UserModFiles". I recommend using .PAK for most mods. If you run into issues, try extracting the files inside the PAK into the folder directly.)" }
 	};
 }

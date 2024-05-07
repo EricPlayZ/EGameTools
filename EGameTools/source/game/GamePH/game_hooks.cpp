@@ -223,6 +223,18 @@ namespace GamePH {
 		}
 #pragma endregion
 
+#pragma region CanUseGrappleHook
+		static bool detourCanUseGrappleHook(LPVOID pInstance, bool a2);
+		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID, bool)> CanUseGrappleHookHook{ "CanUseGrappleHook", &Offsets::Get_CanUseGrappleHook, &detourCanUseGrappleHook };
+
+		static bool detourCanUseGrappleHook(LPVOID pInstance, bool a2) {
+			if (Menu::Player::allowGrappleHookInSafezone.GetValue())
+				return true;
+
+			return CanUseGrappleHookHook.pOriginal(pInstance, a2);
+		}
+#pragma endregion
+
 #pragma region ByteHooks
 		static unsigned char SaveGameCRCBoolCheckBytes[3] = { 0xB3, 0x01, 0x90 }; // mov bl, 01
 		Utils::Hook::ByteHook<LPVOID> SaveGameCRCBoolCheckHook{ "SaveGameCRCBoolCheck", &Offsets::Get_SaveGameCRCBoolCheck, SaveGameCRCBoolCheckBytes, sizeof(SaveGameCRCBoolCheckBytes), &Menu::Misc::disableSavegameCRCCheck }; // and bl, dil

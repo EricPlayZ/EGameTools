@@ -6443,6 +6443,7 @@ namespace Menu {
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
 		KeyBindOption nightrunnerMode{ VK_F9 };
 		KeyBindOption oneHandedMode{ VK_NONE };
+		KeyBindOption allowGrappleHookInSafezone{ VK_NONE };
 		Option playerVariables{};
 
 		std::string saveSCRPath{};
@@ -6904,19 +6905,20 @@ namespace Menu {
 			}
 			ImGui::CheckboxHotkey("God Mode", &godMode, "Makes the player invincible");
 			ImGui::SameLine();
-			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity, "Stops immunity from draining");
-			ImGui::CheckboxHotkey("Unlimited Stamina", &unlimitedStamina, "Stops stamina from draining");
-			ImGui::SameLine();
 			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled()); {
 				ImGui::CheckboxHotkey("Freeze Player", &freezePlayer, "Freezes player position");
 				ImGui::EndDisabled();
 			}
+			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity, "Stops immunity from draining");
+			ImGui::SameLine();
+			ImGui::CheckboxHotkey("Unlimited Stamina", &unlimitedStamina, "Stops stamina from draining");
 			ImGui::CheckboxHotkey("Invisible to Enemies", &invisibleToEnemies, "Makes the player invisible to the enemies");
 			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer, "Disables the timer that runs when out of map bounds or mission bounds");
 			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode, "Makes Aiden super-human/infected");
 			ImGui::SameLine();
 			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode, "Removes Aiden's left hand");
+			ImGui::CheckboxHotkey("Allow Grapple Hook in Safezone", &allowGrappleHookInSafezone, "Allows player to use grapple hook while in a safezone");
 
 			ImGui::SeparatorText("Player Jump Parameters");
 			if (ImGui::Button("Reload Jump Params", "Reloads jump_parameters.scr from any mod located inside EGameTools\\UserModFiles")) {

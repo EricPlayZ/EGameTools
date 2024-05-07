@@ -16,6 +16,7 @@ namespace Menu {
 		extern KeyBindOption disableOutOfBoundsTimer;
 		extern KeyBindOption nightrunnerMode;
 		extern KeyBindOption oneHandedMode;
+		extern KeyBindOption allowGrappleHookInSafezone;
 		extern Option playerVariables;
 
 		extern std::string saveSCRPath;
