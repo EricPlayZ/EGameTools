@@ -27,14 +27,14 @@ namespace Utils {
 		class PatternScanner {
 		public:
 			static LPVOID FindPattern(LPVOID startAddress, DWORD64 searchSize, const Pattern& pattern);
-			static LPVOID FindPattern(const std::string_view ModuleName, const Pattern& pattern);
+			static LPVOID FindPattern(const std::string_view moduleName, const Pattern& pattern);
 			static LPVOID FindPattern(const Pattern& pattern);
 
-			static std::vector<LPVOID> FindPatterns(const std::string_view ModuleName, const Pattern& pattern);
+			static std::vector<LPVOID> FindPatterns(const std::string_view moduleName, const Pattern& pattern);
 			static std::vector<LPVOID> FindPatterns(LPVOID startAddress, DWORD64 searchSize, const Pattern& pattern);
 
 			static LPVOID FindPattern(LPVOID startAddress, DWORD64 searchSize, const Pattern* patterns, float* ratio = nullptr);
-			static LPVOID FindPattern(const std::string_view ModuleName, Pattern* patterns, float* ratio = nullptr);
+			static LPVOID FindPattern(const std::string_view moduleName, Pattern* patterns, float* ratio = nullptr);
 		private:
 			template <typename T> static LPVOID ResolveRelativePtr(LPVOID Address) {
 				if (!Address)

@@ -2,17 +2,25 @@
 
 namespace Utils {
 	namespace SigScan {
-		LPVOID PatternScanner::FindPattern(const std::string_view ModuleName, const Pattern& pattern) {
-			return PatternScanner::FindPattern(GetModuleHandle(ModuleName.data()), Utils::Memory::GetModuleInfo(ModuleName.data()).SizeOfImage, pattern);
+		LPVOID PatternScanner::FindPattern(const std::string_view moduleName, const Pattern& pattern) {
+			HMODULE hModule = GetModuleHandleA(moduleName.data());
+			if (!hModule)
+				return nullptr;
+
+			return PatternScanner::FindPattern(hModule, Utils::Memory::GetModuleInfo(moduleName.data()).SizeOfImage, pattern);
 		}
 		LPVOID PatternScanner::FindPattern(const Pattern& pattern) {
 			MODULEINFO hModuleInfo;
-			GetModuleInformation(GetCurrentProcess(), GetModuleHandle(nullptr), &hModuleInfo, sizeof(hModuleInfo));
-			return PatternScanner::FindPattern(GetModuleHandle(nullptr), hModuleInfo.SizeOfImage, pattern);
+			GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(nullptr), &hModuleInfo, sizeof(hModuleInfo));
+			return PatternScanner::FindPattern(GetModuleHandleA(nullptr), hModuleInfo.SizeOfImage, pattern);
 		}
 
-		std::vector<LPVOID> PatternScanner::FindPatterns(const std::string_view ModuleName, const Pattern& pattern) {
-			return PatternScanner::FindPatterns(GetModuleHandle(ModuleName.data()), Utils::Memory::GetModuleInfo(ModuleName.data()).SizeOfImage, pattern);
+		std::vector<LPVOID> PatternScanner::FindPatterns(const std::string_view moduleName, const Pattern& pattern) {
+			HMODULE hModule = GetModuleHandleA(moduleName.data());
+			if (!hModule)
+				return {};
+
+			return PatternScanner::FindPatterns(hModule, Utils::Memory::GetModuleInfo(moduleName.data()).SizeOfImage, pattern);
 		}
 		std::vector<LPVOID> PatternScanner::FindPatterns(LPVOID startAddress, DWORD64 searchSize, const Pattern& pattern) {
 			std::vector<LPVOID> ret;
@@ -87,22 +95,30 @@ namespace Utils {
 			if (bytesCounted <= byteCount)
 				mask[bytesCounted] = '\0';
 
-			size_t searchLen = strlen(reinterpret_cast<char*>(&mask[0])) - 1;
-
 			LPVOID ret = nullptr;
-			for (DWORD64 retAddress = reinterpret_cast<DWORD64>(startAddress); retAddress < reinterpret_cast<DWORD64>(startAddress) + searchSize; retAddress++) {
+			DWORD64 retAddress = reinterpret_cast<DWORD64>(startAddress);
+			DWORD64 endAddress = retAddress + searchSize;
+			size_t searchLen = bytesCounted;
+
+			while (retAddress < endAddress) {
 				__try {
-					if ((pos < bytesCounted && *reinterpret_cast<BYTE*>(retAddress) == patt[pos]) || mask[pos] == '?') {
-						if (bytesCounted <= byteCount && pos < bytesCounted && mask[pos + 1] == '\0') {
-							ret = reinterpret_cast<LPVOID>(retAddress - searchLen + offset);
+					bool found = true;
+					for (size_t j = 0; j < searchLen; j++) {
+						BYTE* currentByte = reinterpret_cast<BYTE*>(retAddress + j);
+						if (mask[j] == 'x' && *currentByte != patt[j]) {
+							found = false;
 							break;
 						}
+					}
 
-						pos++;
-					} else
-						pos = 0;
+					if (found) {
+						ret = reinterpret_cast<LPVOID>(retAddress + offset);
+						break;
+					}
+
+					retAddress++;
 				} __except (EXCEPTION_EXECUTE_HANDLER) {
-					pos = 0;
+					retAddress++;
 				}
 			}
 
@@ -147,6 +163,7 @@ namespace Utils {
 
 			return ret;
 		}
+
 		LPVOID PatternScanner::FindPattern(LPVOID startAddress, DWORD64 searchSize, const Pattern* patterns, float* ratio) {
 			int totalCount = 0;
 			struct result {

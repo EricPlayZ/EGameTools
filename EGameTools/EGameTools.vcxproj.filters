@@ -197,6 +197,9 @@
     <ClCompile Include="source\game\GamePH\PlayerInfectionModule.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
+    <ClCompile Include="source\utils\rtti.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -416,6 +419,9 @@
     </ClInclude>
     <ClInclude Include="source\game\GamePH\PlayerInfectionModule.h">
       <Filter>game\GamePH</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utils\rtti.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

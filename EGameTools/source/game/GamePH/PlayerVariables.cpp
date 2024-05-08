@@ -14,25 +14,6 @@ namespace GamePH {
 	std::vector<std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerCustomVarsDefault;
 	bool PlayerVariables::gotPlayerVars = false;
 
-	static PDWORD64 getFloatPlayerVariableVT() {
-		if (!Offsets::Get_InitializePlayerVariables())
-			return nullptr;
-
-		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariables() + Offsets::Get_initPlayerFloatVarsInstr_offset() + 0x3; // 0x3 is instruction size
-		const DWORD floatPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
-
-		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + floatPlayerVariableVTOffset);
-	}
-	static PDWORD64 getBoolPlayerVariableVT() {
-		if (!Offsets::Get_InitializePlayerVariables())
-			return nullptr;
-
-		const DWORD64 offsetToInstr = Offsets::Get_InitializePlayerVariables() + Offsets::Get_initPlayerBoolVarsInstr_offset() + 0x3; // 0x3 is instruction size
-		const DWORD boolPlayerVariableVTOffset = *reinterpret_cast<DWORD*>(offsetToInstr);
-
-		return reinterpret_cast<PDWORD64>(offsetToInstr + sizeof(DWORD) + boolPlayerVariableVTOffset);
-	}
-
 	template <typename T>
 	static void updateDefaultVar(std::vector<std::pair<std::string, std::pair<std::any, std::string>>>& defaultVars, const std::string& varName, T varValue) {
 		static_assert(std::is_same<T, float>::value || std::is_same<T, bool>::value, "Invalid type: value must be float or bool");
@@ -47,8 +28,8 @@ namespace GamePH {
 	}
 	static void processPlayerVar(PDWORD64*& playerVarsMem, std::pair<std::string, std::pair<LPVOID, std::string>>& var) {
 		while (true) {
-			const bool isFloatPlayerVar = *playerVarsMem == getFloatPlayerVariableVT();
-			const bool isBoolPlayerVar = *playerVarsMem == getBoolPlayerVariableVT();
+			const bool isFloatPlayerVar = *playerVarsMem == Offsets::GetVT_FloatPlayerVariable();
+			const bool isBoolPlayerVar = *playerVarsMem == Offsets::GetVT_BoolPlayerVariable();
 
 			if (isFloatPlayerVar || isBoolPlayerVar) {
 				var.second.first = playerVarsMem + VAR_LOC_OFFSET;
@@ -81,9 +62,9 @@ namespace GamePH {
 			return;
 		if (playerVars.empty())
 			return;
-		if (!getFloatPlayerVariableVT())
+		if (!Offsets::GetVT_FloatPlayerVariable())
 			return;
-		if (!getBoolPlayerVariableVT())
+		if (!Offsets::GetVT_BoolPlayerVariable())
 			return;
 
 		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());

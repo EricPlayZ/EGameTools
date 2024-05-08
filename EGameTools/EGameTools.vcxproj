@@ -101,6 +101,7 @@
     <ClCompile Include="source\utils\files.cpp" />
     <ClCompile Include="source\utils\hook.cpp" />
     <ClCompile Include="source\utils\memory.cpp" />
+    <ClCompile Include="source\utils\rtti.cpp" />
     <ClCompile Include="source\utils\sigscan.cpp" />
     <ClCompile Include="source\utils\texture.cpp" />
     <ClCompile Include="source\utils\time.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="source\utils\files.h" />
     <ClInclude Include="source\utils\hook.h" />
     <ClInclude Include="source\utils\memory.h" />
+    <ClInclude Include="source\utils\rtti.h" />
     <ClInclude Include="source\utils\sigscan.h" />
     <ClInclude Include="source\utils\texture.h" />
     <ClInclude Include="source\utils\time.h" />
