@@ -16,6 +16,7 @@ namespace Menu {
 		extern KeyBindOption disableOutOfBoundsTimer;
 		extern KeyBindOption nightrunnerMode;
 		extern KeyBindOption oneHandedMode;
+		extern KeyBindOption disableAirControl;
 		extern KeyBindOption allowGrappleHookInSafezone;
 		extern Option playerVariables;
 

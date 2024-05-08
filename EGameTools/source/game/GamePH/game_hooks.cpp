@@ -219,6 +219,9 @@ namespace GamePH {
 				return 0;
 			}
 
+			if (Menu::Player::godMode.GetValue())
+				return 0;
+
 			return CalculateFallHeightHook.pOriginal(pInstance, height);
 		}
 #pragma endregion
@@ -232,6 +235,34 @@ namespace GamePH {
 				return true;
 
 			return CanUseGrappleHookHook.pOriginal(pInstance, a2);
+		}
+#pragma endregion
+
+#pragma region ReadPlayerJumpParam
+		static bool isOnAllowVelocityMod = false;
+
+		static bool detourReadPlayerJumpParam(DWORD64 a1, const char* a2);
+		static Utils::Hook::MHook<LPVOID, bool(*)(DWORD64, const char*)> ReadPlayerJumpParamHook{ "ReadPlayerJumpParam", &Offsets::Get_ReadPlayerJumpParam, &detourReadPlayerJumpParam };
+
+		static bool detourReadPlayerJumpParam(DWORD64 a1, const char* a2) {
+			if (!strcmp(a2, "AllowVelocityMod"))
+				isOnAllowVelocityMod = true;
+
+			return ReadPlayerJumpParamHook.pOriginal(a1, a2);
+		}
+#pragma endregion
+
+#pragma region GetBoolFromPlayerJumpParam
+		static bool detourGetBoolFromPlayerJumpParam(LPVOID a1);
+		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID)> GetBoolFromPlayerJumpParamHook{ "GetBoolFromPlayerJumpParam", &Offsets::Get_GetBoolFromPlayerJumpParam, &detourGetBoolFromPlayerJumpParam };
+
+		static bool detourGetBoolFromPlayerJumpParam(LPVOID a1) {
+			if (Menu::Player::disableAirControl.GetValue() && isOnAllowVelocityMod) {
+				isOnAllowVelocityMod = false;
+				return false;
+			}
+
+			return GetBoolFromPlayerJumpParamHook.pOriginal(a1);
 		}
 #pragma endregion
 

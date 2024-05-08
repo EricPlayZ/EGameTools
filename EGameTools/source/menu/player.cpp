@@ -6443,6 +6443,7 @@ namespace Menu {
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
 		KeyBindOption nightrunnerMode{ VK_F9 };
 		KeyBindOption oneHandedMode{ VK_NONE };
+		KeyBindOption disableAirControl{ VK_NONE };
 		KeyBindOption allowGrappleHookInSafezone{ VK_NONE };
 		Option playerVariables{};
 
@@ -6592,6 +6593,12 @@ namespace Menu {
 		static void UpdateDisabledOptions() {
 			freezePlayer.SetChangesAreDisabled(!Engine::CBulletPhysicsCharacter::Get());
 		}
+		static void HandleToggles() {
+			if (disableAirControl.HasChanged()) {
+				disableAirControl.SetPrevValue(disableAirControl.GetValue());
+				GamePH::ReloadJumps();
+			}
+		}
 
 		Tab Tab::instance{};
 		void Tab::Update() {
@@ -6601,6 +6608,7 @@ namespace Menu {
 			PlayerImmunityUpdate();
 			UpdateDisabledOptions();
 			UpdatePlayerVars();
+			HandleToggles();
 		}
 
 		static void SaveVariablesToSCR() {
@@ -6917,6 +6925,8 @@ namespace Menu {
 			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode, "Makes Aiden super-human/infected");
 			ImGui::SameLine();
 			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode, "Removes Aiden's left hand");
+			ImGui::CheckboxHotkey("Disable Air Control", &disableAirControl, "Disables the ability to change the player's direction of momentum while in-air");
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Allow Grapple Hook in Safezone", &allowGrappleHookInSafezone, "Allows player to use grapple hook while in a safezone");
 
 			ImGui::SeparatorText("Player Jump Parameters");

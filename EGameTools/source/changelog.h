@@ -57,6 +57,7 @@ Thank you everyone for the support <3)" },
 - Added "Unlimited Immunity" (Player)
 - Added "Unlimited Stamina" (Player)
 - Added "Invisible to Enemies" (Player)
+- Added "Disable Air Control" (Player)
 - Added "Allow Grapple Hook in Safezone" (Player)
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
@@ -70,6 +71,7 @@ Thank you everyone for the support <3)" },
 - Fixed volatiles still being able to kill you when they jump on top of you while "God Mode" (Player) is enabled
 - Fixed "Disable Out of Bounds Timer" (Player) not working in missions
 - Fixed immunity drastically being lowered while rapidly changing the time forward with the "Time" slider (World) at night or while in a dark zone
+- Fixed blood overlay still displaying after falling from a great height with "God Mode" (Player) enabled
 - Changed the config system to only write to the config file whenever there's a change in the mod menu
 - Changed the way the mod menu gets the list of player variables, meaning the player variables list should self-update, with no manual intervention required even after a game update
 
