@@ -51,7 +51,7 @@ Thank you everyone for the support <3)" },
 - Added function hooking timeout for easier debugging
 - Fetch game version using Windows' API instead of using the game's function)" },
 		{ "v1.2.0",
-		R"(- Added compatibility with v1.16.1 hotfix update
+		R"(- Added compatibility with v1.16.2 hotfix update
 - Added the ability of using .PAK mods inside "EGameTools\UserModFiles"; just drag and drop a .PAK inside the folder, rename it to whatever you like and enjoy! CREDITS TO @12brendon34 on Discord for finding out how to implement this feature!
 - Added "Player Immunity" slider (Player)
 - Added "Unlimited Immunity" (Player)
@@ -71,6 +71,7 @@ Thank you everyone for the support <3)" },
 - Fixed "Disable Out of Bounds Timer" (Player) not working in missions
 - Fixed immunity drastically being lowered while rapidly changing the time forward with the "Time" slider (World) at night or while in a dark zone
 - Changed the config system to only write to the config file whenever there's a change in the mod menu
+- Changed the way the mod menu gets the list of player variables, meaning the player variables list should self-update, with no manual intervention required even after a game update
 
 NOTE: Any mods that are put inside "EGameTools\UserModFiles" as a regular file (.scr or any other file that is usually present in .PAK mods) and NOT a .PAK file will make the game ignore the same files that are present in any of the .PAK mods inside "EGameTools\UserModFiles". I recommend using .PAK for most mods. If you run into issues, try extracting the files inside the PAK into the folder directly.)" }
 	};

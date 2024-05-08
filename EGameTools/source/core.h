@@ -18,7 +18,7 @@
 
 constexpr const char* MOD_VERSION_STR = "v1.2.0";
 constexpr DWORD MOD_VERSION = 10200;
-constexpr DWORD GAME_VER_COMPAT = 11601;
+constexpr DWORD GAME_VER_COMPAT = 11602;
 
 struct Key {
     constexpr Key(std::string_view name, int code, ImGuiKey imGuiCode) : name(name), code(code), imGuiCode(imGuiCode) {}

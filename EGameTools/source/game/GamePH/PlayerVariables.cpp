@@ -13,6 +13,7 @@ namespace GamePH {
 	std::vector<std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerVarsDefault;
 	std::vector<std::pair<std::string, std::pair<std::any, std::string>>> PlayerVariables::playerCustomVarsDefault;
 	bool PlayerVariables::gotPlayerVars = false;
+	static bool sortedPlayerVars = false;
 
 	template <typename T>
 	static void updateDefaultVar(std::vector<std::pair<std::string, std::pair<std::any, std::string>>>& defaultVars, const std::string& varName, T varValue) {
@@ -58,54 +59,149 @@ namespace GamePH {
 	void PlayerVariables::GetPlayerVars() {
 		if (gotPlayerVars)
 			return;
+		if (!sortedPlayerVars)
+			return;
 		if (!Get())
 			return;
-		if (playerVars.empty())
-			return;
-		if (!Offsets::GetVT_FloatPlayerVariable())
-			return;
-		if (!Offsets::GetVT_BoolPlayerVariable())
+		if (!Offsets::GetVT_FloatPlayerVariable() || !Offsets::GetVT_BoolPlayerVariable())
 			return;
 
-		PDWORD64* playerVarsMem = reinterpret_cast<PDWORD64*>(Get());
+		DWORD64** playerVarsMem = reinterpret_cast<DWORD64**>(Get());
 
 		for (auto& var : playerVars)
 			processPlayerVar(playerVarsMem, var);
 
 		gotPlayerVars = true;
 	}
-	void PlayerVariables::SortPlayerVars() {
-		if (!playerVars.empty())
-			return;
 
-		std::stringstream ss(Config::playerVars);
+#pragma region Player Variables Sorting
+	struct VarTypeFieldMeta {
+		PlayerVariables::PlayerVarType type;
+		LPVOID(*getFieldMetaVT)();
+	};
+	const std::vector<VarTypeFieldMeta> varTypeFields = {
+		{ PlayerVariables::PlayerVarType::Float, Offsets::GetVT_TypedFieldMetaFloatPlayerVariable },
+		{ PlayerVariables::PlayerVarType::Bool, Offsets::GetVT_TypedFieldMetaBoolPlayerVariable }
+	};
 
-		while (ss.good()) {
-			// separate the string by the , character to get each variable
-			std::string pVar{};
-			getline(ss, pVar, ',');
+	bool isRetInstruction(BYTE* address) {
+		return address[0] == 0xC3 && address[1] == 0xCC;
+	}
+	bool isLeaInstruction(BYTE* address, BYTE REX, BYTE ModRM) {
+		return address[0] == REX && address[1] == 0x8D && address[2] == ModRM;
+	}
+	bool isCallInstruction(BYTE* address) {
+		return address[0] == 0xE8 && address[4] != 0xE8;
+	}
+	bool isBelowFuncSizeLimit(BYTE* address, DWORD64 startOfFunc, size_t sizeLimit) {
+		return (reinterpret_cast<DWORD64>(address) - startOfFunc) < sizeLimit;
+	}
 
-			std::stringstream ssPVar(pVar);
+	// to prevent infinite loops, assuming function is no longer than 500000 bytes LMAO Techland... why is your function even like 250000 bytes to begin with? bad code...
+	static const size_t MAX_FUNC_SIZE = 500000;
+	static const size_t MAX_LOAD_VAR_FUNC_SIZE = 2000;
 
-			std::string varName{};
-			std::string varType{};
-
-			while (ssPVar.good()) {
-				// seperate the string by the : character to get name and type of variable
-				std::string subStr{};
-				getline(ssPVar, subStr, ':');
-
-				if (subStr != "float" && subStr != "bool")
-					varName = subStr;
-				else
-					varType = subStr;
+	const char* getPlayerVarName(BYTE*& funcAddress, DWORD64 startOfFunc) {
+		const char* playerVarName = nullptr;
+		while (!playerVarName && !isRetInstruction(funcAddress) && isBelowFuncSizeLimit(funcAddress, startOfFunc, MAX_FUNC_SIZE)) {
+			// lea r8, varNameString
+			if (!isLeaInstruction(funcAddress, 0x4C, 0x05)) {
+				funcAddress++;
+				continue;
 			}
 
-			PlayerVariables::playerVars.emplace_back(varName, std::make_pair(nullptr, varType));
-			PlayerVariables::playerVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
-			PlayerVariables::playerCustomVarsDefault.emplace_back(varName, std::make_pair(varType == "float" ? 0.0f : false, varType));
+			playerVarName = reinterpret_cast<const char*>(Utils::Memory::CalcTargetAddrOfRelInst(reinterpret_cast<DWORD64>(funcAddress), 3));
+			if (!playerVarName) {
+				funcAddress++;
+				continue;
+			}
+
+			// add the size of the instruction, so we skip this instruction because this instruction is the name
+			funcAddress += 0x7;
 		}
+
+		return playerVarName;
 	}
+	PlayerVariables::PlayerVarType getPlayerVarType(BYTE*& funcAddress, DWORD64 startOfFunc) {
+		PlayerVariables::PlayerVarType playerVarType = PlayerVariables::PlayerVarType::NONE;
+
+		while (!playerVarType && !isRetInstruction(funcAddress) && isBelowFuncSizeLimit(funcAddress, startOfFunc, MAX_FUNC_SIZE)) {
+			// call LoadPlayerXVariable
+			if (!isCallInstruction(funcAddress)) {
+				funcAddress++;
+				continue;
+			}
+
+			DWORD64 startOfLoadVarFunc = Utils::Memory::CalcTargetAddrOfRelInst(reinterpret_cast<DWORD64>(funcAddress), 1);
+			for (const auto& varType : varTypeFields) {
+				DWORD64 metaVTAddr = reinterpret_cast<DWORD64>(varType.getFieldMetaVT());
+				BYTE* loadVarFuncAddress = reinterpret_cast<BYTE*>(startOfLoadVarFunc);
+				DWORD64 metaVTAddrFromFunc = 0;
+
+				while (!metaVTAddrFromFunc && !isRetInstruction(loadVarFuncAddress) && isBelowFuncSizeLimit(loadVarFuncAddress, startOfLoadVarFunc, MAX_LOAD_VAR_FUNC_SIZE)) {
+					// lea rax, typedFieldMetaVT
+					if (!isLeaInstruction(loadVarFuncAddress, 0x48, 0x05)) {
+						loadVarFuncAddress++;
+						continue;
+					}
+
+					metaVTAddrFromFunc = Utils::Memory::CalcTargetAddrOfRelInst(reinterpret_cast<DWORD64>(loadVarFuncAddress), 3);
+					if (metaVTAddrFromFunc != metaVTAddr) {
+						metaVTAddrFromFunc = 0;
+						loadVarFuncAddress++;
+						continue;
+					}
+				}
+
+				if (metaVTAddr == metaVTAddrFromFunc) {
+					playerVarType = varType.type;
+					break;
+				}
+			}
+
+			// if it's still NONE after seeing the function doesnt reference any of the variables, break so the loop stops
+			if (playerVarType == PlayerVariables::PlayerVarType::NONE)
+				break;
+		}
+
+		return playerVarType;
+	}
+
+	void PlayerVariables::SortPlayerVars() {
+		DWORD64 startOfFunc = 0;
+		while (!startOfFunc)
+			startOfFunc = reinterpret_cast<DWORD64>(Offsets::Get_LoadPlayerVars());
+
+		BYTE* funcAddress = reinterpret_cast<BYTE*>(startOfFunc);
+		while (!isRetInstruction(funcAddress) && (reinterpret_cast<DWORD64>(funcAddress) - startOfFunc) < MAX_FUNC_SIZE) {
+			const char* playerVarName = getPlayerVarName(funcAddress, startOfFunc);
+			if (!playerVarName)
+				continue;
+
+			PlayerVarType playerVarType = getPlayerVarType(funcAddress, startOfFunc);
+			if (!playerVarType)
+				continue;
+
+			std::string varType{};
+			switch (playerVarType) {
+			case PlayerVarType::Float:
+				varType = "float";
+				break;
+			case PlayerVarType::Bool:
+				varType = "bool";
+				break;
+			default:
+				break;
+			}
+
+			PlayerVariables::playerVars.emplace_back(playerVarName, std::make_pair(nullptr, varType));
+			PlayerVariables::playerVarsDefault.emplace_back(playerVarName, std::make_pair(varType == "float" ? 0.0f : false, varType));
+			PlayerVariables::playerCustomVarsDefault.emplace_back(playerVarName, std::make_pair(varType == "float" ? 0.0f : false, varType));
+		}
+
+		sortedPlayerVars = true;
+	}
+#pragma endregion
 
 	PlayerVariables* PlayerVariables::Get() {
 		__try {

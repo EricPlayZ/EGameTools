@@ -9,6 +9,13 @@
 namespace GamePH {
 	class PlayerVariables {
 	public:
+		enum PlayerVarType {
+			NONE = 0,
+			String,
+			Float,
+			Bool
+		};
+
 		static std::vector<std::pair<std::string, std::pair<LPVOID, std::string>>> playerVars;
 		static std::vector<std::pair<std::string, std::pair<std::any, std::string>>> playerVarsDefault;
 		static std::vector<std::pair<std::string, std::pair<std::any, std::string>>> playerCustomVarsDefault;

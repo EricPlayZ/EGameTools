@@ -163,8 +163,7 @@ namespace Core {
 	}
 
 	void OnPostUpdate() {
-		if (!GamePH::PlayerVariables::gotPlayerVars)
-			GamePH::PlayerVariables::GetPlayerVars();
+		GamePH::PlayerVariables::GetPlayerVars();
 
 		for (auto& menuTab : *Menu::MenuTab::GetInstances())
 			menuTab.second->Update();
@@ -235,8 +234,10 @@ namespace Core {
 		}
 
 		spdlog::warn("Sorting Player Variables");
-		GamePH::PlayerVariables::SortPlayerVars();
-		spdlog::info("Player Variables sorted");
+		std::thread([]() {
+			GamePH::PlayerVariables::SortPlayerVars();
+			spdlog::info("Player Variables sorted");
+		}).detach();
 
 		spdlog::warn("Hooking DX11/DX12 renderer");
 		std::thread([]() {

@@ -10,9 +10,16 @@ namespace Utils {
 
 		extern const bool IsAddressValidMod(const DWORD64 ptr, const char* moduleName);
 
+		extern DWORD64 CalcTargetAddrOfRelInst(DWORD64 addrOfInst, size_t opSize);
+		std::vector<DWORD64> GetXrefsTo(DWORD64 address, DWORD64 start, size_t size);
+
 		// Templates
 		template<typename ptrT> bool IsValidPtr(ptrT ptr) {
-			return !IsBadReadPtr(reinterpret_cast<LPVOID>(ptr), sizeof(LPVOID));
+			__try {
+				return !IsBadReadPtr(reinterpret_cast<LPVOID>(ptr), sizeof(LPVOID));
+			} __except(EXCEPTION_EXECUTE_HANDLER) {
+				return false;
+			}
 		}
 		template<typename ptrT = LPVOID> bool IsValidPtrMod(ptrT ptr, const char* moduleName, const bool checkForVT = true) {
 			return IsValidPtr<ptrT>(ptr) && IsAddressValidMod(checkForVT ? *(PDWORD64)(ptr) : (DWORD64)(ptr), moduleName);

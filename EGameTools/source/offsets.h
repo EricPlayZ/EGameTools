@@ -21,27 +21,25 @@ static DWORD64 Get_## name () {\
 	return name=reinterpret_cast<DWORD64>(GetModuleHandle(moduleName)) + static_cast<DWORD64>(off);\
 }
 
-#define AddVTOffset(name, moduleName, retType)\
+#define AddVTOffset(name, moduleName, rttiName, retType)\
 static retType GetVT_## name () {\
 	static retType VT_## name = NULL;\
 	if (Utils::Memory::IsValidPtr(VT_## name)) return VT_## name;\
-	return VT_## name=reinterpret_cast<retType>(Utils::RTTI::GetVTablePtr(moduleName, #name));\
+	return VT_## name=reinterpret_cast<retType>(Utils::RTTI::GetVTablePtr(moduleName, rttiName));\
 } 
 
 struct Offsets {
-	AddVTOffset(FloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", LPVOID)
-	AddVTOffset(BoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", LPVOID)
-	// ntdll.dll
-	//AddOffset(LdrpCallInitRoutine, "ntdll.dll", "[48 89 5C 24 08 44 89 44 24 18 48", PatternType::Address, DWORD64*)
-	//AddOffset(LdrpRunInitializeRoutines, "ntdll.dll", "[48 89 4C 24 08 53 56 57 41 54 41 55 41 56 41 57 48 81 EC 90", PatternType::Address, DWORD64*) // for win7
+	AddVTOffset(FloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", "FloatPlayerVariable", LPVOID)
+	AddVTOffset(BoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", "BoolPlayerVariable", LPVOID)
+	AddVTOffset(TypedFieldMetaFloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VFloatPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
+	AddVTOffset(TypedFieldMetaBoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VBoolPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
 
 	// Input related
 	AddOffset(g_CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 84 D2", Utils::SigScan::PatternType::RelativePointer, DWORD64**)
-	//AddOffset(WndProc, "engine_x64_rwdi.dll", "40 55 56 57 41 54 41 56 48 83 EC ?? 49 8B E9", PatternType::Address, LPVOID)
 
 	// Player vars related
-	AddStaticOffset(LoadPlayerVariableFunc_size, 0x14E)
 	//AddOffset(LoadPlayerFloatVariable, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B D0 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 94 24 ?? ?? ?? ?? 48 8B 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 84 24 ?? ?? ?? ??", PatternType::RelativePointer, DWORD64*);
+	AddOffset(LoadPlayerVars, "gamedll_ph_x64_rwdi.dll", "48 89 4C 24 ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 48 8B 8C 24", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(PlayerState, "gamedll_ph_x64_rwdi.dll", "4C 8B 35 [?? ?? ?? ?? 4C 8B E2", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 
 	// Game related

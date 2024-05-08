@@ -6729,8 +6729,7 @@ namespace Menu {
 			if (!playerVariables.GetValue())
 				return;
 
-			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars);
-			{
+			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
 				if (ImGui::CollapsingHeader("Player variables list", ImGuiTreeNodeFlags_None)) {
 					ImGui::Indent();
 					if (ImGui::Button("Save variables to file", "Saves current player variables to chosen file inside the file dialog"))
