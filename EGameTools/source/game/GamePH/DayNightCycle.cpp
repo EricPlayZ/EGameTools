@@ -18,6 +18,8 @@ namespace GamePH {
 			DayNightCycle* ptr = *reinterpret_cast<DayNightCycle**>(Offsets::Get_g_DayNightCycle());
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_DayNightCycle())
+				return nullptr;
 
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {

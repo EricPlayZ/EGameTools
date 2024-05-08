@@ -1,5 +1,6 @@
 #include <pch.h>
 #include "..\Engine\CGSObject2.h"
+#include "..\offsets.h"
 #include "LogicalPlayer.h"
 
 namespace GamePH {
@@ -11,6 +12,8 @@ namespace GamePH {
 
 			LogicalPlayer* ptr = pCGSObject2->pLogicalPlayer;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_LogicalPlayer())
 				return nullptr;
 
 			return ptr;

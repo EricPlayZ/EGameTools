@@ -29,27 +29,42 @@ static retType GetVT_## name () {\
 } 
 
 struct Offsets {
-	AddVTOffset(FloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", "FloatPlayerVariable", LPVOID)
-	AddVTOffset(BoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", "BoolPlayerVariable", LPVOID)
-	AddVTOffset(TypedFieldMetaFloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VFloatPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
-	AddVTOffset(TypedFieldMetaBoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VBoolPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
-
 	// Input related
 	AddOffset(g_CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 84 D2", Utils::SigScan::PatternType::RelativePointer, DWORD64**)
 
 	// Player vars related
-	//AddOffset(LoadPlayerFloatVariable, "gamedll_ph_x64_rwdi.dll", "E8 [?? ?? ?? ?? 48 8B D0 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 94 24 ?? ?? ?? ?? 48 8B 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 84 24 ?? ?? ?? ??", PatternType::RelativePointer, DWORD64*);
+	AddVTOffset(FloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", "FloatPlayerVariable", LPVOID)
+	AddVTOffset(BoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", "BoolPlayerVariable", LPVOID)
+	AddVTOffset(TypedFieldMetaFloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VFloatPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
+	AddVTOffset(TypedFieldMetaBoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VBoolPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
 	AddOffset(LoadPlayerVars, "gamedll_ph_x64_rwdi.dll", "48 89 4C 24 ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 48 8B 8C 24", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(PlayerState, "gamedll_ph_x64_rwdi.dll", "4C 8B 35 [?? ?? ?? ?? 4C 8B E2", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 
 	// Game related
+	AddVTOffset(CBulletPhysicsCharacter, "engine_x64_rwdi.dll", "CBulletPhysicsCharacter", LPVOID)
+	AddVTOffset(CGSObject, "engine_x64_rwdi.dll", "CGSObject", LPVOID)
+	AddVTOffset(CInput, "engine_x64_rwdi.dll", "CInput", LPVOID)
+	AddVTOffset(CLevel, "engine_x64_rwdi.dll", "CLevel", LPVOID)
+	AddVTOffset(CLobbySteam, "engine_x64_rwdi.dll", "CLobbySteam", LPVOID)
+	AddVTOffset(CVideoSettings, "engine_x64_rwdi.dll", "CVideoSettings", LPVOID)
+
+	AddVTOffset(DayNightCycle, "gamedll_ph_x64_rwdi.dll", "DayNightCycle", LPVOID)
+	AddVTOffset(FreeCamera, "gamedll_ph_x64_rwdi.dll", "FreeCamera", LPVOID)
+	AddVTOffset(GameDI_PH, "gamedll_ph_x64_rwdi.dll", "GameDI_PH", LPVOID)
+	AddVTOffset(LevelDI, "gamedll_ph_x64_rwdi.dll", "LevelDI", LPVOID)
+	AddVTOffset(LocalClientDI, "gamedll_ph_x64_rwdi.dll", "LocalClientDI", LPVOID)
+	AddVTOffset(LogicalPlayer, "gamedll_ph_x64_rwdi.dll", "LogicalPlayer", LPVOID)
+	AddVTOffset(PlayerDI_PH, "gamedll_ph_x64_rwdi.dll", "PlayerDI_PH", LPVOID)
+	AddVTOffset(PlayerState, "gamedll_ph_x64_rwdi.dll", "PlayerState", LPVOID)
+	AddVTOffset(SessionCooperativeDI, "gamedll_ph_x64_rwdi.dll", "SessionCooperativeDI", LPVOID)
+	AddVTOffset(TPPCameraDI, "gamedll_ph_x64_rwdi.dll", "TPPCameraDI", LPVOID)
+
 	AddStaticOffset(gameDI_PH2_offset, 0x28)
 	AddOffset(CLobbySteam, "engine_x64_rwdi.dll", "48 8B 05 [?? ?? ?? ?? 48 85 C0 74 ?? 48 83 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 	AddOffset(g_PlayerObjProperties, "gamedll_ph_x64_rwdi.dll", "48 89 0D [?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 	AddOffset(g_DayNightCycle, "gamedll_ph_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? E8 ?? ?? ?? ?? 84 C0 74 ?? B0 ?? 48 83 C4 ?? C3 32 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 	//AddOffset(g_CameraFPPDI, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 40 84 FF", PatternType::RelativePointer, DWORD64*)
 	AddOffset(g_FreeCamera, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 48 89 4C 24", Utils::SigScan::PatternType::RelativePointer, DWORD64*)
-	//AddOffset(CameraFPPDI_VT, "gamedll_ph_x64_rwdi.dll", "48 8D 05 [?? ?? ?? ?? 48 89 07 48 8D 4F 60", PatternType::RelativePointer, DWORD64)
 	AddOffset(SaveGameCRCBoolCheck, "gamedll_ph_x64_rwdi.dll", "FF 50 ?? [40 22 DF 0F 85 ?? ?? ?? ?? 0F B6 05 ?? ?? ?? ?? 48 8D 3D", Utils::SigScan::PatternType::Address, LPVOID)
 
 	// Functions

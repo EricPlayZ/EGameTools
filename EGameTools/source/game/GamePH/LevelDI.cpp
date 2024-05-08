@@ -1,5 +1,6 @@
 #include <pch.h>
 #include "..\Engine\CLevel.h"
+#include "..\offsets.h"
 #include "LevelDI.h"
 #include "PlayerObjProperties.h"
 
@@ -138,6 +139,8 @@ namespace GamePH {
 
 			LevelDI* ptr = pCLevel->pLevelDI;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_LevelDI())
 				return nullptr;
 
 			return ptr;

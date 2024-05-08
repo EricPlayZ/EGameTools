@@ -119,7 +119,7 @@ namespace Utils {
 
 					// Here I'm checking for <= 8 as we're adding 0x8 to it. So if the pattern scan returns 0 we still head the fuck out
 					if (vtableAddr <= 8)
-						return 0;
+						continue;
 
 					return vtableAddr;
 

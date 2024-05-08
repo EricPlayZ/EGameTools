@@ -1,4 +1,5 @@
 #include <pch.h>
+#include "..\offsets.h"
 #include "CBulletPhysicsCharacter.h"
 #include "CoPhysicsProperty.h"
 
@@ -22,6 +23,8 @@ namespace Engine {
 
 			CBulletPhysicsCharacter* ptr = pCoPhysicsProperty->pCBulletPhysicsCharacter;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
+				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_CBulletPhysicsCharacter())
 				return nullptr;
 
 			return ptr;

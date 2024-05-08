@@ -1,4 +1,5 @@
 #include <pch.h>
+#include "..\offsets.h"
 #include "CGSObject.h"
 #include "CLevel.h"
 
@@ -11,6 +12,8 @@ namespace Engine {
 
 			CGSObject* ptr = pCLevel->pCGSObject;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
+				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_CGSObject())
 				return nullptr;
 
 			return ptr;

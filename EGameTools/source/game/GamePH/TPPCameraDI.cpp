@@ -1,4 +1,5 @@
 #include <pch.h>
+#include "..\offsets.h"
 #include "CoBaseCameraProxy.h"
 #include "FreeCamera.h"
 #include "TPPCameraDI.h"
@@ -16,6 +17,8 @@ namespace GamePH {
 
 			TPPCameraDI* ptr = pCoBaseCameraProxy->pTPPCameraDI;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_TPPCameraDI())
 				return nullptr;
 
 			return ptr;

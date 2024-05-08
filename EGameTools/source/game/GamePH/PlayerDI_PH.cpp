@@ -13,6 +13,8 @@ namespace GamePH {
 			PlayerDI_PH* ptr = iLevel->pPlayerDI_PH;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_PlayerDI_PH())
+				return nullptr;
 
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {

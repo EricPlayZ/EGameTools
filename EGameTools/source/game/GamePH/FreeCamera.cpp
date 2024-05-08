@@ -24,6 +24,8 @@ namespace GamePH {
 			FreeCamera* ptr = reinterpret_cast<FreeCamera*>(*pg_FreeCamera);
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_FreeCamera())
+				return nullptr;
 
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {

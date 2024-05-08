@@ -36,6 +36,8 @@ namespace GamePH {
 			GameDI_PH* ptr = pCGame->pGameDI_PH;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_GameDI_PH())
+				return nullptr;
 
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {

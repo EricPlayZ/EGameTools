@@ -18,6 +18,8 @@ namespace Engine {
 			CInput* ptr = *reinterpret_cast<CInput**>(Offsets::Get_g_CInput());
 			if (!Utils::Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_CInput())
+				return nullptr;
 
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
