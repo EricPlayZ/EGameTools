@@ -85,17 +85,23 @@ namespace GamePH {
 			if (!gotPlayerVars)
 				return;
 
-			static T previousPlayerVarValue = GamePH::PlayerVariables::GetPlayerVar<T>(playerVar);
+			static std::unordered_map<std::string, T> prevPlayerVarValueMap;
+			static std::unordered_map<std::string, bool> prevOptionValueMap;
+
+			if (prevPlayerVarValueMap.find(playerVar) == prevPlayerVarValueMap.end())
+				prevPlayerVarValueMap[playerVar] = GamePH::PlayerVariables::GetPlayerVar<T>(playerVar);
+			if (prevOptionValueMap.find(playerVar) == prevOptionValueMap.end())
+				prevOptionValueMap[playerVar] = false;
 
 			if (option->GetValue()) {
-				if (!option->GetPrevValue())
-					previousPlayerVarValue = GamePH::PlayerVariables::GetPlayerVar<T>(playerVar);
+				if (!prevOptionValueMap[playerVar])
+					prevPlayerVarValueMap[playerVar] = GamePH::PlayerVariables::GetPlayerVar<T>(playerVar);
 
 				GamePH::PlayerVariables::ChangePlayerVar(playerVar, valueIfTrue);
-				option->SetPrevValue(true);
-			} else if (option->GetPrevValue()) {
-				option->SetPrevValue(false);
-				GamePH::PlayerVariables::ChangePlayerVar(playerVar, usePreviousVal ? previousPlayerVarValue : valueIfFalse);
+				prevOptionValueMap[playerVar] = true;
+			} else if (prevOptionValueMap[playerVar]) {
+				prevOptionValueMap[playerVar] = false;
+				GamePH::PlayerVariables::ChangePlayerVar(playerVar, usePreviousVal ? prevPlayerVarValueMap[playerVar] : valueIfFalse);
 			}
 		}
 

@@ -58,21 +58,23 @@ Thank you everyone for the support <3)" },
 - Added "Unlimited Stamina" (Player)
 - Added "Invisible to Enemies" (Player)
 - Added "Disable Air Control" (Player)
-- Added "Disable Head Correction" (Player) - disables centering of the player's hands to the screen while jumping
 - Added "Allow Grapple Hook in Safezone" (Player)
+- Added "Lens Distortion" slider (Camera)
+- Added "Disable Head Correction" (Player) - disables centering of the player's hands to the center of the camera
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
-- Added tooltips when hovering over buttons inside the mod menu
+- Added tooltips when hovering over buttons and sliders inside the mod menu
 
 - Fixed "God Mode" (Player) staying enabled after toggling FreeCam off
-- Fixed player variables saving and loading using old version of player_variables.scr (which made Max Health drop to negative infinite)
-- Fixed long paths to mods inside UserModFiles causing a game crash or causing the mods to not load at all
 - Fixed "God Mode" (Player) not working properly or at all in multiplayer
+- Fixed blood overlay still displaying after falling from a great height with "God Mode" (Player) enabled
 - Fixed volatiles still being able to kill you when they jump on top of you while "God Mode" (Player) is enabled
 - Fixed "Disable Out of Bounds Timer" (Player) not working in missions
+- Fixed player variables saving and loading using old version of player_variables.scr (which made Max Health drop to negative infinite)
+- Fixed options that make use of player variables not returning back to their original value after disabling them
 - Fixed immunity drastically being lowered while rapidly changing the time forward with the "Time" slider (World) at night or while in a dark zone
-- Fixed blood overlay still displaying after falling from a great height with "God Mode" (Player) enabled
+- Fixed long paths to mods inside UserModFiles causing a game crash or causing the mods to not load at all
 - Changed the config system to only write to the config file whenever there's a change in the mod menu
 - Changed the way the mod menu gets the list of player variables, meaning the player variables list should self-update, with no manual intervention required even after a game update
 

@@ -247,7 +247,7 @@ namespace GamePH {
 
 			if (Menu::Player::disableAirControl.GetValue())
 				*reinterpret_cast<bool*>(a1 + Offsets::Get_allowVelocityMod_offset()) = false;
-			if (Menu::Player::disableHeadCorrection.GetValue())
+			if (Menu::Camera::disableHeadCorrection.GetValue())
 				*reinterpret_cast<bool*>(a1 + Offsets::Get_disableHeadCorrection_offset()) = true;
 
 			return result;

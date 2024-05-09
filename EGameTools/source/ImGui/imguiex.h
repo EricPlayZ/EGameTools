@@ -10,6 +10,8 @@ namespace ImGui {
 	extern bool Checkbox(const char* label, Option* v);
 	extern bool Checkbox(const char* label, Option* v, const char* tooltip);
 	extern bool CheckboxHotkey(const char* label, KeyBindOption* v, const char* tooltip = nullptr);
+	extern bool SliderInt(const char* label, const char* tooltip, int* v, int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0);
+	extern bool SliderFloat(const char* label, const char* tooltip, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	extern void TextCentered(const char* text, const bool calculateWithScrollbar = true);
 	extern void TextCenteredColored(const char* text, const ImU32 col, const bool calculateWithScrollbar = true);
 	extern bool ButtonCentered(const char* label, const ImVec2 size = ImVec2(0.0f, 0.0f));

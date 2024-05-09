@@ -28,8 +28,11 @@ namespace Menu {
 		float tpHeightAbovePlayer = 1.35f;
 		float tpHorizontalDistanceFromPlayer = 0.0f;
 
+		float lensDistortion = 20.0f;
 		KeyBindOption disablePhotoModeLimits{ VK_NONE };
 		KeyBindOption disableSafezoneFOVReduction{ VK_NONE };
+		KeyBindOption disableHeadCorrection{ VK_NONE };
+		float baseSprintHeadCorrectionFactor = 0.55f;
 
 		static constexpr int baseFOV = 57;
 		static constexpr float baseSafezoneFOVReduction = -10.0f;
@@ -138,7 +141,17 @@ namespace Menu {
 			if (!GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
-			GamePH::PlayerVariables::ManagePlayerVarOption("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, &disableSafezoneFOVReduction);
+			static bool gotDefaultVal = false;
+			if (!gotDefaultVal) {
+				lensDistortion = GamePH::PlayerVariables::GetPlayerVar<float>("FOVCorrection") * 100.0f;
+				gotDefaultVal = true;
+			}
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, &disableSafezoneFOVReduction, true);
+
+			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", lensDistortion / 100.0f);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, &disableHeadCorrection, true);
 		}
 		static void UpdateDisabledOptions() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
@@ -146,6 +159,12 @@ namespace Menu {
 			teleportPlayerToCamera.SetChangesAreDisabled(!iLevel || !iLevel->IsLoaded());
 			thirdPersonCamera.SetChangesAreDisabled(freeCam.GetValue() || photoMode.GetValue());
 			tpUseTPPModel.SetChangesAreDisabled(freeCam.GetValue() || photoMode.GetValue());
+		}
+		static void HandleToggles() {
+			if (disableHeadCorrection.HasChanged()) {
+				disableHeadCorrection.SetPrevValue(disableHeadCorrection.GetValue());
+				GamePH::ReloadJumps();
+			}
 		}
 
 		Tab Tab::instance{};
@@ -155,6 +174,7 @@ namespace Menu {
 			UpdateTPPModel();
 			UpdatePlayerVars();
 			UpdateDisabledOptions();
+			HandleToggles();
 		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Free Camera");
@@ -186,14 +206,16 @@ namespace Menu {
 			ImGui::SeparatorText("Misc");
 			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();
 			ImGui::BeginDisabled(!pCVideoSettings); {
-				if (ImGui::SliderInt("FOV", &FOV, 20, 160) && pCVideoSettings)
+				if (ImGui::SliderInt("FOV", "Camera Field of View", &FOV, 20, 160) && pCVideoSettings)
 					pCVideoSettings->extraFOV = static_cast<float>(FOV - baseFOV);
 				else if (pCVideoSettings)
 					FOV = static_cast<int>(pCVideoSettings->extraFOV) + baseFOV;
 				ImGui::EndDisabled();
 			}
+			ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", &lensDistortion, 0.0f, 100.0f, "%.1f%%");
 			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits, "Disables the invisible box while in Photo Mode");
 			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction, "Disables the FOV reduction that happens while you're in a safezone");
+			ImGui::CheckboxHotkey("Disable Head Correction", &disableHeadCorrection, "Disables centering of the player's hands to the center of the camera");
 		}
 	}
 }

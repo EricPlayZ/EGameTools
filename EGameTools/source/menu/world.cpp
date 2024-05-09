@@ -85,11 +85,11 @@ namespace Menu {
 				}
 			}
 
-			if (!menuToggle.GetValue()) {
-				time = dayNightCycle->time1 * 24.0f;
-				if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
-					dayNightCycle->SetDaytime(timeBeforeFreeze);
+			time = dayNightCycle->time1 * 24.0f;
+			if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
+				dayNightCycle->SetDaytime(timeBeforeFreeze);
 
+			if (!menuToggle.GetValue()) {
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
 					iLevel->TimerSetSpeedUp(gameSpeed);
 				actualGameSpeed = iLevel->TimerGetSpeedUp();
@@ -116,10 +116,6 @@ namespace Menu {
 						GamePH::PlayerVariables::ChangePlayerVar("AntizinDrainBlocked", previousAntizinDrainBlocked);
 						haveResetAntizinDrainBlocked = true;
 					}
-
-					time = dayNightCycle->time1 * 24.0f;
-					if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
-						dayNightCycle->SetDaytime(timeBeforeFreeze);
 				}
 
 				ImGui::BeginDisabled(slowMotion.GetValue()); {

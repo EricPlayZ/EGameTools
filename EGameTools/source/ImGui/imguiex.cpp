@@ -119,6 +119,18 @@ namespace ImGui {
         Hotkey(std::string(label + std::string("##ToggleKey")), v);
         return checkbox;
     }
+    bool SliderInt(const char* label, const char* tooltip, int* v, int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0) {
+        const bool sliderInt = SliderInt(label, v, v_min, v_max, format, flags);
+        if (tooltip)
+            SetItemTooltip(tooltip);
+        return sliderInt;
+    }
+    bool SliderFloat(const char* label, const char* tooltip, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0) {
+        const bool sliderFloat = SliderFloat(label, v, v_min, v_max, format, flags);
+        if (tooltip)
+            SetItemTooltip(tooltip);
+        return sliderFloat;
+    }
     static const float CalculateIndentation(const float window_width, const float text_width, const float min_indentation) {
         const float indentation = (window_width - text_width) * 0.5f;
         return (indentation > min_indentation ? indentation : min_indentation);

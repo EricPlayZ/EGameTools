@@ -6445,7 +6445,6 @@ namespace Menu {
 		KeyBindOption oneHandedMode{ VK_NONE };
 		KeyBindOption allowGrappleHookInSafezone{ VK_NONE };
 		KeyBindOption disableAirControl{ VK_NONE };
-		KeyBindOption disableHeadCorrection{ VK_NONE };
 		Option playerVariables{};
 
 		std::string saveSCRPath{};
@@ -6597,10 +6596,6 @@ namespace Menu {
 		static void HandleToggles() {
 			if (disableAirControl.HasChanged()) {
 				disableAirControl.SetPrevValue(disableAirControl.GetValue());
-				GamePH::ReloadJumps();
-			}
-			if (disableHeadCorrection.HasChanged()) {
-				disableHeadCorrection.SetPrevValue(disableHeadCorrection.GetValue());
 				GamePH::ReloadJumps();
 			}
 		}
@@ -6934,8 +6929,6 @@ namespace Menu {
 
 			ImGui::SeparatorText("Player Jump Parameters");
 			ImGui::CheckboxHotkey("Disable Air Control", &disableAirControl, "Disables the ability to change the player's direction of momentum while jumping (in-air)");
-			ImGui::SameLine();
-			ImGui::CheckboxHotkey("Disable Head Correction", &disableHeadCorrection, "Disables centering of the player's hands to the screen while jumping");
 			if (ImGui::Button("Reload Jump Params", "Reloads jump_parameters.scr from any mod located inside EGameTools\\UserModFiles")) {
 				if (Utils::Files::FileExistsInDir("jump_parameters.scr", "EGameTools\\UserModFiles")) {
 					GamePH::ReloadJumps();

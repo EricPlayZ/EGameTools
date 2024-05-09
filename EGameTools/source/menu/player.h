@@ -18,7 +18,6 @@ namespace Menu {
 		extern KeyBindOption oneHandedMode;
 		extern KeyBindOption allowGrappleHookInSafezone;
 		extern KeyBindOption disableAirControl;
-		extern KeyBindOption disableHeadCorrection;
 		extern Option playerVariables;
 
 		extern std::string saveSCRPath;
