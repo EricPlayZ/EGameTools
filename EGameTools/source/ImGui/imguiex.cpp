@@ -119,13 +119,13 @@ namespace ImGui {
         Hotkey(std::string(label + std::string("##ToggleKey")), v);
         return checkbox;
     }
-    bool SliderInt(const char* label, const char* tooltip, int* v, int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0) {
+    bool SliderInt(const char* label, const char* tooltip, int* v, int v_min, int v_max, const char* format, ImGuiSliderFlags flags) {
         const bool sliderInt = SliderInt(label, v, v_min, v_max, format, flags);
         if (tooltip)
             SetItemTooltip(tooltip);
         return sliderInt;
     }
-    bool SliderFloat(const char* label, const char* tooltip, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0) {
+    bool SliderFloat(const char* label, const char* tooltip, float* v, float v_min, float v_max, const char* format, ImGuiSliderFlags flags) {
         const bool sliderFloat = SliderFloat(label, v, v_min, v_max, format, flags);
         if (tooltip)
             SetItemTooltip(tooltip);
