@@ -238,31 +238,19 @@ namespace GamePH {
 		}
 #pragma endregion
 
-#pragma region ReadPlayerJumpParam
-		static bool isOnAllowVelocityMod = false;
+#pragma region ReadPlayerJumpParams
+		static DWORD64 detourReadPlayerJumpParams(DWORD64 a1, DWORD64 a2, DWORD64 a3, char a4, DWORD64* a5);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, DWORD64, DWORD64, char, DWORD64*)> ReadPlayerJumpParamsHook{ "ReadPlayerJumpParams", &Offsets::Get_ReadPlayerJumpParams, &detourReadPlayerJumpParams };
 
-		static bool detourReadPlayerJumpParam(DWORD64 a1, const char* a2);
-		static Utils::Hook::MHook<LPVOID, bool(*)(DWORD64, const char*)> ReadPlayerJumpParamHook{ "ReadPlayerJumpParam", &Offsets::Get_ReadPlayerJumpParam, &detourReadPlayerJumpParam };
+		static DWORD64 detourReadPlayerJumpParams(DWORD64 a1, DWORD64 a2, DWORD64 a3, char a4, DWORD64* a5) {
+			DWORD64 result = ReadPlayerJumpParamsHook.pOriginal(a1, a2, a3, a4, a5);
 
-		static bool detourReadPlayerJumpParam(DWORD64 a1, const char* a2) {
-			if (!strcmp(a2, "AllowVelocityMod"))
-				isOnAllowVelocityMod = true;
+			if (Menu::Player::disableAirControl.GetValue())
+				*reinterpret_cast<bool*>(a1 + Offsets::Get_allowVelocityMod_offset()) = false;
+			if (Menu::Player::disableHeadCorrection.GetValue())
+				*reinterpret_cast<bool*>(a1 + Offsets::Get_disableHeadCorrection_offset()) = true;
 
-			return ReadPlayerJumpParamHook.pOriginal(a1, a2);
-		}
-#pragma endregion
-
-#pragma region GetBoolFromPlayerJumpParam
-		static bool detourGetBoolFromPlayerJumpParam(LPVOID a1);
-		static Utils::Hook::MHook<LPVOID, bool(*)(LPVOID)> GetBoolFromPlayerJumpParamHook{ "GetBoolFromPlayerJumpParam", &Offsets::Get_GetBoolFromPlayerJumpParam, &detourGetBoolFromPlayerJumpParam };
-
-		static bool detourGetBoolFromPlayerJumpParam(LPVOID a1) {
-			if (Menu::Player::disableAirControl.GetValue() && isOnAllowVelocityMod) {
-				isOnAllowVelocityMod = false;
-				return false;
-			}
-
-			return GetBoolFromPlayerJumpParamHook.pOriginal(a1);
+			return result;
 		}
 #pragma endregion
 

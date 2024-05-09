@@ -58,6 +58,7 @@ Thank you everyone for the support <3)" },
 - Added "Unlimited Stamina" (Player)
 - Added "Invisible to Enemies" (Player)
 - Added "Disable Air Control" (Player)
+- Added "Disable Head Correction" (Player) - disables centering of the player's hands to the screen while jumping
 - Added "Allow Grapple Hook in Safezone" (Player)
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
