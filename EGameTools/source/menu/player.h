@@ -13,6 +13,7 @@ namespace Menu {
 		extern KeyBindOption freezePlayer;
 		extern KeyBindOption unlimitedImmunity;
 		extern KeyBindOption unlimitedStamina;
+		extern KeyBindOption unlimitedItems;
 		extern KeyBindOption oneHitKill;
 		extern KeyBindOption invisibleToEnemies;
 		extern KeyBindOption disableOutOfBoundsTimer;

@@ -254,6 +254,21 @@ namespace GamePH {
 		}
 #pragma endregion
 
+#pragma region HandleInventoryItemsAmount
+		static void detourHandleInventoryItemsAmount(int* pInventoryItem_0x10, UINT amount);
+		static Utils::Hook::MHook<LPVOID, void(*)(int*, UINT)> HandleInventoryItemsAmountHook{ "HandleInventoryItemsAmount", &Offsets::Get_HandleInventoryItemsAmount, &detourHandleInventoryItemsAmount };
+
+		static void detourHandleInventoryItemsAmount(int* pInventoryItem_0x10, UINT amount) {
+			int previousValue = *pInventoryItem_0x10;
+			HandleInventoryItemsAmountHook.pOriginal(pInventoryItem_0x10, amount);
+			if (!LevelDI::Get() || !LevelDI::Get()->IsLoaded())
+				return;
+
+			if (*pInventoryItem_0x10 < previousValue && *pInventoryItem_0x10 == amount && Menu::Player::unlimitedItems.GetValue())
+				*pInventoryItem_0x10 = previousValue;
+		}
+#pragma endregion
+
 #pragma region ByteHooks
 		static unsigned char SaveGameCRCBoolCheckBytes[3] = { 0xB3, 0x01, 0x90 }; // mov bl, 01
 		Utils::Hook::ByteHook<LPVOID> SaveGameCRCBoolCheckHook{ "SaveGameCRCBoolCheck", &Offsets::Get_SaveGameCRCBoolCheck, SaveGameCRCBoolCheckBytes, sizeof(SaveGameCRCBoolCheckBytes), &Menu::Misc::disableSavegameCRCCheck }; // and bl, dil

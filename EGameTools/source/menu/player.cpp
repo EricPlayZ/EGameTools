@@ -6441,6 +6441,7 @@ namespace Menu {
 		KeyBindOption freezePlayer{ VK_F7 };
 		KeyBindOption unlimitedImmunity{ VK_NONE };
 		KeyBindOption unlimitedStamina{ VK_NONE };
+		KeyBindOption unlimitedItems{ VK_NONE };
 		KeyBindOption oneHitKill{ VK_NONE };
 		KeyBindOption invisibleToEnemies{ VK_NONE };
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
@@ -6588,6 +6589,8 @@ namespace Menu {
 			GamePH::PlayerVariables::ManagePlayerVarOption("AntizinDrainBlocked", true, false, &unlimitedImmunity);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("InfiniteStamina", true, false, &unlimitedStamina);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("UvFlashlightEnergyDrainFactor", 0.0f, 1.0f, &unlimitedItems);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("DamageMulAll", 99999.0f, 0.0f, &oneHitKill, true);
 
@@ -6960,14 +6963,15 @@ namespace Menu {
 			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity, "Stops immunity from draining");
 			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Unlimited Stamina", &unlimitedStamina, "Stops stamina from draining");
+			ImGui::CheckboxHotkey("Unlimited Items", &unlimitedItems, "Stops the game from lowering the amount of items such as consumables / throwables when using them, alongside other inventory items such as ammo, lockpicks and even money\nWARNING: Dropping the entire amount of an item will remove the item from your inventory, whilst also being dropped");
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("One-Hit Kill", &oneHitKill, "Makes the player one-hit kill EVERYTHING and EVERYONE RAWRRR");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Invisible to Enemies", &invisibleToEnemies, "Makes the player invisible to the enemies");
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer, "Disables the timer that runs when out of map bounds or mission bounds");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode, "Makes Aiden super-human/infected");
-			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode, "Removes Aiden's left hand");
 			ImGui::SameLine();
+			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode, "Removes Aiden's left hand");
 			ImGui::CheckboxHotkey("Allow Grapple Hook in Safezone", &allowGrappleHookInSafezone, "Allows player to use grapple hook while in a safezone");
 
 			ImGui::SeparatorText("Player Jump Parameters");
