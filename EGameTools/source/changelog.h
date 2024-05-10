@@ -57,7 +57,7 @@ Thank you everyone for the support <3)" },
 - Added "Old World Money" slider (Player)
 - Added "Unlimited Immunity" (Player)
 - Added "Unlimited Stamina" (Player)
-- Added "Unlimited Items" (Player) - Stops the game from lowering the amount of items such as consumables / throwables when using them, alongside other inventory items such as ammo, lockpicks and even money; WARNING: Dropping the entire amount of an item will remove the item from your inventory, whilst also being dropped
+- Added "Unlimited Items" (Player) - Stops the game from lowering the amount of items such as consumables / throwables when using them, alongside other inventory items such as ammo, lockpicks and other items; WARNING: This will not stop the item from getting removed from your inventory if you drop the entire amount
 - Added "One-Hit Kill" (Player)
 - Added "Invisible to Enemies" (Player)
 - Added "Allow Grapple Hook in Safezone" (Player)
