@@ -8,7 +8,7 @@
 
 namespace Menu {
 	namespace Weapon {
-		float currentWeaponDurability = 150.0f;
+		float currentWeaponDurability = 0.0f;
 		KeyBindOption unlimitedDurability{ VK_NONE };
 		KeyBindOption unlimitedAmmo{ VK_NONE };
 		KeyBindOption noSpread{ VK_NONE };
@@ -98,7 +98,7 @@ namespace Menu {
 		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Current Weapon");
-			ImGui::BeginDisabled(isWeaponInteractionDisabled()); {
+			ImGui::BeginDisabled(isWeaponInteractionDisabled() || currentWeaponDurability <= 0.0f); {
 				if (ImGui::SliderFloat("Weapon Durability", "Currently only works while your weapon is physically equipped in your hand", &currentWeaponDurability, 0.1f, 999.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
 					UpdateWeaponDurability(false);
 				else

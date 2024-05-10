@@ -3,6 +3,7 @@
 #include "..\game\Engine\CBulletPhysicsCharacter.h"
 #include "..\game\GamePH\FreeCamera.h"
 #include "..\game\GamePH\LevelDI.h"
+#include "..\game\GamePH\PlayerDI_PH.h"
 #include "..\game\GamePH\PlayerHealthModule.h"
 #include "..\game\GamePH\PlayerInfectionModule.h"
 #include "..\game\GamePH\PlayerVariables.h"
@@ -6435,6 +6436,7 @@ namespace Menu {
 		float playerMaxHealth = 80.0f;
 		float playerImmunity = 80.0f;
 		float playerMaxImmunity = 80.0f;
+		int oldWorldMoney = 0;
 		KeyBindOption godMode{ VK_F6 };
 		KeyBindOption freezePlayer{ VK_F7 };
 		KeyBindOption unlimitedImmunity{ VK_NONE };
@@ -6601,17 +6603,6 @@ namespace Menu {
 				disableAirControl.SetPrevValue(disableAirControl.GetValue());
 				GamePH::ReloadJumps();
 			}
-		}
-
-		Tab Tab::instance{};
-		void Tab::Update() {
-			PlayerPositionUpdate();
-			PlayerVarsUpdate();
-			PlayerHealthUpdate();
-			PlayerImmunityUpdate();
-			UpdateDisabledOptions();
-			UpdatePlayerVars();
-			HandleToggles();
 		}
 
 		static void SaveVariablesToSCR() {
@@ -6895,6 +6886,46 @@ namespace Menu {
 			}
 		}
 
+		static void UpdateMoney(bool updateSlider) {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel || !iLevel->IsLoaded())
+				return;
+			GamePH::PlayerDI_PH* player = GamePH::PlayerDI_PH::Get();
+			if (!player)
+				return;
+			GamePH::InventoryContainerDI* invContainer = player->GetInventoryContainer();
+			if (!invContainer)
+				return;
+			GamePH::InventoryMoney* invMoney = invContainer->GetInventoryMoney(0);
+			if (!invMoney)
+				return;
+
+			updateSlider ? (oldWorldMoney = invMoney->oldWorldMoney) : (invMoney->oldWorldMoney = oldWorldMoney);
+		}
+		static bool isMoneyInteractionDisabled() {
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			if (!iLevel || !iLevel->IsLoaded())
+				return true;
+			GamePH::PlayerDI_PH* player = GamePH::PlayerDI_PH::Get();
+			if (!player)
+				return true;
+			GamePH::InventoryContainerDI* invContainer = player->GetInventoryContainer();
+			if (!invContainer || !invContainer->GetInventoryMoney(0))
+				return true;
+
+			return false;
+		}
+
+		Tab Tab::instance{};
+		void Tab::Update() {
+			PlayerPositionUpdate();
+			PlayerVarsUpdate();
+			PlayerHealthUpdate();
+			PlayerImmunityUpdate();
+			UpdateDisabledOptions();
+			UpdatePlayerVars();
+			HandleToggles();
+		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Misc");
 			GamePH::PlayerHealthModule* playerHealthModule = GamePH::PlayerHealthModule::Get();
@@ -6911,6 +6942,13 @@ namespace Menu {
 					playerInfectionModule->immunity = playerImmunity / 100.0f;
 				else if (playerInfectionModule)
 					playerImmunity = playerInfectionModule->immunity * 100.0f;
+				ImGui::EndDisabled();
+			}
+			ImGui::BeginDisabled(isMoneyInteractionDisabled()); {
+				if (ImGui::DragInt("Old World Money", &oldWorldMoney, 2.0f, 0, 999999999))
+					UpdateMoney(false);
+				else
+					UpdateMoney(true);
 				ImGui::EndDisabled();
 			}
 			ImGui::CheckboxHotkey("God Mode", &godMode, "Makes the player invincible");

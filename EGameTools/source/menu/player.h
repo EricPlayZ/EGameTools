@@ -8,6 +8,7 @@ namespace Menu {
 		extern float playerMaxHealth;
 		extern float playerImmunity;
 		extern float playerMaxImmunity;
+		extern int oldWorldMoney;
 		extern KeyBindOption godMode;
 		extern KeyBindOption freezePlayer;
 		extern KeyBindOption unlimitedImmunity;

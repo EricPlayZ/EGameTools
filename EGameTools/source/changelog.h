@@ -54,6 +54,7 @@ Thank you everyone for the support <3)" },
 		R"(- Added compatibility with v1.16.2 hotfix update
 - Added the ability of using .PAK mods inside "EGameTools\UserModFiles"; just drag and drop a .PAK inside the folder, rename it to whatever you like and enjoy! CREDITS TO @12brendon34 on Discord for finding out how to implement this feature!
 - Added "Player Immunity" slider (Player)
+- Added "Old World Money" slider (Player)
 - Added "Unlimited Immunity" (Player)
 - Added "Unlimited Stamina" (Player)
 - Added "One-Hit Kill" (Player)

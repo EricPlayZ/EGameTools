@@ -1,5 +1,6 @@
 #include <pch.h>
 #include "..\offsets.h"
+#include "InventoryContainerDI.h"
 #include "InventoryItem.h"
 #include "LevelDI.h"
 #include "PlayerDI_PH.h"
@@ -33,6 +34,20 @@ namespace GamePH {
 			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
 				return nullptr;
 			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_InventoryItem())
+				return nullptr;
+
+			return ptr;
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return nullptr;
+		}
+	}
+
+	InventoryContainerDI* PlayerDI_PH::GetInventoryContainer() {
+		__try {
+			InventoryContainerDI* ptr = reinterpret_cast<InventoryContainerDI*>(*reinterpret_cast<DWORD64*>(reinterpret_cast<DWORD64>(this) + 0x470));
+			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+				return nullptr;
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_InventoryContainerDI())
 				return nullptr;
 
 			return ptr;

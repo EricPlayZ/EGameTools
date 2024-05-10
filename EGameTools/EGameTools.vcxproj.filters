@@ -206,6 +206,9 @@
     <ClCompile Include="source\game\GamePH\InventoryItem.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
+    <ClCompile Include="source\game\GamePH\InventoryContainerDI.cpp">
+      <Filter>game\GamePH</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -436,6 +439,12 @@
       <Filter>game\GamePH</Filter>
     </ClInclude>
     <ClInclude Include="source\game\GamePH\ItemDescWithContext.h">
+      <Filter>game\GamePH</Filter>
+    </ClInclude>
+    <ClInclude Include="source\game\GamePH\InventoryContainerDI.h">
+      <Filter>game\GamePH</Filter>
+    </ClInclude>
+    <ClInclude Include="source\game\GamePH\InventoryMoney.h">
       <Filter>game\GamePH</Filter>
     </ClInclude>
   </ItemGroup>
