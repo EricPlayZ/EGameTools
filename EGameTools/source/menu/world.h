@@ -15,7 +15,7 @@ namespace Menu {
 
 		class Tab : MenuTab {
 		public:
-			Tab() : MenuTab("World", 4) {}
+			Tab() : MenuTab("World", 5) {}
 			void Update() override;
 			void Render() override;
 

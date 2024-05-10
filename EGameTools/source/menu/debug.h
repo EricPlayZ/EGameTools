@@ -5,7 +5,7 @@ namespace Menu {
 	namespace Debug {
 		class Tab : MenuTab {
 		public:
-			Tab() : MenuTab("Debug", 5) {}
+			Tab() : MenuTab("Debug", 6) {}
 			void Update() override;
 			void Render() override;
 

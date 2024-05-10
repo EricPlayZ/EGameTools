@@ -39,6 +39,9 @@ Vector3 Vector3::cross(const Vector3& v) const {
 		X * v.Y - Y * v.X
 	};
 }
+Vector3 Vector3::round() {
+	return { std::roundf(X), std::roundf(Y), std::roundf(Z) };
+}
 
 bool Vector3::isDefault() const {
 	return Utils::Values::are_samef(X, 0.0f) && Utils::Values::are_samef(Y, 0.0f) && Utils::Values::are_samef(Z, 0.0f);

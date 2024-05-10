@@ -3,6 +3,7 @@
 #include "..\menu\menu.h"
 #include "..\menu\misc.h"
 #include "..\menu\player.h"
+#include "..\menu\teleport.h"
 #include "..\menu\weapon.h"
 #include "..\menu\world.h"
 #include "config.h"
@@ -11,7 +12,8 @@ namespace Config {
 	enum ValueType {
 		OPTION,
 		Float,
-		String
+		String,
+		TPLocations
 	};
 
 	struct VKey {

@@ -97,7 +97,7 @@ namespace Menu {
 			UpdatePlayerVars();
 		}
 		void Tab::Render() {
-			ImGui::SeparatorText("Current Weapon");
+			ImGui::SeparatorText("Current Weapon##Weapon");
 			ImGui::BeginDisabled(isWeaponInteractionDisabled() || currentWeaponDurability <= 0.0f); {
 				if (ImGui::SliderFloat("Weapon Durability", "Currently only works while your weapon is physically equipped in your hand", &currentWeaponDurability, 0.1f, 999.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
 					UpdateWeaponDurability(false);
@@ -106,7 +106,7 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 
-			ImGui::SeparatorText("Misc");
+			ImGui::SeparatorText("Misc##Weapon");
 			ImGui::CheckboxHotkey("Unlimited Durability", &unlimitedDurability, "Enables unlimited durability for all weapons");
 			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Unlimited Ammo", &unlimitedAmmo, "Enables unlimited ammo for all firearms and bows");

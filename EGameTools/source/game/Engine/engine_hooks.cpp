@@ -171,8 +171,8 @@ namespace Engine {
 			std::string gamePath = userModFilesFullPath;
 			Utils::Values::str_replace(gamePath, "\\ph\\source\\data\\EGameTools\\UserModFiles", "");
 
-			std::unique_ptr<fs::mount_path> pathPtr = std::make_unique<fs::mount_path>();
-			pathPtr->gamePath = gamePath.c_str();
+			fs::mount_path pathPtr = fs::mount_path();
+			pathPtr.gamePath = gamePath.c_str();
 
 			try {
 				const auto rdi = std::filesystem::recursive_directory_iterator(userModFilesFullPath);
@@ -186,11 +186,11 @@ namespace Engine {
 					std::string pakPath = fullPakPath;
 					pakPath.erase(0, gamePath.size() + 1);
 
-					pathPtr->pakPath = pakPath.c_str();
-					pathPtr->fullPakPath = fullPakPath.c_str();
+					pathPtr.pakPath = pakPath.c_str();
+					pathPtr.fullPakPath = fullPakPath.c_str();
 
 					spdlog::warn("Loading user PAK mod file \"{}\"", pakPath.c_str());
-					if (!fs::mount(pathPtr.get(), 1, nullptr))
+					if (!fs::mount(&pathPtr, 1, nullptr))
 						spdlog::error("fs::mount returned 0! Something went wrong with loading user PAK mod file \"{}\"!\nPlease make sure the path to the file is no longer than 260 characters, and make sure the file is valid!", pakPath.c_str());
 				}
 			} catch (const std::exception& e) {

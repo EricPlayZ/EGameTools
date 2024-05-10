@@ -209,6 +209,9 @@
     <ClCompile Include="source\game\GamePH\InventoryContainerDI.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
+    <ClCompile Include="source\menu\teleport.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -446,6 +449,9 @@
     </ClInclude>
     <ClInclude Include="source\game\GamePH\InventoryMoney.h">
       <Filter>game\GamePH</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\teleport.h">
+      <Filter>menu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
