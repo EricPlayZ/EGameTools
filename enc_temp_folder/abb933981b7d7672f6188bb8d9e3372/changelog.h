@@ -58,8 +58,8 @@ Thank you everyone for the support <3)" },
 - Added "Unlimited Stamina" (Player)
 - Added "One-Hit Kill" (Player)
 - Added "Invisible to Enemies" (Player)
-- Added "Allow Grapple Hook in Safezone" (Player)
 - Added "Disable Air Control" (Player)
+- Added "Allow Grapple Hook in Safezone" (Player)
 - Added "Current Weapon Durability" slider (Weapon) - currently only works while your weapon is physically equipped in your hand
 - Added "Unlimited Durability" (Weapon)
 - Added "Unlimited Ammo" (Weapon)

@@ -5,6 +5,10 @@
 namespace Menu {
 	namespace Weapon {
 		extern KeyBindOption unlimitedDurability;
+		extern KeyBindOption unlimitedAmmo;
+		extern KeyBindOption noSpread;
+		extern KeyBindOption noRecoil;
+		extern KeyBindOption instantReload;
 
 		class Tab : MenuTab {
 		public:

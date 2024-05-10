@@ -9,9 +9,10 @@ namespace Menu {
 		extern float playerImmunity;
 		extern float playerMaxImmunity;
 		extern KeyBindOption godMode;
+		extern KeyBindOption freezePlayer;
 		extern KeyBindOption unlimitedImmunity;
 		extern KeyBindOption unlimitedStamina;
-		extern KeyBindOption freezePlayer;
+		extern KeyBindOption oneHitKill;
 		extern KeyBindOption invisibleToEnemies;
 		extern KeyBindOption disableOutOfBoundsTimer;
 		extern KeyBindOption nightrunnerMode;

@@ -32,10 +32,10 @@ namespace Menu {
 		KeyBindOption disablePhotoModeLimits{ VK_NONE };
 		KeyBindOption disableSafezoneFOVReduction{ VK_NONE };
 		KeyBindOption disableHeadCorrection{ VK_NONE };
-		static constexpr float baseSprintHeadCorrectionFactor = 0.55f;
 
 		static constexpr int baseFOV = 57;
 		static constexpr float baseSafezoneFOVReduction = -10.0f;
+		static constexpr float baseSprintHeadCorrectionFactor = 0.55f;
 
 		static void UpdateFOV() {
 			if (menuToggle.GetValue())
@@ -213,8 +213,9 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 			ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", &lensDistortion, 0.0f, 100.0f, "%.1f%%");
-			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits, "Disables the invisible box while in Photo Mode");
 			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction, "Disables the FOV reduction that happens while you're in a safezone");
+			ImGui::SameLine();
+			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits, "Disables the invisible box while in Photo Mode");
 			ImGui::CheckboxHotkey("Disable Head Correction", &disableHeadCorrection, "Disables centering of the player's hands to the center of the camera");
 		}
 	}

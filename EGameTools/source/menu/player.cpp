@@ -6436,9 +6436,10 @@ namespace Menu {
 		float playerImmunity = 80.0f;
 		float playerMaxImmunity = 80.0f;
 		KeyBindOption godMode{ VK_F6 };
+		KeyBindOption freezePlayer{ VK_F7 };
 		KeyBindOption unlimitedImmunity{ VK_NONE };
 		KeyBindOption unlimitedStamina{ VK_NONE };
-		KeyBindOption freezePlayer{ VK_F7 };
+		KeyBindOption oneHitKill{ VK_NONE };
 		KeyBindOption invisibleToEnemies{ VK_NONE };
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
 		KeyBindOption nightrunnerMode{ VK_F9 };
@@ -6585,6 +6586,8 @@ namespace Menu {
 			GamePH::PlayerVariables::ManagePlayerVarOption("AntizinDrainBlocked", true, false, &unlimitedImmunity);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("InfiniteStamina", true, false, &unlimitedStamina);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("DamageMulAll", 99999.0f, 0.0f, &oneHitKill, true);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("InVisibleToEnemies", true, false, &invisibleToEnemies);
 
@@ -6919,12 +6922,14 @@ namespace Menu {
 			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity, "Stops immunity from draining");
 			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Unlimited Stamina", &unlimitedStamina, "Stops stamina from draining");
+			ImGui::CheckboxHotkey("One-Hit Kill", &oneHitKill, "Makes the player one-hit kill EVERYTHING and EVERYONE RAWRRR");
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Invisible to Enemies", &invisibleToEnemies, "Makes the player invisible to the enemies");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer, "Disables the timer that runs when out of map bounds or mission bounds");
-			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode, "Makes Aiden super-human/infected");
 			ImGui::SameLine();
+			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode, "Makes Aiden super-human/infected");
 			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode, "Removes Aiden's left hand");
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Allow Grapple Hook in Safezone", &allowGrappleHookInSafezone, "Allows player to use grapple hook while in a safezone");
 
 			ImGui::SeparatorText("Player Jump Parameters");
