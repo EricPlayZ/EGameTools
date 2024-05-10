@@ -58,7 +58,7 @@ namespace Menu {
 		void Tab::Render() {
 			ImGui::SeparatorText("Current Weapon");
 			ImGui::BeginDisabled(isWeaponInteractionDisabled()); {
-				if (ImGui::SliderFloat("Weapon Durability", &currentWeaponDurability, 0.1f, 999.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+				if (ImGui::SliderFloat("Weapon Durability", "Currently only works while your weapon is physically equipped in your hand", &currentWeaponDurability, 0.1f, 999.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
 					UpdateWeaponDurability(false);
 				else
 					UpdateWeaponDurability(true);
