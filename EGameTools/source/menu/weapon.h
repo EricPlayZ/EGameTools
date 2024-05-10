@@ -1,11 +1,14 @@
 #pragma once
+#include "..\core.h"
 #include "menu.h"
-	
+
 namespace Menu {
-	namespace Debug {
+	namespace Weapon {
+		extern KeyBindOption unlimitedDurability;
+
 		class Tab : MenuTab {
 		public:
-			Tab() : MenuTab("Debug", 5) {}
+			Tab() : MenuTab("Weapon", 1) {}
 			void Update() override;
 			void Render() override;
 

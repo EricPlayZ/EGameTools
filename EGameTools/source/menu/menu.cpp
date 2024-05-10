@@ -10,7 +10,7 @@ namespace Menu {
     static ImVec2 EGTLogoSize = defEGTLogoSize;
 
 	static constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar;
-    static constexpr ImVec2 defMinWndSize = ImVec2(425.0f, 725.0f);
+    static constexpr ImVec2 defMinWndSize = ImVec2(500.0f, 725.0f);
     static ImVec2 minWndSize = defMinWndSize;
     static constexpr ImVec2 defMaxWndSize = ImVec2(900.0f, 725.0f);
     static ImVec2 maxWndSize = defMaxWndSize;

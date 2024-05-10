@@ -59,8 +59,10 @@ Thank you everyone for the support <3)" },
 - Added "Invisible to Enemies" (Player)
 - Added "Disable Air Control" (Player)
 - Added "Allow Grapple Hook in Safezone" (Player)
+- Added "Current Weapon Durability" slider (Weapon) - currently only works while your weapon is physically equipped in your hand
+- Added "Unlimited Durability" (Weapon)
 - Added "Lens Distortion" slider (Camera)
-- Added "Disable Head Correction" (Player) - disables centering of the player's hands to the center of the camera
+- Added "Disable Head Correction" (Camera) - disables centering of the player's hands to the center of the camera
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it

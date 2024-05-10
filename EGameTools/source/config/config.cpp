@@ -3,6 +3,7 @@
 #include "..\menu\menu.h"
 #include "..\menu\misc.h"
 #include "..\menu\player.h"
+#include "..\menu\weapon.h"
 #include "..\menu\world.h"
 #include "config.h"
 
@@ -4351,6 +4352,7 @@ namespace Config {
 		{ "Menu:Keybinds", "OneHandedModeToggleKey", std::string("VK_NONE"), &Menu::Player::oneHandedMode, String},
 		{ "Menu:Keybinds", "AllowGrappleHookInSafezoneToggleKey", std::string("VK_NONE"), &Menu::Player::allowGrappleHookInSafezone, String},
 		{ "Menu:Keybinds", "DisableAirControlToggleKey", std::string("VK_NONE"), &Menu::Player::disableAirControl, String },
+		{ "Menu:Keybinds", "UnlimitedDurabilityToggleKey", std::string("VK_NONE"), &Menu::Weapon::unlimitedDurability, String },
 		{ "Menu:Keybinds", "FreeCamToggleKey", std::string("VK_F3"), &Menu::Camera::freeCam, String},
 		{ "Menu:Keybinds", "TeleportPlayerToCameraToggleKey", std::string("VK_F4"), &Menu::Camera::teleportPlayerToCamera, String},
 		{ "Menu:Keybinds", "ThirdPersonToggleKey", std::string("VK_F1"), &Menu::Camera::thirdPersonCamera, String},
@@ -4374,6 +4376,7 @@ namespace Config {
 		{ "Player:PlayerVariables", "Enabled", false, &Menu::Player::playerVariables, OPTION },
 		{ "Player:PlayerVariables", "LastSaveSCRPath", std::string(), &Menu::Player::saveSCRPath, String },
 		{ "Player:PlayerVariables", "LastLoadSCRFilePath", std::string(), &Menu::Player::loadSCRFilePath, String },
+		{ "Weapon:Misc", "UnlimitedDurability", false, &Menu::Weapon::unlimitedDurability, OPTION },
 		{ "Camera:FreeCam", "Speed", 2.0f, &Menu::Camera::freeCamSpeed, Float },
 		{ "Camera:FreeCam", "TeleportPlayerToCamera", false, &Menu::Camera::teleportPlayerToCamera, OPTION },
 		{ "Camera:ThirdPerson", "Enabled", false, &Menu::Camera::thirdPersonCamera, OPTION },

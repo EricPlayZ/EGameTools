@@ -200,6 +200,12 @@
     <ClCompile Include="source\utils\rtti.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="source\menu\weapon.cpp">
+      <Filter>menu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\game\GamePH\InventoryItem.cpp">
+      <Filter>game\GamePH</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -422,6 +428,15 @@
     </ClInclude>
     <ClInclude Include="source\utils\rtti.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\menu\weapon.h">
+      <Filter>menu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\game\GamePH\InventoryItem.h">
+      <Filter>game\GamePH</Filter>
+    </ClInclude>
+    <ClInclude Include="source\game\GamePH\ItemDescWithContext.h">
+      <Filter>game\GamePH</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

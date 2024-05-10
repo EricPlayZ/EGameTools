@@ -32,7 +32,7 @@ namespace Menu {
 		KeyBindOption disablePhotoModeLimits{ VK_NONE };
 		KeyBindOption disableSafezoneFOVReduction{ VK_NONE };
 		KeyBindOption disableHeadCorrection{ VK_NONE };
-		float baseSprintHeadCorrectionFactor = 0.55f;
+		static constexpr float baseSprintHeadCorrectionFactor = 0.55f;
 
 		static constexpr int baseFOV = 57;
 		static constexpr float baseSafezoneFOVReduction = -10.0f;

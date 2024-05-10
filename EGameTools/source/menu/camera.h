@@ -25,7 +25,7 @@ namespace Menu {
 
 		class Tab : MenuTab {
 		public:
-			Tab() : MenuTab("Camera", 1) {}
+			Tab() : MenuTab("Camera", 2) {}
 			void Update() override;
 			void Render() override;
 

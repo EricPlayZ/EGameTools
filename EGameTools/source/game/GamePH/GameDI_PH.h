@@ -13,7 +13,6 @@ namespace GamePH {
 		};
 
 		float GetGameTimeDelta();
-		DWORD64 GetCurrentGameVersion();
 		void TogglePhotoMode(bool doNothing = false, bool setAsOptionalCamera = false);
 
 		static GameDI_PH* Get();
