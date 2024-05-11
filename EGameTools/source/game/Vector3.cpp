@@ -42,6 +42,10 @@ Vector3 Vector3::cross(const Vector3& v) const {
 Vector3 Vector3::round() {
 	return { std::roundf(X), std::roundf(Y), std::roundf(Z) };
 }
+Vector3 Vector3::round(int decimals) {
+	float power = std::powf(10.0f, static_cast<float>(decimals));
+	return { std::roundf(X * power) / power, std::roundf(Y * power) / power, std::roundf(Z * power) / power };
+}
 
 bool Vector3::isDefault() const {
 	return Utils::Values::are_samef(X, 0.0f) && Utils::Values::are_samef(Y, 0.0f) && Utils::Values::are_samef(Z, 0.0f);

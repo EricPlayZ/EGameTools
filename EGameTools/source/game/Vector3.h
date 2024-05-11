@@ -15,6 +15,7 @@ struct Vector3 {
 	Vector3 normalize();
 	Vector3 cross(const Vector3& v) const;
 	Vector3 round();
+	Vector3 round(int decimals);
 
 	bool isDefault() const;
 };

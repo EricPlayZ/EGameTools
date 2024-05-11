@@ -227,17 +227,17 @@ namespace Menu {
 
 				playerPos = playerCharacter->playerPos;
 			}
-			playerPos = playerPos.round();
+			playerPos = playerPos.round(1);
 
-			if (savedLocIt != savedTeleportLocations.end() && savedLocIt->pos == playerPos) {
-				ImGui::OpenPopup("The location you have entered already exists. Either the name of the location, or the position of the location is already inside the list. If you want to change it then please remove it and add it again.");
+			if (savedLocIt != savedTeleportLocations.end() && savedLocIt->pos.round() == playerPos.round()) {
+				ImGui::OpenPopup("Location already exists");
 				return;
 			}
 
-			TeleportLocation tpLocation = TeleportLocation(locationName, playerPos);
-
-			savedTeleportLocations.push_back(tpLocation);
-			savedTeleportLocationNames.push_back(tpLocation.name.data());
+			savedTeleportLocations.emplace_back(std::string(locationName), playerPos);
+			savedTeleportLocationNames.clear();
+			for (const auto& loc : savedTeleportLocations)
+				savedTeleportLocationNames.emplace_back(loc.name.data());
 		}
 		static void HandleDialogs() {
 			if (ImGui::BeginPopupModal("Give the location a name", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -249,7 +249,7 @@ namespace Menu {
 				ImGui::EndPopup();
 			}
 			if (ImGui::BeginPopupModal("Location already exists", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-				ImGui::Text("The location you have entered already exists, if you want to change it then please remove it and add it again.");
+				ImGui::Text("The location you have entered already exists. Either the name of the location, or the position of the location is already inside the list. If you want to change it then please remove it and add it again.");
 				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
@@ -283,7 +283,9 @@ namespace Menu {
 				ImGui::SameLine();
 				if (ImGui::Button("Remove Selected Location")) {
 					savedTeleportLocations.erase(savedTeleportLocations.begin() + selectedTPLocation);
-					savedTeleportLocationNames.erase(savedTeleportLocationNames.begin() + selectedTPLocation);
+					savedTeleportLocationNames.clear();
+					for (const auto& loc : savedTeleportLocations)
+						savedTeleportLocationNames.emplace_back(loc.name.data());
 					selectedTPLocation = -1;
 				}
 				ImGui::EndDisabled();
@@ -301,33 +303,33 @@ namespace Menu {
 				static std::string playerPos = "Player Position = X: 0.00, Y: 0.00, Z: 0.00";
 				Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 				if (!playerCharacter)
-					playerPos = "Player Position = X: 0.00, Y: 0.00, Z: 0.00";
+					playerPos = "Player Position -- X: 0.00, Y: 0.00, Z: 0.00";
 				else {
-					playerPos = "Player Position = X: " + std::format("{:.2f}", playerCharacter->playerPos.data.X) + ", Y: " + std::format("{:.2f}", playerCharacter->playerPos.data.Y) + ", Z: " + std::format("{:.2f}", playerCharacter->playerPos.data.Z);
+					playerPos = "Player Position -- X: " + std::format("{:.2f}", playerCharacter->playerPos.data.X) + ", Y: " + std::format("{:.2f}", playerCharacter->playerPos.data.Y) + ", Z: " + std::format("{:.2f}", playerCharacter->playerPos.data.Z);
 				}
 
-				static std::string cameraPos = "Free Camera Position = X: 0.00, Y: 0.00, Z: 0.00";
+				static std::string cameraPos = "Free Camera Position -- X: 0.00, Y: 0.00, Z: 0.00";
 				GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
 				if (!Camera::freeCam.GetValue() || !freeCam)
-					cameraPos = "Free Camera Position = X: 0.00, Y: 0.00, Z: 0.00";
+					cameraPos = "Free Camera Position -- X: 0.00, Y: 0.00, Z: 0.00";
 				else {
 					Vector3 camPos{};
 					freeCam->GetPosition(&camPos);
 					if (camPos.isDefault())
-						cameraPos = "Free Camera Position = X: 0.00, Y: 0.00, Z: 0.00";
+						cameraPos = "Free Camera Position -- X: 0.00, Y: 0.00, Z: 0.00";
 					else
-						cameraPos = "Free Camera Position = X: " + std::format("{:.2f}", camPos.X) + ", Y: " + std::format("{:.2f}", camPos.Y) + ", Z: " + std::format("{:.2f}", camPos.Z);
+						cameraPos = "Free Camera Position -- X: " + std::format("{:.2f}", camPos.X) + ", Y: " + std::format("{:.2f}", camPos.Y) + ", Z: " + std::format("{:.2f}", camPos.Z);
 				}
 
 				ImGui::Text(playerPos.data());
 				ImGui::Text(cameraPos.data());
 
 				ImGui::PushItemWidth(200.0f);
-				ImGui::InputFloat("X", &teleportCoords.X, 1.0f, 10.0f, "%.3f");
+				ImGui::InputFloat("X", &teleportCoords.X, 1.0f, 10.0f, "%.2f");
 				ImGui::SameLine();
-				ImGui::InputFloat("Y", &teleportCoords.Y, 1.0f, 10.0f, "%.3f");
+				ImGui::InputFloat("Y", &teleportCoords.Y, 1.0f, 10.0f, "%.2f");
 				ImGui::SameLine();
-				ImGui::InputFloat("Z", &teleportCoords.Z, 1.0f, 10.0f, "%.3f");
+				ImGui::InputFloat("Z", &teleportCoords.Z, 1.0f, 10.0f, "%.2f");
 				ImGui::PopItemWidth();
 
 				if (ImGui::ButtonHotkey("Teleport to Coords", &teleportToCoords, "Teleports player to the coords specified in the input boxes above"))
