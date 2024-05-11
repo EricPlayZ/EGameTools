@@ -43,7 +43,9 @@ namespace Menu {
 				return;
 
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
-			Engine::CBaseCamera* viewCam = reinterpret_cast<Engine::CBaseCamera*>(iLevel->GetViewCamera());
+			Engine::CBaseCamera* viewCam = nullptr;
+			if (iLevel)
+				viewCam = reinterpret_cast<Engine::CBaseCamera*>(iLevel->GetViewCamera());
 
 			static int previousFOV = FOV;
 			
@@ -55,7 +57,7 @@ namespace Menu {
 
 				if (iLevel && viewCam)
 					viewCam->SetFOV(110.0f);
-				FOV = 110.0f;
+				FOV = 110;
 				return;
 			} else if (goProMode.HasChangedTo(false)) {
 				FOV = previousFOV;
