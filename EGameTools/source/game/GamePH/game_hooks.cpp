@@ -2,6 +2,7 @@
 #include "..\menu\camera.h"
 #include "..\menu\misc.h"
 #include "..\menu\player.h"
+#include "..\menu\teleport.h"
 #include "..\menu\world.h"
 #include "..\offsets.h"
 #include "FreeCamera.h"
@@ -266,6 +267,21 @@ namespace GamePH {
 
 			if (*pInventoryItem_0x10 < previousValue && *pInventoryItem_0x10 == amount && Menu::Player::unlimitedItems.GetValue())
 				*pInventoryItem_0x10 = previousValue;
+		}
+#pragma endregion
+
+#pragma region SetNewWaypointLocation
+		static DWORD64 detourSetNewWaypointLocation(DWORD64 pLogicalPlayer, int a2, Vector3* newWaypointLoc);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, int, Vector3*)> SetNewWaypointLocationHook{ "SetNewWaypointLocation", &Offsets::Get_SetNewWaypointLocation, &detourSetNewWaypointLocation };
+
+		static DWORD64 detourSetNewWaypointLocation(DWORD64 pLogicalPlayer, int a2, Vector3* newWaypointLoc) {
+			DWORD64 result = SetNewWaypointLocationHook.pOriginal(pLogicalPlayer, a2, newWaypointLoc);
+			Menu::Teleport::waypointCoords = *newWaypointLoc;
+			if (Offsets::Get_SetNewWaypointLocationWaypointIsSetBoolInstr()) {
+				const UINT offset = *Offsets::Get_SetNewWaypointLocationWaypointIsSetBoolInstr();
+				Menu::Teleport::waypointIsSet = reinterpret_cast<bool*>(pLogicalPlayer + offset);
+			}
+			return result;
 		}
 #pragma endregion
 

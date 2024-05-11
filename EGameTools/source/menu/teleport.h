@@ -10,8 +10,12 @@ namespace Menu {
 
 		extern std::vector<TeleportLocation> savedTeleportLocations;
 
+		extern Vector3 waypointCoords;
+
 		extern KeyBindOption teleportToSelectedLocation;
 		extern KeyBindOption teleportToCoords;
+		extern KeyBindOption teleportToWaypoint;
+		extern bool* waypointIsSet;
 
 		extern void UpdateTeleportLocationVisualNames();
 		extern std::vector<TeleportLocation> ParseTeleportLocations(const std::string& input);

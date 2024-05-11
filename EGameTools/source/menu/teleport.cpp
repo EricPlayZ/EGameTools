@@ -14,10 +14,13 @@ namespace Menu {
 		static int selectedTPLocation = -1;
 		static char newLocationName[25]{};
 
+		Vector3 waypointCoords{};
+		bool* waypointIsSet = nullptr;
 		static Vector3 teleportCoords{};
 
 		KeyBindOption teleportToSelectedLocation{ VK_F9 };
 		KeyBindOption teleportToCoords{ VK_NONE };
+		KeyBindOption teleportToWaypoint{ VK_F10 };
 
 		void UpdateTeleportLocationVisualNames() {
 			savedTeleportLocationNames.clear();
@@ -131,6 +134,9 @@ namespace Menu {
 			if (isTeleportationDisabled())
 				return;
 
+			if (pos.isDefault())
+				return;
+
 			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 			
 			if (Player::freezePlayer.GetValue()) {
@@ -157,6 +163,7 @@ namespace Menu {
 				playerCharacter->MoveCharacter(pos);
 			}
 		}
+
 		static void UpdateTeleportPos() {
 			if (isTeleportationDisabled()) {
 				if (!teleportCoords.isDefault())
@@ -187,11 +194,16 @@ namespace Menu {
 		}
 		static void HotkeysUpdate() {
 			teleportToSelectedLocation.SetChangesAreDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size());
+			teleportToWaypoint.SetChangesAreDisabled(isTeleportationDisabled() || !waypointIsSet || !*waypointIsSet);
 			teleportToCoords.SetChangesAreDisabled(isTeleportationDisabled());
 
 			if (teleportToSelectedLocation.HasChanged()) {
 				TeleportPlayerTo(savedTeleportLocations[selectedTPLocation].pos);
 				teleportToSelectedLocation.SetPrevValue(teleportToSelectedLocation.GetValue());
+			}
+			if (teleportToWaypoint.HasChanged()) {
+				TeleportPlayerTo(waypointCoords);
+				teleportToWaypoint.SetPrevValue(teleportToWaypoint.GetValue());
 			}
 			if (teleportToCoords.HasChanged()) {
 				TeleportPlayerTo(teleportCoords);
@@ -359,8 +371,16 @@ namespace Menu {
 						cameraPos = "Free Camera Position -- X: " + std::format("{:.2f}", camPos.X) + ", Y: " + std::format("{:.2f}", camPos.Y) + ", Z: " + std::format("{:.2f}", camPos.Z);
 				}
 
+				static std::string waypointPos = "Waypoint Position = X: 0.00, Y: 0.00, Z: 0.00";
+				if (!waypointIsSet || !*waypointIsSet || waypointCoords.isDefault())
+					waypointPos = "Waypoint Position -- X: 0.00, Y: 0.00, Z: 0.00";
+				else {
+					waypointPos = "Waypoint Position -- X: " + std::format("{:.2f}", waypointCoords.X) + ", Y: " + std::format("{:.2f}", waypointCoords.Y) + ", Z: " + std::format("{:.2f}", waypointCoords.Z);
+				}
+
 				ImGui::Text(playerPos.data());
 				ImGui::Text(cameraPos.data());
+				ImGui::Text(waypointPos.data());
 
 				ImGui::PushItemWidth(200.0f * Menu::scale);
 				ImGui::InputFloat("X", &teleportCoords.X, 1.0f, 10.0f, "%.2f");
@@ -370,6 +390,9 @@ namespace Menu {
 				ImGui::InputFloat("Z", &teleportCoords.Z, 1.0f, 10.0f, "%.2f");
 				ImGui::PopItemWidth();
 
+				if (ImGui::ButtonHotkey("Teleport to Waypoint", &teleportToWaypoint, "Teleports player to waypoint.\nWARNING: If the waypoint is selected to track an object/item on the map, Teleport to Waypoint will not work, if so just set the waypoint nearby instead.\nWARNING: Your player height won't change when teleporting, so make sure you catch yourself if you fall under the map because of the teleportation") && waypointIsSet && *waypointIsSet)
+					TeleportPlayerTo(waypointCoords);
+				ImGui::SameLine();
 				if (ImGui::ButtonHotkey("Teleport to Coords", &teleportToCoords, "Teleports player to the coords specified in the input boxes above"))
 					TeleportPlayerTo(teleportCoords);
 				ImGui::SameLine();

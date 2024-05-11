@@ -57,7 +57,8 @@ Thank you everyone for the support <3)" },
 - Added "Old World Money" slider (Player)
 - Added "Unlimited Immunity" (Player)
 - Added "Unlimited Stamina" (Player)
-- Added "Unlimited Items" (Player) - Stops the game from lowering the amount of items such as consumables / throwables when using them, alongside other inventory items such as ammo, lockpicks and other items; WARNING: This will not stop the item from getting removed from your inventory if you drop the entire amount; currently, if the amount of item is 1, it will still drop from your inventory unfortunately
+- Added "Unlimited Items" (Player) - stops the game from lowering the amount of items such as consumables / throwables when using them, alongside other inventory items such as ammo, lockpicks and other items
+  - WARNING: this will not stop the item from getting removed from your inventory if you drop the entire amount; currently, if the amount of item is 1, it will still drop from your inventory unfortunately
 - Added "One-Hit Kill" (Player)
 - Added "Invisible to Enemies" (Player)
 - Added "Allow Grapple Hook in Safezone" (Player)
@@ -70,8 +71,11 @@ Thank you everyone for the support <3)" },
 - Added "Instant Reload" (Weapon)
 - Added "Lens Distortion" slider (Camera)
 - Added "Disable Head Correction" (Camera) - disables centering of the player's hands to the center of the camera
-- Added "Teleport to Coords" with X, Y, Z inputs (Teleport)
-- Added "Saved Locations" section in Teleport menu, with the ability of saving, deleting and teleporting to said locations; these locations are saved in the config file and will contain a name and a set of coordinates for each location
+- Added "Teleport to Coords" with X, Y, Z inputs (Teleport), with a "Get Player Coords" button which will automatically fill the X, Y and Z inputs
+- Added "Teleport to Waypoint" (Teleport)
+  - WARNING: if the waypoint is selected to track an object/item on the map, Teleport to Waypoint will not work, if so just set the waypoint nearby instead
+  - WARNING: your player height won't change when teleporting, so make sure you catch yourself if you fall under the map because of the teleportation
+- Added "Saved Locations" in Teleport menu, with the ability of saving, deleting and teleporting to said locations; these locations are saved in the config file and will contain a name and a set of coordinates for each location
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
