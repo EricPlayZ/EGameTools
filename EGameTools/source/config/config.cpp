@@ -4474,9 +4474,7 @@ namespace Config {
 						reinterpret_cast<KeyBindOption*>(entry.optionPtr)->ChangeKeyBind(it->code);
 				} else if (entry.key == "SavedTeleportLocations") {
 					Menu::Teleport::savedTeleportLocations = Menu::Teleport::ParseTeleportLocations(strValue);
-					Menu::Teleport::savedTeleportLocationNames.clear();
-					for (const auto& tpLoc : Menu::Teleport::savedTeleportLocations)
-						Menu::Teleport::savedTeleportLocationNames.push_back(tpLoc.name.data());
+					Menu::Teleport::UpdateTeleportLocationVisualNames();
 					break;
 				}
 
@@ -4551,9 +4549,7 @@ namespace Config {
 						break;
 					} else if (entry.key == "SavedTeleportLocations") {
 						Menu::Teleport::savedTeleportLocations = Menu::Teleport::ParseTeleportLocations(strValue);
-						Menu::Teleport::savedTeleportLocationNames.clear();
-						for (const auto& tpLoc : Menu::Teleport::savedTeleportLocations)
-							Menu::Teleport::savedTeleportLocationNames.push_back(tpLoc.name.data());
+						Menu::Teleport::UpdateTeleportLocationVisualNames();
 						break;
 					}
 

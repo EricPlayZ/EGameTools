@@ -9,7 +9,8 @@
 namespace Menu {
 	namespace Teleport {
 		std::vector<TeleportLocation> savedTeleportLocations;
-		std::vector<const char*> savedTeleportLocationNames;
+		static std::vector<std::string> savedTeleportLocationNames;
+		static std::vector<const char*> savedTeleportLocationNamesPtrs;
 		static int selectedTPLocation = -1;
 		static char newLocationName[25]{};
 
@@ -18,6 +19,17 @@ namespace Menu {
 		KeyBindOption teleportToSelectedLocation{ VK_F9 };
 		KeyBindOption teleportToCoords{ VK_NONE };
 
+		void UpdateTeleportLocationVisualNames() {
+			savedTeleportLocationNames.clear();
+			savedTeleportLocationNamesPtrs.clear();
+			for (const auto& loc : savedTeleportLocations) {
+				std::string completeName = loc.name + " (X: " + std::format("{:.1f}", loc.pos.X) + ", Y: " + std::format("{:.1f}", loc.pos.X) + ", Z: " + std::format("{:.1f}", loc.pos.Z) + ")";
+				savedTeleportLocationNames.emplace_back(completeName);
+			}
+			for (const auto& name : savedTeleportLocationNames) {
+				savedTeleportLocationNamesPtrs.emplace_back(name.c_str());
+			}
+		}
 		std::vector<TeleportLocation> ParseTeleportLocations(const std::string& input) {
 			if (input.empty())
 				return {};
@@ -187,18 +199,22 @@ namespace Menu {
 			}
 		}
 
-		static void SaveTeleportLocation(const char* locationName) {
+		static bool SaveTeleportLocation(const char* locationName) {
 			if (isTeleportationDisabled()) {
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
 				ImGui::OpenPopup("Couldn't add location");
-				return;
+				return false;
 			}
 
 			auto savedLocIt = std::find_if(savedTeleportLocations.begin(), savedTeleportLocations.end(), [&locationName](const auto& loc) {
 				return loc.name == locationName;
 			});
 			if (savedLocIt != savedTeleportLocations.end()) {
-				ImGui::OpenPopup("The location you have entered already exists, if you want to change it then please remove it and add it again.");
-				return;
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+				ImGui::OpenPopup("Location already exists");
+				return false;
 			}
 
 			Vector3 playerPos{};
@@ -206,58 +222,80 @@ namespace Menu {
 			if (Camera::freeCam.GetValue()) {
 				GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
 				if (!freeCam) {
+					ImGui::CloseCurrentPopup();
+					ImGui::EndPopup();
 					ImGui::OpenPopup("Couldn't add location");
-					return;
+					return false;
 				}
 
 				Vector3 camPos{};
 				freeCam->GetPosition(&camPos);
 				if (camPos.isDefault()) {
+					ImGui::CloseCurrentPopup();
+					ImGui::EndPopup();
 					ImGui::OpenPopup("Couldn't add location");
-					return;
+					return false;
 				}
 
 				playerPos = camPos;
 			} else {
 				Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 				if (!playerCharacter) {
+					ImGui::CloseCurrentPopup();
+					ImGui::EndPopup();
 					ImGui::OpenPopup("Couldn't add location");
-					return;
+					return false;
 				}
 
 				playerPos = playerCharacter->playerPos;
 			}
 			playerPos = playerPos.round(1);
 
-			if (savedLocIt != savedTeleportLocations.end() && savedLocIt->pos.round() == playerPos.round()) {
+			savedLocIt = std::find_if(savedTeleportLocations.begin(), savedTeleportLocations.end(), [&playerPos](const auto& loc) {
+				return loc.pos == playerPos;
+			});
+			if (savedLocIt != savedTeleportLocations.end() && savedLocIt->pos == playerPos) {
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
 				ImGui::OpenPopup("Location already exists");
-				return;
+				return false;
 			}
 
 			savedTeleportLocations.emplace_back(std::string(locationName), playerPos);
-			savedTeleportLocationNames.clear();
-			for (const auto& loc : savedTeleportLocations)
-				savedTeleportLocationNames.emplace_back(loc.name.data());
+			UpdateTeleportLocationVisualNames();
+
+			ImGui::CloseCurrentPopup();
+			return true;
 		}
 		static void HandleDialogs() {
 			if (ImGui::BeginPopupModal("Give the location a name", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-				if (ImGui::InputTextWithHint("##TPLocationNameInputText", "Location name", newLocationName, IM_ARRAYSIZE(newLocationName), ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("OK", ImVec2(120.0f, 0.0f))) {
-					SaveTeleportLocation(newLocationName);
+				bool tpSaveResult = true;
+				ImGui::PushItemWidth(500.0f * Menu::scale);
+				if (ImGui::InputTextWithHint("##TPLocationNameInputText", "Location name", newLocationName, IM_ARRAYSIZE(newLocationName), ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("OK", ImVec2(500.0f, 0.0f) * Menu::scale)) {
+					ImGui::PopItemWidth();
+					tpSaveResult = SaveTeleportLocation(newLocationName);
 					newLocationName[0] = 0;
+				}
+				if (tpSaveResult)
+					ImGui::EndPopup();
+			}
+			if (ImGui::BeginPopupModal("Location already exists", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+				ImGui::PushItemWidth(500.0f * Menu::scale);
+				ImGui::TextCentered("The location you have entered already exists. Either the name of the location, or the position of the location is already inside the list. If you want to change it then please remove it and add it again.", false);
+				if (ImGui::Button("OK", ImVec2(500.0f, 0.0f) * Menu::scale)) {
+					ImGui::PopItemWidth();
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndPopup();
 			}
-			if (ImGui::BeginPopupModal("Location already exists", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-				ImGui::Text("The location you have entered already exists. Either the name of the location, or the position of the location is already inside the list. If you want to change it then please remove it and add it again.");
-				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
-					ImGui::CloseCurrentPopup();
-				ImGui::EndPopup();
-			}
+			ImGui::SetNextWindowSizeConstraints(ImVec2(500.0f, 0.0f) * Menu::scale, ImVec2(500.0f, 800.0f) * Menu::scale);
 			if (ImGui::BeginPopupModal("Couldn't add location", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-				ImGui::Text("Something went wrong trying to add a location. Either the player class or camera class are not found, or you're in a place in the game where the character or camera isn't properly loaded. If this happens, even though you know it should work fine, please contact @EricPlayZ on NexusMods, GitHub or Discord.");
-				if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
+				ImGui::PushItemWidth(500.0f * Menu::scale);
+				ImGui::TextCentered("Something went wrong trying to add a location. Either the player class or camera class are not found, or you're in a place in the game where the character or camera isn't properly loaded. If this happens, even though you know it should work fine, please contact @EricPlayZ on NexusMods, GitHub or Discord.");
+				if (ImGui::Button("OK", ImVec2(500.0f, 0.0f) * Menu::scale)) {
+					ImGui::PopItemWidth();
 					ImGui::CloseCurrentPopup();
+				}
 				ImGui::EndPopup();
 			}
 		}
@@ -271,7 +309,7 @@ namespace Menu {
 			ImGui::SeparatorText("Saved Locations##Teleport");
 			ImGui::BeginDisabled(isTeleportationDisabled()); {
 				ImGui::PushItemWidth(-FLT_MIN);
-				ImGui::ListBox("##SavedTPLocationsListBox", &selectedTPLocation, savedTeleportLocationNames.data(), static_cast<int>(savedTeleportLocationNames.size()), 5);
+				ImGui::ListBox("##SavedTPLocationsListBox", &selectedTPLocation, savedTeleportLocationNamesPtrs.data(), static_cast<int>(savedTeleportLocationNamesPtrs.size()), 5);
 				ImGui::PopItemWidth();
 
 				ImGui::EndDisabled();
@@ -283,9 +321,7 @@ namespace Menu {
 				ImGui::SameLine();
 				if (ImGui::Button("Remove Selected Location")) {
 					savedTeleportLocations.erase(savedTeleportLocations.begin() + selectedTPLocation);
-					savedTeleportLocationNames.clear();
-					for (const auto& loc : savedTeleportLocations)
-						savedTeleportLocationNames.emplace_back(loc.name.data());
+					UpdateTeleportLocationVisualNames();
 					selectedTPLocation = -1;
 				}
 				ImGui::EndDisabled();
@@ -324,7 +360,7 @@ namespace Menu {
 				ImGui::Text(playerPos.data());
 				ImGui::Text(cameraPos.data());
 
-				ImGui::PushItemWidth(200.0f);
+				ImGui::PushItemWidth(200.0f * Menu::scale);
 				ImGui::InputFloat("X", &teleportCoords.X, 1.0f, 10.0f, "%.2f");
 				ImGui::SameLine();
 				ImGui::InputFloat("Y", &teleportCoords.Y, 1.0f, 10.0f, "%.2f");
