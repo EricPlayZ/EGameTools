@@ -9,11 +9,76 @@
 namespace Menu {
 	namespace Teleport {
 		std::vector<TeleportLocation> savedTeleportLocations;
-		static std::vector<const char*> savedTeleportLocationNames;
+		std::vector<const char*> savedTeleportLocationNames;
 		static int selectedTPLocation = -1;
 		static char newLocationName[25]{};
 
-		static Vector3 teleportPos{};
+		static Vector3 teleportCoords{};
+
+		KeyBindOption teleportToSelectedLocation{ VK_F9 };
+		KeyBindOption teleportToCoords{ VK_NONE };
+
+		std::vector<TeleportLocation> ParseTeleportLocations(const std::string& input) {
+			if (input.empty())
+				return {};
+
+			std::vector<TeleportLocation> teleportLocations{};
+			std::stringstream ss(input);
+			std::string item{};
+
+			while (std::getline(ss, item, ';')) {
+				size_t colonPos = item.rfind(':');
+				if (colonPos != std::string::npos) {
+					std::string tpLocName = item.substr(0, colonPos);
+					std::string tpLocCoords = item.substr(colonPos + 1);
+
+					std::stringstream coordStream(tpLocCoords);
+					std::string coordItem{};
+					std::vector<float> coordValues{};
+					while (std::getline(coordStream, coordItem, ',')) {
+						try {
+							coordValues.push_back(std::stof(coordItem));
+						} catch (const std::invalid_argument& e) {
+							UNREFERENCED_PARAMETER(e);
+							spdlog::error("ParseTeleportLocations: Invalid coordinate value: {}, for location: {}", coordItem, tpLocName);
+							break;
+						}
+					}
+
+					Vector3 tpLocPos{};
+					if (coordValues.size() == 3) {
+						tpLocPos.X = coordValues[0];
+						tpLocPos.Y = coordValues[1];
+						tpLocPos.Z = coordValues[2];
+						teleportLocations.push_back({ tpLocName, tpLocPos });
+					} else
+						spdlog::error("ParseTeleportLocations: Invalid number of coordinates ({}) for location: {}", coordValues.size(), tpLocName);
+				} else
+					spdlog::error("ParseTeleportLocations: Invalid format for TP location: {}", item);
+			}
+
+			spdlog::info("Successfully parsed teleport locations:");
+			int tpLocIndex = 1;
+			for (const auto& loc : teleportLocations) {
+				spdlog::info("{}. \"{}\" (X: {}, Y: {}, Z: {})", tpLocIndex, loc.name, loc.pos.X, loc.pos.Y, loc.pos.Z);
+				tpLocIndex++;
+			}
+
+			return teleportLocations;
+		}
+		std::string ConvertTeleportLocationsToStr(const std::vector<TeleportLocation>& teleportLocations) {
+			std::stringstream ss{};
+
+			for (size_t i = 0; i < teleportLocations.size(); ++i) {
+				const TeleportLocation& loc = teleportLocations[i];
+
+				ss << loc.name << ":" << loc.pos.X << "," << loc.pos.Y << "," << loc.pos.Z;
+				if (i < teleportLocations.size() - 1)
+					ss << ";";
+			}
+
+			return ss.str();
+		}
 
 		static bool isTeleportationDisabled() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
@@ -41,13 +106,13 @@ namespace Menu {
 				if (camPos.isDefault())
 					return;
 
-				teleportPos = camPos;
+				teleportCoords = camPos;
 			} else {
 				Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 				if (!playerCharacter)
 					return;
 
-				teleportPos = playerCharacter->playerPos;
+				teleportCoords = playerCharacter->playerPos;
 			}
 		}
 		static void TeleportPlayerTo(const Vector3& pos) {
@@ -82,11 +147,11 @@ namespace Menu {
 		}
 		static void UpdateTeleportPos() {
 			if (isTeleportationDisabled()) {
-				if (!teleportPos.isDefault())
-					teleportPos = Vector3();
+				if (!teleportCoords.isDefault())
+					teleportCoords = Vector3();
 				return;
 			}
-			if (!teleportPos.isDefault())
+			if (!teleportCoords.isDefault())
 				return;
 
 			if (Camera::freeCam.GetValue()) {
@@ -99,13 +164,26 @@ namespace Menu {
 				if (camPos.isDefault())
 					return;
 
-				teleportPos = camPos;
+				teleportCoords = camPos;
 			} else {
 				Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 				if (!playerCharacter)
 					return;
 
-				teleportPos = playerCharacter->playerPos;
+				teleportCoords = playerCharacter->playerPos;
+			}
+		}
+		static void HotkeysUpdate() {
+			teleportToSelectedLocation.SetChangesAreDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size());
+			teleportToCoords.SetChangesAreDisabled(isTeleportationDisabled());
+
+			if (teleportToSelectedLocation.HasChanged()) {
+				TeleportPlayerTo(savedTeleportLocations[selectedTPLocation].pos);
+				teleportToSelectedLocation.SetPrevValue(teleportToSelectedLocation.GetValue());
+			}
+			if (teleportToCoords.HasChanged()) {
+				TeleportPlayerTo(teleportCoords);
+				teleportToCoords.SetPrevValue(teleportToCoords.GetValue());
 			}
 		}
 
@@ -159,12 +237,13 @@ namespace Menu {
 			TeleportLocation tpLocation = TeleportLocation(locationName, playerPos);
 
 			savedTeleportLocations.push_back(tpLocation);
-			savedTeleportLocationNames.push_back(locationName);
+			savedTeleportLocationNames.push_back(tpLocation.name.data());
 		}
 		static void HandleDialogs() {
 			if (ImGui::BeginPopupModal("Give the location a name", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				if (ImGui::InputTextWithHint("##TPLocationNameInputText", "Location name", newLocationName, IM_ARRAYSIZE(newLocationName), ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("OK", ImVec2(120.0f, 0.0f))) {
 					SaveTeleportLocation(newLocationName);
+					newLocationName[0] = 0;
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndPopup();
@@ -186,6 +265,7 @@ namespace Menu {
 		Tab Tab::instance{};
 		void Tab::Update() {
 			UpdateTeleportPos();
+			HotkeysUpdate();
 		}
 		void Tab::Render() {
 			ImGui::SeparatorText("Saved Locations##Teleport");
@@ -194,17 +274,21 @@ namespace Menu {
 				ImGui::ListBox("##SavedTPLocationsListBox", &selectedTPLocation, savedTeleportLocationNames.data(), static_cast<int>(savedTeleportLocationNames.size()), 5);
 				ImGui::PopItemWidth();
 
-				ImGui::BeginDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size()); {
-					if (ImGui::Button("Teleport to Selected Location"))
-						TeleportPlayerTo(savedTeleportLocations[selectedTPLocation].pos);
-					ImGui::SameLine();
-					if (ImGui::Button("Remove Selected Location")) {
-						savedTeleportLocations.erase(savedTeleportLocations.begin() + selectedTPLocation);
-						savedTeleportLocationNames.erase(savedTeleportLocationNames.begin() + selectedTPLocation);
-						selectedTPLocation = -1;
-					}
-					ImGui::EndDisabled();
+				ImGui::EndDisabled();
+			}
+
+			ImGui::BeginDisabled(isTeleportationDisabled() || selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size()); {
+				if (ImGui::ButtonHotkey("Teleport to Selected Location", &teleportToSelectedLocation, "Teleports player to selected location from the saved locations list"))
+					TeleportPlayerTo(savedTeleportLocations[selectedTPLocation].pos);
+				ImGui::SameLine();
+				if (ImGui::Button("Remove Selected Location")) {
+					savedTeleportLocations.erase(savedTeleportLocations.begin() + selectedTPLocation);
+					savedTeleportLocationNames.erase(savedTeleportLocationNames.begin() + selectedTPLocation);
+					selectedTPLocation = -1;
 				}
+				ImGui::EndDisabled();
+			}
+			ImGui::BeginDisabled(isTeleportationDisabled()); {
 				ImGui::SameLine();
 				if (ImGui::Button("Save Current Location"))
 					ImGui::OpenPopup("Give the location a name");
@@ -239,15 +323,15 @@ namespace Menu {
 				ImGui::Text(cameraPos.data());
 
 				ImGui::PushItemWidth(200.0f);
-				ImGui::InputFloat("X", &teleportPos.X, 1.0f, 10.0f, "%.3f");
+				ImGui::InputFloat("X", &teleportCoords.X, 1.0f, 10.0f, "%.3f");
 				ImGui::SameLine();
-				ImGui::InputFloat("Y", &teleportPos.Y, 1.0f, 10.0f, "%.3f");
+				ImGui::InputFloat("Y", &teleportCoords.Y, 1.0f, 10.0f, "%.3f");
 				ImGui::SameLine();
-				ImGui::InputFloat("Z", &teleportPos.Z, 1.0f, 10.0f, "%.3f");
+				ImGui::InputFloat("Z", &teleportCoords.Z, 1.0f, 10.0f, "%.3f");
 				ImGui::PopItemWidth();
 
-				if (ImGui::Button("Teleport to Coords"))
-					TeleportPlayerTo(teleportPos);
+				if (ImGui::ButtonHotkey("Teleport to Coords", &teleportToCoords, "Teleports player to the coords specified in the input boxes above"))
+					TeleportPlayerTo(teleportCoords);
 				ImGui::SameLine();
 				if (ImGui::Button("Get Player Coords"))
 					SyncTPCoordsToPlayer();

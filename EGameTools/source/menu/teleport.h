@@ -9,6 +9,13 @@ namespace Menu {
 		};
 
 		extern std::vector<TeleportLocation> savedTeleportLocations;
+		extern std::vector<const char*> savedTeleportLocationNames;
+
+		extern KeyBindOption teleportToSelectedLocation;
+		extern KeyBindOption teleportToCoords;
+
+		extern std::vector<TeleportLocation> ParseTeleportLocations(const std::string& input);
+		extern std::string ConvertTeleportLocationsToStr(const std::vector<TeleportLocation>& teleportLocations);
 
 		class Tab : MenuTab {
 		public:

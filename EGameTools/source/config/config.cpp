@@ -12,8 +12,7 @@ namespace Config {
 	enum ValueType {
 		OPTION,
 		Float,
-		String,
-		TPLocations
+		String
 	};
 
 	struct VKey {
@@ -4346,13 +4345,13 @@ namespace Config {
 		{ "Menu", "HasSeenChangelog", false, &Menu::hasSeenChangelog, OPTION },
 		{ "Menu:Keybinds", "MenuToggleKey", std::string("VK_F5"), &Menu::menuToggle, String},
 		{ "Menu:Keybinds", "GodModeToggleKey", std::string("VK_F6"), &Menu::Player::godMode, String},
-		{ "Menu:Keybinds", "FreezePlayerToggleKey", std::string("VK_F7"), &Menu::Player::freezePlayer, String },
+		{ "Menu:Keybinds", "FreezePlayerToggleKey", std::string("VK_NONE"), &Menu::Player::freezePlayer, String },
 		{ "Menu:Keybinds", "UnlimitedImmunityToggleKey", std::string("VK_NONE"), &Menu::Player::unlimitedImmunity, String},
 		{ "Menu:Keybinds", "UnlimitedStaminaToggleKey", std::string("VK_NONE"), &Menu::Player::unlimitedStamina, String},
 		{ "Menu:Keybinds", "UnlimitedItemsToggleKey", std::string("VK_NONE"), &Menu::Player::unlimitedItems, String},
 		{ "Menu:Keybinds", "OneHitKillToggleKey", std::string("VK_NONE"), &Menu::Player::oneHitKill, String},
 		{ "Menu:Keybinds", "DisableOutOfBoundsTimerToggleKey", std::string("VK_NONE"), &Menu::Player::disableOutOfBoundsTimer, String},
-		{ "Menu:Keybinds", "NightrunnerModeToggleKey", std::string("VK_F9"), &Menu::Player::nightrunnerMode, String},
+		{ "Menu:Keybinds", "NightrunnerModeToggleKey", std::string("VK_F8"), &Menu::Player::nightrunnerMode, String},
 		{ "Menu:Keybinds", "OneHandedModeToggleKey", std::string("VK_NONE"), &Menu::Player::oneHandedMode, String},
 		{ "Menu:Keybinds", "AllowGrappleHookInSafezoneToggleKey", std::string("VK_NONE"), &Menu::Player::allowGrappleHookInSafezone, String},
 		{ "Menu:Keybinds", "DisableAirControlToggleKey", std::string("VK_NONE"), &Menu::Player::disableAirControl, String },
@@ -4368,7 +4367,9 @@ namespace Config {
 		{ "Menu:Keybinds", "DisableSafezoneFOVReduction", std::string("VK_NONE"), &Menu::Camera::disableSafezoneFOVReduction, String },
 		{ "Menu:Keybinds", "DisablePhotoModeLimits", std::string("VK_NONE"), &Menu::Camera::disablePhotoModeLimits, String},
 		{ "Menu:Keybinds", "DisableHeadCorrectionToggleKey", std::string("VK_NONE"), &Menu::Camera::disableHeadCorrection, String },
-		{ "Menu:Keybinds", "DisableHUDToggleKey", std::string("VK_F8"), &Menu::Misc::disableHUD, String},
+		{ "Menu:Keybinds", "TeleportToSelectedLocationToggleKey", std::string("VK_F9"), &Menu::Teleport::teleportToSelectedLocation, String },
+		{ "Menu:Keybinds", "TeleportToCoordsToggleKey", std::string("VK_NONE"), &Menu::Teleport::teleportToCoords, String },
+		{ "Menu:Keybinds", "DisableHUDToggleKey", std::string("VK_F7"), &Menu::Misc::disableHUD, String},
 		{ "Menu:Keybinds", "DisableGamePauseWhileAFKToggleKey", std::string("VK_NONE"), &Menu::Misc::disableGamePauseWhileAFK, String},
 		{ "Menu:Keybinds", "FreezeTimeToggleKey", std::string("VK_NONE"), &Menu::World::freezeTime, String},
 		{ "Menu:Keybinds", "SlowMotionToggleKey", std::string("VK_4"), &Menu::World::slowMotion, String},
@@ -4402,6 +4403,7 @@ namespace Config {
 		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION },
 		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimits, OPTION },
 		{ "Camera:Misc", "DisableHeadCorrection", false, &Menu::Camera::disableHeadCorrection, OPTION },
+		{ "Teleport:SavedLocations", "SavedTeleportLocations", std::string(""), &Menu::Teleport::savedTeleportLocations, String},
 		{ "Misc:Misc", "DisableGamePauseWhileAFK", true, &Menu::Misc::disableGamePauseWhileAFK, OPTION },
 		{ "Misc:GameChecks", "DisableSavegameCRCCheck", true, &Menu::Misc::disableSavegameCRCCheck, OPTION },
 		{ "Misc:GameChecks", "DisableDataPAKsCRCCheck", true, &Menu::Misc::disableDataPAKsCRCCheck, OPTION },
@@ -4442,30 +4444,43 @@ namespace Config {
 
 		const std::string loadSCRFilePath = desktopPathStr.empty() ? "" : desktopPathStr + "\\player_variables.scr";
 
+		std::string strValue{};
 		for (auto entry : configVariablesDefault) {
-			if (entry.key == "LastSaveSCRPath") {
-				entry.value = desktopPathStr;
-				Menu::Player::saveSCRPath = desktopPathStr;
-			}
-			else if (entry.key == "LastLoadSCRFilePath") {
-				entry.value = loadSCRFilePath;
-				Menu::Player::loadSCRFilePath = loadSCRFilePath;
-			}
-			else if (entry.section == "Menu:Keybinds") {
-				const std::string toggleKey = std::any_cast<std::string>(entry.value);
-				if (const auto it = std::ranges::find(virtualKeyCodes, toggleKey, &Config::VKey::name); it != virtualKeyCodes.end())
-					reinterpret_cast<KeyBindOption*>(entry.optionPtr)->ChangeKeyBind(it->code);
-			}
-
 			switch (entry.type) {
-			case OPTION:
+			case OPTION: {
+				Option* option = reinterpret_cast<Option*>(entry.optionPtr);
+				if (option->GetChangesAreDisabled())
+					break;
+				option->SetBothValues(std::any_cast<bool>(entry.value));
 				reader.InsertEntry(entry.section.data(), entry.key.data(), std::any_cast<bool>(entry.value));
 				break;
+			}
 			case Float:
+				*reinterpret_cast<float*>(entry.optionPtr) = std::any_cast<float>(entry.value);
 				reader.InsertEntry(entry.section.data(), entry.key.data(), std::any_cast<float>(entry.value));
 				break;
 			case String:
-				reader.InsertEntry(entry.section.data(), entry.key.data(), std::any_cast<std::string>(entry.value));
+				strValue = std::any_cast<std::string>(entry.value);
+
+				if (entry.key == "LastSaveSCRPath") {
+					entry.value = desktopPathStr;
+					Menu::Player::saveSCRPath = desktopPathStr;
+				} else if (entry.key == "LastLoadSCRFilePath") {
+					entry.value = loadSCRFilePath;
+					Menu::Player::loadSCRFilePath = loadSCRFilePath;
+				} else if (entry.section == "Menu:Keybinds") {
+					const std::string toggleKey = strValue;
+					if (const auto it = std::ranges::find(virtualKeyCodes, toggleKey, &Config::VKey::name); it != virtualKeyCodes.end())
+						reinterpret_cast<KeyBindOption*>(entry.optionPtr)->ChangeKeyBind(it->code);
+				} else if (entry.key == "SavedTeleportLocations") {
+					Menu::Teleport::savedTeleportLocations = Menu::Teleport::ParseTeleportLocations(strValue);
+					Menu::Teleport::savedTeleportLocationNames.clear();
+					for (const auto& tpLoc : Menu::Teleport::savedTeleportLocations)
+						Menu::Teleport::savedTeleportLocationNames.push_back(tpLoc.name.data());
+					break;
+				}
+
+				reader.InsertEntry(entry.section.data(), entry.key.data(), strValue);
 				break;
 			}
 		}
@@ -4516,8 +4531,7 @@ namespace Config {
 						if (const auto it = std::ranges::find(virtualKeyCodes, strValue, &Config::VKey::name); it != virtualKeyCodes.end())
 							reinterpret_cast<KeyBindOption*>(entry.optionPtr)->ChangeKeyBind(it->code);
 						break;
-					}
-					else if (entry.key == "LastSaveSCRPath") {
+					} else if (entry.key == "LastSaveSCRPath") {
 						Menu::Player::saveSCRPath = strValue;
 						if (Menu::Player::saveSCRPath.empty())
 							Menu::Player::saveSCRPath = desktopPathStr;
@@ -4526,8 +4540,7 @@ namespace Config {
 						if (!saveSCRPath.empty() && !(std::filesystem::is_directory(saveSCRPath.parent_path()) && std::filesystem::is_directory(saveSCRPath)))
 							Menu::Player::saveSCRPath = {};
 						break;
-					}
-					else if (entry.key == "LastLoadSCRFilePath") {
+					} else if (entry.key == "LastLoadSCRFilePath") {
 						Menu::Player::loadSCRFilePath = strValue;
 						if (Menu::Player::loadSCRFilePath.empty())
 							Menu::Player::loadSCRFilePath = loadSCRFilePathStr;
@@ -4535,6 +4548,12 @@ namespace Config {
 
 						if (!loadSCRFilePath.empty() && !std::filesystem::is_directory(loadSCRFilePath.parent_path()))
 							Menu::Player::loadSCRFilePath = {};
+						break;
+					} else if (entry.key == "SavedTeleportLocations") {
+						Menu::Teleport::savedTeleportLocations = Menu::Teleport::ParseTeleportLocations(strValue);
+						Menu::Teleport::savedTeleportLocationNames.clear();
+						for (const auto& tpLoc : Menu::Teleport::savedTeleportLocations)
+							Menu::Teleport::savedTeleportLocationNames.push_back(tpLoc.name.data());
 						break;
 					}
 
@@ -4579,6 +4598,11 @@ namespace Config {
 						if (strValue != itMemVal->name)
 							return true;
 						break;
+					} else if (entry.key == "SavedTeleportLocations") {
+						std::string currentTPLocations = Menu::Teleport::ConvertTeleportLocationsToStr(Menu::Teleport::savedTeleportLocations);
+						if (strValue != currentTPLocations)
+							return true;
+						break;
 					}
 
 					if (strValue != *reinterpret_cast<std::string*>(entry.optionPtr))
@@ -4607,6 +4631,9 @@ namespace Config {
 
 					if (const auto it = std::ranges::find(virtualKeyCodes, option->GetKeyBind(), &Config::VKey::code); it != virtualKeyCodes.end())
 						entry.value = std::string(it->name);
+					break;
+				} else if (entry.key == "SavedTeleportLocations") {
+					entry.value = Menu::Teleport::ConvertTeleportLocationsToStr(Menu::Teleport::savedTeleportLocations);
 					break;
 				}
 

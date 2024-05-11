@@ -6438,14 +6438,14 @@ namespace Menu {
 		float playerMaxImmunity = 80.0f;
 		int oldWorldMoney = 0;
 		KeyBindOption godMode{ VK_F6 };
-		KeyBindOption freezePlayer{ VK_F7 };
+		KeyBindOption freezePlayer{ VK_NONE };
 		KeyBindOption unlimitedImmunity{ VK_NONE };
 		KeyBindOption unlimitedStamina{ VK_NONE };
 		KeyBindOption unlimitedItems{ VK_NONE };
 		KeyBindOption oneHitKill{ VK_NONE };
 		KeyBindOption invisibleToEnemies{ VK_NONE };
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
-		KeyBindOption nightrunnerMode{ VK_F9 };
+		KeyBindOption nightrunnerMode{ VK_F8 };
 		KeyBindOption oneHandedMode{ VK_NONE };
 		KeyBindOption allowGrappleHookInSafezone{ VK_NONE };
 		KeyBindOption disableAirControl{ VK_NONE };

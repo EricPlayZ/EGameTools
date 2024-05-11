@@ -10,7 +10,7 @@ namespace GamePH::Hooks {
 namespace Menu {
 	namespace Misc {
 		KeyBindOption disableGamePauseWhileAFK{ VK_NONE };
-		KeyBindOption disableHUD{ VK_F8 };
+		KeyBindOption disableHUD{ VK_F7 };
 		Option disableSavegameCRCCheck{};
 		Option disableDataPAKsCRCCheck{};
 		Option increaseDataPAKsLimit{};

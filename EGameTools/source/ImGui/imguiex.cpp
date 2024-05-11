@@ -47,9 +47,17 @@ namespace ImGui {
         EndTabBar();
         tabIndex = 1;
     }
-    bool Button(const char* label, const char* tooltip, const ImVec2& size_arg) {
-        bool btn = Button(label, size_arg);
-        SetItemTooltip(tooltip);
+    bool Button(const char* label, const char* tooltip, const ImVec2& size) {
+        bool btn = Button(label, size);
+        if (tooltip)
+            SetItemTooltip(tooltip);
+        return btn;
+    }
+    bool ButtonHotkey(const char* label, KeyBindOption* v, const char* tooltip, const ImVec2& size) {
+        bool btn = Button(label, size);
+        if (tooltip)
+            SetItemTooltip(tooltip);
+        Hotkey(std::string(label + std::string("##ToggleKey")), v);
         return btn;
     }
     bool Checkbox(const char* label, bool* v, const char* tooltip) {

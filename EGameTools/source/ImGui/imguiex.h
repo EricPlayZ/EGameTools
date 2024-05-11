@@ -5,7 +5,8 @@ namespace ImGui {
 	extern void StyleScaleAllSizes(ImGuiStyle* style, const float scale_factor, ImGuiStyle* defStyle = nullptr);
 	extern void SpanNextTabAcrossWidth(const float width, const size_t tabs = 1);
 	extern void EndTabBarEx();
-	extern bool Button(const char* label, const char* tooltip, const ImVec2& size_arg = ImVec2(0, 0));
+	extern bool Button(const char* label, const char* tooltip, const ImVec2& size = ImVec2(0, 0));
+	extern bool ButtonHotkey(const char* label, KeyBindOption* v, const char* tooltip = nullptr, const ImVec2& size = ImVec2(0, 0));
 	extern bool Checkbox(const char* label, bool* v, const char* tooltip);
 	extern bool Checkbox(const char* label, Option* v);
 	extern bool Checkbox(const char* label, Option* v, const char* tooltip);
