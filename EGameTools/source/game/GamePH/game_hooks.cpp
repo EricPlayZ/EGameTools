@@ -219,6 +219,10 @@ namespace GamePH {
 				prevFreeCam = false;
 				return 0;
 			}
+			if (Menu::Teleport::waypointIsSet && !*Menu::Teleport::waypointIsSet && Menu::Teleport::justTeleportedToWaypoint) {
+				Menu::Teleport::justTeleportedToWaypoint = false;
+				return 0;
+			}
 
 			if (Menu::Player::godMode.GetValue())
 				return 0;
@@ -278,7 +282,7 @@ namespace GamePH {
 			DWORD64 result = SetNewWaypointLocationHook.pOriginal(pLogicalPlayer, a2, newWaypointLoc);
 			Menu::Teleport::waypointCoords = *newWaypointLoc;
 			if (Offsets::Get_SetNewWaypointLocationWaypointIsSetBoolInstr()) {
-				const UINT offset = *Offsets::Get_SetNewWaypointLocationWaypointIsSetBoolInstr();
+				const DWORD offset = *Offsets::Get_SetNewWaypointLocationWaypointIsSetBoolInstr();
 				Menu::Teleport::waypointIsSet = reinterpret_cast<bool*>(pLogicalPlayer + offset);
 			}
 			return result;

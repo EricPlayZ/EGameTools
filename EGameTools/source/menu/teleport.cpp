@@ -16,6 +16,7 @@ namespace Menu {
 
 		Vector3 waypointCoords{};
 		bool* waypointIsSet = nullptr;
+		bool justTeleportedToWaypoint = false;
 		static Vector3 teleportCoords{};
 
 		KeyBindOption teleportToSelectedLocation{ VK_F9 };
@@ -130,38 +131,40 @@ namespace Menu {
 				teleportCoords = playerCharacter->playerPos;
 			}
 		}
-		static void TeleportPlayerTo(const Vector3& pos) {
+		static bool TeleportPlayerTo(const Vector3& pos) {
 			if (isTeleportationDisabled())
-				return;
+				return false;
 
 			if (pos.isDefault())
-				return;
+				return false;
 
 			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 			
 			if (Player::freezePlayer.GetValue()) {
 				if (!playerCharacter)
-					return;
+					return false;
 
 				playerCharacter->posBeforeFreeze = pos;
 				playerCharacter->MoveCharacter(pos);
 			} else if (Camera::freeCam.GetValue()) {
 				GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
 				if (!freeCam)
-					return;
+					return false;
 
 				Vector3 camPos{};
 				freeCam->GetPosition(&camPos);
 				if (camPos.isDefault())
-					return;
+					return false;
 
 				// need to implement camera teleportation here :(
 			} else {
 				if (!playerCharacter)
-					return;
+					return false;
 
 				playerCharacter->MoveCharacter(pos);
 			}
+			
+			return true;
 		}
 
 		static void UpdateTeleportPos() {
@@ -202,7 +205,7 @@ namespace Menu {
 				teleportToSelectedLocation.SetPrevValue(teleportToSelectedLocation.GetValue());
 			}
 			if (teleportToWaypoint.HasChanged()) {
-				TeleportPlayerTo(waypointCoords);
+				justTeleportedToWaypoint = TeleportPlayerTo(waypointCoords);
 				teleportToWaypoint.SetPrevValue(teleportToWaypoint.GetValue());
 			}
 			if (teleportToCoords.HasChanged()) {
@@ -391,7 +394,7 @@ namespace Menu {
 				ImGui::PopItemWidth();
 
 				if (ImGui::ButtonHotkey("Teleport to Waypoint", &teleportToWaypoint, "Teleports player to waypoint.\nWARNING: If the waypoint is selected to track an object/item on the map, Teleport to Waypoint will not work, if so just set the waypoint nearby instead.\nWARNING: Your player height won't change when teleporting, so make sure you catch yourself if you fall under the map because of the teleportation") && waypointIsSet && *waypointIsSet)
-					TeleportPlayerTo(waypointCoords);
+					justTeleportedToWaypoint = TeleportPlayerTo(waypointCoords);
 				ImGui::SameLine();
 				if (ImGui::ButtonHotkey("Teleport to Coords", &teleportToCoords, "Teleports player to the coords specified in the input boxes above"))
 					TeleportPlayerTo(teleportCoords);
