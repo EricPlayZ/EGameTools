@@ -19,8 +19,9 @@ namespace Menu {
 		extern float tpHorizontalDistanceFromPlayer;
 
 		extern float lensDistortion;
-		extern KeyBindOption disablePhotoModeLimits;
+		extern KeyBindOption goProMode;
 		extern KeyBindOption disableSafezoneFOVReduction;
+		extern KeyBindOption disablePhotoModeLimits;
 		extern KeyBindOption disableHeadCorrection;
 
 		class Tab : MenuTab {

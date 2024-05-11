@@ -40,7 +40,7 @@ namespace Utils {
 			bool HookLoop() override {
 				if (hooked || (optionRef && !optionRef->GetValue()))
 					return true;
-				timeSpentHooking = Utils::Time::Timer(60000);
+				timeSpentHooking = Utils::Time::Timer(180000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
@@ -111,7 +111,7 @@ namespace Utils {
 
 			bool hooked = false;
 
-			Utils::Time::Timer timeSpentHooking{ 60000 };
+			Utils::Time::Timer timeSpentHooking{ 180000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class MHook : HookBase {
@@ -121,7 +121,7 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(60000);
+				timeSpentHooking = Utils::Time::Timer(180000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
@@ -146,7 +146,7 @@ namespace Utils {
 			GetTargetOffsetRetType(*pGetOffsetFunc)() = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 60000 };
+			Utils::Time::Timer timeSpentHooking{ 180000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class VTHook : HookBase {
@@ -156,7 +156,7 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(60000);
+				timeSpentHooking = Utils::Time::Timer(180000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
@@ -181,7 +181,7 @@ namespace Utils {
 			LPVOID pInstance = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 60000 };
+			Utils::Time::Timer timeSpentHooking{ 180000 };
 
 			DWORD offset = 0x0;
 		};

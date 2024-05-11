@@ -252,7 +252,7 @@ namespace GamePH {
 
 			if (Menu::Player::disableAirControl.GetValue())
 				*reinterpret_cast<bool*>(a1 + Offsets::Get_allowVelocityMod_offset()) = false;
-			if (Menu::Camera::disableHeadCorrection.GetValue())
+			if (Menu::Camera::disableHeadCorrection.GetValue() || Menu::Camera::goProMode.GetValue())
 				*reinterpret_cast<bool*>(a1 + Offsets::Get_disableHeadCorrection_offset()) = true;
 
 			return result;
@@ -288,6 +288,38 @@ namespace GamePH {
 			return result;
 		}
 #pragma endregion
+
+/*#pragma region HandleHeadBob
+		static bool isHandleHeadBobRunning = false;
+
+		static void detourHandleHeadBob(DWORD64 a1, DWORD64 a2, DWORD64 a3, DWORD64 a4);
+		static Utils::Hook::MHook<LPVOID, void(*)(DWORD64, DWORD64, DWORD64, DWORD64)> HandleHeadBobHook{ "HandleHeadBob", &Offsets::Get_HandleHeadBob, &detourHandleHeadBob };
+
+		static void detourHandleHeadBob(DWORD64 a1, DWORD64 a2, DWORD64 a3, DWORD64 a4) {
+			isHandleHeadBobRunning = true;
+			HandleHeadBobHook.pOriginal(a1, a2, a3, a4);
+			isHandleHeadBobRunning = false;
+		}
+#pragma endregion
+
+#pragma region SomeFloatCalcFunc
+		static DWORD64 detourSomeFloatCalcFunc(float* a1, float* a2, float a3, DWORD64 a4, DWORD64 a5, DWORD64 a6);
+		static Utils::Hook::MHook<LPVOID, DWORD64(*)(float*, float*, float, DWORD64, DWORD64, DWORD64)> SomeFloatCalcFuncHook{ "SomeFloatCalcFunc", &Offsets::Get_SomeFloatCalcFunc, &detourSomeFloatCalcFunc };
+
+		static DWORD64 detourSomeFloatCalcFunc(float* a1, float* a2, float a3, DWORD64 a4, DWORD64 a5, DWORD64 a6) {
+			if (isHandleHeadBobRunning) {
+				static int i = 1;
+				if (*a1 < 0.002f && i >= 2 && i <= 3) {
+					*a1 *= 2.0f;
+					a3 *= 2.0f;
+				}
+				i++;
+				if (i > 3)
+					i = 1;
+			}
+			return SomeFloatCalcFuncHook.pOriginal(a1, a2, a3, a4, a5, a6);
+		}
+#pragma endregion*/
 
 #pragma region ByteHooks
 		static unsigned char SaveGameCRCBoolCheckBytes[3] = { 0xB3, 0x01, 0x90 }; // mov bl, 01

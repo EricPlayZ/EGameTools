@@ -70,6 +70,7 @@ Thank you everyone for the support <3)" },
 - Added "No Recoil" (Weapon)
 - Added "Instant Reload" (Weapon)
 - Added "Lens Distortion" slider (Camera)
+- Added "GoPro Mode" (Camera) - this is best used with Head Bob Reduction set to 0 and Player FOV Correction set to 0 in game options; thank you to @c.r.e.x on Discord for the idea of adding this feature!
 - Added "Disable Head Correction" (Camera) - disables centering of the player's hands to the center of the camera
 - Added "Teleport to Coords" with X, Y, Z inputs (Teleport), with a "Get Player Coords" button which will automatically fill the X, Y and Z inputs
 - Added "Teleport to Waypoint" (Teleport)

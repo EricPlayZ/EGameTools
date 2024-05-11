@@ -102,6 +102,8 @@ struct Offsets {
 	AddOffset(HandleInventoryItemsAmount, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 8B 29", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(SetNewWaypointLocation, "gamedll_ph_x64_rwdi.dll", "85 D2 78 ?? 48 89 74 24 ?? 57 48 83 EC ?? 49 8B F8", Utils::SigScan::PatternType::Address, LPVOID)
 	AddOffset(SetNewWaypointLocationWaypointIsSetBoolInstr, "gamedll_ph_x64_rwdi.dll", "C6 84 33 [?? ?? ?? ?? 01 48 8B 5C 24", Utils::SigScan::PatternType::Address, DWORD*)
+	AddOffset(HandleHeadBob, "gamedll_ph_x64_rwdi.dll", "40 53 48 83 EC ?? 0F 29 74 24 ?? 48 8D 51 ?? 0F 29 7C 24 ?? 0F 28 F3 0F 28 FA F3 0F 11 74 24 ?? F3 0F 10 51 ?? 0F 28 D9 44 0F 29 44 24 ?? 48 8B D9 F3 0F 11 7C 24 ?? 44 0F 28 C1 E8 ?? ?? ?? ?? F3 0F 10 53 ?? 48 8D 53 ?? F3 0F 11 74 24 ?? 48 8D 4B ?? 41 0F 28 D8 F3 0F 11 7C 24 ?? E8 ?? ?? ?? ?? F3 0F 10 53 ?? 48 8D 53 ?? F3 0F 11 74 24 ?? 48 8D 4B ?? 41 0F 28 D8 F3 0F 11 7C 24 ?? E8 ?? ?? ?? ?? F3 0F 10 53", Utils::SigScan::PatternType::Address, LPVOID)
+	AddOffset(SomeFloatCalcFunc, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 81 EC ?? ?? ?? ?? F3 0F 10 0D", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(CompareAndUpdateFloat, "gamedll_ph_x64_rwdi.dll", "0F 2F C1 73 ?? 0F 28 C1 C3", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(HandlePlayerImmunity, "gamedll_ph_x64_rwdi.dll", "48 8B C4 53 56 57 41 56 41 57", Utils::SigScan::PatternType::Address, LPVOID)
 	//AddOffset(HandlePlayerImmunity2, "gamedll_ph_x64_rwdi.dll", "40 55 56 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B F1 45 0F B6 F0", Utils::SigScan::PatternType::Address, LPVOID)

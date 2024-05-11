@@ -138,20 +138,14 @@ namespace Menu {
 			if (pos.isDefault())
 				return false;
 
-			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
-			
 			if (Camera::freeCam.GetValue()) {
 				GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
 				if (!freeCam)
 					return false;
 
 				freeCam->SetPosition(&pos);
-				if (playerCharacter) {
-					if (Player::freezePlayer.GetValue())
-						playerCharacter->posBeforeFreeze = pos;
-					playerCharacter->MoveCharacter(pos);
-				}
 			} else {
+				Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 				if (!playerCharacter)
 					return false;
 

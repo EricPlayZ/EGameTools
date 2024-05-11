@@ -29,8 +29,9 @@ namespace Menu {
 		float tpHorizontalDistanceFromPlayer = 0.0f;
 
 		float lensDistortion = 20.0f;
-		KeyBindOption disablePhotoModeLimits{ VK_NONE };
+		KeyBindOption goProMode{ VK_NONE };
 		KeyBindOption disableSafezoneFOVReduction{ VK_NONE };
+		KeyBindOption disablePhotoModeLimits{ VK_NONE };
 		KeyBindOption disableHeadCorrection{ VK_NONE };
 
 		static constexpr int baseFOV = 57;
@@ -141,17 +142,27 @@ namespace Menu {
 			if (!GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
-			static bool gotDefaultVal = false;
-			if (!gotDefaultVal) {
-				lensDistortion = GamePH::PlayerVariables::GetPlayerVar<float>("FOVCorrection") * 100.0f;
-				gotDefaultVal = true;
-			}
-
 			GamePH::PlayerVariables::ManagePlayerVarOption("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, &disableSafezoneFOVReduction, true);
 
-			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", lensDistortion / 100.0f);
+			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();
+			if (pCVideoSettings) {
+				static int previousFOV = FOV;
+				if (goProMode.HasChangedTo(true)) {
+					previousFOV = FOV;
+					goProMode.SetPrevValue(true);
+				} else if (goProMode.HasChangedTo(false)) {
+					FOV = previousFOV;
+					pCVideoSettings->extraFOV = static_cast<float>(FOV - baseFOV);
+					goProMode.SetPrevValue(false);
+				}
 
-			GamePH::PlayerVariables::ManagePlayerVarOption("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, &disableHeadCorrection, true);
+				if (goProMode.GetValue())
+					pCVideoSettings->extraFOV = static_cast<float>((goProMode.GetValue() ? 110 : FOV) - baseFOV);
+			}
+			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", goProMode.GetValue() ? 1.0f : lensDistortion / 100.0f);
+			GamePH::PlayerVariables::ManagePlayerVarOption("HeadBobFactor", 1.25f, 1.0f, &goProMode, true);
+
+			GamePH::PlayerVariables::ManagePlayerVarOption("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? &goProMode : &disableHeadCorrection, true);
 		}
 		static void UpdateDisabledOptions() {
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
@@ -161,6 +172,10 @@ namespace Menu {
 			tpUseTPPModel.SetChangesAreDisabled(freeCam.GetValue() || photoMode.GetValue());
 		}
 		static void HandleToggles() {
+			if (goProMode.HasChanged()) {
+				goProMode.SetPrevValue(goProMode.GetValue());
+				GamePH::ReloadJumps();
+			}
 			if (disableHeadCorrection.HasChanged()) {
 				disableHeadCorrection.SetPrevValue(disableHeadCorrection.GetValue());
 				GamePH::ReloadJumps();
@@ -213,10 +228,15 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 			ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", &lensDistortion, 0.0f, 100.0f, "%.1f%%");
-			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction, "Disables the FOV reduction that happens while you're in a safezone");
+			ImGui::CheckboxHotkey("GoPro Mode *", &goProMode, "Makes the camera behave similar to a GoPro mounted on the chest");
 			ImGui::SameLine();
+			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction, "Disables the FOV reduction that happens while you're in a safezone");
 			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits, "Disables the invisible box while in Photo Mode");
+			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Head Correction", &disableHeadCorrection, "Disables centering of the player's hands to the center of the camera");
+
+			ImGui::Separator();
+			ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "* GoPro Mode is best used with Head Bob Reduction set to 0 and Player FOV\nCorrection set to 0 in game options");
 		}
 	}
 }

@@ -6544,7 +6544,7 @@ namespace Menu {
 					}
 				} catch (std::exception& e) {
 					UNREFERENCED_PARAMETER(e);
-					spdlog::error("PlayerVarsUpdate() threw an exception! If this error message appears, please open a bug report.");
+					spdlog::error("PlayerVarsUpdate() threw an exception! Restart the game to fix this error. If the error still happens, please open a bug report.");
 				}
 			}
 		}
