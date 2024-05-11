@@ -46,4 +46,16 @@ namespace Engine {
 			return nullptr;
 		}
 	}
+
+	void CBaseCamera::SetPosition(const Vector3* pos) {
+		__try {
+			void* (*pSetPosition)(LPVOID pCBaseCamera, const Vector3* pos) = (decltype(pSetPosition))Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?SetPosition@IBaseCamera@@QEAAXAEBVvec3@@@Z");
+			if (!pSetPosition)
+				return;
+
+			pSetPosition(this, pos);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return;
+		}
+	}
 }

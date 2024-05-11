@@ -140,27 +140,23 @@ namespace Menu {
 
 			Engine::CBulletPhysicsCharacter* playerCharacter = Engine::CBulletPhysicsCharacter::Get();
 			
-			if (Player::freezePlayer.GetValue()) {
-				if (!playerCharacter)
-					return false;
-
-				playerCharacter->posBeforeFreeze = pos;
-				playerCharacter->MoveCharacter(pos);
-			} else if (Camera::freeCam.GetValue()) {
+			if (Camera::freeCam.GetValue()) {
 				GamePH::FreeCamera* freeCam = GamePH::FreeCamera::Get();
 				if (!freeCam)
 					return false;
 
-				Vector3 camPos{};
-				freeCam->GetPosition(&camPos);
-				if (camPos.isDefault())
-					return false;
-
-				// need to implement camera teleportation here :(
+				freeCam->SetPosition(&pos);
+				if (playerCharacter) {
+					if (Player::freezePlayer.GetValue())
+						playerCharacter->posBeforeFreeze = pos;
+					playerCharacter->MoveCharacter(pos);
+				}
 			} else {
 				if (!playerCharacter)
 					return false;
 
+				if (Player::freezePlayer.GetValue())
+					playerCharacter->posBeforeFreeze = pos;
 				playerCharacter->MoveCharacter(pos);
 			}
 			

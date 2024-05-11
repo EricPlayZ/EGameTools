@@ -81,12 +81,12 @@ namespace GamePH {
 				*(varValue + 1) = value;
 			}
 		}
+		static std::unordered_map<std::string, std::any> prevPlayerVarValueMap;
+		static std::unordered_map<std::string, bool> prevOptionValueMap;
+
 		template <typename T> static void ManagePlayerVarOption(const std::string& playerVar, const T valueIfTrue, const T valueIfFalse, Option* option, const bool& usePreviousVal = true) {
 			if (!gotPlayerVars)
 				return;
-
-			static std::unordered_map<std::string, T> prevPlayerVarValueMap;
-			static std::unordered_map<std::string, bool> prevOptionValueMap;
 
 			if (prevPlayerVarValueMap.find(playerVar) == prevPlayerVarValueMap.end())
 				prevPlayerVarValueMap[playerVar] = GamePH::PlayerVariables::GetPlayerVar<T>(playerVar);
@@ -101,7 +101,7 @@ namespace GamePH {
 				prevOptionValueMap[playerVar] = true;
 			} else if (prevOptionValueMap[playerVar]) {
 				prevOptionValueMap[playerVar] = false;
-				GamePH::PlayerVariables::ChangePlayerVar(playerVar, usePreviousVal ? prevPlayerVarValueMap[playerVar] : valueIfFalse);
+				GamePH::PlayerVariables::ChangePlayerVar(playerVar, usePreviousVal ? std::any_cast<T>(prevPlayerVarValueMap[playerVar]) : valueIfFalse);
 			}
 		}
 

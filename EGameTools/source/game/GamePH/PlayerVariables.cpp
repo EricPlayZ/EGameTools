@@ -203,6 +203,9 @@ namespace GamePH {
 	}
 #pragma endregion
 
+	std::unordered_map<std::string, std::any> PlayerVariables::prevPlayerVarValueMap{};
+	std::unordered_map<std::string, bool> PlayerVariables::prevOptionValueMap{};
+
 	PlayerVariables* PlayerVariables::Get() {
 		__try {
 			PlayerState* pPlayerState = PlayerState::Get();

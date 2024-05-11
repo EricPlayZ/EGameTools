@@ -15,5 +15,7 @@ namespace Engine {
 		Vector3* GetUpVector(Vector3* outUpVec);
 		Vector3* GetLeftVector(Vector3* outLeftVec);
 		Vector3* GetPosition(Vector3* outPos);
+
+		void SetPosition(const Vector3* pos);
 	};
 }
