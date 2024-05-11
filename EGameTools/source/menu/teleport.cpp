@@ -268,10 +268,11 @@ namespace Menu {
 			return true;
 		}
 		static void HandleDialogs() {
+			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), 0, ImVec2(0.5f, 0.5f));
 			if (ImGui::BeginPopupModal("Give the location a name", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				bool tpSaveResult = true;
 				ImGui::PushItemWidth(500.0f * Menu::scale);
-				if (ImGui::InputTextWithHint("##TPLocationNameInputText", "Location name", newLocationName, IM_ARRAYSIZE(newLocationName), ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("OK", ImVec2(500.0f, 0.0f) * Menu::scale)) {
+				if (ImGui::InputTextWithHint("##TPLocationNameInputText", "Location name", newLocationName, IM_ARRAYSIZE(newLocationName), ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("OK", ImVec2(500.0f, 0.0f) * Menu::scale) && newLocationName[0]) {
 					ImGui::PopItemWidth();
 					tpSaveResult = SaveTeleportLocation(newLocationName);
 					newLocationName[0] = 0;
@@ -279,6 +280,7 @@ namespace Menu {
 				if (tpSaveResult)
 					ImGui::EndPopup();
 			}
+			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), 0, ImVec2(0.5f, 0.5f));
 			if (ImGui::BeginPopupModal("Location already exists", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::PushItemWidth(500.0f * Menu::scale);
 				ImGui::TextCentered("The location you have entered already exists. Either the name of the location, or the position of the location is already inside the list. If you want to change it then please remove it and add it again.", false);
@@ -288,7 +290,7 @@ namespace Menu {
 				}
 				ImGui::EndPopup();
 			}
-			ImGui::SetNextWindowSizeConstraints(ImVec2(500.0f, 0.0f) * Menu::scale, ImVec2(500.0f, 800.0f) * Menu::scale);
+			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), 0, ImVec2(0.5f, 0.5f));
 			if (ImGui::BeginPopupModal("Couldn't add location", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 				ImGui::PushItemWidth(500.0f * Menu::scale);
 				ImGui::TextCentered("Something went wrong trying to add a location. Either the player class or camera class are not found, or you're in a place in the game where the character or camera isn't properly loaded. If this happens, even though you know it should work fine, please contact @EricPlayZ on NexusMods, GitHub or Discord.");
