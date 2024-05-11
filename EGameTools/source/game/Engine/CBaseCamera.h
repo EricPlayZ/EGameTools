@@ -17,5 +17,6 @@ namespace Engine {
 		Vector3* GetPosition(Vector3* outPos);
 
 		void SetPosition(const Vector3* pos);
+		void SetFOV(float fov);
 	};
 }

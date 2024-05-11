@@ -42,8 +42,31 @@ namespace Menu {
 			if (menuToggle.GetValue())
 				return;
 
+			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
+			Engine::CBaseCamera* viewCam = reinterpret_cast<Engine::CBaseCamera*>(iLevel->GetViewCamera());
+
+			static int previousFOV = FOV;
+			
+			if (goProMode.GetValue()) {
+				if (goProMode.HasChangedTo(true)) {
+					previousFOV = FOV;
+					goProMode.SetPrevValue(true);
+				}
+
+				if (iLevel && viewCam)
+					viewCam->SetFOV(110.0f);
+				FOV = 110.0f;
+				return;
+			} else if (goProMode.HasChangedTo(false)) {
+				FOV = previousFOV;
+				goProMode.SetPrevValue(false);
+
+				if (iLevel && viewCam)
+					viewCam->SetFOV(static_cast<float>(FOV));
+			}
+
 			Engine::CVideoSettings* videoSettings = Engine::CVideoSettings::Get();
-			if (!videoSettings)
+			if (!videoSettings || goProMode.GetValue())
 				return;
 
 			FOV = static_cast<int>(videoSettings->extraFOV) + baseFOV;
@@ -144,21 +167,6 @@ namespace Menu {
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, &disableSafezoneFOVReduction, true);
 
-			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();
-			if (pCVideoSettings) {
-				static int previousFOV = FOV;
-				if (goProMode.HasChangedTo(true)) {
-					previousFOV = FOV;
-					goProMode.SetPrevValue(true);
-				} else if (goProMode.HasChangedTo(false)) {
-					FOV = previousFOV;
-					pCVideoSettings->extraFOV = static_cast<float>(FOV - baseFOV);
-					goProMode.SetPrevValue(false);
-				}
-
-				if (goProMode.GetValue())
-					pCVideoSettings->extraFOV = static_cast<float>((goProMode.GetValue() ? 110 : FOV) - baseFOV);
-			}
 			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", goProMode.GetValue() ? 1.0f : lensDistortion / 100.0f);
 			GamePH::PlayerVariables::ManagePlayerVarOption("HeadBobFactor", 1.25f, 1.0f, &goProMode, true);
 
@@ -220,11 +228,12 @@ namespace Menu {
 
 			ImGui::SeparatorText("Misc");
 			Engine::CVideoSettings* pCVideoSettings = Engine::CVideoSettings::Get();
-			ImGui::BeginDisabled(!pCVideoSettings); {
+			ImGui::BeginDisabled(!pCVideoSettings || goProMode.GetValue()); {
 				if (ImGui::SliderInt("FOV", "Camera Field of View", &FOV, 20, 160) && pCVideoSettings)
 					pCVideoSettings->extraFOV = static_cast<float>(FOV - baseFOV);
-				else if (pCVideoSettings)
+				else if (pCVideoSettings && !goProMode.GetValue()) {
 					FOV = static_cast<int>(pCVideoSettings->extraFOV) + baseFOV;
+				}
 				ImGui::EndDisabled();
 			}
 			ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", &lensDistortion, 0.0f, 100.0f, "%.1f%%");

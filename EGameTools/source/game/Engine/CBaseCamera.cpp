@@ -58,4 +58,15 @@ namespace Engine {
 			return;
 		}
 	}
+	void CBaseCamera::SetFOV(float fov) {
+		__try {
+			void* (*pSetFOV)(LPVOID pCBaseCamera, float fov) = (decltype(pSetFOV))Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?SetFOV@IBaseCamera@@QEAAXM@Z");
+			if (!pSetFOV)
+				return;
+
+			pSetFOV(this, fov);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			return;
+		}
+	}
 }
