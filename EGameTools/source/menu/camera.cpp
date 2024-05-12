@@ -39,9 +39,6 @@ namespace Menu {
 		static constexpr float baseSprintHeadCorrectionFactor = 0.55f;
 
 		static void UpdateFOV() {
-			if (menuToggle.GetValue())
-				return;
-
 			GamePH::LevelDI* iLevel = GamePH::LevelDI::Get();
 			Engine::CBaseCamera* viewCam = nullptr;
 			if (iLevel)
@@ -68,7 +65,7 @@ namespace Menu {
 			}
 
 			Engine::CVideoSettings* videoSettings = Engine::CVideoSettings::Get();
-			if (!videoSettings || goProMode.GetValue())
+			if (!videoSettings || goProMode.GetValue() || menuToggle.GetValue())
 				return;
 
 			FOV = static_cast<int>(videoSettings->extraFOV) + baseFOV;
@@ -169,7 +166,18 @@ namespace Menu {
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, &disableSafezoneFOVReduction, true);
 
-			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", goProMode.GetValue() ? 1.0f : lensDistortion / 100.0f);
+			static float prevLensDistortion = lensDistortion;
+			if (goProMode.GetValue()) {
+				if (goProMode.HasChangedTo(true)) {
+					prevLensDistortion = lensDistortion;
+					goProMode.SetPrevValue(true);
+				}
+				lensDistortion = 100.0f;
+			} else if (goProMode.HasChangedTo(false)) {
+				lensDistortion = prevLensDistortion;
+				goProMode.SetPrevValue(false);
+			}
+			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", lensDistortion / 100.0f);
 			GamePH::PlayerVariables::ManagePlayerVarOption("HeadBobFactor", 1.25f, 1.0f, &goProMode, true);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? &goProMode : &disableHeadCorrection, true);
@@ -238,7 +246,9 @@ namespace Menu {
 				}
 				ImGui::EndDisabled();
 			}
-			ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", &lensDistortion, 0.0f, 100.0f, "%.1f%%");
+			ImGui::BeginDisabled(goProMode.GetValue()); {
+				ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", &lensDistortion, 0.0f, 100.0f, "%.1f%%");
+			}
 			ImGui::CheckboxHotkey("GoPro Mode *", &goProMode, "Makes the camera behave similar to a GoPro mounted on the chest");
 			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction, "Disables the FOV reduction that happens while you're in a safezone");
