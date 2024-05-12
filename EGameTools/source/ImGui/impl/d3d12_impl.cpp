@@ -175,6 +175,9 @@ namespace impl {
 		}
 
 		static void CleanupRenderTarget() {
+			if (!frameContext)
+				return;
+
 			for (UINT i = 0; i < buffersCounts; ++i) {
 				if (frameContext[i].main_render_target_resource) {
 					frameContext[i].main_render_target_resource->Release();

@@ -4405,7 +4405,7 @@ namespace Config {
 		{ "Camera:Misc", "DisableSafezoneFOVReduction", true, &Menu::Camera::disableSafezoneFOVReduction, OPTION },
 		{ "Camera:Misc", "DisablePhotoModeLimits", true, &Menu::Camera::disablePhotoModeLimits, OPTION },
 		{ "Camera:Misc", "DisableHeadCorrection", false, &Menu::Camera::disableHeadCorrection, OPTION },
-		{ "Teleport:SavedLocations", "SavedTeleportLocations", std::string(""), &Menu::Teleport::savedTeleportLocations, String},
+		{ "Teleport:SavedLocations", "SavedTeleportLocations", std::string("Bazaar - Highest Point:1944,123.6,932.8;Bazaar - Main Entrance:1962.9,50.1,927.9;Colonel Williams Stronghold - Main Entrance Bridge:994.3,22.8,-1138.6;Dynamo Cars Factory - Main Entrance:2295.9,-2.1,-78.6;Fish Eye - Player Safehouse:1180.4,32.4,-146.8;Fish Eye - Top of The Baloon:1122.6,98.8,-101.2;Observatory - Meeting Room:1951.2,-13.4,-329.6;Observatory - The 2 Domes (No Chemicals):1985.4,19.9,-357.2;Out of Bounds - Cut Road Quest:2693.3,-4.7,-241.5;PK Metro Station - Main Entrance:1886.9,50,628.9;PK Ship - Main Entrance:801.8,4.2,139.8;St. Paul Cathedral - GRE Entrance:463.4,4.2,-421;Tolga & Fatin Quest - Underground Loot Box:2343.9,12.2,-661.5;VNC Tower - \"V\" Logo:1434.2,4.3,-319.3;VNC Tower - Highest Player Safehouse:1424.7,354.6,-455;VNC Tower - Highest Point:1403.8,446.7,-389.8;X13 - Tunnel Near the City Walls Towards Facility:2407.9,36.2,-461.7;X13 - Underground Facility:2437.8,12.2,-649.9;X13 - Waltz Arena:2551.9,15.3,-569.1"), &Menu::Teleport::savedTeleportLocations, String},
 		{ "Misc:Misc", "DisableGamePauseWhileAFK", true, &Menu::Misc::disableGamePauseWhileAFK, OPTION },
 		{ "Misc:GameChecks", "DisableSavegameCRCCheck", true, &Menu::Misc::disableSavegameCRCCheck, OPTION },
 		{ "Misc:GameChecks", "DisableDataPAKsCRCCheck", true, &Menu::Misc::disableDataPAKsCRCCheck, OPTION },
@@ -4550,7 +4550,7 @@ namespace Config {
 							Menu::Player::loadSCRFilePath = {};
 						break;
 					} else if (entry.key == "SavedTeleportLocations") {
-						Menu::Teleport::savedTeleportLocations = Menu::Teleport::ParseTeleportLocations(strValue);
+						Menu::Teleport::savedTeleportLocations = Menu::Teleport::ParseTeleportLocations(strValue.empty() ? std::any_cast<std::string>(entry.value) : strValue);
 						Menu::Teleport::UpdateTeleportLocationVisualNames();
 						break;
 					}
