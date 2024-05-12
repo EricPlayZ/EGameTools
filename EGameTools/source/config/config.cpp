@@ -4379,7 +4379,7 @@ namespace Config {
 		{ "Player:Misc", "UnlimitedStamina", false, &Menu::Player::unlimitedStamina, OPTION },
 		{ "Player:Misc", "UnlimitedItems", false, &Menu::Player::unlimitedItems, OPTION },
 		{ "Player:Misc", "OneHitKill", false, &Menu::Player::oneHitKill, OPTION },
-		{ "Player:Misc", "InvisibleToEnemies", true, &Menu::Player::invisibleToEnemies, OPTION },
+		{ "Player:Misc", "InvisibleToEnemies", false, &Menu::Player::invisibleToEnemies, OPTION },
 		{ "Player:Misc", "DisableOutOfBoundsTimer", true, &Menu::Player::disableOutOfBoundsTimer, OPTION },
 		{ "Player:Misc", "NightrunnerMode", false, &Menu::Player::nightrunnerMode, OPTION },
 		{ "Player:Misc", "OneHandedMode", false, &Menu::Player::oneHandedMode, OPTION },

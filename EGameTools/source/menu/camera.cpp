@@ -29,6 +29,7 @@ namespace Menu {
 		float tpHorizontalDistanceFromPlayer = 0.0f;
 
 		float lensDistortion = 20.0f;
+		static float altLensDistortion = 20.0f;
 		KeyBindOption goProMode{ VK_NONE };
 		KeyBindOption disableSafezoneFOVReduction{ VK_NONE };
 		KeyBindOption disablePhotoModeLimits{ VK_NONE };
@@ -167,17 +168,18 @@ namespace Menu {
 			GamePH::PlayerVariables::ManagePlayerVarOption("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, &disableSafezoneFOVReduction, true);
 
 			static float prevLensDistortion = lensDistortion;
+			static bool lensDistortionJustEnabled = false;
 			if (goProMode.GetValue()) {
-				if (goProMode.HasChangedTo(true)) {
+				if (!lensDistortionJustEnabled) {
 					prevLensDistortion = lensDistortion;
-					goProMode.SetPrevValue(true);
+					lensDistortionJustEnabled = true;
 				}
-				lensDistortion = 100.0f;
-			} else if (goProMode.HasChangedTo(false)) {
-				lensDistortion = prevLensDistortion;
-				goProMode.SetPrevValue(false);
+				altLensDistortion = 100.0f;
+			} else if (lensDistortionJustEnabled) {
+				altLensDistortion = prevLensDistortion;
+				lensDistortionJustEnabled = false;
 			}
-			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", lensDistortion / 100.0f);
+			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
 			GamePH::PlayerVariables::ManagePlayerVarOption("HeadBobFactor", 1.25f, 1.0f, &goProMode, true);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? &goProMode : &disableHeadCorrection, true);
@@ -246,7 +248,7 @@ namespace Menu {
 				ImGui::EndDisabled();
 			}
 			ImGui::BeginDisabled(goProMode.GetValue()); {
-				ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", &lensDistortion, 0.0f, 100.0f, "%.1f%%");
+				ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", goProMode.GetValue() ? &altLensDistortion : &lensDistortion, 0.0f, 100.0f, "%.1f%%");
 				ImGui::EndDisabled();
 			}
 			ImGui::CheckboxHotkey("GoPro Mode *", &goProMode, "Makes the camera behave similar to a GoPro mounted on the forehead");
