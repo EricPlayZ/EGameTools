@@ -6445,7 +6445,7 @@ namespace Menu {
 		KeyBindOption oneHitKill{ VK_NONE };
 		KeyBindOption invisibleToEnemies{ VK_NONE };
 		KeyBindOption disableOutOfBoundsTimer{ VK_NONE };
-		KeyBindOption nightrunnerMode{ VK_F8 };
+		KeyBindOption nightrunnerMode{ VK_F7 };
 		KeyBindOption oneHandedMode{ VK_NONE };
 		KeyBindOption allowGrappleHookInSafezone{ VK_NONE };
 		KeyBindOption disableAirControl{ VK_NONE };
