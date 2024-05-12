@@ -153,7 +153,7 @@ namespace Menu {
         ImGui::SetNextWindowSizeConstraints(minWndSize, maxWndSize);
         if (ImGui::BeginPopupModal(changelogTitle.c_str(), nullptr, welcomeWindowFlags)) {
             const std::string subTitle = "This is what the " + std::string(MOD_VERSION_STR) + " update brings:";
-            ImGui::TextCenteredColored(subTitle.c_str(), IM_COL32(230, 0, 0, 255), false);
+            ImGui::TextCenteredColored(subTitle.c_str(), IM_COL32(230, 0, 0, 255), true);
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
 
             std::istringstream iss(Changelog::changelogs[MOD_VERSION_STR]);
@@ -163,7 +163,7 @@ namespace Menu {
                     ImGui::NewLine();
                     continue;
                 }
-                ImGui::TextCentered(line.c_str(), false);
+                ImGui::TextCentered(line.c_str(), true);
             }
 
             if (ImGui::ButtonCentered("Close", ImVec2(0.0f, 30.0f) * scale)) {

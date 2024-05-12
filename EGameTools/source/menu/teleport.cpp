@@ -315,7 +315,7 @@ namespace Menu {
 		void Tab::Render() {
 			ImGui::SeparatorText("Saved Locations##Teleport");
 			ImGui::BeginDisabled(isTeleportationDisabled()); {
-				ImGui::PushItemWidth(-FLT_MIN);
+				ImGui::PushItemWidth(672.0f * Menu::scale);
 				ImGui::ListBox("##SavedTPLocationsListBox", &selectedTPLocation, savedTeleportLocationNamesPtrs.data(), static_cast<int>(savedTeleportLocationNamesPtrs.size()), 5);
 				ImGui::PopItemWidth();
 
