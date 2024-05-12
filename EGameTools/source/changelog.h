@@ -109,7 +109,7 @@ With all of that said, here is finally what this update brings:
 - Added "Teleport to Waypoint" (Teleport)
   - WARNING: if the waypoint is selected to track an object/item on the map, Teleport to Waypoint will not work, if so just set the waypoint nearby instead
   - WARNING: your player height won't change when teleporting, so make sure you catch yourself if you fall under the map because of the teleportation
-- Added "Saved Locations" in Teleport menu, with the ability of saving, deleting and teleporting to said locations; these locations are saved in the config file and will contain a name and a set of coordinates for each location
+- Added "Saved Locations" in Teleport menu, with the ability of saving, deleting and teleporting to said locations; these locations are saved in the config file and will contain a name and a set of coordinates for each location; to reset back to the default list, remove the list from inside the config file and go back into the game
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
