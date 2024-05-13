@@ -180,7 +180,6 @@ namespace Menu {
 				lensDistortionJustEnabled = false;
 			}
 			GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
-			GamePH::PlayerVariables::ManagePlayerVarOption("HeadBobFactor", 1.25f, 1.0f, &goProMode, true);
 
 			GamePH::PlayerVariables::ManagePlayerVarOption("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? &goProMode : &disableHeadCorrection, true);
 		}
