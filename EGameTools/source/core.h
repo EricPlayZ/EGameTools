@@ -16,9 +16,9 @@
 #define VK_MWHEELUP 0x101
 #endif
 
-constexpr const char* MOD_VERSION_STR = "v1.2.0";
-constexpr DWORD MOD_VERSION = 10200;
-constexpr DWORD GAME_VER_COMPAT = 11602;
+constexpr const char* MOD_VERSION_STR = "v1.2.1";
+constexpr DWORD MOD_VERSION = 10201;
+constexpr DWORD GAME_VER_COMPAT = 11702;
 
 struct Key {
     constexpr Key(std::string_view name, int code, ImGuiKey imGuiCode) : name(name), code(code), imGuiCode(imGuiCode) {}

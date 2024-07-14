@@ -109,7 +109,7 @@ With all of that said, here is finally what this update brings:
 - Added "Teleport to Waypoint" (Teleport)
   - WARNING: if the waypoint is selected to track an object/item on the map, Teleport to Waypoint will not work, if so just set the waypoint nearby instead
   - WARNING: your player height won't change when teleporting, so make sure you catch yourself if you fall under the map because of the teleportation
-- Added "Saved Locations" in Teleport menu, with the ability of saving, deleting and teleporting to said locations; these locations are saved in the config file and will contain a name and a set of coordinates for each location; to reset back to the default list, remove the list from inside the config file and go back into the game
+- Added "Saved Locations" in Teleport menu, with the ability of saving, deleting and teleporting to said locations; these locations are saved in the config file and will contain a name and a set of coordinates for each location; to reset back to the default list, remove the list from inside the config file and go back into the game; thank you to @Synsteric on Discord for helping me make the default list!
 - Added "Increase Data PAKs Limit" (Misc; requires game restart to apply) - you can now add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total
 - Added "Disable Data PAKs CRC Check" (Misc; requires game restart to apply) - stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well
 - Added "Disable Savegame CRC Check" (Misc; requires game restart to apply) - stops the game from falsely saying your savegame is corrupt whenever you modify it
@@ -132,6 +132,14 @@ NOTE: Any mods that are put inside "EGameTools\UserModFiles" as a regular file (
 
 
 I'm soon starting my exams and won't really have the time to update the mod the way I did right now. I had a 2 week leave and so I had plenty of time to further develop this mod.
-If anyone is looking to help with development, I'm all eyes and ears! Thank you!)" }
+If anyone is looking to help with development, I'm all eyes and ears! Thank you!)" },
+		{ "v1.2.1",
+		R"(- Added compatibility with v1.17.2 Tower Raid update
+- Added a .PDB file included by default with the mod, for debugging purposes in case the game crashes, now I can more easily detect the cause of a game crash!
+- Added a crash handler which handles game crashes and generates a "EGameTools-dump.dmp" file in the game's exe directory for debugging purposes; if you encounter a crash and this file gets generated, please send it to me anywhere you can, for example on Discord, so I can try to find out the cause of the game crash!
+
+- Fixed "Game Speed" (World) not getting applied with the mod menu opened while having another tab selected other than the World tab
+
+I have some things planned for the next updates, but time will decide when I'll be able to work on the updates. I'm almost done with my exams!)" }
 	};
 }
