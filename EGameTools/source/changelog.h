@@ -140,6 +140,9 @@ If anyone is looking to help with development, I'm all eyes and ears! Thank you!
 
 - Fixed "Game Speed" (World) not getting applied with the mod menu opened while having another tab selected other than the World tab
 
-I have some things planned for the next updates, but time will decide when I'll be able to work on the updates. I'm almost done with my exams!)" }
+I have some things planned for the next updates, but time will decide when I'll be able to work on the updates. I'm almost done with my exams!)" },
+		{ "v1.2.2",
+		R"(- Added compatibility with v1.18.0 "Community QoL" update
+- Fixed an issue with classes not always getting detected correctly for everyone (Debug tab; if you still run into issues, please open a bug report!))" }
 	};
 }

@@ -2,13 +2,13 @@
 
 namespace Utils {
 	namespace RTTI {
-		static std::string bytesToIDAPattern(BYTE* bytes, size_t size) {
+		static std::string bytesToIDAPattern(BYTE* bytes, size_t size, bool allowUnkBytes = true) {
 			std::stringstream idaPattern;
 			idaPattern << std::hex << std::uppercase << std::setfill('0');
 
 			for (size_t i = 0; i < size; i++) {
 				const int currentByte = bytes[i];
-				if (currentByte != 255)
+				if (currentByte != 255 || !allowUnkBytes)
 					idaPattern << std::setw(2) << currentByte;
 				else
 					idaPattern << "??";
@@ -113,7 +113,7 @@ namespace Utils {
 				// Now we need to get an xref to the object locator, as that's where the vtable is located
 				{
 					// Convert the object locator address to an IDA pattern
-					idaPattern = bytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<DWORD64*>(&objectLocator)), 8);
+					idaPattern = bytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<DWORD64*>(&objectLocator)), 8, false);
 
 					const DWORD64 vtableAddr = reinterpret_cast<DWORD64>(Utils::SigScan::PatternScanner::FindPattern(reinterpret_cast<LPVOID>(rdataStart), rdataSize, { idaPattern.c_str(), Utils::SigScan::PatternType::Address })) + 0x8;
 
