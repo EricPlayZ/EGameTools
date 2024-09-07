@@ -2,12 +2,12 @@
 #include "..\buffer.h"
 
 namespace GamePH {
-	class gen_TPPModel;
+	class PlayerDI_PH;
 
 	class LocalClientDI {
 	public:
 		union {
-			buffer<0x90, gen_TPPModel*> pgen_TPPModel;
+			buffer<0x90, PlayerDI_PH*> pPlayerDI_PH;
 		};
 
 		static LocalClientDI* Get();

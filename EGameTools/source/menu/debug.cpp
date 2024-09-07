@@ -16,7 +16,6 @@
 #include "..\game\GamePH\SessionCooperativeDI.h"
 #include "..\game\GamePH\TPPCameraDI.h"
 #include "..\game\GamePH\TimeWeather\CSystem.h"
-#include "..\game\GamePH\gen_TPPModel.h"
 
 #include "..\game\Engine\CBulletPhysicsCharacter.h"
 #include "..\game\Engine\CGSObject.h"
@@ -37,7 +36,6 @@ namespace Menu {
 			{ "FreeCamera", reinterpret_cast<LPVOID(*)()>(&GamePH::FreeCamera::Get) },
 			{ "GameDI_PH", reinterpret_cast<LPVOID(*)()>(&GamePH::GameDI_PH::Get) },
 			{ "GameDI_PH2", reinterpret_cast<LPVOID(*)()>(&GamePH::GameDI_PH2::Get) },
-			{ "gen_TPPModel", reinterpret_cast<LPVOID(*)()>(&GamePH::gen_TPPModel::Get) },
 			{ "LevelDI", reinterpret_cast<LPVOID(*)()>(&GamePH::LevelDI::Get) },
 			{ "LocalClientDI", reinterpret_cast<LPVOID(*)()>(&GamePH::LocalClientDI::Get) },
 			{ "LogicalPlayer", reinterpret_cast<LPVOID(*)()>(&GamePH::LogicalPlayer::Get) },

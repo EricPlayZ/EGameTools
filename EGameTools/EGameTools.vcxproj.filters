@@ -133,9 +133,6 @@
     <ClCompile Include="source\game\GamePH\GameDI_PH2.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
-    <ClCompile Include="source\game\GamePH\gen_TPPModel.cpp">
-      <Filter>game\GamePH</Filter>
-    </ClCompile>
     <ClCompile Include="source\game\GamePH\game_hooks.cpp">
       <Filter>game\GamePH</Filter>
     </ClCompile>
@@ -362,9 +359,6 @@
       <Filter>game\GamePH</Filter>
     </ClInclude>
     <ClInclude Include="source\game\GamePH\GameDI_PH2.h">
-      <Filter>game\GamePH</Filter>
-    </ClInclude>
-    <ClInclude Include="source\game\GamePH\gen_TPPModel.h">
       <Filter>game\GamePH</Filter>
     </ClInclude>
     <ClInclude Include="source\game\GamePH\LevelDI.h">

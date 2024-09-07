@@ -35,7 +35,6 @@
     <ClCompile Include="source\game\GamePH\FreeCamera.cpp" />
     <ClCompile Include="source\game\GamePH\GameDI_PH.cpp" />
     <ClCompile Include="source\game\GamePH\GameDI_PH2.cpp" />
-    <ClCompile Include="source\game\GamePH\gen_TPPModel.cpp" />
     <ClCompile Include="source\game\GamePH\game_hooks.cpp" />
     <ClCompile Include="source\game\GamePH\InventoryContainerDI.cpp" />
     <ClCompile Include="source\game\GamePH\InventoryItem.cpp" />
@@ -140,7 +139,6 @@
     <ClInclude Include="source\game\GamePH\FreeCamera.h" />
     <ClInclude Include="source\game\GamePH\GameDI_PH.h" />
     <ClInclude Include="source\game\GamePH\GameDI_PH2.h" />
-    <ClInclude Include="source\game\GamePH\gen_TPPModel.h" />
     <ClInclude Include="source\game\GamePH\InventoryContainerDI.h" />
     <ClInclude Include="source\game\GamePH\InventoryItem.h" />
     <ClInclude Include="source\game\GamePH\InventoryMoney.h" />

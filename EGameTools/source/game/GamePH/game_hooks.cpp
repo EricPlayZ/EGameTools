@@ -11,7 +11,7 @@
 #include "LevelDI.h"
 #include "PlayerHealthModule.h"
 #include "PlayerInfectionModule.h"
-#include "gen_TPPModel.h"
+#include "PlayerDI_PH.h"
 
 namespace GamePH {
 	namespace Hooks {
@@ -161,20 +161,20 @@ namespace GamePH {
 		static Utils::Hook::MHook<LPVOID, void(*)(DWORD64, bool)> ShowTPPModelFunc3Hook{ "ShowTPPModelFunc3", &Offsets::Get_ShowTPPModelFunc3, &detourShowTPPModelFunc3 };
 
 		static void detourShowTPPModelFunc3(DWORD64 tppFunc2Addr, bool showTPPModel) {
-			gen_TPPModel* pgen_TPPModel = gen_TPPModel::Get();
-			if (!pgen_TPPModel) {
+			PlayerDI_PH* pPlayerDI_PH = PlayerDI_PH::Get();
+			if (!pPlayerDI_PH) {
 				ShowTPPModelFunc3Hook.pOriginal(tppFunc2Addr, showTPPModel);
 				return;
 			}
 			
 			if (!showTPPModel && prevUseTPPModel) {
-				pgen_TPPModel->enableTPPModel2 = true;
-				pgen_TPPModel->enableTPPModel1 = true;
+				pPlayerDI_PH->enableTPPModel2 = true;
+				pPlayerDI_PH->enableTPPModel1 = true;
 			}
 			ShowTPPModelFunc3Hook.pOriginal(tppFunc2Addr, showTPPModel);
 			if (showTPPModel && prevUseTPPModel) {
-				pgen_TPPModel->enableTPPModel2 = false;
-				pgen_TPPModel->enableTPPModel1 = false;
+				pPlayerDI_PH->enableTPPModel2 = false;
+				pPlayerDI_PH->enableTPPModel1 = false;
 			} else
 				prevUseTPPModel = showTPPModel;
 		}
