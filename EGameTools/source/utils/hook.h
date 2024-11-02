@@ -40,11 +40,11 @@ namespace Utils {
 			bool HookLoop() override {
 				if (hooked || (optionRef && !optionRef->GetValue()))
 					return true;
-				timeSpentHooking = Utils::Time::Timer(180000);
+				timeSpentHooking = Utils::Time::Timer(160000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking \"{}\" after 60 seconds", name);
+						spdlog::error("Failed hooking \"{}\" after 160 seconds", name);
 						return false;
 					}
 					if (!pGetOffsetFunc || !pGetOffsetFunc())
@@ -111,7 +111,7 @@ namespace Utils {
 
 			bool hooked = false;
 
-			Utils::Time::Timer timeSpentHooking{ 180000 };
+			Utils::Time::Timer timeSpentHooking{ 160000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class MHook : HookBase {
@@ -121,11 +121,11 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(180000);
+				timeSpentHooking = Utils::Time::Timer(160000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking function \"{}\" after 60 seconds", name);
+						spdlog::error("Failed hooking function \"{}\" after 160 seconds", name);
 						return false;
 					}
 					if (!pGetOffsetFunc)
@@ -146,7 +146,7 @@ namespace Utils {
 			GetTargetOffsetRetType(*pGetOffsetFunc)() = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 180000 };
+			Utils::Time::Timer timeSpentHooking{ 160000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class VTHook : HookBase {
@@ -156,11 +156,11 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(180000);
+				timeSpentHooking = Utils::Time::Timer(160000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking function \"{}\" after 60 seconds", name);
+						spdlog::error("Failed hooking function \"{}\" after 160 seconds", name);
 						return false;
 					}
 					if (!pGetOffsetFunc)
@@ -181,7 +181,7 @@ namespace Utils {
 			LPVOID pInstance = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 180000 };
+			Utils::Time::Timer timeSpentHooking{ 160000 };
 
 			DWORD offset = 0x0;
 		};

@@ -4,36 +4,24 @@ namespace Utils {
 	namespace Time {
         Timer::Timer(long timeMs) : timeToPass(std::chrono::milliseconds(timeMs)), timePassed(false) {
             start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+            end = start + timeToPass;
         }
 
         const long long Timer::GetTimePassed() {
             if (timePassed)
                 return -1;
 
-            const auto end = clock::now();
-            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            const auto currentClock = clock::now();
+            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(currentClock - start);
             const long long timePassedMs = duration.count();
 
-            if (timePassedMs < 0) {
-                start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
-                return -1;
-            }
             return timePassedMs;
         }
         const bool Timer::DidTimePass() {
             if (timePassed)
-                return timePassed;
+                return true;
 
-            const auto end = clock::now();
-            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-            const long long timePassedMs = duration.count();
-
-            if (timePassedMs < 0) {
-                start = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
-                return false;
-            }
-
-            if (duration >= timeToPass)
+            if (clock::now() >= end)
                 timePassed = true;
             return timePassed;
         }

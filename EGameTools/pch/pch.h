@@ -37,6 +37,7 @@
 #include <assert.h>
 #include <unordered_map>
 #include <unordered_set>
+#include <semaphore>
 
 #include <dxgi.h>
 #include <dxgi1_4.h>

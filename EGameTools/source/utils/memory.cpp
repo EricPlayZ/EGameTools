@@ -3,13 +3,23 @@
 namespace Utils {
 	namespace Memory {
 		const MODULEINFO GetModuleInfo(const char* szModule) {
-			const HMODULE hModule = GetModuleHandle(szModule);
+			if (!szModule)
+				return MODULEINFO();
+
+			static std::unordered_map<std::string_view, MODULEINFO> moduleInfoCache;
+			auto it = moduleInfoCache.find(szModule);
+			if (it != moduleInfoCache.end())
+				return it->second;
+
+			HMODULE hModule = GetModuleHandle(szModule);
 			if (hModule == 0)
 				return MODULEINFO();
 
 			MODULEINFO moduleInfo{};
 			GetModuleInformation(GetCurrentProcess(), hModule, &moduleInfo, sizeof(MODULEINFO));
-			return moduleInfo;
+			moduleInfoCache[szModule] = moduleInfo;
+
+			return moduleInfoCache[szModule];
 		}
 		const FARPROC GetProcAddr(const std::string_view& module, const std::string_view& funcName) {
 			const HMODULE moduleHandle = GetModuleHandleA(module.data());

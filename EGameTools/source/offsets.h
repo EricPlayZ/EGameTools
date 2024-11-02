@@ -5,7 +5,9 @@
 #define AddOffset(name, moduleName, pattern, type, retType)\
 static retType Get_## name () {\
 	static retType name = NULL;\
-	if (Utils::Memory::IsValidPtr(name)) return name;\
+	static int i = 0;\
+	if (Utils::Memory::IsValidPtr(name) || i >= 10) return name;\
+	i++;\
 	return name=reinterpret_cast<retType>(Utils::SigScan::PatternScanner::FindPattern(moduleName, {pattern, type}));\
 } 
 #define AddStaticOffset(name, off)\
@@ -24,7 +26,9 @@ static DWORD64 Get_## name () {\
 #define AddVTOffset(name, moduleName, rttiName, retType)\
 static retType GetVT_## name () {\
 	static retType VT_## name = NULL;\
+	static int i = 0;\
 	if (Utils::Memory::IsValidPtr(VT_## name)) return VT_## name;\
+	i++;\
 	return VT_## name=reinterpret_cast<retType>(Utils::RTTI::GetVTablePtr(moduleName, rttiName));\
 } 
 

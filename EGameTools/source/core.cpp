@@ -43,6 +43,8 @@ namespace Core {
 	int rendererAPI = 0;
 	DWORD gameVer = 0;
 
+	static std::counting_semaphore<4> maxHookThreads(4);
+
 	static void LoopHookRenderer() {
 		while (true) {
 			if (exiting)
@@ -225,14 +227,25 @@ namespace Core {
 
 		CreateSymlinkForLoadingFiles();
 
-		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
-			spdlog::warn("Hooking \"{}\"", hook->name.data());
-			std::thread([&hook]() {
-				if (hook->HookLoop())
-					spdlog::info("Hooked \"{}\"!", hook->name.data());
-			}).detach();
-		}
+		while (true) {
+			if (!GetModuleHandle("gamedll_ph_x64_rwdi.dll") || !GetModuleHandle("engine_x64_rwdi.dll"))
+				continue;
 
+			for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
+				std::thread([&hook]() {
+					maxHookThreads.acquire();
+
+					spdlog::warn("Hooking \"{}\"", hook->name.data());
+					if (hook->HookLoop())
+						spdlog::info("Hooked \"{}\"!", hook->name.data());
+
+					maxHookThreads.release();
+				}).detach();
+			}
+
+			break;
+		}
+		
 		spdlog::warn("Sorting Player Variables");
 		std::thread([]() {
 			GamePH::PlayerVariables::SortPlayerVars();

@@ -96,30 +96,47 @@ namespace Utils {
 				mask[bytesCounted] = '\0';
 
 			LPVOID ret = nullptr;
-			DWORD64 retAddress = reinterpret_cast<DWORD64>(startAddress);
-			DWORD64 endAddress = retAddress + searchSize;
+			const DWORD64 retAddress = reinterpret_cast<DWORD64>(startAddress);
+			const DWORD64 endAddress = retAddress + searchSize;
 			size_t searchLen = bytesCounted;
 
-			while (retAddress < endAddress) {
-				__try {
-					bool found = true;
-					for (size_t j = 0; j < searchLen; j++) {
-						BYTE* currentByte = reinterpret_cast<BYTE*>(retAddress + j);
-						if (mask[j] == 'x' && *currentByte != patt[j]) {
-							found = false;
-							break;
+			BYTE* retAddressPtr = reinterpret_cast<BYTE*>(retAddress);
+			BYTE* endAddressPtr = reinterpret_cast<BYTE*>(endAddress);
+
+			while (retAddressPtr < endAddressPtr) {
+				MEMORY_BASIC_INFORMATION mbi;
+				if (VirtualQuery(retAddressPtr, &mbi, sizeof(mbi))) {
+					// Check if the memory region is readable
+					if (mbi.Protect & (PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_READONLY | PAGE_READWRITE)) {
+						// Adjust the end address to the end of this memory region
+						BYTE* regionEnd = reinterpret_cast<BYTE*>(mbi.BaseAddress) + mbi.RegionSize;
+
+						// Only scan within this region
+						while (retAddressPtr < regionEnd && retAddressPtr < endAddressPtr) {
+							bool found = true;
+
+							for (size_t j = 0; j < searchLen; j++) {
+								if (mask[j] == 'x' && retAddressPtr[j] != patt[j]) {
+									found = false;
+									break;
+								}
+							}
+
+							if (found) {
+								ret = reinterpret_cast<LPVOID>(retAddressPtr + offset);
+								break;
+							}
+
+							retAddressPtr++;
 						}
-					}
 
-					if (found) {
-						ret = reinterpret_cast<LPVOID>(retAddress + offset);
-						break;
-					}
-
-					retAddress++;
-				} __except (EXCEPTION_EXECUTE_HANDLER) {
-					retAddress++;
-				}
+						if (ret != nullptr)
+							break;
+					} else
+						// Skip the non-readable memory region
+						retAddressPtr = reinterpret_cast<BYTE*>(mbi.BaseAddress) + mbi.RegionSize;
+				} else
+					retAddressPtr++;
 			}
 
 			free(patt);
