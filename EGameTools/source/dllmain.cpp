@@ -25,10 +25,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD64 ul_reason_for_call, LPVOID lpRese
     case DLL_PROCESS_ATTACH: {
         MH_Initialize();
 
-        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::MountDataPaksHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
-        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::AuthenticateDataAddNewFileHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
-        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::FsCheckZipCrcHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
-        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::FsOpenHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
+        Engine::Hooks::MountDataPaksHook.HookLoop();
+        Engine::Hooks::AuthenticateDataAddNewFileHook.HookLoop();
+        Engine::Hooks::FsCheckZipCrcHook.HookLoop();
+        Engine::Hooks::FsOpenHook.HookLoop();
 
         DisableThreadLibraryCalls(hModule);
         hMainThread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)Core::MainThread, hModule, 0, nullptr);

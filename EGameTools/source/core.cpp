@@ -8,6 +8,7 @@
 #include "game\GamePH\PlayerVariables.h"
 #include "game\GamePH\gameph_misc.h"
 #include "menu\menu.h"
+#include "menu\misc.h"
 
 #pragma region KeyBindOption
 bool KeyBindOption::wasAnyKeyPressed = false;
@@ -177,7 +178,7 @@ namespace Core {
 		GamePH::PlayerInfectionModule::UpdateClassAddr();
 
 		static bool mountDataPaksErrorShown = false;
-		if (!mountDataPaksErrorShown && Engine::Hooks::mountDataPaksRanWith8Count < 3 && GamePH::PlayerVariables::Get()) {
+		if (!mountDataPaksErrorShown && Engine::Hooks::mountDataPaksRanWith8Count < 3 && Menu::Misc::increaseDataPAKsLimit.GetValue() && GamePH::PlayerVariables::Get()) {
 			spdlog::error("MountDataPaks hook ran less than 3 times with the data PAKs limit set to 8. This means the increased data PAKs limit might not work correctly! If this error message appears and your data PAKs past \"data7.pak\" have not loaded, please contact author.");
 			mountDataPaksErrorShown = true;
 		}
