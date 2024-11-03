@@ -3,6 +3,8 @@
 namespace Core {
     extern void DisableConsole();
 
+    extern std::counting_semaphore<4> maxHookThreads;
+
     extern DWORD64 WINAPI MainThread(HMODULE hModule);
     extern void Cleanup();
 }
@@ -22,10 +24,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD64 ul_reason_for_call, LPVOID lpRese
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH: {
         MH_Initialize();
-        Engine::Hooks::MountDataPaksHook.HookLoop();
-        Engine::Hooks::AuthenticateDataAddNewFileHook.HookLoop();
-        Engine::Hooks::FsCheckZipCrcHook.HookLoop();
-        Engine::Hooks::FsOpenHook.HookLoop();
+
+        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::MountDataPaksHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
+        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::AuthenticateDataAddNewFileHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
+        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::FsCheckZipCrcHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
+        std::thread([]() { Core::maxHookThreads.acquire(); Engine::Hooks::FsOpenHook.HookLoop(); Core::maxHookThreads.release(); }).detach();
 
         DisableThreadLibraryCalls(hModule);
         hMainThread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)Core::MainThread, hModule, 0, nullptr);

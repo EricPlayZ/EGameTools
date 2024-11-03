@@ -38,109 +38,16 @@ namespace Utils {
 		}
 
 		LPVOID PatternScanner::FindPattern(LPVOID startAddress, DWORD64 searchSize, const Pattern& pattern) {
-			size_t len = strlen(pattern.pattern);
-			if (len == 0)
-				return nullptr;
-
-			DWORD64 pos = 0;
-
-			size_t byteCount = 1;
-			uint32_t i = 0;
-			while (i < len - 1) {
-				if (pattern.pattern[i] == ' ')
-					byteCount++;
-				i++;
-			}
-
-			BYTE* patt = reinterpret_cast<BYTE*>(malloc(byteCount + 1));
-			if (!patt)
-				return nullptr;
-
-			BYTE* mask = reinterpret_cast<BYTE*>(malloc(byteCount + 1));
-			if (!mask) {
-				free(patt);
-				return nullptr;
-			}
-
 			int offset = 0;
-			int bytesCounted = 0;
-			i = 0;
-			while (i < len - 1) {
-				if (pattern.pattern[i] == '[') {
-					i++;
-					offset = bytesCounted;
-				}
+			std::string patt = Memory::ConvertSigToScannerSig(pattern.pattern, &offset);
 
-				if (pattern.pattern[i] == '\0')
-					break;
-
-				if (pattern.pattern[i] == '?' && pattern.pattern[i + 1] == '?') {
-					mask[bytesCounted] = '?';
-					patt[bytesCounted] = '\0';
-				} else {
-					BYTE hn = pattern.pattern[i] > '9' ? pattern.pattern[i] - 'A' + 10 : pattern.pattern[i] - '0';
-					BYTE ln = pattern.pattern[i + 1] > '9' ? pattern.pattern[i + 1] - 'A' + 10 : pattern.pattern[i + 1] - '0';
-					BYTE n = (hn << 4) | ln;
-
-					mask[bytesCounted] = 'x';
-					patt[bytesCounted] = n;
-				}
-
-				bytesCounted++;
-
-				i += 2;
-				while (i < len && (pattern.pattern[i] == ' ' || pattern.pattern[i] == '\t' || pattern.pattern[i] == '\r' || pattern.pattern[i] == '\n'))
-					i++;
-			}
-			if (bytesCounted <= byteCount)
-				mask[bytesCounted] = '\0';
+			const auto scanner = memscan::mapped_region_t(reinterpret_cast<DWORD64>(startAddress), reinterpret_cast<DWORD64>(startAddress) + searchSize);
+			auto patternFind = scanner.find_pattern<ms_uptr_t>(patt);
 
 			LPVOID ret = nullptr;
-			const DWORD64 retAddress = reinterpret_cast<DWORD64>(startAddress);
-			const DWORD64 endAddress = retAddress + searchSize;
-			size_t searchLen = bytesCounted;
 
-			BYTE* retAddressPtr = reinterpret_cast<BYTE*>(retAddress);
-			BYTE* endAddressPtr = reinterpret_cast<BYTE*>(endAddress);
-
-			while (retAddressPtr < endAddressPtr) {
-				MEMORY_BASIC_INFORMATION mbi;
-				if (VirtualQuery(retAddressPtr, &mbi, sizeof(mbi))) {
-					// Check if the memory region is readable
-					if (mbi.Protect & (PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_READONLY | PAGE_READWRITE)) {
-						// Adjust the end address to the end of this memory region
-						BYTE* regionEnd = reinterpret_cast<BYTE*>(mbi.BaseAddress) + mbi.RegionSize;
-
-						// Only scan within this region
-						while (retAddressPtr < regionEnd && retAddressPtr < endAddressPtr) {
-							bool found = true;
-
-							for (size_t j = 0; j < searchLen; j++) {
-								if (mask[j] == 'x' && retAddressPtr[j] != patt[j]) {
-									found = false;
-									break;
-								}
-							}
-
-							if (found) {
-								ret = reinterpret_cast<LPVOID>(retAddressPtr + offset);
-								break;
-							}
-
-							retAddressPtr++;
-						}
-
-						if (ret != nullptr)
-							break;
-					} else
-						// Skip the non-readable memory region
-						retAddressPtr = reinterpret_cast<BYTE*>(mbi.BaseAddress) + mbi.RegionSize;
-				} else
-					retAddressPtr++;
-			}
-
-			free(patt);
-			free(mask);
+			if (patternFind.has_value())
+				ret = reinterpret_cast<LPVOID>(patternFind.value() + offset);
 
 			switch (pattern.type) {
 			case PatternType::Pointer:

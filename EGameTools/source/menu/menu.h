@@ -12,7 +12,6 @@ namespace Menu {
         virtual void Update() {};
 
         std::string_view tabName{};
-    private:
         int tabIndex{};
     };
 
@@ -26,6 +25,8 @@ namespace Menu {
 
     extern Option firstTimeRunning;
     extern Option hasSeenChangelog;
+
+    extern int currentTabIndex;
 
 	extern void Render();
 }

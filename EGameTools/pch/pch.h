@@ -66,6 +66,7 @@
 #include <imstb_textedit.h>
 #include <imstb_truetype.h>
 #include <MinHook.h>
+#include <memscan.h>
 
 #include "..\source\config\ini.h"
 #include "..\source\game\Engine\GameSpeedHandler.h"

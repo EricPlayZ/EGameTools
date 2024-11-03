@@ -89,7 +89,7 @@ namespace Menu {
 			if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
 				dayNightCycle->SetDaytime(timeBeforeFreeze);
 
-			if (!menuToggle.GetValue()) {
+			if (!menuToggle.GetValue() || Menu::currentTabIndex != World::Tab::tabIndex) {
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
 					iLevel->TimerSetSpeedUp(gameSpeed);
 				actualGameSpeed = iLevel->TimerGetSpeedUp();

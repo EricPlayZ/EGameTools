@@ -20,7 +20,7 @@ namespace Core {
 		DWORD prev_mode = 0;
 		const HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 		GetConsoleMode(hInput, &prev_mode);
-		SetConsoleMode(hInput, prev_mode & ENABLE_EXTENDED_FLAGS);
+		SetConsoleMode(hInput, prev_mode & ENABLE_EXTENDED_FLAGS);	
 	}
 
 	static FILE* f = nullptr;
@@ -43,7 +43,7 @@ namespace Core {
 	int rendererAPI = 0;
 	DWORD gameVer = 0;
 
-	static std::counting_semaphore<4> maxHookThreads(4);
+	std::counting_semaphore<4> maxHookThreads(4);
 
 	static void LoopHookRenderer() {
 		while (true) {
@@ -173,31 +173,37 @@ namespace Core {
 		GamePH::PlayerHealthModule::UpdateClassAddr();
 		GamePH::PlayerInfectionModule::UpdateClassAddr();
 	}
-	/*static bool WriteMiniDump(PEXCEPTION_POINTERS pExceptionPointers) {
+#ifndef EXCP_HANDLER_DISABLE_DEBUG
+	static bool WriteMiniDump(PEXCEPTION_POINTERS pExceptionPointers) {
 		HANDLE hFile = CreateFileA("EGameTools-dump.dmp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
 			return false;
 
 		MINIDUMP_EXCEPTION_INFORMATION mdei{};
-		mdei.ThreadId = GetCurrentThreadId();
 		mdei.ExceptionPointers = pExceptionPointers;
 		mdei.ClientPointers = false;
 
-		int success = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &mdei, nullptr, nullptr);
+		int success = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, (pExceptionPointers ? &mdei : nullptr), nullptr, nullptr);
 		CloseHandle(hFile);
 
 		return success;
-	}
-	static long WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo) {
-		spdlog::error("VEH threw an exception with code {}. Trying to continue execution, writing mini-dump in the mean time.", ExceptionInfo->ExceptionRecord->ExceptionCode);
+		}
+	static long WINAPI CrashHandler(PEXCEPTION_POINTERS ExceptionInfo) {
+		spdlog::error("Crash Handler threw an exception with code {}. Game is exiting, writing mini-dump in the mean time.", ExceptionInfo->ExceptionRecord->ExceptionCode);
+		std::string errorMsg = "";
 
-		if (WriteMiniDump(ExceptionInfo))
+		if (WriteMiniDump(ExceptionInfo)) {
 			spdlog::info("Mini-dump written to \"EGameTools-dump.dmp\". Please send this to mod author for further help!");
-		else
+			errorMsg = "EGameTools encountered a fatal error that caused the game to crash.\n\nA file \"" + Utils::Files::GetCurrentProcDirectory() + "\\EGameTools-dump.dmp\" has been generated. Please send this file to the author of the mod!\n\nThe game will now close once you press OK.";
+		} else {
 			spdlog::error("Failed to write mini-dump.");
+			errorMsg = "EGameTools encountered a fatal error that caused the game to crash.\n\nEGameTools failed to generate a crash dump file unfortunately, which means it is harder to find the cause of the crash.\n\nThe game will now close once you press OK.";
+		}
 
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}*/
+		MessageBoxA(nullptr, errorMsg.c_str(), "Fatal game error", MB_ICONERROR | MB_OK | MB_SETFOREGROUND);
+		exit(0);
+	}
+#endif
 	static void GameVersionCheck() {
 		try {
 			gameVer = GamePH::GetCurrentGameVersion();
@@ -216,7 +222,9 @@ namespace Core {
 		EnableConsole();
 		InitLogger();
 
-		//AddVectoredExceptionHandler(0, &VectoredExceptionHandler);
+#ifndef EXCP_HANDLER_DISABLE_DEBUG
+		AddVectoredExceptionHandler(0, &VectoredExceptionHandler);
+#endif
 
 		spdlog::warn("Getting game version");
 		GameVersionCheck();
@@ -227,23 +235,16 @@ namespace Core {
 
 		CreateSymlinkForLoadingFiles();
 
-		while (true) {
-			if (!GetModuleHandle("gamedll_ph_x64_rwdi.dll") || !GetModuleHandle("engine_x64_rwdi.dll"))
-				continue;
+		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
+			std::thread([&hook]() {
+				maxHookThreads.acquire();
 
-			for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
-				std::thread([&hook]() {
-					maxHookThreads.acquire();
+				spdlog::warn("Hooking \"{}\"", hook->name.data());
+				if (hook->HookLoop())
+					spdlog::info("Hooked \"{}\"!", hook->name.data());
 
-					spdlog::warn("Hooking \"{}\"", hook->name.data());
-					if (hook->HookLoop())
-						spdlog::info("Hooked \"{}\"!", hook->name.data());
-
-					maxHookThreads.release();
-				}).detach();
-			}
-
-			break;
+				maxHookThreads.release();
+			}).detach();
 		}
 		
 		spdlog::warn("Sorting Player Variables");

@@ -37,13 +37,13 @@ namespace Utils {
 			return ptr && (ptr <= moduleEndPoint && ptr >= moduleEntryPoint);
 		}
 
-		static std::string bytesToIDAPattern(BYTE* bytes, size_t size) {
+		std::string BytesToIDAPattern(BYTE* bytes, size_t size) {
 			std::stringstream idaPattern;
 			idaPattern << std::hex << std::uppercase << std::setfill('0');
 
 			for (size_t i = 0; i < size; i++) {
 				const int currentByte = bytes[i];
-				if (currentByte != 255)
+				if (currentByte != SigScanWildCard)
 					idaPattern << std::setw(2) << currentByte;
 				else
 					idaPattern << "??";
@@ -54,6 +54,34 @@ namespace Utils {
 
 			return idaPattern.str();
 		}
+		std::string ConvertSigToScannerSig(const char* pattern, int* offsetToAddrInSig) {
+			size_t len = strlen(pattern);
+
+			std::string patt{};
+			int bytesCounted = 0;
+
+			for (size_t i = 0; i < len;) {
+				if (pattern[i] == ' ' || i == len - 1)
+					bytesCounted++;
+
+				if (pattern[i] == '[') {
+					i++;
+					if (offsetToAddrInSig)
+						*offsetToAddrInSig = static_cast<int>(bytesCounted);
+					continue;
+				}
+
+				if (pattern[i] == '?') {
+					patt += SigScanWildCardStr;
+					i += (pattern[static_cast<DWORD64>(i) + 1] == '?') ? 2 : 1;
+				} else {
+					patt.push_back(pattern[i]);
+					i++;
+				}
+			}
+
+			return patt;
+		}
 		DWORD64 CalcTargetAddrOfRelInst(DWORD64 addrOfInst, size_t opSize) {
 			int offset = *reinterpret_cast<int*>(addrOfInst + opSize);
 
@@ -62,7 +90,7 @@ namespace Utils {
 		std::vector<DWORD64> GetXrefsTo(DWORD64 address, DWORD64 start, size_t size) {
 			std::vector<DWORD64> xrefs = {};
 
-			const std::string idaPattern = bytesToIDAPattern(reinterpret_cast<BYTE*>(&address), 8);
+			const std::string idaPattern = BytesToIDAPattern(reinterpret_cast<BYTE*>(&address), 8);
 			const DWORD64 end = start + size;
 
 			while (start && start < end) {

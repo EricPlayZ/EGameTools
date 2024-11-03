@@ -40,11 +40,11 @@ namespace Utils {
 			bool HookLoop() override {
 				if (hooked || (optionRef && !optionRef->GetValue()))
 					return true;
-				timeSpentHooking = Utils::Time::Timer(160000);
+				timeSpentHooking = Utils::Time::Timer(120000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking \"{}\" after 160 seconds", name);
+						spdlog::error("Failed hooking \"{}\" after 120 seconds", name);
 						return false;
 					}
 					if (!pGetOffsetFunc || !pGetOffsetFunc())
@@ -62,6 +62,8 @@ namespace Utils {
 					VirtualProtect(pGetOffsetFunc(), bytesAmount, originalProtection, &oldProtection);
 					hooked = true;
 					return true;
+
+					Sleep(10);
 				}
 			}
 
@@ -111,7 +113,7 @@ namespace Utils {
 
 			bool hooked = false;
 
-			Utils::Time::Timer timeSpentHooking{ 160000 };
+			Utils::Time::Timer timeSpentHooking{ 120000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class MHook : HookBase {
@@ -121,11 +123,11 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(160000);
+				timeSpentHooking = Utils::Time::Timer(120000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking function \"{}\" after 160 seconds", name);
+						spdlog::error("Failed hooking function \"{}\" after 120 seconds", name);
 						return false;
 					}
 					if (!pGetOffsetFunc)
@@ -137,6 +139,8 @@ namespace Utils {
 						MH_EnableHook(pTarget);
 						return true;
 					}
+
+					Sleep(10);
 				}
 			}
 
@@ -146,7 +150,7 @@ namespace Utils {
 			GetTargetOffsetRetType(*pGetOffsetFunc)() = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 160000 };
+			Utils::Time::Timer timeSpentHooking{ 120000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class VTHook : HookBase {
@@ -156,11 +160,11 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(160000);
+				timeSpentHooking = Utils::Time::Timer(120000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking function \"{}\" after 160 seconds", name);
+						spdlog::error("Failed hooking function \"{}\" after 120 seconds", name);
 						return false;
 					}
 					if (!pGetOffsetFunc)
@@ -172,6 +176,8 @@ namespace Utils {
 						HookVT(pInstance, pDetour, reinterpret_cast<LPVOID*>(&pOriginal), offset);
 						return true;
 					}
+
+					Sleep(10);
 				}
 			}
 
@@ -181,7 +187,7 @@ namespace Utils {
 			LPVOID pInstance = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 160000 };
+			Utils::Time::Timer timeSpentHooking{ 120000 };
 
 			DWORD offset = 0x0;
 		};

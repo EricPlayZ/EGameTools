@@ -6,8 +6,8 @@
 #include "..\game\GamePH\GameDI_PH.h"
 #include "..\game\GamePH\LevelDI.h"
 #include "..\game\GamePH\PlayerVariables.h"
+#include "..\game\GamePH\PlayerObjProperties.h"
 #include "..\game\GamePH\gameph_misc.h"
-#include "..\game\GamePH\gen_TPPModel.h"
 #include "..\offsets.h"
 #include "camera.h"
 #include "menu.h"
@@ -149,8 +149,8 @@ namespace Menu {
 			if (!iLevel || !iLevel->IsLoaded())
 				return;
 
-			GamePH::gen_TPPModel* pgen_TPPModel = GamePH::gen_TPPModel::Get();
-			if (pgen_TPPModel) {
+			GamePH::PlayerObjProperties* playerObjProperties = GamePH::PlayerObjProperties::Get();
+			if (playerObjProperties) {
 				if (Menu::Camera::freeCam.GetValue() && !iLevel->IsTimerFrozen())
 					GamePH::ShowTPPModel(true);
 				else if (Menu::Camera::freeCam.GetValue() && iLevel->IsTimerFrozen() && !photoMode.GetValue())

@@ -1,45 +1,30 @@
-#include "pch.h"
+#include <pch.h>
 
 namespace Utils {
 	namespace RTTI {
-		static std::string bytesToIDAPattern(BYTE* bytes, size_t size) {
-			std::stringstream idaPattern;
-			idaPattern << std::hex << std::uppercase << std::setfill('0');
-
-			for (size_t i = 0; i < size; i++) {
-				const int currentByte = bytes[i];
-				if (currentByte != 255)
-					idaPattern << std::setw(2) << currentByte;
-				else
-					idaPattern << "??";
-
-				if (i != size - 1)
-					idaPattern << " ";
-			}
-
-			return idaPattern.str();
-		}
 		static std::vector<DWORD64> getXrefsTo(DWORD64 moduleBaseAddr, DWORD64 address, DWORD64 start, size_t size) {
 			std::vector<DWORD64> xrefs = {};
 
 			const DWORD64 finalOffset = address - moduleBaseAddr;
-			const std::string idaPattern = bytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<DWORD64*>(&finalOffset)), 4);
+			const std::string idaPattern = Memory::BytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<DWORD64*>(&finalOffset)), 4);
+			std::string patt = Memory::ConvertSigToScannerSig(idaPattern.c_str());
 
 			// Get the end of the section (in our case the end of the .rdata section)
 			const DWORD64 end = start + size;
 
 			while (start && start < end) {
-				DWORD64 xref = reinterpret_cast<DWORD64>(Utils::SigScan::PatternScanner::FindPattern(reinterpret_cast<LPVOID>(start), size, { idaPattern.c_str(), Utils::SigScan::PatternType::Address}));
+				const auto scanner = memscan::mapped_region_t(start, end);
+				auto patternFind = scanner.find_pattern<ms_uptr_t>(patt);
 
 				// If the xref is 0 it means that there either were no xrefs, or there are no remaining xrefs.
 				// So we should break out of our loop, otherwise it will keep on trying to look for xrefs.
-				if (!xref)
+				if (!patternFind.has_value())
 					break;
 
 				// We've found an xref, save it in the vector, and add 8 to start, so it wil now search for xrefs
 				// from the previously found xref untill we're at the end of the section, or there aren't any xrefs left.
-				xrefs.push_back(xref);
-				start = xref + 8;
+				xrefs.push_back(patternFind.value());
+				start = patternFind.value() + 8;
 			}
 
 			return xrefs;
@@ -83,7 +68,7 @@ namespace Utils {
 			const std::string typeDescriptorName = ".?AV" + std::string(tableName) + "@@";
 
 			// Convert the string to an IDA pattern so that we can pattern scan it
-			std::string idaPattern = bytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<char*>(typeDescriptorName.data())), typeDescriptorName.size());
+			std::string idaPattern = Memory::BytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<char*>(typeDescriptorName.data())), typeDescriptorName.size());
 
 			DWORD64 rttiTypeDescriptor = reinterpret_cast<DWORD64>(Utils::SigScan::PatternScanner::FindPattern(moduleName, { idaPattern.c_str(), Utils::SigScan::PatternType::Address }));
 			if (!rttiTypeDescriptor)
@@ -113,7 +98,7 @@ namespace Utils {
 				// Now we need to get an xref to the object locator, as that's where the vtable is located
 				{
 					// Convert the object locator address to an IDA pattern
-					idaPattern = bytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<DWORD64*>(&objectLocator)), 8);
+					idaPattern = Memory::BytesToIDAPattern(reinterpret_cast<BYTE*>(const_cast<DWORD64*>(&objectLocator)), 8);
 
 					const DWORD64 vtableAddr = reinterpret_cast<DWORD64>(Utils::SigScan::PatternScanner::FindPattern(reinterpret_cast<LPVOID>(rdataStart), rdataSize, { idaPattern.c_str(), Utils::SigScan::PatternType::Address })) + 0x8;
 
