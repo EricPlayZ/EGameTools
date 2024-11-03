@@ -38,7 +38,9 @@ namespace Core {
 #pragma endregion
 
 	// Core
-	bool exiting = false;
+	std::atomic<bool> exiting = false;
+	static std::vector<std::thread> threads{};
+	static HANDLE keepAliveEvent{};
 
 	int rendererAPI = 0;
 	DWORD gameVer = 0;
@@ -232,36 +234,52 @@ namespace Core {
 
 		spdlog::warn("Initializing config");
 		Config::InitConfig();
-		std::thread(Config::ConfigLoop).detach();
+		threads.emplace_back(Config::ConfigLoop);
 
 		CreateSymlinkForLoadingFiles();
 
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
-			std::thread([&hook]() {
+			threads.emplace_back([&hook]() {
 				maxHookThreads.acquire();
 
-				spdlog::warn("Hooking \"{}\"", hook->name.data());
-				if (hook->HookLoop())
+				if (hook->isHooking) {
+					spdlog::warn("Hooking \"{}\"", hook->name.data());
+					while (hook->isHooking)
+						Sleep(10);
+
+					if (hook->isHooked)
+						spdlog::info("Hooked \"{}\"!", hook->name.data());
+				} else if (hook->isHooked)
 					spdlog::info("Hooked \"{}\"!", hook->name.data());
+				else {
+					spdlog::warn("Hooking \"{}\"", hook->name.data());
+					if (hook->HookLoop())
+						spdlog::info("Hooked \"{}\"!", hook->name.data());
+				}
 
 				maxHookThreads.release();
 			}).detach();
 		}
 		
 		spdlog::warn("Sorting Player Variables");
-		std::thread([]() {
+		threads.emplace_back([]() {
 			GamePH::PlayerVariables::SortPlayerVars();
 			spdlog::info("Player Variables sorted");
 		}).detach();
 
 		spdlog::warn("Hooking DX11/DX12 renderer");
-		std::thread([]() {
+		threads.emplace_back([]() {
 			LoopHookRenderer();
 			spdlog::info("Hooked \"DX11/DX12 renderer\"!");
 		}).detach();
 
-		const HANDLE proc = GetCurrentProcess();
-		WaitForSingleObject(proc, INFINITE);
+		keepAliveEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+		WaitForSingleObject(keepAliveEvent, INFINITE);
+
+		for (auto& thread : threads) {
+			if (thread.joinable())
+				thread.join();
+		}
 
 		return TRUE;
 	}
@@ -278,5 +296,7 @@ namespace Core {
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
 		spdlog::info("Unhooked everything");
+
+		SetEvent(keepAliveEvent);
 	}
 }

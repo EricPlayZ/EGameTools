@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <semaphore>
+#include <atomic>
 
 #include <dxgi.h>
 #include <dxgi1_4.h>

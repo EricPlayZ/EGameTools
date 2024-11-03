@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <ranges>
 #include <set>
+#include <atomic>
 #include "..\utils\values.h"
 
 #ifndef VK_NONE
@@ -225,7 +226,7 @@ private:
 };
 
 namespace Core {
-	extern bool exiting;
+    extern std::atomic<bool> exiting;
 
     extern int rendererAPI;
     extern DWORD gameVer;

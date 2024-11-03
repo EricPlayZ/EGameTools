@@ -45,7 +45,6 @@
     <ClCompile Include="source\game\GamePH\PlayerDI_PH.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerHealthModule.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerInfectionModule.cpp" />
-    <ClCompile Include="source\game\GamePH\PlayerObjProperties.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerState.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerVariables.cpp" />
     <ClCompile Include="source\game\GamePH\SessionCooperativeDI.cpp" />
@@ -158,7 +157,6 @@
     <ClInclude Include="source\game\GamePH\PlayerDI_PH.h" />
     <ClInclude Include="source\game\GamePH\PlayerHealthModule.h" />
     <ClInclude Include="source\game\GamePH\PlayerInfectionModule.h" />
-    <ClInclude Include="source\game\GamePH\PlayerObjProperties.h" />
     <ClInclude Include="source\game\GamePH\PlayerState.h" />
     <ClInclude Include="source\game\GamePH\PlayerVariables.h" />
     <ClInclude Include="source\game\GamePH\SessionCooperativeDI.h" />

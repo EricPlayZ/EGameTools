@@ -1,15 +1,15 @@
 #include <pch.h>
-#include "..\GamePH\PlayerObjProperties.h"
+#include "..\GamePH\PlayerDI_PH.h"
 #include "CoPhysicsProperty.h"
 
 namespace Engine {
 	CoPhysicsProperty* CoPhysicsProperty::Get() {
 		__try {
-			GamePH::PlayerObjProperties* pPlayerObjProperties = GamePH::PlayerObjProperties::Get();
-			if (!pPlayerObjProperties)
+			GamePH::PlayerDI_PH* pPlayerDI_PH = GamePH::PlayerDI_PH::Get();
+			if (!pPlayerDI_PH)
 				return nullptr;
 
-			CoPhysicsProperty* ptr = pPlayerObjProperties->pCoPhysicsProperty;
+			CoPhysicsProperty* ptr = pPlayerDI_PH->pCoPhysicsProperty;
 			if (!Utils::Memory::IsValidPtrMod(ptr, "engine_x64_rwdi.dll"))
 				return nullptr;
 
