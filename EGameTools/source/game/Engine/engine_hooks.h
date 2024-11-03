@@ -7,5 +7,6 @@ namespace Engine {
 	namespace Hooks {
 		extern bool switchedFreeCamByGamePause;
 		extern Vector3 freeCamPosBeforeGamePause;
+		extern int mountDataPaksRanWith8Count;
 	}
 }

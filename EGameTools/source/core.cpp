@@ -1,6 +1,7 @@
 #include <pch.h>
 #include "config\config.h"
 #include "core.h"
+#include "game\Engine\engine_hooks.h"
 #include "game\GamePH\LevelDI.h"
 #include "game\GamePH\PlayerHealthModule.h"
 #include "game\GamePH\PlayerInfectionModule.h"
@@ -174,6 +175,12 @@ namespace Core {
 
 		GamePH::PlayerHealthModule::UpdateClassAddr();
 		GamePH::PlayerInfectionModule::UpdateClassAddr();
+
+		static bool mountDataPaksErrorShown = false;
+		if (!mountDataPaksErrorShown && Engine::Hooks::mountDataPaksRanWith8Count < 3 && GamePH::PlayerVariables::Get()) {
+			spdlog::error("MountDataPaks hook ran less than 3 times with the data PAKs limit set to 8. This means the increased data PAKs limit might not work correctly! If this error message appears and your data PAKs past \"data7.pak\" have not loaded, please contact author.");
+			mountDataPaksErrorShown = true;
+		}
 	}
 #ifndef EXCP_HANDLER_DISABLE_DEBUG
 	static bool WriteMiniDump(PEXCEPTION_POINTERS pExceptionPointers) {

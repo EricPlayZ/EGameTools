@@ -149,6 +149,7 @@ I have some things planned for the next updates, but time will decide when I'll 
 		{ "v1.2.4",
 		R"(- Added compatibility with v1.19 Tower Raid: Halloween Run update
 - Improved CPU performance at game startup when using the mod, this should stop the system from freezing for some people when starting up the game
-- Improved memory signature scanning, increasing reliability and performance; if you encounter issues with classses in the Debug menu being NULL, please open up a bug report!)" }
+- Improved memory signature scanning, increasing reliability and performance; if you encounter issues with classses in the Debug menu being NULL, please open up a bug report!
+- Improved MountDataPaks hook error detection (the error related to MountDataPaks should not show up in the console as often anymore))" }
 	};
 }
