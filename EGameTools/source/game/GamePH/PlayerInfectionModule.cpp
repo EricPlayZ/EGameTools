@@ -1,5 +1,5 @@
 #include <pch.h>
-#include "LevelDI.h"
+#include "PlayerDI_PH.h"
 #include "PlayerInfectionModule.h"
 
 namespace GamePH {
@@ -23,14 +23,14 @@ namespace GamePH {
 	void PlayerInfectionModule::Set(LPVOID instance) { pPlayerInfectionModule = reinterpret_cast<PlayerInfectionModule*>(instance); }
 
 	void PlayerInfectionModule::UpdateClassAddr() {
-		LevelDI* iLevel = LevelDI::Get();
-		if (!iLevel)
+		PlayerDI_PH* pPlayerDI_PH = PlayerDI_PH::Get();
+		if (!pPlayerDI_PH)
 			return;
-		if (PlayerInfectionModule::Get() && PlayerInfectionModule::Get()->pPlayerDI_PH == iLevel->pPlayerDI_PH)
+		if (PlayerInfectionModule::Get() && PlayerInfectionModule::Get()->pPlayerDI_PH == pPlayerDI_PH)
 			return;
 
 		for (auto& pPlayerInfectionModule : PlayerInfectionModule::playerInfectionModulePtrList) {
-			if (pPlayerInfectionModule->pPlayerDI_PH == iLevel->pPlayerDI_PH) {
+			if (pPlayerInfectionModule->pPlayerDI_PH == pPlayerDI_PH) {
 				PlayerInfectionModule::Set(pPlayerInfectionModule);
 				PlayerInfectionModule::playerInfectionModulePtrList.clear();
 				PlayerInfectionModule::playerInfectionModulePtrList.emplace_back(pPlayerInfectionModule);

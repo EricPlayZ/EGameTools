@@ -281,6 +281,9 @@
       </IntrinsicFunctions>
       <AdditionalIncludeDirectories>pch;source\spdlog\include;source\ImGui\freetype\include;source\ImGui;source\MinHook;source\memscan;</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -292,6 +295,10 @@
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
       <AdditionalLibraryDirectories>source\spdlog\lib;source\ImGui\freetype\lib;source\MinHook\lib;</AdditionalLibraryDirectories>
+      <AssemblyDebug>true</AssemblyDebug>
+      <ImportLibrary />
+      <FixedBaseAddress>
+      </FixedBaseAddress>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
@@ -310,21 +317,23 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>pch;source\spdlog\include;source\ImGui\freetype\include;source\ImGui;source\MinHook;source\memscan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>source\spdlog\lib;source\ImGui\freetype\lib;source\MinHook\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DbgHelp.lib;Version.lib;spdlog-mt.lib;freetype-mt.lib;libMinHook-x64-v141-mtd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary />
       <AdditionalOptions>/NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
+      <AssemblyDebug>true</AssemblyDebug>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(SolutionDir)Extra Files\Default Config\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>

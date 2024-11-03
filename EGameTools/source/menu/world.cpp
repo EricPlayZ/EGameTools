@@ -11,6 +11,7 @@ namespace Menu {
 		float time = 0.0f;
 		static float timeBeforeFreeze = 0.0f;
 		float gameSpeed = 1.0f;
+		static bool isModifyingGameSpeed = false;
 		static float actualGameSpeed = gameSpeed;
 		static float gameSpeedBeforeSlowMo = gameSpeed;
 		KeyBindOption freezeTime{ VK_NONE };
@@ -89,7 +90,7 @@ namespace Menu {
 			if (freezeTime.GetValue() && !Utils::Values::are_samef(time, timeBeforeFreeze, 0.0095f))
 				dayNightCycle->SetDaytime(timeBeforeFreeze);
 
-			if (!menuToggle.GetValue() || Menu::currentTabIndex != World::Tab::tabIndex) {
+			if (!isModifyingGameSpeed) {
 				if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
 					iLevel->TimerSetSpeedUp(gameSpeed);
 				actualGameSpeed = iLevel->TimerGetSpeedUp();
@@ -110,8 +111,7 @@ namespace Menu {
 
 					timeBeforeFreeze = time;
 					dayNightCycle->SetDaytime(time);
-				}
-				else if (iLevel && iLevel->IsLoaded() && dayNightCycle) {
+				} else if (iLevel && iLevel->IsLoaded() && dayNightCycle) {
 					if (!haveResetAntizinDrainBlocked) {
 						GamePH::PlayerVariables::ChangePlayerVar("AntizinDrainBlocked", previousAntizinDrainBlocked);
 						haveResetAntizinDrainBlocked = true;
@@ -119,13 +119,9 @@ namespace Menu {
 				}
 
 				ImGui::BeginDisabled(slowMotion.GetValue()); {
-					if (ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx"))
+					isModifyingGameSpeed = ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx");
+					if (isModifyingGameSpeed)
 						iLevel->TimerSetSpeedUp(gameSpeed);
-					else if (iLevel && iLevel->IsLoaded()) {
-						if (!slowMotion.GetValue() && !slowMotion.HasChanged() && !Utils::Values::are_samef(gameSpeed, 1.0f))
-							iLevel->TimerSetSpeedUp(gameSpeed);
-						actualGameSpeed = iLevel->TimerGetSpeedUp();
-					}
 					ImGui::EndDisabled();
 				}
 

@@ -37,6 +37,9 @@ namespace GamePH {
 		template <typename T> static T GetPlayerVar(const std::string& playerVar) {
 			static_assert(std::is_same<T, bool>::value || std::is_same<T, float>::value || std::is_same<T, std::string>::value, "Invalid type: value must be bool, float or string");
 
+			if (!gotPlayerVars)
+				return getDefaultValue<T>();
+
 			auto it = std::find_if(PlayerVariables::playerVars.begin(), PlayerVariables::playerVars.end(), [&playerVar](const auto& pair) {
 				return pair.first == playerVar;
 			});

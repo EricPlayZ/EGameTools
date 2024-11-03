@@ -101,7 +101,7 @@ namespace GamePH {
 	static const size_t MAX_FUNC_SIZE = 500000;
 	static const size_t MAX_LOAD_VAR_FUNC_SIZE = 2000;
 
-	const char* getPlayerVarName(BYTE*& funcAddress, DWORD64 startOfFunc) {
+	static const char* getPlayerVarName(BYTE*& funcAddress, DWORD64 startOfFunc) {
 		const char* playerVarName = nullptr;
 		while (!playerVarName && !isRetInstruction(funcAddress) && isBelowFuncSizeLimit(funcAddress, startOfFunc, MAX_FUNC_SIZE)) {
 			// lea r8, varNameString

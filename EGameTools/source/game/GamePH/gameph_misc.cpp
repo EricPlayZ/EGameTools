@@ -1,7 +1,7 @@
 #include <pch.h>
 #include "..\offsets.h"
 #include "GameDI_PH.h"
-#include "PlayerObjProperties.h"
+#include "PlayerDI_PH.h"
 
 namespace GamePH {
 	const DWORD GetCurrentGameVersion() {
@@ -59,8 +59,8 @@ namespace GamePH {
 		void(*pShowTPPModelFunc3)(DWORD64 tppFunc2Addr, bool showTPPModel) = (decltype(pShowTPPModelFunc3))Offsets::Get_ShowTPPModelFunc3();
 		if (!pShowTPPModelFunc3)
 			return;
-		PlayerObjProperties* playerObjProperties = PlayerObjProperties::Get();
-		if (!playerObjProperties)
+		PlayerDI_PH* pPlayerDI_PH = PlayerDI_PH::Get();
+		if (!pPlayerDI_PH)
 			return;
 
 		pShowTPPModelFunc3(tppFunc2Addr, showTPPModel);

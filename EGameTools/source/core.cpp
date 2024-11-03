@@ -20,7 +20,7 @@ namespace Core {
 		DWORD prev_mode = 0;
 		const HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 		GetConsoleMode(hInput, &prev_mode);
-		SetConsoleMode(hInput, prev_mode & ENABLE_EXTENDED_FLAGS);	
+		SetConsoleMode(hInput, prev_mode & ENABLE_EXTENDED_FLAGS);
 	}
 
 	static FILE* f = nullptr;
@@ -180,6 +180,7 @@ namespace Core {
 			return false;
 
 		MINIDUMP_EXCEPTION_INFORMATION mdei{};
+		mdei.ThreadId = GetCurrentThreadId();
 		mdei.ExceptionPointers = pExceptionPointers;
 		mdei.ClientPointers = false;
 
@@ -187,7 +188,7 @@ namespace Core {
 		CloseHandle(hFile);
 
 		return success;
-		}
+	}
 	static long WINAPI CrashHandler(PEXCEPTION_POINTERS ExceptionInfo) {
 		spdlog::error("Crash Handler threw an exception with code {}. Game is exiting, writing mini-dump in the mean time.", ExceptionInfo->ExceptionRecord->ExceptionCode);
 		std::string errorMsg = "";
@@ -223,7 +224,7 @@ namespace Core {
 		InitLogger();
 
 #ifndef EXCP_HANDLER_DISABLE_DEBUG
-		AddVectoredExceptionHandler(0, &VectoredExceptionHandler);
+		SetUnhandledExceptionFilter(CrashHandler);
 #endif
 
 		spdlog::warn("Getting game version");

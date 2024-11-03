@@ -2,12 +2,12 @@
 #include "..\buffer.h"
 
 namespace GamePH {
-	class PlayerObjProperties;
+	class PlayerDI_PH;
 
 	class LocalClientDI {
 	public:
 		union {
-			buffer<0x90, PlayerObjProperties*> pPlayerObjProperties;
+			buffer<0x90, PlayerDI_PH*> pPlayerDI_PH;
 		};
 
 		static LocalClientDI* Get();

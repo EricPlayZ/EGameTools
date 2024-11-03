@@ -11,10 +11,6 @@ namespace GamePH {
 
 	class LevelDI {
 	public:
-		union {
-			buffer<0x160, PlayerDI_PH*> pPlayerDI_PH;
-		};
-
 		bool IsLoading();
 		bool IsLoaded();
 		LPVOID GetViewCamera();

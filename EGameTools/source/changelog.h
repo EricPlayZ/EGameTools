@@ -137,7 +137,18 @@ If anyone is looking to help with development, I'm all eyes and ears! Thank you!
 		R"(- Added compatibility with v1.17.2 Tower Raid update
 - Added a .PDB file included by default with the mod, for debugging purposes in case the game crashes, now I can more easily detect the cause of a game crash!
 - Added a crash handler which handles game crashes and generates a "EGameTools-dump.dmp" file in the game's exe directory for debugging purposes; if you encounter a crash and this file gets generated, please send it to me anywhere you can, for example on Discord, so I can try to find out the cause of the game crash!
+
 - Fixed "Game Speed" (World) not getting applied with the mod menu opened while having another tab selected other than the World tab
-I have some things planned for the next updates, but time will decide when I'll be able to work on the updates. I'm almost done with my exams!)" }
+
+I have some things planned for the next updates, but time will decide when I'll be able to work on the updates. I'm almost done with my exams!)" },
+		{ "v1.2.2",
+		R"(- Added compatibility with v1.18.0 "Community QoL" update
+- Fixed an issue with classes not always getting detected correctly for everyone (Debug tab; if you still run into issues, please open a bug report!))" },
+		{ "v1.2.3",
+		R"(- Fixed co-op issues related to Player and Weapon options, such as God Mode, Player Health, Player Immunity, Weapon Durability sliders not working (if you still run into issues, please open a bug report!))" },
+		{ "v1.2.4",
+		R"(- Added compatibility with v1.19 Tower Raid: Halloween Run update
+- Improved CPU performance at game startup when using the mod, this should stop the system from freezing for some people when starting up the game
+- Improved memory signature scanning, increasing reliability and performance; if you encounter issues with classses in the Debug menu being NULL, please open up a bug report!)" }
 	};
 }
