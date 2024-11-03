@@ -3,6 +3,8 @@
 namespace Core {
     extern void DisableConsole();
 
+    extern std::counting_semaphore<4> maxHookThreads;
+
     extern DWORD64 WINAPI MainThread(HMODULE hModule);
     extern void Cleanup();
 }
@@ -22,6 +24,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD64 ul_reason_for_call, LPVOID lpRese
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH: {
         MH_Initialize();
+
         Engine::Hooks::MountDataPaksHook.HookLoop();
         Engine::Hooks::AuthenticateDataAddNewFileHook.HookLoop();
         Engine::Hooks::FsCheckZipCrcHook.HookLoop();

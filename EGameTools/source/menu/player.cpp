@@ -6730,6 +6730,71 @@ namespace Menu {
 			else
 				GamePH::PlayerVariables::ChangePlayerVar(varName, std::any_cast<bool>(itDef->second.first));
 		}
+
+		static bool shouldDisplayVariable(const std::string& key, const std::string& searchFilter) {
+			if (searchFilter.empty()) return true;
+
+			// Convert searchFilter to lowercase
+			std::string lowerFilter = searchFilter;
+			std::transform(lowerFilter.begin(), lowerFilter.end(), lowerFilter.begin(), ::tolower);
+
+			// Convert key to lowercase and check if it contains the filter
+			std::string lowerKey = key;
+			std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
+			return lowerKey.find(lowerFilter) != std::string::npos;
+		}
+		static void renderDebugInfo(const std::string& key, const std::pair<void*, std::string>& val) {
+			const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
+			static std::string labelID{};
+			labelID = "##DebugAddrInputText" + std::string(key);
+			DWORD64 finalAddr = val.second == "float" ? reinterpret_cast<DWORD64>(reinterpret_cast<float*>(val.first)) : reinterpret_cast<DWORD64>(reinterpret_cast<bool*>(val.first));
+
+			std::stringstream ss;
+			if (finalAddr)
+				ss << "0x" << std::uppercase << std::hex << finalAddr;
+			else
+				ss << "NULL";
+
+			static std::string addrString{};
+			addrString = ss.str();
+
+			ImGui::SameLine();
+
+			//ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
+			ImGui::SetNextItemWidth(maxInputTextWidth);
+			ImGui::PushStyleColor(ImGuiCol_Text, finalAddr ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+			ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), strlen(addrString.c_str()), ImGuiInputTextFlags_ReadOnly);
+			ImGui::PopStyleColor();
+		}
+		static void renderPlayerVariable(const std::string& key, const std::pair<void*, std::string>& val) {
+			float* floatVarAddr = nullptr;
+			bool* boolVarAddr = nullptr;
+
+			if (val.second == "float") {
+				floatVarAddr = reinterpret_cast<float*>(val.first);
+				float newValue = *floatVarAddr;
+				if (ImGui::InputFloat(key.c_str(), &newValue)) {
+					*floatVarAddr = newValue;
+					*(floatVarAddr + 1) = newValue;
+				}
+			} else if (val.second == "bool") {
+				boolVarAddr = reinterpret_cast<bool*>(val.first);
+				bool newValue = *boolVarAddr;
+				if (ImGui::Checkbox(key.c_str(), &newValue)) {
+					*boolVarAddr = newValue;
+					*(boolVarAddr + 1) = newValue;
+				}
+			}
+
+			ImGui::SameLine();
+			static std::string restoreBtnName{};
+			restoreBtnName = "Restore##" + key;
+			if (ImGui::Button(restoreBtnName.c_str(), "Restores player variable to default"))
+				RestoreVariableToDefault(key);
+
+			if (debugEnabled)
+				renderDebugInfo(key, val);
+		}
 		static void HandlePlayerVariablesList() {
 			if (!playerVariables.GetValue())
 				return;
@@ -6737,6 +6802,7 @@ namespace Menu {
 			ImGui::BeginDisabled(!GamePH::PlayerVariables::gotPlayerVars); {
 				if (ImGui::CollapsingHeader("Player variables list", ImGuiTreeNodeFlags_None)) {
 					ImGui::Indent();
+
 					if (ImGui::Button("Save variables to file", "Saves current player variables to chosen file inside the file dialog"))
 						ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRPath", "Choose Folder", nullptr, saveSCRPath.empty() ? "." : saveSCRPath);
 					ImGui::SameLine();
@@ -6755,67 +6821,13 @@ namespace Menu {
 					ImGui::Separator();
 					ImGui::InputTextWithHint("##VarsSearch", "Search variables", playerVarsSearchFilter, 64);
 
-					std::string restoreBtnName{};
 					for (auto const& [key, val] : GamePH::PlayerVariables::playerVars) {
-						if (!val.first)
+						if (!val.first || !shouldDisplayVariable(key, playerVarsSearchFilter))
 							continue;
 
-						std::string lowerSearch = key.data();
-						std::string lowerFilter = playerVarsSearchFilter;
-						std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(), tolower);
-						std::transform(lowerFilter.begin(), lowerFilter.end(), lowerFilter.begin(), tolower);
-						if (lowerSearch.find(std::string(lowerFilter)) == std::string::npos)
-							continue;
-
-						float* floatVarAddr = nullptr;
-						bool* boolVarAddr = nullptr;
-
-						if (val.second == "float") {
-							floatVarAddr = reinterpret_cast<float*>(val.first);
-							float newValue = *floatVarAddr;
-
-							if (ImGui::InputFloat(key.data(), &newValue)) {
-								*floatVarAddr = newValue;
-								*(floatVarAddr + 1) = newValue;
-							}
-						} else if (val.second == "bool") {
-							boolVarAddr = reinterpret_cast<bool*>(val.first);
-							bool newValue = *boolVarAddr;
-
-							if (ImGui::Checkbox(key.data(), &newValue)) {
-								*boolVarAddr = newValue;
-								*(boolVarAddr + 1) = newValue;
-							}
-						}
-
-						ImGui::SameLine();
-						restoreBtnName = std::string("Restore##") + std::string(key);
-						if (ImGui::Button(restoreBtnName.c_str(), "Restores player variable to default"))
-							RestoreVariableToDefault(key);
-						if (debugEnabled) {
-							const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
-							static std::string labelID{};
-							labelID = "##DebugAddrInputText" + std::string(key);
-							const DWORD64 finalAddr = floatVarAddr ? reinterpret_cast<DWORD64>(floatVarAddr) : reinterpret_cast<DWORD64>(boolVarAddr);
-
-							std::stringstream ss{};
-							if (finalAddr)
-								ss << "0x" << std::uppercase << std::hex << finalAddr;
-							else
-								ss << "NULL";
-
-							static std::string addrString{};
-							addrString = ss.str();
-
-							ImGui::SameLine();
-
-							ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
-							ImGui::SetNextItemWidth(maxInputTextWidth);
-							ImGui::PushStyleColor(ImGuiCol_Text, finalAddr ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
-							ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), strlen(addrString.c_str()), ImGuiInputTextFlags_ReadOnly);
-							ImGui::PopStyleColor();
-						}
+						renderPlayerVariable(key, val);
 					}
+
 					ImGui::Unindent();
 				}
 				ImGui::EndDisabled();

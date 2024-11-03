@@ -218,12 +218,12 @@ namespace Menu {
         ImGuiStyle* style = &ImGui::GetStyle();
 
         style->WindowTitleAlign = ImVec2(0.5f, 0.5f);
-        style->WindowPadding = ImVec2(15, 15);
+        style->WindowPadding = ImVec2(13, 13);
         style->WindowRounding = 5.0f;
         style->ChildRounding = 4.0f;
-        style->FramePadding = ImVec2(5, 5);
+        style->FramePadding = ImVec2(4, 4);
         style->FrameRounding = 4.0f;
-        style->ItemSpacing = ImVec2(12, 8);
+        style->ItemSpacing = ImVec2(10, 6);
         style->ItemInnerSpacing = ImVec2(8, 6);
         style->IndentSpacing = 25.0f;
         style->ScrollbarSize = 15.0f;

@@ -1,12 +1,14 @@
 #include <pch.h>
 #include "config\config.h"
 #include "core.h"
+#include "game\Engine\engine_hooks.h"
 #include "game\GamePH\LevelDI.h"
 #include "game\GamePH\PlayerHealthModule.h"
 #include "game\GamePH\PlayerInfectionModule.h"
 #include "game\GamePH\PlayerVariables.h"
 #include "game\GamePH\gameph_misc.h"
 #include "menu\menu.h"
+#include "menu\misc.h"
 
 #pragma region KeyBindOption
 bool KeyBindOption::wasAnyKeyPressed = false;
@@ -38,10 +40,14 @@ namespace Core {
 #pragma endregion
 
 	// Core
-	bool exiting = false;
+	std::atomic<bool> exiting = false;
+	static std::vector<std::thread> threads{};
+	static HANDLE keepAliveEvent{};
 
 	int rendererAPI = 0;
 	DWORD gameVer = 0;
+
+	std::counting_semaphore<4> maxHookThreads(4);
 
 	static void LoopHookRenderer() {
 		while (true) {
@@ -170,7 +176,14 @@ namespace Core {
 
 		GamePH::PlayerHealthModule::UpdateClassAddr();
 		GamePH::PlayerInfectionModule::UpdateClassAddr();
+
+		static bool mountDataPaksErrorShown = false;
+		if (!mountDataPaksErrorShown && Engine::Hooks::mountDataPaksRanWith8Count < 3 && Menu::Misc::increaseDataPAKsLimit.GetValue() && GamePH::PlayerVariables::Get()) {
+			spdlog::error("MountDataPaks hook ran less than 3 times with the data PAKs limit set to 8. This means the increased data PAKs limit might not work correctly! If this error message appears and your data PAKs past \"data7.pak\" have not loaded, please contact author.");
+			mountDataPaksErrorShown = true;
+		}
 	}
+#ifndef EXCP_HANDLER_DISABLE_DEBUG
 	static bool WriteMiniDump(PEXCEPTION_POINTERS pExceptionPointers) {
 		HANDLE hFile = CreateFileA("EGameTools-dump.dmp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
@@ -193,8 +206,7 @@ namespace Core {
 		if (WriteMiniDump(ExceptionInfo)) {
 			spdlog::info("Mini-dump written to \"EGameTools-dump.dmp\". Please send this to mod author for further help!");
 			errorMsg = "EGameTools encountered a fatal error that caused the game to crash.\n\nA file \"" + Utils::Files::GetCurrentProcDirectory() + "\\EGameTools-dump.dmp\" has been generated. Please send this file to the author of the mod!\n\nThe game will now close once you press OK.";
-		}
-		else {
+		} else {
 			spdlog::error("Failed to write mini-dump.");
 			errorMsg = "EGameTools encountered a fatal error that caused the game to crash.\n\nEGameTools failed to generate a crash dump file unfortunately, which means it is harder to find the cause of the crash.\n\nThe game will now close once you press OK.";
 		}
@@ -202,6 +214,7 @@ namespace Core {
 		MessageBoxA(nullptr, errorMsg.c_str(), "Fatal game error", MB_ICONERROR | MB_OK | MB_SETFOREGROUND);
 		exit(0);
 	}
+#endif
 	static void GameVersionCheck() {
 		try {
 			gameVer = GamePH::GetCurrentGameVersion();
@@ -220,39 +233,61 @@ namespace Core {
 		EnableConsole();
 		InitLogger();
 
+#ifndef EXCP_HANDLER_DISABLE_DEBUG
 		SetUnhandledExceptionFilter(CrashHandler);
+#endif
 
 		spdlog::warn("Getting game version");
 		GameVersionCheck();
 
 		spdlog::warn("Initializing config");
 		Config::InitConfig();
-		std::thread(Config::ConfigLoop).detach();
+		threads.emplace_back(Config::ConfigLoop);
 
 		CreateSymlinkForLoadingFiles();
 
 		for (auto& hook : *Utils::Hook::HookBase::GetInstances()) {
-			spdlog::warn("Hooking \"{}\"", hook->name.data());
-			std::thread([&hook]() {
-				if (hook->HookLoop())
+			threads.emplace_back([&hook]() {
+				maxHookThreads.acquire();
+
+				if (hook->isHooking) {
+					spdlog::warn("Hooking \"{}\"", hook->name.data());
+					while (hook->isHooking)
+						Sleep(10);
+
+					if (hook->isHooked)
+						spdlog::info("Hooked \"{}\"!", hook->name.data());
+				} else if (hook->isHooked)
 					spdlog::info("Hooked \"{}\"!", hook->name.data());
+				else {
+					spdlog::warn("Hooking \"{}\"", hook->name.data());
+					if (hook->HookLoop())
+						spdlog::info("Hooked \"{}\"!", hook->name.data());
+				}
+
+				maxHookThreads.release();
 			}).detach();
 		}
-
+		
 		spdlog::warn("Sorting Player Variables");
-		std::thread([]() {
+		threads.emplace_back([]() {
 			GamePH::PlayerVariables::SortPlayerVars();
 			spdlog::info("Player Variables sorted");
 		}).detach();
 
 		spdlog::warn("Hooking DX11/DX12 renderer");
-		std::thread([]() {
+		threads.emplace_back([]() {
 			LoopHookRenderer();
 			spdlog::info("Hooked \"DX11/DX12 renderer\"!");
 		}).detach();
 
-		const HANDLE proc = GetCurrentProcess();
-		WaitForSingleObject(proc, INFINITE);
+		keepAliveEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+		WaitForSingleObject(keepAliveEvent, INFINITE);
+
+		for (auto& thread : threads) {
+			if (thread.joinable())
+				thread.join();
+		}
 
 		return TRUE;
 	}
@@ -269,5 +304,7 @@ namespace Core {
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
 		spdlog::info("Unhooked everything");
+
+		SetEvent(keepAliveEvent);
 	}
 }

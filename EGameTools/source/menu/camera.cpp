@@ -7,6 +7,7 @@
 #include "..\game\GamePH\LevelDI.h"
 #include "..\game\GamePH\PlayerDI_PH.h"
 #include "..\game\GamePH\PlayerVariables.h"
+#include "..\game\GamePH\PlayerDI_PH.h"
 #include "..\game\GamePH\gameph_misc.h"
 #include "..\offsets.h"
 #include "camera.h"

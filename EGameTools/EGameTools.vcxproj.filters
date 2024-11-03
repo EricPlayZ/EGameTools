@@ -209,6 +209,12 @@
     <ClCompile Include="source\menu\teleport.cpp">
       <Filter>menu</Filter>
     </ClCompile>
+    <ClCompile Include="source\memscan\memscan.c">
+      <Filter>memscan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\memscan\util\util.c">
+      <Filter>memscan\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\kiero.h" />
@@ -447,6 +453,12 @@
     <ClInclude Include="source\menu\teleport.h">
       <Filter>menu</Filter>
     </ClInclude>
+    <ClInclude Include="source\memscan\memscan.h">
+      <Filter>memscan</Filter>
+    </ClInclude>
+    <ClInclude Include="source\memscan\util\util.h">
+      <Filter>memscan\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MinHook">
@@ -490,6 +502,12 @@
     </Filter>
     <Filter Include="ImGui\misc\freetype">
       <UniqueIdentifier>{122420d5-ac60-4778-80bf-1384697fcc44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="memscan">
+      <UniqueIdentifier>{1e82ab1f-550e-4fac-8fac-0888e1e62873}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="memscan\util">
+      <UniqueIdentifier>{7e81ee9f-f74a-4af8-8a10-7530b26c3c86}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

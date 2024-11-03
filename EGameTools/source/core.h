@@ -3,12 +3,14 @@
 #include <imgui.h>
 #include <ranges>
 #include <set>
+#include <atomic>
 #include "..\utils\values.h"
 
 #ifndef VK_NONE
 
 #ifdef _DEBUG
 #define LLMH_IMPL_DISABLE_DEBUG     // this is for disabling low-level mouse hook in case ure trying to debug and u dont want ur pc to die lol
+#define EXCP_HANDLER_DISABLE_DEBUG  // this is for disabling exception handling in case ure trying to debug and u dont want ur debugger to keep crying about errors lol
 #endif
 
 #define VK_NONE -1
@@ -16,9 +18,9 @@
 #define VK_MWHEELUP 0x101
 #endif
 
-constexpr const char* MOD_VERSION_STR = "v1.2.2";
-constexpr DWORD MOD_VERSION = 10202;
-constexpr DWORD GAME_VER_COMPAT = 11800;
+constexpr const char* MOD_VERSION_STR = "v1.2.4";
+constexpr DWORD MOD_VERSION = 10204;
+constexpr DWORD GAME_VER_COMPAT = 11900;
 
 struct Key {
     constexpr Key(std::string_view name, int code, ImGuiKey imGuiCode) : name(name), code(code), imGuiCode(imGuiCode) {}
@@ -224,7 +226,7 @@ private:
 };
 
 namespace Core {
-	extern bool exiting;
+    extern std::atomic<bool> exiting;
 
     extern int rendererAPI;
     extern DWORD gameVer;

@@ -45,7 +45,6 @@
     <ClCompile Include="source\game\GamePH\PlayerDI_PH.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerHealthModule.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerInfectionModule.cpp" />
-    <ClCompile Include="source\game\GamePH\PlayerObjProperties.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerState.cpp" />
     <ClCompile Include="source\game\GamePH\PlayerVariables.cpp" />
     <ClCompile Include="source\game\GamePH\SessionCooperativeDI.cpp" />
@@ -92,6 +91,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\kiero.cpp" />
+    <ClCompile Include="source\memscan\memscan.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\memscan\util\util.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source\menu\camera.cpp" />
     <ClCompile Include="source\menu\debug.cpp" />
     <ClCompile Include="source\menu\init.cpp" />
@@ -150,7 +157,6 @@
     <ClInclude Include="source\game\GamePH\PlayerDI_PH.h" />
     <ClInclude Include="source\game\GamePH\PlayerHealthModule.h" />
     <ClInclude Include="source\game\GamePH\PlayerInfectionModule.h" />
-    <ClInclude Include="source\game\GamePH\PlayerObjProperties.h" />
     <ClInclude Include="source\game\GamePH\PlayerState.h" />
     <ClInclude Include="source\game\GamePH\PlayerVariables.h" />
     <ClInclude Include="source\game\GamePH\SessionCooperativeDI.h" />
@@ -177,6 +183,8 @@
     <ClInclude Include="source\ImGui\imstb_truetype.h" />
     <ClInclude Include="source\ImGui\misc\freetype\imgui_freetype.h" />
     <ClInclude Include="source\kiero.h" />
+    <ClInclude Include="source\memscan\memscan.h" />
+    <ClInclude Include="source\memscan\util\util.h" />
     <ClInclude Include="source\menu\camera.h" />
     <ClInclude Include="source\menu\debug.h" />
     <ClInclude Include="source\menu\init.h" />
@@ -269,7 +277,7 @@
       </Optimization>
       <IntrinsicFunctions>
       </IntrinsicFunctions>
-      <AdditionalIncludeDirectories>pch;source\spdlog\include;source\ImGui\freetype\include;source\ImGui;source\MinHook;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>pch;source\spdlog\include;source\ImGui\freetype\include;source\ImGui;source\MinHook;source\memscan;</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <MultiProcessorCompilation>
@@ -284,7 +292,7 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>source\spdlog\lib;source\ImGui\freetype\lib;source\MinHook\lib;source\CrashRpt\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>source\spdlog\lib;source\ImGui\freetype\lib;source\MinHook\lib;</AdditionalLibraryDirectories>
       <AssemblyDebug>true</AssemblyDebug>
       <ImportLibrary />
       <FixedBaseAddress>
@@ -306,7 +314,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>pch;source\spdlog\include;source\ImGui\freetype\include;source\ImGui;source\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>pch;source\spdlog\include;source\ImGui\freetype\include;source\ImGui;source\MinHook;source\memscan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName)_$(PlatformTarget).pch</PrecompiledHeaderOutputFile>

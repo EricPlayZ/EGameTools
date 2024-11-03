@@ -201,18 +201,15 @@ namespace Engine {
 #pragma endregion
 
 #pragma region MountDataPaks
+		int mountDataPaksRanWith8Count = 0;
+
 		static DWORD64 detourMountDataPaks(DWORD64 a1, UINT a2, UINT a3, DWORD64* a4, DWORD64(*a5)(DWORD64, DWORD, DWORD64, char*, int), INT16 a6, DWORD64 a7, UINT a8);
 		Utils::Hook::MHook<LPVOID, DWORD64(*)(DWORD64, UINT, UINT, DWORD64*, DWORD64(*)(DWORD64, DWORD, DWORD64, char*, int), INT16, DWORD64, UINT)> MountDataPaksHook{ "MountDataPaks", &Offsets::Get_MountDataPaks, &detourMountDataPaks };
 
 		static DWORD64 detourMountDataPaks(DWORD64 a1, UINT a2, UINT a3, DWORD64* a4, DWORD64(*a5)(DWORD64, DWORD, DWORD64, char*, int), INT16 a6, DWORD64 a7, UINT a8) {
 			if (Menu::Misc::increaseDataPAKsLimit.GetValue()) {
-				static int i = 0;
 				if (a8 == 8)
-					i++;
-				else if (i < 3) {
-					i++;
-					spdlog::error("MountDataPaks hook ran less than 3 times with the data PAKs limit set to 8. This means the increased data PAKs limit might not work correctly! If this error message appears and your data PAKs past \"data7.pak\" have not loaded, please contact author.");
-				}
+					mountDataPaksRanWith8Count++;
 
 				a8 = 200;
 			}

@@ -145,6 +145,11 @@ I have some things planned for the next updates, but time will decide when I'll 
 		R"(- Added compatibility with v1.18.0 "Community QoL" update
 - Fixed an issue with classes not always getting detected correctly for everyone (Debug tab; if you still run into issues, please open a bug report!))" },
 		{ "v1.2.3",
-		R"(- Fixed co-op issues related to Player and Weapon options, such as God Mode, Player Health, Player Immunity, Weapon Durability sliders not working (if you still run into issues, please open a bug report!))" }
+		R"(- Fixed co-op issues related to Player and Weapon options, such as God Mode, Player Health, Player Immunity, Weapon Durability sliders not working (if you still run into issues, please open a bug report!))" },
+		{ "v1.2.4",
+		R"(- Added compatibility with v1.19 Tower Raid: Halloween Run update
+- Improved CPU performance at game startup when using the mod, this should stop the system from freezing for some people when starting up the game
+- Improved memory signature scanning, increasing reliability and performance; if you encounter issues with classses in the Debug menu being NULL, please open up a bug report!
+- Improved MountDataPaks hook error detection (the error related to MountDataPaks should not show up in the console as often anymore))" }
 	};
 }

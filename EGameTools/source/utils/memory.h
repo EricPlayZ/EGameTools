@@ -5,10 +5,16 @@
 
 namespace Utils {
 	namespace Memory {
+		static const BYTE SigScanWildCard = 0xAA;
+		static const std::string_view SigScanWildCardStr = "AA";
+
 		extern const MODULEINFO GetModuleInfo(const char* szModule);
 		extern const FARPROC GetProcAddr(const std::string_view& module, const std::string_view& funcName);
 
 		extern const bool IsAddressValidMod(const DWORD64 ptr, const char* moduleName);
+
+		extern std::string BytesToIDAPattern(BYTE* bytes, size_t size);
+		extern std::string ConvertSigToScannerSig(const char* pattern, int* offsetToAddrInSig = nullptr);
 
 		extern DWORD64 CalcTargetAddrOfRelInst(DWORD64 addrOfInst, size_t opSize);
 		std::vector<DWORD64> GetXrefsTo(DWORD64 address, DWORD64 start, size_t size);

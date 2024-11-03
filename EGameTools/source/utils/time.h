@@ -5,7 +5,7 @@
 namespace Utils {
 	namespace Time {
 		class Timer {
-			using clock = std::chrono::system_clock;
+			using clock = std::chrono::steady_clock;
 			using time_point_type = std::chrono::time_point<clock, std::chrono::milliseconds>;
 		public:
 			std::chrono::milliseconds timeToPass;
@@ -16,6 +16,7 @@ namespace Utils {
 			const bool DidTimePass();
 		private:
 			time_point_type start;
+			time_point_type end;
 			bool timePassed;
 		};
 

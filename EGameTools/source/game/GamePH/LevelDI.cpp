@@ -2,7 +2,7 @@
 #include "..\Engine\CLevel.h"
 #include "..\offsets.h"
 #include "LevelDI.h"
-#include "PlayerObjProperties.h"
+#include "PlayerDI_PH.h"
 
 namespace GamePH {
 	bool LevelDI::IsLoading() {
@@ -20,7 +20,7 @@ namespace GamePH {
 		static Utils::Time::Timer loadTimer{ 7500 };
 		static bool isStillLoading = false;
 
-		if (IsLoading() || !GamePH::PlayerObjProperties::Get()) {
+		if (IsLoading() || !GamePH::PlayerDI_PH::Get()) {
 			isStillLoading = true;
 			return false;
 		}

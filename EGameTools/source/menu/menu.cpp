@@ -22,6 +22,8 @@ namespace Menu {
     Option firstTimeRunning{};
     Option hasSeenChangelog{};
 
+    int currentTabIndex = 0;
+
 	void Render() {
         ImGui::StyleScaleAllSizes(&ImGui::GetStyle(), scale, &defStyle);
         ImGui::GetIO().FontGlobalScale = scale;
@@ -47,6 +49,7 @@ namespace Menu {
                         ImGui::SetNextWindowBgAlpha(static_cast<float>(opacity) / 100.0f);
                         ImGui::SetNextWindowSizeConstraints(ImVec2(std::fmax(minWndSize.x - GImGui->Style.WindowPadding.x * 2.0f, ImGui::CalcTextSize(Core::gameVer > GAME_VER_COMPAT ? "Please wait for a new mod update." : "Upgrade your game version to one that the mod supports.").x), remainingHeight), ImVec2(maxWndSize.x - GImGui->Style.WindowPadding.x * 2.0f, remainingHeight));
                         if (ImGui::BeginChild("##TabChild", ImVec2(0.0f, 0.0f), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_Border)) {
+                            currentTabIndex = tab.first;
                             childWidth = ImGui::GetItemRectSize().x;
                             tab.second->Render();
                             ImGui::EndChild();

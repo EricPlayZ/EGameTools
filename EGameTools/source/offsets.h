@@ -5,7 +5,9 @@
 #define AddOffset(name, moduleName, pattern, type, retType)\
 static retType Get_## name () {\
 	static retType name = NULL;\
-	if (Utils::Memory::IsValidPtr(name)) return name;\
+	static int i = 0;\
+	if (Utils::Memory::IsValidPtr(name) || !GetModuleHandleA(moduleName) || i >= 10) return name;\
+	i++;\
 	return name=reinterpret_cast<retType>(Utils::SigScan::PatternScanner::FindPattern(moduleName, {pattern, type}));\
 } 
 #define AddStaticOffset(name, off)\
@@ -18,13 +20,15 @@ static DWORD64 Get_## name () {\
 static DWORD64 Get_## name () {\
 	static DWORD64 name = 0;\
 	if (Utils::Memory::IsValidPtr(name)) return name;\
-	return name=reinterpret_cast<DWORD64>(GetModuleHandle(moduleName)) + static_cast<DWORD64>(off);\
+	return name=reinterpret_cast<DWORD64>(GetModuleHandleA(moduleName)) + static_cast<DWORD64>(off);\
 }
 
 #define AddVTOffset(name, moduleName, rttiName, retType)\
 static retType GetVT_## name () {\
 	static retType VT_## name = NULL;\
-	if (Utils::Memory::IsValidPtr(VT_## name)) return VT_## name;\
+	static int i = 0;\
+	if (Utils::Memory::IsValidPtr(VT_## name)|| !GetModuleHandleA(moduleName) || i >= 10) return VT_## name;\
+	i++;\
 	return VT_## name=reinterpret_cast<retType>(Utils::RTTI::GetVTablePtr(moduleName, rttiName));\
 } 
 
@@ -38,7 +42,7 @@ struct Offsets {
 	AddVTOffset(TypedFieldMetaFloatPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VFloatPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
 	AddVTOffset(TypedFieldMetaBoolPlayerVariable, "gamedll_ph_x64_rwdi.dll", "?$TypedFieldMeta@VBoolPlayerVariable@@@?$FieldsCollection@VPlayerVariables@@@constds", LPVOID)
 	AddOffset(LoadPlayerVars, "gamedll_ph_x64_rwdi.dll", "48 89 4C 24 ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 48 8B 8C 24", Utils::SigScan::PatternType::Address, LPVOID)
-	AddOffset(PlayerState, "gamedll_ph_x64_rwdi.dll", "4C 8B 35 [?? ?? ?? ?? 4C 8B E2", Utils::SigScan::PatternType::RelativePointer, LPVOID)
+	AddOffset(PlayerState, "gamedll_ph_x64_rwdi.dll", "48 8B 35 [?? ?? ?? ?? 4C 8B F2 48 8B F9", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 
 	// Game related
 	AddVTOffset(CBulletPhysicsCharacter, "engine_x64_rwdi.dll", "CBulletPhysicsCharacter", LPVOID)
@@ -67,7 +71,7 @@ struct Offsets {
 	AddStaticOffset(allowVelocityMod_offset, 0x5C)
 	AddStaticOffset(disableHeadCorrection_offset, 0x108)
 	AddOffset(CLobbySteam, "engine_x64_rwdi.dll", "48 8B 05 [?? ?? ?? ?? 48 85 C0 74 ?? 48 83 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
-	AddOffset(g_PlayerObjProperties, "gamedll_ph_x64_rwdi.dll", "48 89 0D [?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
+	//AddOffset(g_PlayerDI_PH, "gamedll_ph_x64_rwdi.dll", "48 89 0D [?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID) // also PlayerObjProperties
 	AddOffset(g_DayNightCycle, "gamedll_ph_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? E8 ?? ?? ?? ?? 84 C0 74 ?? B0 ?? 48 83 C4 ?? C3 32 C0", Utils::SigScan::PatternType::RelativePointer, LPVOID)
 	//AddOffset(g_CameraFPPDI, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 40 84 FF", PatternType::RelativePointer, DWORD64*)
 	AddOffset(g_FreeCamera, "gamedll_ph_x64_rwdi.dll", "48 89 05 [?? ?? ?? ?? 48 89 4C 24", Utils::SigScan::PatternType::RelativePointer, DWORD64*)

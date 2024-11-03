@@ -37,6 +37,8 @@
 #include <assert.h>
 #include <unordered_map>
 #include <unordered_set>
+#include <semaphore>
+#include <atomic>
 
 #include <dxgi.h>
 #include <dxgi1_4.h>
@@ -65,6 +67,7 @@
 #include <imstb_textedit.h>
 #include <imstb_truetype.h>
 #include <MinHook.h>
+#include <memscan.h>
 
 #include "..\source\config\ini.h"
 #include "..\source\game\Engine\GameSpeedHandler.h"

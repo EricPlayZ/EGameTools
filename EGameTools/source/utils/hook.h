@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <set>
+#include <atomic>
 #include "..\MinHook\MinHook.h"
 
 namespace Utils {
@@ -30,7 +31,9 @@ namespace Utils {
 
 			virtual bool HookLoop() { return false; };
 
-			const std::string_view name;
+			const std::string_view name{};
+			std::atomic<bool> isHooking = false;
+			std::atomic<bool> isHooked = false;
 		};
 		template <typename GetTargetOffsetRetType>
 		class ByteHook : HookBase {
@@ -38,13 +41,18 @@ namespace Utils {
 			ByteHook(const std::string_view& name, GetTargetOffsetRetType(*pGetOffsetFunc)(), unsigned char* patchBytes, size_t bytesAmount, Option* optionRef = nullptr) : HookBase(name), pGetOffsetFunc(pGetOffsetFunc), patchBytes(patchBytes), bytesAmount(bytesAmount), optionRef(optionRef) {}
 
 			bool HookLoop() override {
-				if (hooked || (optionRef && !optionRef->GetValue()))
+				if (isHooked || (optionRef && !optionRef->GetValue()))
 					return true;
-				timeSpentHooking = Utils::Time::Timer(180000);
+				if (isHooking)
+					return true;
+
+				isHooking = true;
+				timeSpentHooking = Utils::Time::Timer(120000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking \"{}\" after 60 seconds", name);
+						spdlog::error("Failed hooking \"{}\" after 120 seconds", name);
+						isHooking = false;
 						return false;
 					}
 					if (!pGetOffsetFunc || !pGetOffsetFunc())
@@ -60,13 +68,16 @@ namespace Utils {
 					}
 					memcpy_s(pGetOffsetFunc(), bytesAmount, patchBytes, bytesAmount);
 					VirtualProtect(pGetOffsetFunc(), bytesAmount, originalProtection, &oldProtection);
-					hooked = true;
+					isHooked = true;
+					isHooking = false;
 					return true;
+
+					Sleep(10);
 				}
 			}
 
 			void Enable() {
-				if (hooked)
+				if (isHooked)
 					return;
 
 				DWORD originalProtection = 0;
@@ -79,10 +90,10 @@ namespace Utils {
 				}
 				memcpy_s(pGetOffsetFunc(), bytesAmount, patchBytes, bytesAmount);
 				VirtualProtect(pGetOffsetFunc(), bytesAmount, originalProtection, &oldProtection);
-				hooked = true;
+				isHooked = true;
 			}
 			void Disable() {
-				if (!hooked)
+				if (!isHooked)
 					return;
 
 				DWORD originalProtection = 0;
@@ -91,11 +102,11 @@ namespace Utils {
 				VirtualProtect(pGetOffsetFunc(), bytesAmount, PAGE_EXECUTE_READWRITE, &originalProtection);
 				memcpy_s(pGetOffsetFunc(), bytesAmount, origBytes, bytesAmount);
 				VirtualProtect(pGetOffsetFunc(), bytesAmount, originalProtection, &oldProtection);
-				hooked = false;
+				isHooked = false;
 			}
 			void Toggle() {
 				if (!optionRef) {
-					hooked ? Disable() : Enable();
+					isHooked ? Disable() : Enable();
 					return;
 				}
 
@@ -109,9 +120,7 @@ namespace Utils {
 			unsigned char* patchBytes = nullptr;
 			size_t bytesAmount = 0;
 
-			bool hooked = false;
-
-			Utils::Time::Timer timeSpentHooking{ 180000 };
+			Utils::Time::Timer timeSpentHooking{ 120000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class MHook : HookBase {
@@ -121,11 +130,16 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(180000);
+				if (isHooking)
+					return true;
+
+				isHooking = true;
+				timeSpentHooking = Utils::Time::Timer(120000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking function \"{}\" after 60 seconds", name);
+						spdlog::error("Failed hooking function \"{}\" after 120 seconds", name);
+						isHooking = false;
 						return false;
 					}
 					if (!pGetOffsetFunc)
@@ -135,8 +149,12 @@ namespace Utils {
 						pTarget = reinterpret_cast<OrigType>(pGetOffsetFunc());
 					else if (!pOriginal && MH_CreateHook(pTarget, pDetour, reinterpret_cast<LPVOID*>(&pOriginal)) == MH_OK) {
 						MH_EnableHook(pTarget);
+						isHooked = true;
+						isHooking = false;
 						return true;
 					}
+
+					Sleep(10);
 				}
 			}
 
@@ -146,7 +164,7 @@ namespace Utils {
 			GetTargetOffsetRetType(*pGetOffsetFunc)() = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 180000 };
+			Utils::Time::Timer timeSpentHooking{ 120000 };
 		};
 		template <typename GetTargetOffsetRetType, typename OrigType>
 		class VTHook : HookBase {
@@ -156,11 +174,16 @@ namespace Utils {
 			bool HookLoop() override {
 				if (pOriginal)
 					return true;
-				timeSpentHooking = Utils::Time::Timer(180000);
+				if (isHooking)
+					return true;
+
+				isHooking = true;
+				timeSpentHooking = Utils::Time::Timer(120000);
 
 				while (true) {
 					if (timeSpentHooking.DidTimePass()) {
-						spdlog::error("Failed hooking function \"{}\" after 60 seconds", name);
+						spdlog::error("Failed hooking function \"{}\" after 120 seconds", name);
+						isHooking = false;
 						return false;
 					}
 					if (!pGetOffsetFunc)
@@ -170,8 +193,14 @@ namespace Utils {
 						pInstance = pGetOffsetFunc();
 					else if (!pOriginal) {
 						HookVT(pInstance, pDetour, reinterpret_cast<LPVOID*>(&pOriginal), offset);
-						return true;
+						if (pOriginal) {
+							isHooked = true;
+							isHooking = false;
+							return true;
+						}
 					}
+
+					Sleep(10);
 				}
 			}
 
@@ -181,7 +210,7 @@ namespace Utils {
 			LPVOID pInstance = nullptr;
 			OrigType pDetour = nullptr;
 
-			Utils::Time::Timer timeSpentHooking{ 180000 };
+			Utils::Time::Timer timeSpentHooking{ 120000 };
 
 			DWORD offset = 0x0;
 		};
