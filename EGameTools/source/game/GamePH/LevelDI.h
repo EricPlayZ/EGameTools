@@ -1,6 +1,7 @@
 #pragma once
 #include <WTypesbase.h>
 #include "..\buffer.h"
+#include "..\utils\time.h"
 
 namespace GamePH {
 	namespace TimeWeather {
@@ -24,5 +25,11 @@ namespace GamePH {
 		TimeWeather::CSystem* GetTimeWeatherSystem();
 
 		static LevelDI* Get();
+	private:
+		static Utils::Time::Timer loadTimer;
+		static bool relyOnTimer;
+		static bool hasLoaded;
+
+		static void ResetLoadTimer();
 	};
 }

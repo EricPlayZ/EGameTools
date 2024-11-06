@@ -5,6 +5,10 @@
 #include "PlayerDI_PH.h"
 
 namespace GamePH {
+	Utils::Time::Timer LevelDI::loadTimer{ 20000 };
+	bool LevelDI::relyOnTimer = false;
+	bool LevelDI::hasLoaded = false;
+
 	bool LevelDI::IsLoading() {
 		__try {
 			bool(*pIsLoading)(LPVOID iLevel) = (decltype(pIsLoading))Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?IsLoading@ILevel@@QEBA_NXZ");
@@ -17,19 +21,28 @@ namespace GamePH {
 		}
 	}
 	bool LevelDI::IsLoaded() {
-		static Utils::Time::Timer loadTimer{ 7500 };
-		static bool isStillLoading = false;
-
 		if (IsLoading() || !GamePH::PlayerDI_PH::Get()) {
-			isStillLoading = true;
+			ResetLoadTimer();
 			return false;
 		}
-		if (isStillLoading) {
-			isStillLoading = false;
-			loadTimer = Utils::Time::Timer(7500);
+
+		if (!relyOnTimer && !hasLoaded) {
+			relyOnTimer = true;
+			loadTimer = Utils::Time::Timer(20000);
+			return false;
 		}
 
-		return loadTimer.DidTimePass();
+		if (loadTimer.DidTimePass()) {
+			relyOnTimer = false;
+			hasLoaded = true;
+			return true;
+		}
+
+		return false;
+	}
+	void LevelDI::ResetLoadTimer() {
+		relyOnTimer = false;
+		hasLoaded = false;
 	}
 	LPVOID LevelDI::GetViewCamera() {
 		__try {
@@ -134,17 +147,24 @@ namespace GamePH {
 	LevelDI* LevelDI::Get() {
 		__try {
 			Engine::CLevel* pCLevel = Engine::CLevel::Get();
-			if (!pCLevel)
+			if (!pCLevel) {
+				ResetLoadTimer();
 				return nullptr;
+			}
 
 			LevelDI* ptr = pCLevel->pLevelDI;
-			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll"))
+			if (!Utils::Memory::IsValidPtrMod(ptr, "gamedll_ph_x64_rwdi.dll")) {
+				ResetLoadTimer();
 				return nullptr;
-			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_LevelDI())
+			}
+			if (*reinterpret_cast<DWORD64**>(ptr) != Offsets::GetVT_LevelDI()) {
+				ResetLoadTimer();
 				return nullptr;
+			}
 
 			return ptr;
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			ResetLoadTimer();
 			return nullptr;
 		}
 	}

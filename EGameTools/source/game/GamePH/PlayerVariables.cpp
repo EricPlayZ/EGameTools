@@ -27,32 +27,37 @@ namespace GamePH {
 
 		it->second.first.template emplace<T>(varValue);
 	}
-	static void processPlayerVar(PDWORD64*& playerVarsMem, std::pair<std::string, std::pair<LPVOID, std::string>>& var) {
-		while (true) {
-			const bool isFloatPlayerVar = *playerVarsMem == Offsets::GetVT_FloatPlayerVariable();
-			const bool isBoolPlayerVar = *playerVarsMem == Offsets::GetVT_BoolPlayerVariable();
+	static void processPlayerVar(DWORD64**(*playerVarsGetter)(), std::pair<std::string, std::pair<LPVOID, std::string>>& var) {
+		static int offset = 0;
+		__try {
+			while (true) {
+				const bool isFloatPlayerVar = *(playerVarsGetter() + offset) == Offsets::GetVT_FloatPlayerVariable();
+				const bool isBoolPlayerVar = *(playerVarsGetter() + offset) == Offsets::GetVT_BoolPlayerVariable();
 
-			if (isFloatPlayerVar || isBoolPlayerVar) {
-				var.second.first = playerVarsMem + VAR_LOC_OFFSET;
-				const std::string& varName = var.first;
+				if (isFloatPlayerVar || isBoolPlayerVar) {
+					var.second.first = playerVarsGetter() + offset + VAR_LOC_OFFSET;
+					const std::string& varName = var.first;
 
-				if (isFloatPlayerVar) {
-					float* varValue = reinterpret_cast<float*>(var.second.first);
-					updateDefaultVar(GamePH::PlayerVariables::playerVarsDefault, varName, *varValue);
-					updateDefaultVar(GamePH::PlayerVariables::playerCustomVarsDefault, varName, *varValue);
+					if (isFloatPlayerVar) {
+						float* varValue = reinterpret_cast<float*>(var.second.first);
+						updateDefaultVar(GamePH::PlayerVariables::playerVarsDefault, varName, *varValue);
+						updateDefaultVar(GamePH::PlayerVariables::playerCustomVarsDefault, varName, *varValue);
 
-					playerVarsMem += FLOAT_VAR_OFFSET;
-				} else {
-					bool* varValue = reinterpret_cast<bool*>(var.second.first);
-					updateDefaultVar(GamePH::PlayerVariables::playerVarsDefault, varName, *varValue);
-					updateDefaultVar(GamePH::PlayerVariables::playerCustomVarsDefault, varName, *varValue);
+						offset += FLOAT_VAR_OFFSET;
+					} else {
+						bool* varValue = reinterpret_cast<bool*>(var.second.first);
+						updateDefaultVar(GamePH::PlayerVariables::playerVarsDefault, varName, *varValue);
+						updateDefaultVar(GamePH::PlayerVariables::playerCustomVarsDefault, varName, *varValue);
 
-					playerVarsMem += BOOL_VAR_OFFSET;
-				}
+						offset += BOOL_VAR_OFFSET;
+					}
 
-				break;
-			} else
-				playerVarsMem += 1;
+					break;
+				} else
+					offset += 1;
+			}
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			spdlog::error("Failed to process player variable: {}", var.first);
 		}
 	}
 
@@ -66,10 +71,8 @@ namespace GamePH {
 		if (!Offsets::GetVT_FloatPlayerVariable() || !Offsets::GetVT_BoolPlayerVariable())
 			return;
 
-		DWORD64** playerVarsMem = reinterpret_cast<DWORD64**>(Get());
-
 		for (auto& var : playerVars)
-			processPlayerVar(playerVarsMem, var);
+			processPlayerVar(reinterpret_cast<DWORD64**(*)()>(&Get), var);
 
 		gotPlayerVars = true;
 	}
