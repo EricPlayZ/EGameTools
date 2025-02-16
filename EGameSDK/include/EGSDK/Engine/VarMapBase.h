@@ -8,7 +8,7 @@
 #include <EGSDK\Exports.h>
 
 namespace EGSDK::Engine {
-    template <typename VarType>
+    template <typename VarT>
     class EGameSDK_API VarMapBase {
     public:
         VarMapBase() = default;
@@ -19,13 +19,13 @@ namespace EGSDK::Engine {
 
         virtual ~VarMapBase() = default;
 
-        virtual std::unique_ptr<VarType>& try_emplace(std::unique_ptr<VarType> var);
+        virtual std::unique_ptr<VarT>& try_emplace(std::unique_ptr<VarT> var);
         bool empty() const;
         bool none_of(const std::string& name) const;
         void reserve(size_t count);
         size_t size();
 
-        VarType* Find(const std::string& name) const;
+        VarT* Find(const std::string& name) const;
 
         virtual void Erase(const std::string& name);
 
@@ -36,7 +36,7 @@ namespace EGSDK::Engine {
                 func(vars.at(name), std::forward<Args>(args)...);
         }
     protected:
-        std::unordered_map<std::string, std::unique_ptr<VarType>> vars{};
+        std::unordered_map<std::string, std::unique_ptr<VarT>> vars{};
         std::vector<std::string> varsOrdered{};
         mutable std::recursive_mutex mutex{};
     };

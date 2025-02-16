@@ -46,7 +46,6 @@ namespace EGSDK::GamePH {
 
 	class EGameSDK_API PlayerVariables : public Engine::VarManagerBase<PlayerVarMap, PlayerVar> {
 	public:
-		static PlayerVarMap customDefaultVars;
 		static std::atomic<bool> gotPlayerVars;
 
 #ifdef EGameSDK_EXPORTS

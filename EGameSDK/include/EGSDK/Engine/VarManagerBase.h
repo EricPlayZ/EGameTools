@@ -15,135 +15,187 @@
 #pragma intrinsic(_ReturnAddress)
 
 namespace EGSDK::Engine {
-#define StaticAssertValueType static_assert(std::is_same_v<T, std::string> || std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, Vec3> || std::is_same_v<T, Vec4> || std::is_same_v<T, bool>, "Invalid type: value must be string, float, int, Vec3, Vec4 or bool")
+    template <typename T>
+    concept AllowedVarTypes = std::is_same_v<T, std::string> || std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, Vec3> || std::is_same_v<T, Vec4> || std::is_same_v<T, bool>;
 
-    template <typename VarMapType, typename VarType>
-    class EGameSDK_API VarManagerBase {
+    template <typename VarMapT, typename VarT>
+    class VarManagerBase;
+
+    template <typename VarMapT, typename VarT>
+    class VarRef {
     public:
-        static VarMapType vars;
-        static VarMapType customVars;
-        static VarMapType defaultVars;
+        VarRef(VarT* var) : ptr(var) {
+            name = var->GetName();
+        }
+        VarRef(const char* name, VarMapT& map) : name(name), ptr(map.Find(name)) {}
 
-        template <typename T>
-        static std::optional<T> GetVarValue(const std::string& name) {
-            StaticAssertValueType;
-            auto var = vars.Find(name);
-            if (!var)
+        const char* GetName() const {
+            return name;
+        }
+        VarType GetType() const {
+            return ptr ? ptr->GetType() : VarType::NONE;
+        }
+        VarT* GetPtr() const {
+            return ptr;
+        }
+
+        template <AllowedVarTypes T>
+        std::optional<T> GetValue() {
+            if (!ptr)
                 return std::nullopt;
-            auto value = var->GetValue();
+
+            auto value = ptr->GetValue();
             auto variantValue = std::get_if<T>(&value);
             return variantValue ? std::optional<T>(*variantValue) : std::nullopt;
         }
-        template <typename T>
-        static std::optional<T> GetVarValue(VarType* var) {
-            StaticAssertValueType;
-            if (!var)
-                return std::nullopt;
-            auto value = var->GetValue();
-            auto variantValue = std::get_if<T>(&value);
-            return variantValue ? std::optional<T>(*variantValue) : std::nullopt;
-        }
-        template <typename T>
-        static std::optional<T> GetVarValueFromMap(const std::string& name, const VarMapType& map) {
-            StaticAssertValueType;
-            auto var = map.Find(name);
-            return GetVarValue<T>(var);
-        }
-
-        static VarType* GetVar(const std::string& name);
-
-        template <typename T>
-        static void ChangeVar(const std::string& name, T value) {
-            StaticAssertValueType;
-            auto var = vars.Find(name);
-            if (!var)
-                return;
-
-            ChangeVar<T>(var, value);
-        }
-        template <typename T>
-        static void ChangeVar(VarType* var, T value) {
-            StaticAssertValueType;
-
-            if (!var)
+        template <AllowedVarTypes T>
+        void SetValue(T value) {
+            if (!ptr)
                 return;
 
             if constexpr (std::is_same_v<T, std::string>) {
-                switch (var->GetType()) {
-                    case Engine::VarType::Float:
-                        ChangeVar<float>(var, std::stof(Utils::Values::to_string(value)));
+                switch (ptr->GetType()) {
+                    case VarType::Float:
+                        SetValue<float>(std::stof(Utils::Values::to_string(value)));
                         return;
-                    case Engine::VarType::Int:
-                        ChangeVar<int>(var, std::stof(Utils::Values::to_string(value)));
+                    case VarType::Int:
+                        SetValue<int>(std::stof(Utils::Values::to_string(value)));
                         return;
-                    case Engine::VarType::Bool:
-                        ChangeVar<bool>(var, std::stof(Utils::Values::to_string(value)));
+                    case VarType::Bool:
+                        SetValue<bool>(std::stof(Utils::Values::to_string(value)));
                         return;
                     default:
                         break;
                 }
             }
-            var->SetValue(value);
+            ptr->SetValue(value);
         }
-        template <typename T>
-        static void ChangeVarFromMap(const std::string& name, T value, const VarMapType& map) {
-            StaticAssertValueType;
-            auto var = map.Find(name);
-            ChangeVar<T>(var, value);
+        template <AllowedVarTypes T>
+        void SetValueFromList(T value) {
+            VarManagerBase<VarMapT, VarT>::template _SetValueFromList<T>(this, value);
         }
-        template <typename T>
-        static void ChangeVarFromList(const std::string& name, T value) {
-            StaticAssertValueType;
 
-            auto var = vars.Find(name);
+        bool IsManagedByBool() {
+            return VarManagerBase<VarMapT, VarT>::_IsManagedByBool(this);
+        }
+        bool HasCustomValue() {
+            return VarManagerBase<VarMapT, VarT>::_HasCustomValue(this);
+        }
+
+        template <AllowedVarTypes T>
+        void ManageByBool(T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
+            VarManagerBase<VarMapT, VarT>::template _ManageByBool<T>(this, valueIfTrue, valueIfFalse, boolVal, usePreviousVal);
+        }
+        template <AllowedVarTypes T>
+        void SaveVariableAsDefault() {
+            VarManagerBase<VarMapT, VarT>::template _SaveVariableAsDefault<T>(this);
+        }
+        template <AllowedVarTypes T>
+        void RestoreVarToDefault(bool restoreToSavedVars = false) {
+            VarManagerBase<VarMapT, VarT>::template _RestoreVarToDefault<T>(this, restoreToSavedVars);
+        }
+    private:
+        const char* name = nullptr;
+        VarT* ptr = nullptr;
+    };
+
+    template <typename VarMapT, typename VarT>
+    class EGameSDK_API VarManagerBase {
+        template <typename, typename>
+        friend class VarRef;
+
+    public:
+        static VarMapT vars;
+        static VarMapT customVars;
+        static VarMapT defaultVars;
+        static VarMapT defaultCustomVars;
+
+        static std::optional<VarRef<VarMapT, VarT>> GetVarRef(VarT* var) {
+            return std::optional<VarRef<VarMapT, VarT>>(VarRef<VarMapT, VarT>(var));
+        }
+        static std::optional<VarRef<VarMapT, VarT>> GetVarRef(const char* name) {
+            VarRef<VarMapT, VarT> varRef(name, vars);
+            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
+        }
+        static std::optional<VarRef<VarMapT, VarT>> GetCustomVarRef(const char* name) {
+            VarRef<VarMapT, VarT> varRef(name, customVars);
+            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
+        }
+        static std::optional<VarRef<VarMapT, VarT>> GetDefaultVarRef(const char* name) {
+            VarRef<VarMapT, VarT> varRef(name, defaultVars);
+            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
+        }
+        static std::optional<VarRef<VarMapT, VarT>> GetCustomDefaultVarRef(const char* name) {
+            VarRef<VarMapT, VarT> varRef(name, defaultCustomVars);
+            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
+        }
+
+        static bool AreAnyVarsPresent();
+        static bool AreAnyCustomVarsPresent();
+        static bool AreAllCustomVarsManagedByBool();
+
+        template <AllowedVarTypes T>
+        static void ManageVarByBool(const char* name, T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
+            auto playerVar = GetVarRef(name);
+            if (playerVar)
+                _ManageByBool(&*playerVar, valueIfTrue, valueIfFalse, boolVal, usePreviousVal);
+        }
+    private:
+        static std::unordered_map<std::string, std::any> prevVarValueMap;
+        static std::unordered_map<std::string, bool> prevBoolValueMap;
+        static std::unordered_map<std::string, uint64_t> varOwnerMap;
+        static std::recursive_mutex mutex;
+
+        static bool _IsManagedByBool(const char* name);
+        static bool _IsManagedByBool(VarRef<VarMapT, VarT>* var);
+        static bool _HasCustomValue(VarRef<VarMapT, VarT>* var);
+
+        template <AllowedVarTypes T>
+        static void _SetValueFromList(VarRef<VarMapT, VarT>* var, T value) {
             if (!var)
                 return;
 
-            ChangeVarFromList<T>(var, value);
-        }
-        template <typename T>
-        static void ChangeVarFromList(VarType* var, T value) {
-            StaticAssertValueType;
+            auto name = var->GetName();
 
-            if (!var)
-                return;
-
-            auto customVar = customVars.Find(var->GetName());
-            auto defVar = defaultVars.Find(var->GetName());
+            auto customVar = GetCustomVarRef(name);
+            auto defVar = GetDefaultVarRef(name);
 
             if constexpr (std::is_same_v<T, std::string>) {
                 switch (var->GetType()) {
-                    case Engine::VarType::Float:
-                        ChangeVarFromList<float>(var, std::stof(Utils::Values::to_string(value)));
+                    case VarType::Float:
+                        _SetValueFromList<float>(var, std::stof(Utils::Values::to_string(value)));
                         return;
-                    case Engine::VarType::Int:
-                        ChangeVarFromList<int>(var, std::stof(Utils::Values::to_string(value)));
+                    case VarType::Int:
+                        _SetValueFromList<int>(var, std::stof(Utils::Values::to_string(value)));
                         return;
-                    case Engine::VarType::Bool:
-                        ChangeVarFromList<bool>(var, std::stof(Utils::Values::to_string(value)));
+                    case VarType::Bool:
+                        _SetValueFromList<bool>(var, std::stof(Utils::Values::to_string(value)));
                         return;
                     default:
                         break;
                 }
             }
             if (!customVar)
-                customVar = customVars.try_emplace(std::make_unique<VarType>(var->GetName(), var->GetType())).get();
+                customVar = customVars.try_emplace(std::make_unique<VarT>(name, var->GetType())).get();
             if (!defVar) {
-                defVar = defaultVars.try_emplace(std::make_unique<VarType>(var->GetName(), var->GetType())).get();
-                if (auto varValue = GetVarValue<T>(var); defVar && varValue)
-                    defVar->SetValue(*varValue);
+                defVar = defaultVars.try_emplace(std::make_unique<VarT>(name, var->GetType())).get();
+                if (auto varValue = var->GetValue<T>(); defVar && varValue)
+                    defVar->SetValue<T>(*varValue);
             }
 
             if (customVar)
                 customVar->SetValue(value);
             var->SetValue(value);
         }
+        template <AllowedVarTypes T>
+        static void _ManageByBool(VarRef<VarMapT, VarT>* var, T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
+            if (!var)
+                return;
 
-        template <typename T>
-        static void ManageVarByBool(const std::string& name, T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
             uint64_t caller = reinterpret_cast<uint64_t>(_ReturnAddress());
-
             std::lock_guard lock(mutex);
+
+            const char* name = var->GetName();
 
             auto ownerIt = varOwnerMap.find(name);
             if (ownerIt != varOwnerMap.end() && ownerIt->second != caller)
@@ -156,15 +208,15 @@ namespace EGSDK::Engine {
 
             if (boolVal) {
                 if (!prevBoolValue) {
-                    auto varValue = GetVarValue<T>(name);
+                    auto varValue = var->GetValue<T>();
                     prevVarValueMap[name] = varValue ? *varValue : T{};
                 }
 
-                ChangeVarFromList(name, valueIfTrue);
+                _SetValueFromList<T>(var, valueIfTrue);
                 prevBoolValue = true;
                 varOwnerMap[name] = caller;
             } else if (prevBoolValue) {
-                ChangeVarFromList(name, usePreviousVal ? std::any_cast<T>(prevValueAny) : valueIfFalse);
+                _SetValueFromList<T>(var, usePreviousVal ? std::any_cast<T>(prevValueAny) : valueIfFalse);
                 defaultVars.Erase(name);
                 customVars.Erase(name);
                 prevVarValueMap.erase(name);
@@ -172,50 +224,40 @@ namespace EGSDK::Engine {
                 varOwnerMap.erase(name);
             }
         }
-        static bool IsVarManagedByBool(const std::string& name);
-        static bool DoesVarHaveCustomValue(const std::string& name);
-        static bool AreAnyVarsPresent();
-        static bool AreAnyCustomVarsPresent();
-        static bool AreAllCustomVarsManagedByBool();
-
-        template <typename T>
-        static void RestoreVariableToDefault(VarType* var, bool eraseFromMaps = true) {
-            if (IsVarManagedByBool(var->GetName()))
+        template <AllowedVarTypes T>
+        static void _SaveVariableAsDefault(VarRef<VarMapT, VarT>* var) {
+            if (!var)
                 return;
 
-            auto defValue = GetVarValueFromMap<T>(var->GetName(), defaultVars);
+            auto customDefaultVar = GetCustomDefaultVarRef(var->GetName());
+
+            auto varValue = var->GetValue<T>();
+            if (!varValue)
+                return;
+            customDefaultVar->SetValue(*varValue);
+        }
+        template <AllowedVarTypes T>
+        static void _RestoreVarToDefault(VarRef<VarMapT, VarT>* var, bool restoreToSavedVars = false) {
+            if (!var)
+                return;
+            if (_IsManagedByBool(var))
+                return;
+
+            const char* name = var->GetName();
+
+            auto defVar = !restoreToSavedVars ? GetDefaultVarRef(name) : GetCustomDefaultVarRef(name);
+            if (!defVar)
+                return;
+            auto defValue = defVar->GetValue<T>();
             if (!defValue)
                 return;
 
-            ChangeVar(var->GetName(), *defValue);
+            var->SetValue<T>(*defValue);
 
-            if (eraseFromMaps) {
-                defaultVars.Erase(var->GetName());
-                customVars.Erase(var->GetName());
+            if (!restoreToSavedVars) {
+                defaultVars.Erase(name);
+                customVars.Erase(name);
             }
         }
-        template <typename T>
-        static void RestoreVariableToDefaultFromMap(VarType* var, VarMapType& map, bool eraseFromMaps = true) {
-            if (IsVarManagedByBool(var->GetName()))
-                return;
-
-            auto defValue = GetVarValueFromMap<T>(var->GetName(), map);
-            if (!defValue)
-                return;
-
-            ChangeVar(var->GetName(), *defValue);
-
-            if (eraseFromMaps) {
-                map.Erase(var->GetName());
-                customVars.Erase(var->GetName());
-            }
-        }
-    private:
-        static std::unordered_map<std::string, std::any> prevVarValueMap;
-        static std::unordered_map<std::string, bool> prevBoolValueMap;
-        static std::unordered_map<std::string, uint64_t> varOwnerMap;
-        static std::recursive_mutex mutex;
     };
-
-#undef StaticAssertValueType
 }

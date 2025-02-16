@@ -3,8 +3,8 @@
 #include <EGSDK\GamePH\PlayerVariables.h>
 
 namespace EGSDK::Engine {
-    template <typename VarType>
-    std::unique_ptr<VarType>& VarMapBase<VarType>::try_emplace(std::unique_ptr<VarType> var) {
+    template <typename VarT>
+    std::unique_ptr<VarT>& VarMapBase<VarT>::try_emplace(std::unique_ptr<VarT> var) {
         std::lock_guard lock(mutex);
         const std::string& name = var->GetName();
         auto [it, inserted] = vars.try_emplace(name, std::move(var));
@@ -12,36 +12,36 @@ namespace EGSDK::Engine {
             varsOrdered.emplace_back(name);
         return it->second;
     }
-    template <typename VarType>
-    bool VarMapBase<VarType>::empty() const {
+    template <typename VarT>
+    bool VarMapBase<VarT>::empty() const {
         std::lock_guard lock(mutex);
         return vars.empty();
     }
-    template <typename VarType>
-    bool VarMapBase<VarType>::none_of(const std::string& name) const {
+    template <typename VarT>
+    bool VarMapBase<VarT>::none_of(const std::string& name) const {
         std::lock_guard lock(mutex);
         return vars.find(name) == vars.end();
     }
-    template <typename VarType>
-    void VarMapBase<VarType>::reserve(size_t count) {
+    template <typename VarT>
+    void VarMapBase<VarT>::reserve(size_t count) {
         std::lock_guard lock(mutex);
         vars.reserve(count);
     }
-    template <typename VarType>
-    size_t VarMapBase<VarType>::size() {
+    template <typename VarT>
+    size_t VarMapBase<VarT>::size() {
         std::lock_guard lock(mutex);
         return vars.size();
     }
 
-    template <typename VarType>
-    VarType* VarMapBase<VarType>::Find(const std::string& name) const {
+    template <typename VarT>
+    VarT* VarMapBase<VarT>::Find(const std::string& name) const {
         std::lock_guard lock(mutex);
         auto it = vars.find(name);
         return (it != vars.end()) ? it->second.get() : nullptr;
     }
 
-    template <typename VarType>
-    void VarMapBase<VarType>::Erase(const std::string& name) {
+    template <typename VarT>
+    void VarMapBase<VarT>::Erase(const std::string& name) {
         std::lock_guard lock(mutex);
         auto it = vars.find(name);
         if (it == vars.end())

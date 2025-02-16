@@ -72,7 +72,6 @@ namespace EGSDK::GamePH {
 		SetType(Engine::VarType::Bool);
 	}
 
-	PlayerVarMap PlayerVariables::customDefaultVars{};
 	std::atomic<bool> PlayerVariables::gotPlayerVars = false;
 	static bool sortedPlayerVars = false;
 
@@ -149,7 +148,7 @@ namespace EGSDK::GamePH {
 				playerVarPtr.reset(floatPlayerVar);
 				playerVarPtr->SetName(varName);
 				playerVarPtr->SetType(varType);
-				updateDefaultVar(PlayerVariables::customDefaultVars, varName, floatPlayerVar->floatValue.data, floatPlayerVar->defaultFloatValue.data);
+				updateDefaultVar(PlayerVariables::defaultCustomVars, varName, floatPlayerVar->floatValue.data, floatPlayerVar->defaultFloatValue.data);
 
 				offset += FLOAT_SIZE_OFFSET;
 				return;
@@ -163,7 +162,7 @@ namespace EGSDK::GamePH {
 				playerVarPtr.reset(boolPlayerVar);
 				playerVarPtr->SetName(varName);
 				playerVarPtr->SetType(varType);
-				updateDefaultVar(PlayerVariables::customDefaultVars, varName, boolPlayerVar->boolValue.data, boolPlayerVar->defaultBoolValue.data);
+				updateDefaultVar(PlayerVariables::defaultCustomVars, varName, boolPlayerVar->boolValue.data, boolPlayerVar->defaultBoolValue.data);
 
 				offset += BOOL_SIZE_OFFSET;
 				return;
@@ -192,7 +191,7 @@ namespace EGSDK::GamePH {
 
 		customVars.reserve(vars.size());
 		defaultVars.reserve(vars.size());
-		customDefaultVars.reserve(vars.size());
+		defaultCustomVars.reserve(vars.size());
 
 		vars.ForEach(processPlayerVarSafe, reinterpret_cast<uint64_t*(*)()>(&Get));
 		gotPlayerVars = true;
