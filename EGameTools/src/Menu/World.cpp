@@ -159,7 +159,7 @@ namespace EGT::Menu {
 			ImGui::SeparatorText("Time##World");
 			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle || !timeWeatherSystem);
 			bool timeSlider = ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("AntizinDrainBlocked", true, false, timeSlider);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("AntizinDrainBlocked", true, false, timeSlider);
 			if (timeSlider) {
 				requestedTimeWeatherInterpolation = true;
 				timeBeforeFreeze = time;

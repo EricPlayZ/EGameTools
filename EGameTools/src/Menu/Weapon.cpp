@@ -25,39 +25,39 @@ namespace EGT::Menu {
 			if (!EGSDK::GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("MeleeWpnDurabilityMulReduce", 0.0f, baseWeaponDurabilityMul, unlimitedDurability.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("MeleeWpnDurabilityMulReduce", 0.0f, baseWeaponDurabilityMul, unlimitedDurability.GetValue(), true);
 
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsPistolInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRevolverInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRifleInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsShotgunInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsSMGInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("InfiniteArrows", true, false, unlimitedAmmo.GetValue());
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsPistolInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRevolverInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRifleInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsShotgunInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsSMGInfiniteAmmo", true, false, unlimitedAmmo.GetValue());
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("InfiniteArrows", true, false, unlimitedAmmo.GetValue());
 
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("BulletAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsMoveAccuracyReduce", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsPistolAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRevolverAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRifleAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsShotgunAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsCrossbowAccuracyFactor", 0.0f, baseBowAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsHarpoonAccuracyFactor", 0.0f, baseBowAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("BowAccuracyFactor", 0.0f, baseBowAccuracyMul, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("BowMaxThrowFactor", 99999.0f, 1.0f, noSpread.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("BowSlowMoAccuracyMul", 0.0f, 0.25f, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("BulletAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsMoveAccuracyReduce", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsPistolAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRevolverAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRifleAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsShotgunAccuracyFactor", 0.0f, baseWeaponAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsCrossbowAccuracyFactor", 0.0f, baseBowAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsHarpoonAccuracyFactor", 0.0f, baseBowAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("BowAccuracyFactor", 0.0f, baseBowAccuracyMul, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("BowMaxThrowFactor", 99999.0f, 1.0f, noSpread.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("BowSlowMoAccuracyMul", 0.0f, 0.25f, noSpread.GetValue(), true);
 
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("BulletRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsPistolRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRevolverRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRifleRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsShotgunRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("BulletRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsPistolRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRevolverRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRifleRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsShotgunRecoilFactor", 0.0f, baseWeaponRecoilMul, noRecoil.GetValue(), true);
 
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("BulletReloadSpeed", 1000.0f, 0.0f, instantReload.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsPistolReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRevolverReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsRifleReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("FirearmsShotgunReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("BowPutArrowDuration", 0.0f, 0.137f, instantReload.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("BulletReloadSpeed", 1000.0f, 0.0f, instantReload.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsPistolReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRevolverReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsRifleReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("FirearmsShotgunReloadTimeMul", 1000.0f, baseWeaponReloadMul, instantReload.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("BowPutArrowDuration", 0.0f, 0.137f, instantReload.GetValue(), true);
 		}
 		static void UpdateWeaponDurability(bool updateSlider) {
 			auto iLevel = EGSDK::GamePH::LevelDI::Get();

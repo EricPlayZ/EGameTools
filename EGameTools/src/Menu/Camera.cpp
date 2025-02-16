@@ -235,7 +235,7 @@ namespace EGT::Menu {
 			if (!EGSDK::GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, disableSafezoneFOVReduction.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("CameraDefaultFOVReduction", 0.0f, baseSafezoneFOVReduction, disableSafezoneFOVReduction.GetValue(), true);
 
 			static float prevLensDistortion = lensDistortion;
 			static bool lensDistortionJustEnabled = false;
@@ -251,8 +251,8 @@ namespace EGT::Menu {
 				lensDistortionJustEnabled = false;
 			}
 
-			EGSDK::GamePH::PlayerVariables::ChangePlayerVar("FOVCorrection", goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
-			EGSDK::GamePH::PlayerVariables::ManagePlayerVarByBool("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? goProMode.GetValue() : disableHeadCorrection.GetValue(), true);
+			EGSDK::GamePH::PlayerVariables::ChangeVar("FOVCorrection", goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
+			EGSDK::GamePH::PlayerVariables::ManageVarByBool("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? goProMode.GetValue() : disableHeadCorrection.GetValue(), true);
 		}
 		static void UpdateDisabledOptions() {
 			auto iLevel = EGSDK::GamePH::LevelDI::Get();

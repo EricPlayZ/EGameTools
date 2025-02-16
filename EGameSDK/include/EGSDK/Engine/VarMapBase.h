@@ -31,7 +31,7 @@ namespace EGSDK::Engine {
 
         template <typename Callable, typename... Args>
         void ForEach(Callable&& func, Args&&... args) {
-            std::lock_guard<decltype(mutex)> lock(mutex);
+            std::lock_guard lock(mutex);
             for (const auto& name : varsOrdered)
                 func(vars.at(name), std::forward<Args>(args)...);
         }

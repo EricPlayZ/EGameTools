@@ -36,9 +36,6 @@ namespace EGT::Menu {
 			return lowerKey.find(lowerFilter) != std::string::npos;
 		}
 		static void RestoreVariableToDefault(const std::unique_ptr<EGSDK::Engine::CVar>& cVarPtr) {
-			if (EGSDK::Engine::CVars::IsVarManagedByBool(cVarPtr->GetName()))
-				return;
-
 			auto cVar = cVarPtr.get();
 
 			ImGui_impl::DeferredActions::Add([cVar]() {
@@ -128,7 +125,7 @@ namespace EGT::Menu {
 			if (ImGui::CollapsingHeader("Renderer CVars list", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 
-				ImGui::BeginDisabled(EGSDK::Engine::CVars::AreAnyCustomVarsPresent() || !EGSDK::Engine::CVars::AreAllCustomVarsManagedByBool());
+				ImGui::BeginDisabled(!EGSDK::Engine::CVars::AreAnyCustomVarsPresent() || EGSDK::Engine::CVars::AreAllCustomVarsManagedByBool());
 				if (ImGui::Button("Restore variables to default"))
 					RestoreVariablesToDefault();
 				ImGui::EndDisabled();

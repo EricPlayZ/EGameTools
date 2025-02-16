@@ -1,5 +1,6 @@
 ﻿#include <EGSDK\Engine\VarManagerBase.h>
 #include <EGSDK\Engine\CVars.h>
+#include <EGSDK\GamePH\PlayerVariables.h>
 #include <EGSDK\Vec4.h>
 
 namespace EGSDK::Engine {
@@ -23,13 +24,18 @@ namespace EGSDK::Engine {
 #endif
 
     template <typename VarMapType, typename VarType>
+    VarType* VarManagerBase<VarMapType, VarType>::GetVar(const std::string& name) {
+        return vars.Find(name);
+    }
+
+    template <typename VarMapType, typename VarType>
     bool VarManagerBase<VarMapType, VarType>::IsVarManagedByBool(const std::string& name) {
-        std::lock_guard<decltype(mutex)> lock(mutex);
+        std::lock_guard lock(mutex);
         return prevBoolValueMap.find(name) != prevBoolValueMap.end() && prevBoolValueMap[name];
     }
     template <typename VarMapType, typename VarType>
     bool VarManagerBase<VarMapType, VarType>::DoesVarHaveCustomValue(const std::string& name) {
-        return !customVars.none_of(cVar->GetName());
+        return !customVars.none_of(name);
     }
     template <typename VarMapType, typename VarType>
     bool VarManagerBase<VarMapType, VarType>::AreAnyVarsPresent() {
@@ -54,4 +60,5 @@ namespace EGSDK::Engine {
     }
 
     template EGameSDK_API class VarManagerBase<CVarMap, CVar>;
+    template EGameSDK_API class VarManagerBase<GamePH::PlayerVarMap, GamePH::PlayerVar>;
 }
