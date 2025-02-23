@@ -66,30 +66,43 @@ namespace EGT::Menu {
 			if (EGSDK::Utils::Values::are_samef(freeCamFOV, 0.0f))
 				freeCamFOV = baseFOV;
 		}
-		static void UpdateFirstPersonFOV() {
+		static void UpdateGoProFOV() {
 			auto iLevel = EGSDK::GamePH::LevelDI::Get();
-			auto viewCam = iLevel && iLevel->IsLoaded() ? reinterpret_cast<EGSDK::Engine::CBaseCamera*>(iLevel->GetViewCamera()) : nullptr;
+			if (!iLevel || !iLevel->IsLoaded())
+				return;
+			auto viewCam = iLevel->GetViewCamera();
+			if (!viewCam)
+				return;
+
+			static float previousFirstPersonFOV = firstPersonFOV;
+
+			if (goProMode.GetValue()) {
+				if (goProMode.HasChangedTo(true)) {
+					previousFirstPersonFOV = viewCam->GetFOV();
+					goProMode.SetPrevValue(true);
+				}
+
+				viewCam->SetFOV(110.0f);
+				firstPersonFOV = 110;
+			} else if (goProMode.HasChangedTo(false)) {
+				firstPersonFOV = previousFirstPersonFOV;
+				goProMode.SetPrevValue(false);
+			}
+		}
+		static void UpdateZoomInFOV() {
+			auto iLevel = EGSDK::GamePH::LevelDI::Get();
+			if (!iLevel || !iLevel->IsLoaded())
+				return;
+			auto viewCam = iLevel->GetViewCamera();
+			if (!viewCam)
+				return;
 
 			static float previousFirstPersonFOV = firstPersonFOV;
 			static bool hasChangedZoomLevel = false;
-			static int zoomLevel = 0;
+			static int zoomLevel = 1;
+			static int initialZoomLevel = 1;
 
-			if (iLevel && iLevel->IsLoaded() && viewCam) {
-				if (goProMode.GetValue()) {
-					if (goProMode.HasChangedTo(true)) {
-						previousFirstPersonFOV = viewCam->GetFOV();
-						goProMode.SetPrevValue(true);
-					}
-
-					viewCam->SetFOV(110.0f);
-					firstPersonFOV = 110;
-				} else if (goProMode.HasChangedTo(false)) {
-					firstPersonFOV = previousFirstPersonFOV;
-					goProMode.SetPrevValue(false);
-				}
-			}
-			
-			if (iLevel && iLevel->IsLoaded() && viewCam && !thirdPersonCamera.GetValue() && !freeCam.GetValue()) {
+			if (!thirdPersonCamera.GetValue() && !freeCam.GetValue()) {
 				constexpr float level1Min = 42.0f;
 				constexpr float level2Min = 25.0f;
 				constexpr float level3Min = 15.0f;
@@ -98,20 +111,19 @@ namespace EGT::Menu {
 					if (firstPersonZoomIn.IsKeyPressed()) {
 						hasChangedZoomLevel = true;
 						if (!isZoomingIn) {
-							originalFirstPersonFOVBeforeZoomIn = viewCam->GetFOV();
+							originalFirstPersonFOVBeforeZoomIn = std::roundf(viewCam->GetFOV());
 							previousFirstPersonFOV = originalFirstPersonFOVBeforeZoomIn;
 						} else
 							previousFirstPersonFOV = firstPersonFOV;
 
-						float rawFOVLevel1 = originalFirstPersonFOVBeforeZoomIn - 25.0f;
-						float rawFOVLevel2 = originalFirstPersonFOVBeforeZoomIn - 45.0f;
-
-						if (std::abs(rawFOVLevel1 - level1Min) > 5.0f)
-							zoomLevel = 2;
-						else if (std::abs(rawFOVLevel2 - level2Min) > 5.0f)
+						if (originalFirstPersonFOVBeforeZoomIn < level2Min || std::abs(originalFirstPersonFOVBeforeZoomIn - level2Min) < 10.0f)
 							zoomLevel = 3;
+						else if (originalFirstPersonFOVBeforeZoomIn < level1Min || std::abs(originalFirstPersonFOVBeforeZoomIn - level1Min) < 10.0f)
+							zoomLevel = 2;
 						else
 							zoomLevel = 1;
+
+						initialZoomLevel = zoomLevel;
 					}
 
 					isZoomingIn = true;
@@ -137,7 +149,7 @@ namespace EGT::Menu {
 						}
 					} else if (ImGui::KeyBindOption::scrolledMouseWheelDown) {
 						ImGui::KeyBindOption::scrolledMouseWheelDown = false;
-						if (zoomLevel > 1) {
+						if (zoomLevel > initialZoomLevel) {
 							zoomLevel--;
 							previousFirstPersonFOV = firstPersonFOV;
 							hasChangedZoomLevel = true;
@@ -145,6 +157,7 @@ namespace EGT::Menu {
 					}
 				} else {
 					zoomLevel = 1;
+					initialZoomLevel = 1;
 					if (firstPersonZoomIn.IsKeyReleased()) {
 						hasChangedZoomLevel = true;
 						previousFirstPersonFOV = firstPersonFOV;
@@ -158,6 +171,10 @@ namespace EGT::Menu {
 						isZoomingIn = false;
 				}
 			}
+		}
+		static void UpdateFirstPersonFOV() {
+			UpdateGoProFOV();
+			UpdateZoomInFOV();
 
 			auto videoSettings = EGSDK::Engine::CVideoSettings::Get();
 			if (videoSettings && !EGSDK::Utils::Values::are_samef(baseFOV, 0.0f) && !goProMode.GetValue() && !menuToggle.GetValue() && !isZoomingIn)

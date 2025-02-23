@@ -89,8 +89,8 @@ namespace EGT::Engine {
 				return SetFOVHook.ExecuteCallbacksWithOriginal(pCBaseCamera, fov);
 			if (Menu::Camera::thirdPersonCamera.GetValue())
 				fov = static_cast<float>(Menu::Camera::thirdPersonFOV);
-			else if (!Menu::Camera::firstPersonZoomIn.IsKeyDown())
-				Menu::Camera::originalFirstPersonFOVBeforeZoomIn = fov;
+			else if (!Menu::Camera::firstPersonZoomIn.IsKeyDown() && !EGSDK::Engine::IBaseCamera::isSetFOVCalledByEGSDK)
+				Menu::Camera::originalFirstPersonFOVBeforeZoomIn = std::roundf(fov);
 
 			return SetFOVHook.ExecuteCallbacksWithOriginal(pCBaseCamera, fov);
 		} };
