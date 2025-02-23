@@ -16,14 +16,12 @@ namespace EGSDK::Engine {
             varsOrdered.push_back(name);
         return it->second;
     }
-
     template <typename VarT>
     VarT* VarMapBase<VarT>::Find(const std::string& name) const {
         std::shared_lock lock(readingMutex);
         auto it = vars.find(name);
         return (it != vars.end()) ? it->second.get() : nullptr;
     }
-
     template <typename VarT>
     void VarMapBase<VarT>::Erase(const std::string& name) {
         std::lock_guard lock(writingMutex);
@@ -41,19 +39,16 @@ namespace EGSDK::Engine {
         std::shared_lock lock(readingMutex);
         return vars.empty();
     }
-
     template <typename VarT>
     bool VarMapBase<VarT>::none_of(const std::string& name) const {
         std::shared_lock lock(readingMutex);
         return vars.find(name) == vars.end();
     }
-
     template <typename VarT>
     size_t VarMapBase<VarT>::size() {
         std::shared_lock lock(readingMutex);
         return vars.size();
     }
-
     template <typename VarT>
     void VarMapBase<VarT>::reserve(size_t count) {
         std::lock_guard lock(writingMutex);

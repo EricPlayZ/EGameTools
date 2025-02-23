@@ -225,7 +225,7 @@ namespace EGT::Menu {
 			ImGui::OpenPopup("Loaded player variables!");
 		}
 
-		static void RestoreVariableToDefault(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
+		static void RestoreVariableToDefault(EGSDK::GamePH::PlayerVar* playerVarPtr) {
 			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(playerVarPtr->GetName());
 			if (!playerVar)
 				return;
@@ -247,7 +247,7 @@ namespace EGT::Menu {
 		}
 		static void RestoreVariablesToDefault() {
 			(restoreVarsToSavedVarsEnabled ? EGSDK::GamePH::PlayerVariables::vars : EGSDK::GamePH::PlayerVariables::customVars).ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-				RestoreVariableToDefault(playerVarPtr);
+				RestoreVariableToDefault(playerVarPtr.get());
 			});
 		}
 		static void SaveVariableAsDefault(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
@@ -286,10 +286,10 @@ namespace EGT::Menu {
 			std::string lowerKey = EGSDK::Utils::Values::to_lower(playerVarPtr->GetName());
 			return lowerKey.find(lowerFilter) != std::string::npos;
 		}
-		static void RenderDebugInfo(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
+		static void RenderDebugInfo(EGSDK::GamePH::PlayerVar* playerVarPtr) {
 			const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
 			std::string labelID = "##DebugAddrInputText" + std::string(playerVarPtr->GetName());
-			DWORD64 finalVarValueAddr = reinterpret_cast<DWORD64>(playerVarPtr.get()) + 0x8; // 0x8 is PlayerVariable->value
+			DWORD64 finalVarValueAddr = reinterpret_cast<DWORD64>(playerVarPtr) + 0x8; // 0x8 is PlayerVariable->value
 
 			std::stringstream ss;
 			if (finalVarValueAddr)
@@ -305,8 +305,8 @@ namespace EGT::Menu {
 			ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), strlen(addrString.c_str()), ImGuiInputTextFlags_ReadOnly);
 			ImGui::PopStyleColor();
 		}
-		static void RenderPlayerVariable(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRefFromPtr(playerVarPtr.get());
+		static void RenderPlayerVariable(EGSDK::GamePH::PlayerVar* playerVarPtr) {
+			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRefFromPtr(playerVarPtr);
 			if (!playerVar)
 				return;
 
@@ -380,10 +380,28 @@ namespace EGT::Menu {
 				ImGui::Separator();
 				ImGui::InputTextWithHint("##PlayerVariablesSearch", "Search variables", varsSearchFilter, 64);
 
-				EGSDK::GamePH::PlayerVariables::vars.ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-					if (ShouldDisplayVariable(playerVarPtr, varsSearchFilter))
-						RenderPlayerVariable(playerVarPtr);
-				});
+				static std::vector<EGSDK::GamePH::PlayerVar*> filteredVars;
+				static char lastSearchFilter[64];
+
+				if (filteredVars.empty() || _strcmpi(varsSearchFilter, lastSearchFilter)) {
+					strcpy_s(lastSearchFilter, varsSearchFilter); // Update last search filter
+					filteredVars.clear();
+
+					EGSDK::GamePH::PlayerVariables::vars.ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
+						if (ShouldDisplayVariable(playerVarPtr, varsSearchFilter))
+							filteredVars.push_back(playerVarPtr.get()); // Store raw pointer
+					});
+				}
+
+				ImGui::Text("Total variables: %zu", filteredVars.size()); // Debug info
+
+				ImGuiListClipper clipper;
+				clipper.Begin(filteredVars.size());
+
+				while (clipper.Step()) {
+					for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+						RenderPlayerVariable(filteredVars[i]);
+				}
 
 				ImGui::Unindent();
 			}
