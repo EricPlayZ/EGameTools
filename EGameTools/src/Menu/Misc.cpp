@@ -36,7 +36,7 @@ namespace EGT::Menu {
 			return lowerKey.find(lowerFilter) != std::string::npos;
 		}
 		static void RestoreVariableToDefault(const std::unique_ptr<EGSDK::Engine::CVar>& cVarPtr) {
-			auto cVar = EGSDK::Engine::CVars::GetVarRef(cVarPtr.get());
+			auto cVar = EGSDK::Engine::CVars::GetVarRefFromPtr(cVarPtr.get());
 
 			ImGui_impl::DeferredActions::Add([cVar]() mutable {
 				switch (cVar->GetType()) {
@@ -63,7 +63,7 @@ namespace EGT::Menu {
 			});
 		}
 		static void RenderRendererCVar(const std::unique_ptr<EGSDK::Engine::CVar>& cVarPtr) {
-			auto cVar = EGSDK::Engine::CVars::GetVarRef(cVarPtr.get());
+			auto cVar = EGSDK::Engine::CVars::GetVarRefFromPtr(cVarPtr.get());
 
 			ImGui::BeginDisabled(cVar->IsManagedByBool());
 			switch (cVar->GetType()) {

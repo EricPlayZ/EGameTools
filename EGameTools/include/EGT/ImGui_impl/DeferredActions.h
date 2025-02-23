@@ -2,6 +2,7 @@
 #include <functional>
 #include <vector>
 #include <mutex>
+#include <shared_mutex>
 
 namespace EGT::ImGui_impl {
     class DeferredActions {
@@ -13,6 +14,7 @@ namespace EGT::ImGui_impl {
         static void Process();
     private:
         static std::vector<std::function<void()>> actions;
-        static std::mutex mutex;
+        static std::mutex writingMutex;
+        static std::shared_mutex readingMutex;
     };
 }

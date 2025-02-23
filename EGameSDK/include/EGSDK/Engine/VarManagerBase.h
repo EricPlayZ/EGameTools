@@ -2,6 +2,7 @@
 #include <string>
 #include <any>
 #include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 #include <intrin.h>
 #include <variant>
@@ -27,7 +28,7 @@ namespace EGSDK::Engine {
         static VarMapT defaultVars;
         static VarMapT defaultCustomVars;
 
-        static std::optional<VarRef<VarMapT, VarT>> GetVarRef(VarT* var);
+        static std::optional<VarRef<VarMapT, VarT>> GetVarRefFromPtr(VarT* var);
         static std::optional<VarRef<VarMapT, VarT>> GetVarRef(const char* name);
         static std::optional<VarRef<VarMapT, VarT>> GetCustomVarRef(const char* name);
         static std::optional<VarRef<VarMapT, VarT>> GetDefaultVarRef(const char* name);
@@ -41,13 +42,14 @@ namespace EGSDK::Engine {
         static void ManageVarByBool(const char* name, T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
             auto playerVar = GetVarRef(name);
             if (playerVar)
-                _ManageByBool(&*playerVar, valueIfTrue, valueIfFalse, boolVal, usePreviousVal);
+                _ManageByBool(_ReturnAddress(), &*playerVar, valueIfTrue, valueIfFalse, boolVal, usePreviousVal);
         }
     private:
         static std::unordered_map<std::string, std::any> prevVarValueMap;
         static std::unordered_map<std::string, bool> prevBoolValueMap;
         static std::unordered_map<std::string, uint64_t> varOwnerMap;
-        static std::recursive_mutex mutex;
+        static std::mutex writingMutex;
+        static std::shared_mutex readingMutex;
 
         static std::optional<VarRef<VarMapT, VarT>> _GetVarRef(const char* name, VarMapT& map);
 
@@ -66,15 +68,16 @@ namespace EGSDK::Engine {
             auto defVar = GetDefaultVarRef(name);
 
             if constexpr (std::is_same_v<T, std::string>) {
+                std::string valueStr = Utils::Values::to_string(value);
                 switch (var->GetType()) {
                     case VarType::Float:
-                        _SetValueFromList<float>(var, std::stof(Utils::Values::to_string(value)));
+                        _SetValueFromList<float>(var, std::stof(valueStr));
                         return;
                     case VarType::Int:
-                        _SetValueFromList<int>(var, std::stof(Utils::Values::to_string(value)));
+                        _SetValueFromList<int>(var, std::stof(valueStr));
                         return;
                     case VarType::Bool:
-                        _SetValueFromList<bool>(var, std::stof(Utils::Values::to_string(value)));
+                        _SetValueFromList<bool>(var, !_strcmpi(valueStr.c_str(), "true"));
                         return;
                     default:
                         break;
@@ -93,12 +96,12 @@ namespace EGSDK::Engine {
             var->SetValue(value);
         }
         template <AllowedVarTypes T>
-        static void _ManageByBool(VarRef<VarMapT, VarT>* var, T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
+        static void _ManageByBool(void* returnAddr, VarRef<VarMapT, VarT>* var, T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
             if (!var)
                 return;
 
-            uint64_t caller = reinterpret_cast<uint64_t>(_ReturnAddress());
-            std::lock_guard lock(mutex);
+            uint64_t caller = reinterpret_cast<uint64_t>(returnAddr);
+            std::shared_lock lock(readingMutex);
 
             const char* name = var->GetName();
 

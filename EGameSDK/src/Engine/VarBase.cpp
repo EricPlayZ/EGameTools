@@ -3,36 +3,35 @@
 namespace EGSDK::Engine {
 	std::unordered_map<const VarBase*, std::string> VarBase::varNames{};
 	std::unordered_map<const VarBase*, VarType> VarBase::varTypes{};
-	std::recursive_mutex VarBase::mutex{};
+	std::mutex VarBase::writingMutex{};
+	std::shared_mutex VarBase::readingMutex{};
 
 	VarBase::VarBase(const std::string& name, VarType type) {
-		std::lock_guard lock(mutex);
 		SetName(name);
 		SetType(type);
 	}
 	VarBase::~VarBase() {
-		std::lock_guard lock(mutex);
 		varNames.erase(this);
 		varTypes.erase(this);
 	}
 
 	const char* VarBase::GetName() const {
-		std::lock_guard lock(mutex);
+		std::shared_lock lock(readingMutex);
 		auto it = varNames.find(this);
 		return it != varNames.end() ? it->second.c_str() : nullptr;
 	}
 	void VarBase::SetName(const std::string& newName) {
-		std::lock_guard lock(mutex);
+		std::lock_guard lock(writingMutex);
 		varNames[this] = newName;
 	}
 
 	VarType VarBase::GetType() const {
-		std::lock_guard lock(mutex);
+		std::shared_lock lock(readingMutex);
 		auto it = varTypes.find(this);
 		return it != varTypes.end() ? it->second : VarType::NONE;
 	}
 	void VarBase::SetType(VarType newType) {
-		std::lock_guard lock(mutex);
+		std::lock_guard lock(writingMutex);
 		varTypes[this] = newType;
 	}
 }

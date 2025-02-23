@@ -48,6 +48,7 @@ namespace EGSDK::GamePH {
 	class EGameSDK_API PlayerVariables : public Engine::VarManagerBase<PlayerVarMap, PlayerVar> {
 	public:
 		using Base = VarManagerBase<PlayerVarMap, PlayerVar>;
+		using Base::GetVarRefFromPtr;
 		using Base::GetVarRef;
 		using Base::GetCustomVarRef;
 		using Base::GetDefaultVarRef;

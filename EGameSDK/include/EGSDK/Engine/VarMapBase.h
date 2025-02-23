@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -32,13 +33,14 @@ namespace EGSDK::Engine {
 
         template <typename Callable, typename... Args>
         void ForEach(Callable&& func, Args&&... args) {
-            std::lock_guard lock(mutex);
+            std::shared_lock lock(readingMutex);
             for (const auto& name : varsOrdered)
                 func(vars.at(name), std::forward<Args>(args)...);
         }
     protected:
         std::unordered_map<std::string, std::unique_ptr<VarT>> vars;
         std::vector<std::string> varsOrdered;
-        mutable std::recursive_mutex mutex;
+        mutable std::mutex writingMutex;
+        mutable std::shared_mutex readingMutex;
     };
 }

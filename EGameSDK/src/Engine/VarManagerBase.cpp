@@ -21,10 +21,12 @@ namespace EGSDK::Engine {
     std::unordered_map<std::string, uint64_t> VarManagerBase<VarMapT, VarT>::varOwnerMap{};
 
     template <typename VarMapT, typename VarT>
-    std::recursive_mutex VarManagerBase<VarMapT, VarT>::mutex{};
+    std::mutex VarManagerBase<VarMapT, VarT>::writingMutex{};
+    template <typename VarMapT, typename VarT>
+    std::shared_mutex VarManagerBase<VarMapT, VarT>::readingMutex{};
 
     template <typename VarMapT, typename VarT>
-    std::optional<VarRef<VarMapT, VarT>> VarManagerBase<VarMapT, VarT>::GetVarRef(VarT* var) {
+    std::optional<VarRef<VarMapT, VarT>> VarManagerBase<VarMapT, VarT>::GetVarRefFromPtr(VarT* var) {
         return var ? std::optional<VarRef<VarMapT, VarT>>(VarRef<VarMapT, VarT>(var)) : std::nullopt;
     }
     template <typename VarMapT, typename VarT>
@@ -61,7 +63,7 @@ namespace EGSDK::Engine {
     template <typename VarMapT, typename VarT>
     bool VarManagerBase<VarMapT, VarT>::AreAllCustomVarsManagedByBool() {
         bool allManagedByBool = true;
-        vars.ForEach([&allManagedByBool](const std::unique_ptr<VarT>& varPtr) {
+        customVars.ForEach([&allManagedByBool](const std::unique_ptr<VarT>& varPtr) {
             if (!_IsManagedByBool(varPtr->GetName())) {
                 allManagedByBool = false;
                 return;
@@ -72,7 +74,7 @@ namespace EGSDK::Engine {
 
     template <typename VarMapT, typename VarT>
     bool VarManagerBase<VarMapT, VarT>::_IsManagedByBool(const char* name) {
-        std::lock_guard<std::recursive_mutex> lock(mutex);
+        std::shared_lock lock(readingMutex);
         return (prevBoolValueMap.find(name) != prevBoolValueMap.end()) && prevBoolValueMap[name];
     }
     template <typename VarMapT, typename VarT>

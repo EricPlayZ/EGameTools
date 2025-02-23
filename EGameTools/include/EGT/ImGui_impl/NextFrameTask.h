@@ -2,6 +2,7 @@
 #include <functional>
 #include <vector>
 #include <mutex>
+#include <shared_mutex>
 
 namespace EGT::ImGui_impl {
     class NextFrameTask {
@@ -16,7 +17,8 @@ namespace EGT::ImGui_impl {
             Task task{};
         };
 
-        static std::vector<TaskEntry>& GetTaskQueue();
-        static std::mutex& GetMutex();
+        static std::vector<TaskEntry> taskQueue;
+        static std::mutex writingMutex;
+        static std::shared_mutex readingMutex;
     };
 }

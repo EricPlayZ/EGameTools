@@ -34,15 +34,16 @@ namespace EGSDK::Engine {
                 return;
 
             if constexpr (std::is_same_v<T, std::string>) {
+                std::string valueStr = Utils::Values::to_string(value);
                 switch (ptr->GetType()) {
                     case VarType::Float:
-                        SetValue<float>(std::stof(Utils::Values::to_string(value)));
+                        SetValue<float>(std::stof(valueStr));
                         return;
                     case VarType::Int:
-                        SetValue<int>(std::stof(Utils::Values::to_string(value)));
+                        SetValue<int>(std::stof(valueStr));
                         return;
                     case VarType::Bool:
-                        SetValue<bool>(std::stof(Utils::Values::to_string(value)));
+                        SetValue<bool>(!_strcmpi(valueStr.c_str(), "true"));
                         return;
                     default:
                         break;
@@ -72,6 +73,6 @@ namespace EGSDK::Engine {
         }
     protected:
         const char* name;
-        VarT* ptr;
+        VarT* ptr = nullptr;
     };
 }

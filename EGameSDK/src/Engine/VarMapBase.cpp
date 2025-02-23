@@ -5,11 +5,11 @@
 
 namespace EGSDK::Engine {
     template <typename VarT>
-    VarMapBase<VarT>::VarMapBase() : vars(), varsOrdered(), mutex() {}
+    VarMapBase<VarT>::VarMapBase() : vars(), varsOrdered(), writingMutex(), readingMutex() {}
 
     template <typename VarT>
     std::unique_ptr<VarT>& VarMapBase<VarT>::try_emplace(std::unique_ptr<VarT> var) {
-        std::lock_guard lock(mutex);
+        std::lock_guard lock(writingMutex);
         const std::string& name = var->GetName();
         auto [it, inserted] = vars.try_emplace(name, std::move(var));
         if (inserted)
@@ -19,14 +19,14 @@ namespace EGSDK::Engine {
 
     template <typename VarT>
     VarT* VarMapBase<VarT>::Find(const std::string& name) const {
-        std::lock_guard lock(mutex);
+        std::shared_lock lock(readingMutex);
         auto it = vars.find(name);
         return (it != vars.end()) ? it->second.get() : nullptr;
     }
 
     template <typename VarT>
     void VarMapBase<VarT>::Erase(const std::string& name) {
-        std::lock_guard lock(mutex);
+        std::lock_guard lock(writingMutex);
         auto it = vars.find(name);
         if (it == vars.end())
             return;
@@ -38,25 +38,25 @@ namespace EGSDK::Engine {
 
     template <typename VarT>
     bool VarMapBase<VarT>::empty() const {
-        std::lock_guard lock(mutex);
+        std::shared_lock lock(readingMutex);
         return vars.empty();
     }
 
     template <typename VarT>
     bool VarMapBase<VarT>::none_of(const std::string& name) const {
-        std::lock_guard lock(mutex);
+        std::shared_lock lock(readingMutex);
         return vars.find(name) == vars.end();
     }
 
     template <typename VarT>
     size_t VarMapBase<VarT>::size() {
-        std::lock_guard lock(mutex);
+        std::shared_lock lock(readingMutex);
         return vars.size();
     }
 
     template <typename VarT>
     void VarMapBase<VarT>::reserve(size_t count) {
-        std::lock_guard lock(mutex);
+        std::lock_guard lock(writingMutex);
         vars.reserve(count);
         varsOrdered.reserve(count);
     }

@@ -91,7 +91,9 @@ namespace EGT::Menu {
 				return;
 
 			EGSDK::GamePH::PlayerVariables::customVars.ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& customPlayerVarPtr) {
-				auto customPlayerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(customPlayerVarPtr.get());
+				auto customPlayerVar = EGSDK::GamePH::PlayerVariables::GetVarRefFromPtr(customPlayerVarPtr.get());
+				if (!customPlayerVar)
+					return;
 				if (customPlayerVar->IsManagedByBool())
 					return;
 								
@@ -213,16 +215,20 @@ namespace EGT::Menu {
 				if (value.empty())
 					continue;
 
-				auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(name.c_str());
-				if (playerVar)
-					playerVar->SetValue(value);
+				ImGui_impl::DeferredActions::Add([name, value]() {
+					auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(name.c_str());
+					if (playerVar && playerVar->GetType() != EGSDK::Engine::VarType::String)
+						playerVar->SetValueFromList(value);
+				});
 			}
 			file.close();
 			ImGui::OpenPopup("Loaded player variables!");
 		}
 
 		static void RestoreVariableToDefault(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(playerVarPtr.get());
+			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(playerVarPtr->GetName());
+			if (!playerVar)
+				return;
 
 			ImGui_impl::DeferredActions::Add([playerVar]() mutable {
 				switch (playerVar->GetType()) {
@@ -243,11 +249,12 @@ namespace EGT::Menu {
 			(restoreVarsToSavedVarsEnabled ? EGSDK::GamePH::PlayerVariables::vars : EGSDK::GamePH::PlayerVariables::customVars).ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
 				RestoreVariableToDefault(playerVarPtr);
 			});
-				
-			ImGui::OpenPopup("Restored player variables!");
 		}
 		static void SaveVariableAsDefault(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(playerVarPtr.get());
+			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRefFromPtr(playerVarPtr.get());
+			if (!playerVar)
+				return;
+
 			switch (playerVar->GetType()) {
 				case EGSDK::Engine::VarType::String:
 					break; // TO IMPLEMENT
@@ -299,7 +306,9 @@ namespace EGT::Menu {
 			ImGui::PopStyleColor();
 		}
 		static void RenderPlayerVariable(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(playerVarPtr.get());
+			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRefFromPtr(playerVarPtr.get());
+			if (!playerVar)
+				return;
 
 			ImGui::BeginDisabled(playerVar->IsManagedByBool());
 			switch (playerVar->GetType()) {
@@ -352,8 +361,10 @@ namespace EGT::Menu {
 				if (ImGui::Button("Save variables to file", "Saves current player variables to chosen file inside the file dialog"))
 					ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRPath", "Choose Folder", nullptr, { saveSCRPath.empty() ? "." : saveSCRPath });
 				ImGui::SameLine();
-				if (ImGui::Button("Load variables from file", "Loads player variables from chosen file inside the file dialog"))
-					ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRLoadPath", "Choose File", ".scr", { loadSCRFilePath.empty() ? "." : loadSCRFilePath });
+				if (ImGui::Button("Load variables from file", "Loads player variables from chosen file inside the file dialog")) {
+					std::filesystem::path _loadSCRFilePath = loadSCRFilePath;
+					ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRLoadPath", "Choose File", ".scr", { !_loadSCRFilePath.empty() && std::filesystem::is_directory(_loadSCRFilePath.parent_path()) ? _loadSCRFilePath.parent_path().string() : "." });
+				}
 
 				ImGui::Checkbox("Restore variables to saved variables", &restoreVarsToSavedVarsEnabled, "Sets whether or not \"Restore variables to default\" should restore variables to the ones saved by \"Save current variables as default\"");
 				ImGui::Checkbox("Debug Mode", &debugEnabled, "Shows text boxes alongside player variables, which will show the address in memory of each variable");
@@ -399,7 +410,7 @@ namespace EGT::Menu {
 			ImGui::DisplaySimplePopupMessage("Failed saving player variables.", "There was an error opening a handle to the file \"%s\\player_variables.scr\"! The file is most likely already open inanother program. Please close it!", saveSCRPath.c_str());
 			ImGui::DisplaySimplePopupMessage("Saved player variables!", "Player variables have been saved to \"%s\\player_variables.scr\"!", saveSCRPath.c_str());
 
-			ImGui::DisplaySimplePopupMessage("Failed loading player variables.", "There was an error opening the file \"%s\"! The file is most likely already open in another program. Please closeit!", loadSCRFilePath.c_str());
+			ImGui::DisplaySimplePopupMessage("Failed loading player variables.", "There was an error opening the file \"%s\"! The file is most likely already open in another program. Please close it!", loadSCRFilePath.c_str());
 			ImGui::DisplaySimplePopupMessage("Loaded player variables!", "Player variables have been loaded from \"%s\"!", loadSCRFilePath.c_str());
 
 			ImGui::DisplaySimplePopupMessage("Restored player variables!", "All player variables have been restored to default values!");

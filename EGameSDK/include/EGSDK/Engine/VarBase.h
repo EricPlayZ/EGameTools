@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <string>
 #include <mutex>
+#include <shared_mutex>
 #include <variant>
 #include <type_traits>
 #include <EGSDK\Exports.h>
@@ -34,7 +35,8 @@ namespace EGSDK::Engine {
         VarType GetType() const;
         void SetType(VarType type);
     protected:
-        static std::recursive_mutex mutex;
+        static std::mutex writingMutex;
+        static std::shared_mutex readingMutex;
     private:
         static std::unordered_map<const VarBase*, std::string> varNames;
         static std::unordered_map<const VarBase*, VarType> varTypes;
