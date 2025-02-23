@@ -13,10 +13,10 @@
   <ItemGroup>
     <ClCompile Include="deps\memscan\memscan.c" />
     <ClCompile Include="deps\memscan\util\util.c" />
-    <ClCompile Include="Offsets.cpp" />
-    <ClCompile Include="SaveGameManager.cpp" />
     <ClCompile Include="src\ClassHelpers.cpp" />
     <ClCompile Include="src\Core\Core.cpp" />
+    <ClCompile Include="src\Core\SaveGameManager.cpp" />
+    <ClCompile Include="src\Core\SteamAPI.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\Engine\CBulletPhysicsCharacter.cpp" />
     <ClCompile Include="src\Engine\CGame.cpp" />
@@ -34,6 +34,9 @@
     <ClCompile Include="src\Engine\CVideoSettings.cpp" />
     <ClCompile Include="src\Engine\Engine_Misc.cpp" />
     <ClCompile Include="src\Engine\VarBase.cpp" />
+    <ClCompile Include="src\Engine\VarManagerBase.cpp" />
+    <ClCompile Include="src\Engine\VarMapBase.cpp" />
+    <ClCompile Include="src\Engine\VarRef.cpp" />
     <ClCompile Include="src\GamePH\CoPlayerRestrictions.cpp" />
     <ClCompile Include="src\GamePH\DayNightCycle.cpp" />
     <ClCompile Include="src\GamePH\FreeCamera.cpp" />
@@ -55,6 +58,7 @@
     <ClCompile Include="src\GamePH\TimeWeather\CSystem.cpp" />
     <ClCompile Include="src\GamePH\TPPCameraDI.cpp" />
     <ClCompile Include="src\Mtx34.cpp" />
+    <ClCompile Include="src\Offsets.cpp" />
     <ClCompile Include="src\Utils\Files.cpp" />
     <ClCompile Include="src\Utils\Hook.cpp" />
     <ClCompile Include="src\Utils\Memory.cpp" />
@@ -62,13 +66,10 @@
     <ClCompile Include="src\Utils\Sigscan.cpp" />
     <ClCompile Include="src\Utils\Time.cpp" />
     <ClCompile Include="src\Utils\Values.cpp" />
+    <ClCompile Include="src\Utils\WinMemory.cpp" />
     <ClCompile Include="src\Vec2.cpp" />
     <ClCompile Include="src\Vec3.cpp" />
     <ClCompile Include="src\Vec4.cpp" />
-    <ClCompile Include="SteamAPI.cpp" />
-    <ClCompile Include="VarManagerBase.cpp" />
-    <ClCompile Include="VarMapBase.cpp" />
-    <ClCompile Include="WinMemory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\EGSDK\ClassHelpers.h" />
@@ -95,6 +96,7 @@
     <ClInclude Include="include\EGSDK\Engine\VarBase.h" />
     <ClInclude Include="include\EGSDK\Engine\VarManagerBase.h" />
     <ClInclude Include="include\EGSDK\Engine\VarMapBase.h" />
+    <ClInclude Include="include\EGSDK\Engine\VarRef.h" />
     <ClInclude Include="include\EGSDK\Exports.h" />
     <ClInclude Include="include\EGSDK\GamePH\CameraFPPDI.h" />
     <ClInclude Include="include\EGSDK\GamePH\CoBaseCameraProxy.h" />

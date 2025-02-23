@@ -20,7 +20,7 @@ namespace EGT::Menu {
 
 		EGSDK::Vec3 cameraOffset{};
 		float firstPersonFOV = baseFOV;
-		float originalFirstPersonFOVAfterZoomIn = firstPersonFOV;
+		float originalFirstPersonFOVBeforeZoomIn = firstPersonFOV;
 		ImGui::KeyBindOption firstPersonZoomIn{ false, 'Q', false };
 		static bool isZoomingIn = false;
 
@@ -90,25 +90,39 @@ namespace EGT::Menu {
 			}
 			
 			if (iLevel && iLevel->IsLoaded() && viewCam && !thirdPersonCamera.GetValue() && !freeCam.GetValue()) {
+				constexpr float level1Min = 42.0f;
+				constexpr float level2Min = 25.0f;
+				constexpr float level3Min = 15.0f;
+
 				if (firstPersonZoomIn.IsKeyDown()) {
 					if (firstPersonZoomIn.IsKeyPressed()) {
 						hasChangedZoomLevel = true;
 						if (!isZoomingIn) {
-							originalFirstPersonFOVAfterZoomIn = viewCam->GetFOV();
-							previousFirstPersonFOV = originalFirstPersonFOVAfterZoomIn;
+							originalFirstPersonFOVBeforeZoomIn = viewCam->GetFOV();
+							previousFirstPersonFOV = originalFirstPersonFOVBeforeZoomIn;
 						} else
 							previousFirstPersonFOV = firstPersonFOV;
+
+						float rawFOVLevel1 = originalFirstPersonFOVBeforeZoomIn - 25.0f;
+						float rawFOVLevel2 = originalFirstPersonFOVBeforeZoomIn - 45.0f;
+
+						if (std::abs(rawFOVLevel1 - level1Min) > 5.0f)
+							zoomLevel = 2;
+						else if (std::abs(rawFOVLevel2 - level2Min) > 5.0f)
+							zoomLevel = 3;
+						else
+							zoomLevel = 1;
 					}
 
 					isZoomingIn = true;
 
 					float targetFOV = previousFirstPersonFOV;
-					if (zoomLevel == 0)
-						targetFOV = std::max(originalFirstPersonFOVAfterZoomIn - 25.0f, 42.0f);
-					else if (zoomLevel == 1)
-						targetFOV = std::max(originalFirstPersonFOVAfterZoomIn - 45.0f, 25.0f);
+					if (zoomLevel == 1)
+						targetFOV = std::max(originalFirstPersonFOVBeforeZoomIn - 25.0f, level1Min);
 					else if (zoomLevel == 2)
-						targetFOV = std::max(originalFirstPersonFOVAfterZoomIn - 65.0f, 15.0f);
+						targetFOV = std::max(originalFirstPersonFOVBeforeZoomIn - 45.0f, level2Min);
+					else if (zoomLevel == 3)
+						targetFOV = std::max(originalFirstPersonFOVBeforeZoomIn - 65.0f, level3Min);
 
 					firstPersonFOV = ImGui::AnimateLerp("zoomInFOVLerp", previousFirstPersonFOV, targetFOV, 0.3f, hasChangedZoomLevel, &ImGui::AnimEaseOutSine);
 					viewCam->SetFOV(firstPersonFOV);
@@ -116,28 +130,28 @@ namespace EGT::Menu {
 
 					if (ImGui::KeyBindOption::scrolledMouseWheelUp) {
 						ImGui::KeyBindOption::scrolledMouseWheelUp = false;
-						if (zoomLevel < 2) {
+						if (zoomLevel < 3) {
 							zoomLevel++;
 							previousFirstPersonFOV = firstPersonFOV;
 							hasChangedZoomLevel = true;
 						}
 					} else if (ImGui::KeyBindOption::scrolledMouseWheelDown) {
 						ImGui::KeyBindOption::scrolledMouseWheelDown = false;
-						if (zoomLevel > 0) {
+						if (zoomLevel > 1) {
 							zoomLevel--;
 							previousFirstPersonFOV = firstPersonFOV;
 							hasChangedZoomLevel = true;
 						}
 					}
 				} else {
-					zoomLevel = 0;
+					zoomLevel = 1;
 					if (firstPersonZoomIn.IsKeyReleased()) {
 						hasChangedZoomLevel = true;
 						previousFirstPersonFOV = firstPersonFOV;
 					}
 
-					if (!EGSDK::Utils::Values::are_samef(firstPersonFOV, originalFirstPersonFOVAfterZoomIn) && isZoomingIn) {
-						firstPersonFOV = ImGui::AnimateLerp("zoomInFOVLerp", previousFirstPersonFOV, originalFirstPersonFOVAfterZoomIn, 0.25f, hasChangedZoomLevel, &ImGui::AnimEaseOutSine);
+					if (!EGSDK::Utils::Values::are_samef(firstPersonFOV, originalFirstPersonFOVBeforeZoomIn) && isZoomingIn) {
+						firstPersonFOV = ImGui::AnimateLerp("zoomInFOVLerp", previousFirstPersonFOV, originalFirstPersonFOVBeforeZoomIn, 0.25f, hasChangedZoomLevel, &ImGui::AnimEaseOutSine);
 						viewCam->SetFOV(firstPersonFOV);
 						hasChangedZoomLevel = false;
 					} else
@@ -251,7 +265,7 @@ namespace EGT::Menu {
 				lensDistortionJustEnabled = false;
 			}
 
-			EGSDK::GamePH::PlayerVariables::ChangeVar("FOVCorrection", goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
+			EGSDK::GamePH::PlayerVariables::GetVarRef("FOVCorrection")->SetValue(goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
 			EGSDK::GamePH::PlayerVariables::ManageVarByBool("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? goProMode.GetValue() : disableHeadCorrection.GetValue(), true);
 		}
 		static void UpdateDisabledOptions() {

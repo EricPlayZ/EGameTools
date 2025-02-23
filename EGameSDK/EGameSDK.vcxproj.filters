@@ -133,20 +133,8 @@
     <ClCompile Include="src\GamePH\CoPlayerRestrictions.cpp">
       <Filter>src\GamePH</Filter>
     </ClCompile>
-    <ClCompile Include="SaveGameManager.cpp">
-      <Filter>src\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="SteamAPI.cpp">
-      <Filter>src\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Offsets.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine\CVars.cpp">
       <Filter>src\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="WinMemory.cpp">
-      <Filter>src\Utils</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\IBaseCamera.cpp">
       <Filter>src\Engine</Filter>
@@ -166,13 +154,28 @@
     <ClCompile Include="src\Vec2.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="VarMapBase.cpp">
-      <Filter>src\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="VarManagerBase.cpp">
-      <Filter>src\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine\VarBase.cpp">
+      <Filter>src\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\SaveGameManager.cpp">
+      <Filter>src\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\SteamAPI.cpp">
+      <Filter>src\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Offsets.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils\WinMemory.cpp">
+      <Filter>src\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\VarRef.cpp">
+      <Filter>src\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\VarMapBase.cpp">
+      <Filter>src\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\VarManagerBase.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -417,6 +420,9 @@
       <Filter>include\Engine</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\VarBase.h">
+      <Filter>include\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGSDK\Engine\VarRef.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
   </ItemGroup>

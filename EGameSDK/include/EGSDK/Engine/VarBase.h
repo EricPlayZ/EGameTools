@@ -3,6 +3,7 @@
 #include <string>
 #include <mutex>
 #include <variant>
+#include <type_traits>
 #include <EGSDK\Exports.h>
 #include <EGSDK\Vec3.h>
 #include <EGSDK\Vec4.h>
@@ -19,11 +20,12 @@ namespace EGSDK::Engine {
     };
 
     using VarValueType = std::variant<std::string, float, int, Vec3, Vec4, bool>;
+    template <typename T>
+    concept AllowedVarTypes = std::is_same_v<T, std::string> || std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, Vec3> || std::is_same_v<T, Vec4> || std::is_same_v<T, bool>;
 
     class EGameSDK_API VarBase {
     public:
-        VarBase(const std::string& name);
-        VarBase(const std::string& name, VarType type);
+        VarBase(const std::string& name, VarType type = VarType::NONE);
         ~VarBase();
 
         const char* GetName() const;

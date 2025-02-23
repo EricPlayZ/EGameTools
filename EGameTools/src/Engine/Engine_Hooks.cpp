@@ -90,7 +90,7 @@ namespace EGT::Engine {
 			if (Menu::Camera::thirdPersonCamera.GetValue())
 				fov = static_cast<float>(Menu::Camera::thirdPersonFOV);
 			else if (!Menu::Camera::firstPersonZoomIn.IsKeyDown())
-				Menu::Camera::originalFirstPersonFOVAfterZoomIn = fov;
+				Menu::Camera::originalFirstPersonFOVBeforeZoomIn = fov;
 
 			return SetFOVHook.ExecuteCallbacksWithOriginal(pCBaseCamera, fov);
 		} };
@@ -321,40 +321,41 @@ namespace EGT::Engine {
 			if (!varValuePtr)
 				return varValuePtr;
 
-			EGSDK::Engine::CVar* cVar = EGSDK::Engine::CVars::vars.Find(valueOffset);
+			auto cVar = EGSDK::Engine::CVars::GetVarRef(valueOffset);
 			if (!cVar)
 				return varValuePtr;
 			cVar->AddValuePtr(varValuePtr);
 
-			EGSDK::Engine::CVar* customCVar = EGSDK::Engine::CVars::customVars.Find(cVar->GetName());
+			//EGSDK::Engine::CVar* customCVar = EGSDK::Engine::CVars::customVars.Find(cVar->GetName());
+			auto customCVar = EGSDK::Engine::CVars::GetCustomVarRef(cVar->GetName());
 			if (!customCVar)
 				return varValuePtr;
 
 			switch (cVar->GetType()) {
 				case EGSDK::Engine::VarType::Float:
 				{
-					auto value = EGSDK::Engine::CVars::GetVarValue<float>(customCVar);
+					auto value = customCVar->GetValue<float>();
 					if (value)
 						cVar->SetValue(*value);
 					break;
 				}
 				case EGSDK::Engine::VarType::Int:
 				{
-					auto value = EGSDK::Engine::CVars::GetVarValue<int>(customCVar);
+					auto value = customCVar->GetValue<int>();
 					if (value)
 						cVar->SetValue(*value);
 					break;
 				}
 				case EGSDK::Engine::VarType::Vec3:
 				{
-					auto value = EGSDK::Engine::CVars::GetVarValue<EGSDK::Vec3>(customCVar);
+					auto value = customCVar->GetValue<EGSDK::Vec3>();
 					if (value)
 						cVar->SetValue(*value);
 					break;
 				}
 				case EGSDK::Engine::VarType::Vec4:
 				{
-					auto value = EGSDK::Engine::CVars::GetVarValue<EGSDK::Vec4>(customCVar);
+					auto value = customCVar->GetValue<EGSDK::Vec4>();
 					if (value)
 						cVar->SetValue(*value);
 					break;

@@ -62,6 +62,7 @@ namespace EGSDK::GamePH {
 		}, value);
 	}
 
+
 	StringPlayerVariable::StringPlayerVariable(const std::string& name) : PlayerVar(name) {
 		SetType(Engine::VarType::String);
 	}

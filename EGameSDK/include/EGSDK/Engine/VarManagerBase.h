@@ -11,124 +11,27 @@
 #include <EGSDK\Vec4.h>
 #include <EGSDK\Utils\Values.h>
 #include <EGSDK\Engine\VarBase.h>
+#include <EGSDK\Engine\VarRef.h>
+#include <EGSDK\Engine\VarMapBase.h>
 
 #pragma intrinsic(_ReturnAddress)
 
 namespace EGSDK::Engine {
-    template <typename T>
-    concept AllowedVarTypes = std::is_same_v<T, std::string> || std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, Vec3> || std::is_same_v<T, Vec4> || std::is_same_v<T, bool>;
-
-    template <typename VarMapT, typename VarT>
-    class VarManagerBase;
-
-    template <typename VarMapT, typename VarT>
-    class VarRef {
-    public:
-        VarRef(VarT* var) : ptr(var) {
-            name = var->GetName();
-        }
-        VarRef(const char* name, VarMapT& map) : name(name), ptr(map.Find(name)) {}
-
-        const char* GetName() const {
-            return name;
-        }
-        VarType GetType() const {
-            return ptr ? ptr->GetType() : VarType::NONE;
-        }
-        VarT* GetPtr() const {
-            return ptr;
-        }
-
-        template <AllowedVarTypes T>
-        std::optional<T> GetValue() {
-            if (!ptr)
-                return std::nullopt;
-
-            auto value = ptr->GetValue();
-            auto variantValue = std::get_if<T>(&value);
-            return variantValue ? std::optional<T>(*variantValue) : std::nullopt;
-        }
-        template <AllowedVarTypes T>
-        void SetValue(T value) {
-            if (!ptr)
-                return;
-
-            if constexpr (std::is_same_v<T, std::string>) {
-                switch (ptr->GetType()) {
-                    case VarType::Float:
-                        SetValue<float>(std::stof(Utils::Values::to_string(value)));
-                        return;
-                    case VarType::Int:
-                        SetValue<int>(std::stof(Utils::Values::to_string(value)));
-                        return;
-                    case VarType::Bool:
-                        SetValue<bool>(std::stof(Utils::Values::to_string(value)));
-                        return;
-                    default:
-                        break;
-                }
-            }
-            ptr->SetValue(value);
-        }
-        template <AllowedVarTypes T>
-        void SetValueFromList(T value) {
-            VarManagerBase<VarMapT, VarT>::template _SetValueFromList<T>(this, value);
-        }
-
-        bool IsManagedByBool() {
-            return VarManagerBase<VarMapT, VarT>::_IsManagedByBool(this);
-        }
-        bool HasCustomValue() {
-            return VarManagerBase<VarMapT, VarT>::_HasCustomValue(this);
-        }
-
-        template <AllowedVarTypes T>
-        void ManageByBool(T valueIfTrue, T valueIfFalse, bool boolVal, bool usePreviousVal = true) {
-            VarManagerBase<VarMapT, VarT>::template _ManageByBool<T>(this, valueIfTrue, valueIfFalse, boolVal, usePreviousVal);
-        }
-        template <AllowedVarTypes T>
-        void SaveVariableAsDefault() {
-            VarManagerBase<VarMapT, VarT>::template _SaveVariableAsDefault<T>(this);
-        }
-        template <AllowedVarTypes T>
-        void RestoreVarToDefault(bool restoreToSavedVars = false) {
-            VarManagerBase<VarMapT, VarT>::template _RestoreVarToDefault<T>(this, restoreToSavedVars);
-        }
-    private:
-        const char* name = nullptr;
-        VarT* ptr = nullptr;
-    };
-
     template <typename VarMapT, typename VarT>
     class EGameSDK_API VarManagerBase {
         template <typename, typename>
         friend class VarRef;
-
     public:
         static VarMapT vars;
         static VarMapT customVars;
         static VarMapT defaultVars;
         static VarMapT defaultCustomVars;
 
-        static std::optional<VarRef<VarMapT, VarT>> GetVarRef(VarT* var) {
-            return std::optional<VarRef<VarMapT, VarT>>(VarRef<VarMapT, VarT>(var));
-        }
-        static std::optional<VarRef<VarMapT, VarT>> GetVarRef(const char* name) {
-            VarRef<VarMapT, VarT> varRef(name, vars);
-            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
-        }
-        static std::optional<VarRef<VarMapT, VarT>> GetCustomVarRef(const char* name) {
-            VarRef<VarMapT, VarT> varRef(name, customVars);
-            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
-        }
-        static std::optional<VarRef<VarMapT, VarT>> GetDefaultVarRef(const char* name) {
-            VarRef<VarMapT, VarT> varRef(name, defaultVars);
-            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
-        }
-        static std::optional<VarRef<VarMapT, VarT>> GetCustomDefaultVarRef(const char* name) {
-            VarRef<VarMapT, VarT> varRef(name, defaultCustomVars);
-            return varRef.GetPtr() ? std::optional<VarRef<VarMapT, VarT>>(varRef) : std::nullopt;
-        }
+        static std::optional<VarRef<VarMapT, VarT>> GetVarRef(VarT* var);
+        static std::optional<VarRef<VarMapT, VarT>> GetVarRef(const char* name);
+        static std::optional<VarRef<VarMapT, VarT>> GetCustomVarRef(const char* name);
+        static std::optional<VarRef<VarMapT, VarT>> GetDefaultVarRef(const char* name);
+        static std::optional<VarRef<VarMapT, VarT>> GetCustomDefaultVarRef(const char* name);
 
         static bool AreAnyVarsPresent();
         static bool AreAnyCustomVarsPresent();
@@ -145,6 +48,8 @@ namespace EGSDK::Engine {
         static std::unordered_map<std::string, bool> prevBoolValueMap;
         static std::unordered_map<std::string, uint64_t> varOwnerMap;
         static std::recursive_mutex mutex;
+
+        static std::optional<VarRef<VarMapT, VarT>> _GetVarRef(const char* name, VarMapT& map);
 
         static bool _IsManagedByBool(const char* name);
         static bool _IsManagedByBool(VarRef<VarMapT, VarT>* var);

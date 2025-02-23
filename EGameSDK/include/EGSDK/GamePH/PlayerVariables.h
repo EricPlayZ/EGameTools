@@ -39,13 +39,20 @@ namespace EGSDK::GamePH {
 
 	class EGameSDK_API PlayerVarMap : public Engine::VarMapBase<PlayerVar> {
 	public:
-		using Engine::VarMapBase<PlayerVar>::Find;
-		using Engine::VarMapBase<PlayerVar>::none_of;
-		using Engine::VarMapBase<PlayerVar>::empty;
+		using Base = VarMapBase<PlayerVar>;
+		using Base::Find;
+		using Base::none_of;
+		using Base::empty;
 	};
 
 	class EGameSDK_API PlayerVariables : public Engine::VarManagerBase<PlayerVarMap, PlayerVar> {
 	public:
+		using Base = VarManagerBase<PlayerVarMap, PlayerVar>;
+		using Base::GetVarRef;
+		using Base::GetCustomVarRef;
+		using Base::GetDefaultVarRef;
+		using Base::GetCustomDefaultVarRef;
+
 		static std::atomic<bool> gotPlayerVars;
 
 #ifdef EGameSDK_EXPORTS

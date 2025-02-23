@@ -7,7 +7,7 @@ namespace EGT::Menu {
 	namespace Camera {
 		extern EGSDK::Vec3 cameraOffset;
 		extern float firstPersonFOV;
-		extern float originalFirstPersonFOVAfterZoomIn;
+		extern float originalFirstPersonFOVBeforeZoomIn;
 		extern ImGui::KeyBindOption firstPersonZoomIn;
 		
 		extern ImGui::Option photoMode;

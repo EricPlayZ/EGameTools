@@ -159,10 +159,10 @@
     <ClCompile Include="deps\ImGui\imguiex_animation.cpp">
       <Filter>deps\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="src\ImGui_impl\DeferredActions.cpp">
+    <ClCompile Include="src\ImGui_impl\NextFrameTask.cpp">
       <Filter>src\ImGui_impl</Filter>
     </ClCompile>
-    <ClCompile Include="src\ImGui_impl\NextFrameTask.cpp">
+    <ClCompile Include="src\ImGui_impl\DeferredActions.cpp">
       <Filter>src\ImGui_impl</Filter>
     </ClCompile>
   </ItemGroup>

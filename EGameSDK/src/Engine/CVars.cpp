@@ -98,11 +98,6 @@ namespace EGSDK::Engine {
 		}
 		return it->second;
 	}
-	bool CVarMap::none_of(uint32_t valueOffset) {
-		std::lock_guard lock(mutex);
-		return varsByValueOffset.find(valueOffset) == varsByValueOffset.end();
-	}
-
 	CVar* CVarMap::Find(uint32_t valueOffset) const {
 		std::lock_guard lock(mutex);
 		auto it = varsByValueOffset.find(valueOffset);
@@ -120,5 +115,37 @@ namespace EGSDK::Engine {
 
 		varsByValueOffset.erase(it->second->valueOffset.data);
 		vars.erase(it);
+	}
+
+	bool CVarMap::none_of(uint32_t valueOffset) {
+		std::lock_guard lock(mutex);
+		return varsByValueOffset.find(valueOffset) == varsByValueOffset.end();
+	}
+
+	CVarRef::CVarRef(uint32_t valueOffset, CVarMap& map) : valueOffset(valueOffset), Base(map.Find(valueOffset)) {}
+	uint32_t CVarRef::GetValueOffset() const {
+		return valueOffset;
+	}
+	void CVarRef::AddValuePtr(uint64_t* ptr) {
+		if (!ptr)
+			return;
+		Base::ptr->AddValuePtr(ptr);
+	}
+
+	std::optional<CVarRef> CVars::GetVarRef(uint32_t valueOffset) {
+		return _GetVarRef(valueOffset, Base::vars);
+	}
+	std::optional<CVarRef> CVars::GetCustomVarRef(uint32_t valueOffset) {
+		return _GetVarRef(valueOffset, Base::customVars);
+	}
+	std::optional<CVarRef> CVars::GetDefaultVarRef(uint32_t valueOffset) {
+		return _GetVarRef(valueOffset, Base::defaultVars);
+	}
+	std::optional<CVarRef> CVars::GetCustomDefaultVarRef(uint32_t valueOffset) {
+		return _GetVarRef(valueOffset, Base::defaultCustomVars);
+	}
+	std::optional<CVarRef> CVars::_GetVarRef(uint32_t valueOffset, CVarMap& map) {
+		CVarRef varRef(valueOffset, map);
+		return varRef.GetPtr() ? std::optional<CVarRef>(varRef) : std::nullopt;
 	}
 }
