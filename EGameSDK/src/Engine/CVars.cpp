@@ -6,7 +6,7 @@ namespace EGSDK::Engine {
 	CVar::CVar(const std::string& name) : VarBase(name) {}
 	CVar::CVar(const std::string& name, VarType type) : VarBase(name, type) {}
 	VarValueType& CVar::GetValue() {
-		std::shared_lock lock(readingMutex);
+		std::shared_lock lock(readMutex);
 		auto it = varValues.find(this);
 		if (it == varValues.end()) {
 			switch (GetType()) {
@@ -47,7 +47,7 @@ namespace EGSDK::Engine {
 		}
 	}
 	void CVar::SetValue(const VarValueType& value) {
-		std::lock_guard lock(writingMutex);
+		std::lock_guard lock(writeMutex);
 		auto& varData = varValues[this];
 
 		std::visit([&](auto&& val) {
@@ -70,7 +70,7 @@ namespace EGSDK::Engine {
 		}, value);
 	}
 	void CVar::AddValuePtr(uint64_t* ptr) {
-		std::lock_guard lock(writingMutex);
+		std::lock_guard lock(writeMutex);
 		varValues[this].valuePtrs.push_back(ptr);
 	}
 
@@ -88,7 +88,7 @@ namespace EGSDK::Engine {
 	}
 
 	std::unique_ptr<CVar>& CVarMap::try_emplace(std::unique_ptr<CVar> cVar) {
-		std::lock_guard lock(writingMutex);
+		std::lock_guard lock(writeMutex);
 		const std::string& name = cVar->GetName();
 		auto [it, inserted] = vars.try_emplace(name, std::move(cVar));
 		if (inserted) {
@@ -99,12 +99,12 @@ namespace EGSDK::Engine {
 		return it->second;
 	}
 	CVar* CVarMap::Find(uint32_t valueOffset) const {
-		std::shared_lock lock(readingMutex);
+		std::shared_lock lock(readMutex);
 		auto it = varsByValueOffset.find(valueOffset);
 		return it == varsByValueOffset.end() ? nullptr : it->second;
 	}
 	void CVarMap::Erase(const std::string& name) {
-		std::lock_guard lock(writingMutex);
+		std::lock_guard lock(writeMutex);
 		auto it = vars.find(name);
 		if (it == vars.end())
 			return;
@@ -118,7 +118,7 @@ namespace EGSDK::Engine {
 	}
 
 	bool CVarMap::none_of(uint32_t valueOffset) {
-		std::shared_lock lock(readingMutex);
+		std::shared_lock lock(readMutex);
 		return varsByValueOffset.find(valueOffset) == varsByValueOffset.end();
 	}
 

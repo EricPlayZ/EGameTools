@@ -64,8 +64,8 @@ namespace EGSDK::Engine {
             VarMgrBase::template _ManageByBool<T>(this, valueIfTrue, valueIfFalse, boolVal, usePreviousVal);
         }
         template <AllowedVarTypes T>
-        void SaveVariableAsDefault() {
-            VarMgrBase::template _SaveVariableAsDefault<T>(this);
+        void SaveVarAsDefault() {
+            VarMgrBase::template _SaveVarAsDefault<T>(this);
         }
         template <AllowedVarTypes T>
         void RestoreVarToDefault(bool restoreToSavedVars = false) {

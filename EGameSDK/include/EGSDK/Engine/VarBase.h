@@ -35,8 +35,8 @@ namespace EGSDK::Engine {
         VarType GetType() const;
         void SetType(VarType type);
     protected:
-        static std::mutex writingMutex;
-        static std::shared_mutex readingMutex;
+        static std::mutex writeMutex;
+        static std::shared_mutex readMutex;
     private:
         static std::unordered_map<const VarBase*, std::string> varNames;
         static std::unordered_map<const VarBase*, VarType> varTypes;

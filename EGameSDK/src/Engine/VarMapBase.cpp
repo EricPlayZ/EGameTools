@@ -5,11 +5,11 @@
 
 namespace EGSDK::Engine {
     template <typename VarT>
-    VarMapBase<VarT>::VarMapBase() : vars(), varsOrdered(), writingMutex(), readingMutex() {}
+    VarMapBase<VarT>::VarMapBase() : vars(), varsOrdered(), writeMutex(), readMutex() {}
 
     template <typename VarT>
     std::unique_ptr<VarT>& VarMapBase<VarT>::try_emplace(std::unique_ptr<VarT> var) {
-        std::lock_guard lock(writingMutex);
+        std::lock_guard lock(writeMutex);
         const std::string& name = var->GetName();
         auto [it, inserted] = vars.try_emplace(name, std::move(var));
         if (inserted)
@@ -18,13 +18,13 @@ namespace EGSDK::Engine {
     }
     template <typename VarT>
     VarT* VarMapBase<VarT>::Find(const std::string& name) const {
-        std::shared_lock lock(readingMutex);
+        std::shared_lock lock(readMutex);
         auto it = vars.find(name);
         return (it != vars.end()) ? it->second.get() : nullptr;
     }
     template <typename VarT>
     void VarMapBase<VarT>::Erase(const std::string& name) {
-        std::lock_guard lock(writingMutex);
+        std::lock_guard lock(writeMutex);
         auto it = vars.find(name);
         if (it == vars.end())
             return;
@@ -36,22 +36,22 @@ namespace EGSDK::Engine {
 
     template <typename VarT>
     bool VarMapBase<VarT>::empty() const {
-        std::shared_lock lock(readingMutex);
+        std::shared_lock lock(readMutex);
         return vars.empty();
     }
     template <typename VarT>
     bool VarMapBase<VarT>::none_of(const std::string& name) const {
-        std::shared_lock lock(readingMutex);
+        std::shared_lock lock(readMutex);
         return vars.find(name) == vars.end();
     }
     template <typename VarT>
     size_t VarMapBase<VarT>::size() {
-        std::shared_lock lock(readingMutex);
+        std::shared_lock lock(readMutex);
         return vars.size();
     }
     template <typename VarT>
     void VarMapBase<VarT>::reserve(size_t count) {
-        std::lock_guard lock(writingMutex);
+        std::lock_guard lock(writeMutex);
         vars.reserve(count);
         varsOrdered.reserve(count);
     }

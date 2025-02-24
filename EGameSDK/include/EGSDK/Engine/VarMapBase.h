@@ -33,14 +33,14 @@ namespace EGSDK::Engine {
 
         template <typename Callable, typename... Args>
         void ForEach(Callable&& func, Args&&... args) {
-            std::shared_lock lock(readingMutex);
+            std::shared_lock lock(readMutex);
             for (const auto& name : varsOrdered)
                 func(vars.at(name), std::forward<Args>(args)...);
         }
     protected:
         std::unordered_map<std::string, std::unique_ptr<VarT>> vars;
         std::vector<std::string> varsOrdered;
-        mutable std::mutex writingMutex;
-        mutable std::shared_mutex readingMutex;
+        mutable std::mutex writeMutex;
+        mutable std::shared_mutex readMutex;
     };
 }

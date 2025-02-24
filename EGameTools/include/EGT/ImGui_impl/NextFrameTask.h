@@ -18,7 +18,7 @@ namespace EGT::ImGui_impl {
         };
 
         static std::vector<TaskEntry> taskQueue;
-        static std::mutex writingMutex;
-        static std::shared_mutex readingMutex;
+        static std::mutex writeMutex;
+        static std::shared_mutex readMutex;
     };
 }

@@ -54,6 +54,9 @@ namespace EGSDK::GamePH {
 		using Base::GetDefaultVarRef;
 		using Base::GetCustomDefaultVarRef;
 
+		using VarT = PlayerVar;
+		using VarMapT = PlayerVarMap;
+
 		static std::atomic<bool> gotPlayerVars;
 
 #ifdef EGameSDK_EXPORTS

@@ -165,6 +165,9 @@
     <ClCompile Include="src\ImGui_impl\DeferredActions.cpp">
       <Filter>src\ImGui_impl</Filter>
     </ClCompile>
+    <ClCompile Include="src\Menu\VarList.cpp">
+      <Filter>src\Menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\EGT\Config\Config.h">
@@ -235,6 +238,9 @@
     </ClInclude>
     <ClInclude Include="include\EGT\ImGui_impl\NextFrameTask.h">
       <Filter>include\ImGui_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\Menu\VarList.h">
+      <Filter>include\Menu</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

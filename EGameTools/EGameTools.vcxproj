@@ -40,6 +40,7 @@
     <ClCompile Include="src\Menu\Misc.cpp" />
     <ClCompile Include="src\Menu\Player.cpp" />
     <ClCompile Include="src\Menu\Teleport.cpp" />
+    <ClCompile Include="src\Menu\VarList.cpp" />
     <ClCompile Include="src\Menu\Weapon.cpp" />
     <ClCompile Include="src\Menu\World.cpp" />
     <ClCompile Include="src\Utils\Texture.cpp" />
@@ -65,6 +66,7 @@
     <ClInclude Include="include\EGT\Menu\Misc.h" />
     <ClInclude Include="include\EGT\Menu\Player.h" />
     <ClInclude Include="include\EGT\Menu\Teleport.h" />
+    <ClInclude Include="include\EGT\Menu\VarList.h" />
     <ClInclude Include="include\EGT\Menu\Weapon.h" />
     <ClInclude Include="include\EGT\Menu\World.h" />
     <ClInclude Include="include\EGT\Utils\Texture.h" />

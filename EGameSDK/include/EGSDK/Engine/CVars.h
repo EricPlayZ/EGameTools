@@ -75,6 +75,9 @@ namespace EGSDK::Engine {
 		using Base::GetDefaultVarRef;
 		using Base::GetCustomDefaultVarRef;
 
+		using VarT = CVar;
+		using VarMapT = CVarMap;
+
 		static std::optional<CVarRef> GetVarRef(uint32_t valueOffset);
 		static std::optional<CVarRef> GetCustomVarRef(uint32_t valueOffset);
 		static std::optional<CVarRef> GetDefaultVarRef(uint32_t valueOffset);

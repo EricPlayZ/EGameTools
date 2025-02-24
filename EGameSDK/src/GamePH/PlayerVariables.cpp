@@ -15,7 +15,7 @@ namespace EGSDK::GamePH {
 	PlayerVar::PlayerVar(const std::string& name) : VarBase(name) {}
 	PlayerVar::PlayerVar(const std::string& name, Engine::VarType type) : Engine::VarBase(name, type) {}
 	Engine::VarValueType PlayerVar::GetValue() {
-		std::shared_lock lock(readingMutex);
+		std::shared_lock lock(readMutex);
 		switch (GetType()) {
 			case Engine::VarType::String:
 				return reinterpret_cast<const char*>(reinterpret_cast<uint64_t>(this->strValue.data) & 0x1FFFFFFFFFFFFFFF);
@@ -28,7 +28,7 @@ namespace EGSDK::GamePH {
 		}
 	}
 	Engine::VarValueType PlayerVar::GetDefaultValue() {
-		std::shared_lock lock(readingMutex);
+		std::shared_lock lock(readMutex);
 		switch (GetType()) {
 			case Engine::VarType::String:
 				return reinterpret_cast<const char*>(reinterpret_cast<uint64_t>(this->defaultStrValue.data) & 0x1FFFFFFFFFFFFFFF);
@@ -41,7 +41,7 @@ namespace EGSDK::GamePH {
 		}
 	}
 	void PlayerVar::SetValue(const Engine::VarValueType& value) {
-		std::lock_guard lock(writingMutex);
+		std::lock_guard lock(writeMutex);
 		std::visit([&](auto&& val) {
 			using T = std::decay_t<decltype(val)>;
 			if constexpr (std::is_same_v<T, std::string>) {

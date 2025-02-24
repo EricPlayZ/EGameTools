@@ -21,9 +21,9 @@ namespace EGSDK::Engine {
     std::unordered_map<std::string, uint64_t> VarManagerBase<VarMapT, VarT>::varOwnerMap{};
 
     template <typename VarMapT, typename VarT>
-    std::mutex VarManagerBase<VarMapT, VarT>::writingMutex{};
+    std::mutex VarManagerBase<VarMapT, VarT>::writeMutex{};
     template <typename VarMapT, typename VarT>
-    std::shared_mutex VarManagerBase<VarMapT, VarT>::readingMutex{};
+    std::shared_mutex VarManagerBase<VarMapT, VarT>::readMutex{};
 
     template <typename VarMapT, typename VarT>
     std::optional<VarRef<VarMapT, VarT>> VarManagerBase<VarMapT, VarT>::GetVarRefFromPtr(VarT* var) {
@@ -74,7 +74,7 @@ namespace EGSDK::Engine {
 
     template <typename VarMapT, typename VarT>
     bool VarManagerBase<VarMapT, VarT>::_IsManagedByBool(const char* name) {
-        std::shared_lock lock(readingMutex);
+        std::shared_lock lock(readMutex);
         return (prevBoolValueMap.find(name) != prevBoolValueMap.end()) && prevBoolValueMap[name];
     }
     template <typename VarMapT, typename VarT>

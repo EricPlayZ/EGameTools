@@ -48,8 +48,8 @@ namespace EGSDK::Engine {
         static std::unordered_map<std::string, std::any> prevVarValueMap;
         static std::unordered_map<std::string, bool> prevBoolValueMap;
         static std::unordered_map<std::string, uint64_t> varOwnerMap;
-        static std::mutex writingMutex;
-        static std::shared_mutex readingMutex;
+        static std::mutex writeMutex;
+        static std::shared_mutex readMutex;
 
         static std::optional<VarRef<VarMapT, VarT>> _GetVarRef(const char* name, VarMapT& map);
 
@@ -101,7 +101,7 @@ namespace EGSDK::Engine {
                 return;
 
             uint64_t caller = reinterpret_cast<uint64_t>(returnAddr);
-            std::shared_lock lock(readingMutex);
+            std::shared_lock lock(readMutex);
 
             const char* name = var->GetName();
 
@@ -133,7 +133,7 @@ namespace EGSDK::Engine {
             }
         }
         template <AllowedVarTypes T>
-        static void _SaveVariableAsDefault(VarRef<VarMapT, VarT>* var) {
+        static void _SaveVarAsDefault(VarRef<VarMapT, VarT>* var) {
             if (!var)
                 return;
 

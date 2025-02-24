@@ -22,6 +22,7 @@
 #include <EGT\Menu\Camera.h>
 #include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Player.h>
+#include <EGT\Menu\VarList.h>
 
 namespace EGT::Menu {
 	namespace Player {
@@ -48,8 +49,7 @@ namespace EGT::Menu {
 		std::string loadSCRFilePath{};
 
 		static bool debugEnabled = false;
-		static bool restoreVarsToSavedVarsEnabled = false;
-		static char varsSearchFilter[64];
+		static VarList<EGSDK::GamePH::PlayerVariables> playerVarList{ "Player Variables List" };
 
 #pragma region Player Variables
 		static std::string getParamName(const std::string& str) {
@@ -125,7 +125,7 @@ namespace EGT::Menu {
 				}
 			});
 		}
-		static void varsUpdate() {
+		static void ManagePlayerVars() {
 			if (!EGSDK::GamePH::PlayerVariables::gotPlayerVars)
 				return;
 
@@ -225,67 +225,6 @@ namespace EGT::Menu {
 			ImGui::OpenPopup("Loaded player variables!");
 		}
 
-		static void RestoreVariableToDefault(EGSDK::GamePH::PlayerVar* playerVarPtr) {
-			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(playerVarPtr->GetName());
-			if (!playerVar)
-				return;
-
-			ImGui_impl::DeferredActions::Add([playerVar]() mutable {
-				switch (playerVar->GetType()) {
-					case EGSDK::Engine::VarType::String:
-						break; // TO IMPLEMENT
-					case EGSDK::Engine::VarType::Float:
-						playerVar->RestoreVarToDefault<float>(restoreVarsToSavedVarsEnabled);
-						break;
-					case EGSDK::Engine::VarType::Bool:
-						playerVar->RestoreVarToDefault<bool>(restoreVarsToSavedVarsEnabled);
-						break;
-					default:
-						break;
-				}
-			});
-		}
-		static void RestoreVariablesToDefault() {
-			(restoreVarsToSavedVarsEnabled ? EGSDK::GamePH::PlayerVariables::vars : EGSDK::GamePH::PlayerVariables::customVars).ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-				RestoreVariableToDefault(playerVarPtr.get());
-			});
-		}
-		static void SaveVariableAsDefault(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRefFromPtr(playerVarPtr.get());
-			if (!playerVar)
-				return;
-
-			switch (playerVar->GetType()) {
-				case EGSDK::Engine::VarType::String:
-					break; // TO IMPLEMENT
-				case EGSDK::Engine::VarType::Float:
-					playerVar->SaveVariableAsDefault<float>();
-					break;
-				case EGSDK::Engine::VarType::Bool:
-					playerVar->SaveVariableAsDefault<bool>();
-					break;
-				default:
-					break;
-			}
-		}
-		static void SaveVariablesAsDefault() {
-			EGSDK::GamePH::PlayerVariables::vars.ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-				SaveVariableAsDefault(playerVarPtr);
-			});
-			ImGui::OpenPopup("Saved current player variables!");
-		}
-
-		static bool ShouldDisplayVariable(const std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr, const std::string& searchFilter) {
-			if (playerVarPtr->GetType() == EGSDK::Engine::VarType::String || playerVarPtr->GetType() == EGSDK::Engine::VarType::NONE) // TO IMPLEMENT
-				return false;
-			if (searchFilter.empty())
-				return true;
-
-			// Convert searchFilter and variable name to lowercase
-			std::string lowerFilter = EGSDK::Utils::Values::to_lower(searchFilter);
-			std::string lowerKey = EGSDK::Utils::Values::to_lower(playerVarPtr->GetName());
-			return lowerKey.find(lowerFilter) != std::string::npos;
-		}
 		static void RenderDebugInfo(EGSDK::GamePH::PlayerVar* playerVarPtr) {
 			const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
 			std::string labelID = "##DebugAddrInputText" + std::string(playerVarPtr->GetName());
@@ -305,106 +244,12 @@ namespace EGT::Menu {
 			ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), strlen(addrString.c_str()), ImGuiInputTextFlags_ReadOnly);
 			ImGui::PopStyleColor();
 		}
-		static void RenderPlayerVariable(EGSDK::GamePH::PlayerVar* playerVarPtr) {
-			auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRefFromPtr(playerVarPtr);
-			if (!playerVar)
-				return;
-
-			ImGui::BeginDisabled(playerVar->IsManagedByBool());
-			switch (playerVar->GetType()) {
-				case EGSDK::Engine::VarType::String:
-					break; // TO IMPLEMENT
-				case EGSDK::Engine::VarType::Float:
-				{
-					auto value = playerVar->GetValue<float>();
-					if (!value)
-						return;
-					auto newValue = *value;
-					if (ImGui::InputFloat(playerVar->GetName(), &newValue))
-						playerVar->SetValueFromList(newValue);
-					break;
-				}
-				case EGSDK::Engine::VarType::Bool:
-				{
-					auto value = playerVar->GetValue<bool>();
-					if (!value)
-						return;
-					auto newValue = *value;
-					if (ImGui::Checkbox(playerVar->GetName(), &newValue))
-						playerVar->SetValueFromList(newValue);
-					break;
-				}
-				default:
-					break;
-			}
-			ImGui::EndDisabled();
-
-			ImGui::SameLine();
-			std::string restoreBtnName = "Restore##" + std::string(playerVarPtr->GetName());
-			
-			ImGui::BeginDisabled(!playerVar->HasCustomValue() || playerVar->IsManagedByBool());
-			if (ImGui::Button(restoreBtnName.c_str(), "Restores player variable to default"))
-				RestoreVariableToDefault(playerVarPtr);
-			ImGui::EndDisabled();
-
-			if (debugEnabled)
-				RenderDebugInfo(playerVarPtr);
-		}
 		static void HandlePlayerVariablesList() {
 			if (!playerVariables.GetValue())
 				return;
 
 			ImGui::BeginDisabled(!EGSDK::GamePH::PlayerVariables::gotPlayerVars);
-			if (ImGui::CollapsingHeader("Player Variables list", ImGuiTreeNodeFlags_None)) {
-				ImGui::Indent();
-
-				if (ImGui::Button("Save variables to file", "Saves current player variables to chosen file inside the file dialog"))
-					ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRPath", "Choose Folder", nullptr, { saveSCRPath.empty() ? "." : saveSCRPath });
-				ImGui::SameLine();
-				if (ImGui::Button("Load variables from file", "Loads player variables from chosen file inside the file dialog")) {
-					std::filesystem::path _loadSCRFilePath = loadSCRFilePath;
-					ImGuiFileDialog::Instance()->OpenDialog("ChooseSCRLoadPath", "Choose File", ".scr", { !_loadSCRFilePath.empty() && std::filesystem::is_directory(_loadSCRFilePath.parent_path()) ? _loadSCRFilePath.parent_path().string() : "." });
-				}
-
-				ImGui::Checkbox("Restore variables to saved variables", &restoreVarsToSavedVarsEnabled, "Sets whether or not \"Restore variables to default\" should restore variables to the ones saved by \"Save current variables as default\"");
-				ImGui::Checkbox("Debug Mode", &debugEnabled, "Shows text boxes alongside player variables, which will show the address in memory of each variable");
-
-				ImGui::BeginDisabled(!EGSDK::GamePH::PlayerVariables::AreAnyCustomVarsPresent() || EGSDK::GamePH::PlayerVariables::AreAllCustomVarsManagedByBool());
-				if (ImGui::Button("Restore variables to default"))
-					RestoreVariablesToDefault();
-				ImGui::EndDisabled();
-				ImGui::SameLine();
-				if (ImGui::Button("Save current variables as default", "Saves the current player variables as default for whenever you use \"Restore variables to default\""))
-					SaveVariablesAsDefault();
-
-				ImGui::Separator();
-				ImGui::InputTextWithHint("##PlayerVariablesSearch", "Search variables", varsSearchFilter, 64);
-
-				static std::vector<EGSDK::GamePH::PlayerVar*> filteredVars;
-				static char lastSearchFilter[64];
-
-				if (filteredVars.empty() || _strcmpi(varsSearchFilter, lastSearchFilter)) {
-					strcpy_s(lastSearchFilter, varsSearchFilter); // Update last search filter
-					filteredVars.clear();
-
-					EGSDK::GamePH::PlayerVariables::vars.ForEach([](std::unique_ptr<EGSDK::GamePH::PlayerVar>& playerVarPtr) {
-						if (ShouldDisplayVariable(playerVarPtr, varsSearchFilter))
-							filteredVars.push_back(playerVarPtr.get()); // Store raw pointer
-					});
-				}
-
-				ImGui::Text("Total variables: %zu", filteredVars.size()); // Debug info
-
-				ImGuiListClipper clipper;
-				clipper.Begin(filteredVars.size());
-
-				while (clipper.Step()) {
-					for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
-						RenderPlayerVariable(filteredVars[i]);
-				}
-
-				ImGui::Unindent();
-			}
+			playerVarList.Render();
 			ImGui::EndDisabled();
 		}
 		static void HandlePlayerVariablesDialogs() {
@@ -574,7 +419,7 @@ namespace EGT::Menu {
 			PlayerImmunityUpdate();
 			PlayerRestrictionsUpdate();
 
-			varsUpdate();
+			ManagePlayerVars();
 			PlayerVarListValuesUpdate();
 
 			HandleToggles();
