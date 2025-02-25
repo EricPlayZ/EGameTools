@@ -37,15 +37,15 @@ namespace EGT {
 
                 UpdateFilteredList();
 
-                ImGui::Text("Total listed variables: %zu", filteredVars.size());
+                //ImGui::Text("Total listed variables: %zu", filteredVars.size());
 
-                ImGuiListClipper clipper{};
-                clipper.Begin(filteredVars.size());
+                //ImGuiListClipper clipper{};
+                //clipper.Begin(filteredVars.size());
 
-                while (clipper.Step()) {
-                    for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
-                        RenderVar(filteredVars[i]);
-                }
+                //while (clipper.Step()) {
+                //    for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+                //        RenderVar(filteredVars[i]);
+                //}
 
                 ImGui::Unindent();
             }

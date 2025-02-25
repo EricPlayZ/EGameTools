@@ -42,7 +42,7 @@ namespace EGSDK::Engine {
             size_t operator()(std::string_view s) const {
                 size_t h = 0;
                 for (char c : s)
-                    h = h * 101 + static_cast<size_t>(std::tolower(c));
+                    h = h * 101 + static_cast<size_t>(std::tolower(static_cast<unsigned char>(c)));
                 return h;
             }
         };
