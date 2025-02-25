@@ -282,28 +282,28 @@ namespace EGT::Engine {
 				{
 					cVarPtr->SetName(name);
 					cVarPtr->SetType(EGSDK::Engine::VarType::Float);
-					EGSDK::Engine::CVars::vars.try_emplace(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
+					EGSDK::Engine::CVars::vars.AddVar(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
 					break;
 				}
 				case 0x198:
 				{
 					cVarPtr->SetName(name);
 					cVarPtr->SetType(EGSDK::Engine::VarType::Int);
-					EGSDK::Engine::CVars::vars.try_emplace(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
+					EGSDK::Engine::CVars::vars.AddVar(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
 					break;
 				}
 				case 0x1C8:
 				{
 					cVarPtr->SetName(name);
 					cVarPtr->SetType(EGSDK::Engine::VarType::Vec3);
-					EGSDK::Engine::CVars::vars.try_emplace(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
+					EGSDK::Engine::CVars::vars.AddVar(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
 					break;
 				}
 				case 0x1D8:
 				{
 					cVarPtr->SetName(name);
 					cVarPtr->SetType(EGSDK::Engine::VarType::Vec4);
-					EGSDK::Engine::CVars::vars.try_emplace(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
+					EGSDK::Engine::CVars::vars.AddVar(std::unique_ptr<EGSDK::Engine::CVar>(cVarPtr));
 					break;
 				}
 				default:

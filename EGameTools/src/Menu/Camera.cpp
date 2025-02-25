@@ -282,7 +282,8 @@ namespace EGT::Menu {
 				lensDistortionJustEnabled = false;
 			}
 
-			EGSDK::GamePH::PlayerVariables::GetVarRef("FOVCorrection")->SetValue(goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
+			if (auto fovCorrectionVar = EGSDK::GamePH::PlayerVariables::GetVarRef("FOVCorrection"))
+				fovCorrectionVar->SetValue(goProMode.GetValue() ? (altLensDistortion / 100.0f) : (lensDistortion / 100.0f));
 			EGSDK::GamePH::PlayerVariables::ManageVarByBool("SprintHeadCorrectionFactor", 0.0f, baseSprintHeadCorrectionFactor, goProMode.GetValue() ? goProMode.GetValue() : disableHeadCorrection.GetValue(), true);
 		}
 		static void UpdateDisabledOptions() {

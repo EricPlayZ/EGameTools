@@ -85,15 +85,15 @@ namespace EGSDK::GamePH {
 		if (!playerVar) {
             if constexpr (std::is_same_v<T, std::string>) {
 				auto stringPlayerVar = std::make_unique<StringPlayerVariable>(name);
-				defaultVars.try_emplace(std::move(stringPlayerVar));
+				defaultVars.AddVar(std::move(stringPlayerVar));
             } else if constexpr (std::is_same_v<T, float>) {
 				auto floatPlayerVar = std::make_unique<FloatPlayerVariable>(name);
 				floatPlayerVar->SetValue(value);
-				defaultVars.try_emplace(std::move(floatPlayerVar));
+				defaultVars.AddVar(std::move(floatPlayerVar));
             } else if constexpr (std::is_same_v<T, bool>) {
 				auto boolPlayerVar = std::make_unique<BoolPlayerVariable>(name);
 				boolPlayerVar->SetValue(value);
-				defaultVars.try_emplace(std::move(boolPlayerVar));
+				defaultVars.AddVar(std::move(boolPlayerVar));
             }
 		} else {
 			if constexpr (std::is_same_v<T, std::string>) {
@@ -319,16 +319,16 @@ namespace EGSDK::GamePH {
 			Engine::VarType playerVarType = getPlayerVarType(funcAddress, startOfFunc);
 			switch (playerVarType) {
 				case Engine::VarType::String:
-					vars.try_emplace(std::make_unique<StringPlayerVariable>(playerVarName));
+					vars.AddVar(std::make_unique<StringPlayerVariable>(playerVarName));
 					break;
 				case Engine::VarType::Float:
-					vars.try_emplace(std::make_unique<FloatPlayerVariable>(playerVarName));
+					vars.AddVar(std::make_unique<FloatPlayerVariable>(playerVarName));
 					break;
 				case Engine::VarType::Bool:
-					vars.try_emplace(std::make_unique<BoolPlayerVariable>(playerVarName));
+					vars.AddVar(std::make_unique<BoolPlayerVariable>(playerVarName));
 					break;
 				default:
-					//vars.try_emplace(std::make_unique<PlayerVar>(playerVarName));
+					//vars.AddVar(std::make_unique<PlayerVar>(playerVarName));
 					break;
 			}
 		}

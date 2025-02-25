@@ -5,7 +5,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <functional>
-#include <string>
+#include <string_view>
 #include <type_traits>
 #include <EGSDK\Exports.h>
 #include <EGSDK\Engine\VarBase.h>
@@ -22,12 +22,12 @@ namespace EGSDK::Engine {
         VarMapBase& operator=(VarMapBase&&) noexcept = default;
         virtual ~VarMapBase() = default;
 
-        virtual std::unique_ptr<VarT>& try_emplace(std::unique_ptr<VarT> var);
-        VarT* Find(const std::string& name) const;
-        virtual void Erase(const std::string& name);
+        virtual std::unique_ptr<VarT>& AddVar(std::unique_ptr<VarT> var);
+        VarT* Find(std::string_view name) const;
+        virtual void Erase(std::string_view name);
 
         bool empty() const;
-        bool none_of(const std::string& name) const;
+        bool none_of(std::string_view name) const;
         size_t size();
         void reserve(size_t count);
 
@@ -37,9 +37,26 @@ namespace EGSDK::Engine {
             for (const auto& name : varsOrdered)
                 func(vars.at(name), std::forward<Args>(args)...);
         }
+    private:
+        struct CaseInsensitiveHash {
+            size_t operator()(std::string_view s) const {
+                size_t h = 0;
+                for (char c : s)
+                    h = h * 101 + static_cast<size_t>(std::tolower(c));
+                return h;
+            }
+        };
+        struct CaseInsensitiveEqual {
+            bool operator()(std::string_view lhs, std::string_view rhs) const {
+                return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
+                    [](unsigned char a, unsigned char b) {
+                    return std::tolower(a) == std::tolower(b);
+                });
+            }
+        };
     protected:
-        std::unordered_map<std::string, std::unique_ptr<VarT>> vars;
-        std::vector<std::string> varsOrdered;
+        std::unordered_map<std::string_view, std::unique_ptr<VarT>, CaseInsensitiveHash, CaseInsensitiveEqual> vars;
+        std::vector<std::string_view> varsOrdered;
         mutable std::mutex writeMutex;
         mutable std::shared_mutex readMutex;
     };

@@ -47,9 +47,9 @@ namespace EGSDK::Engine {
 		using Base::Find;
 		using Base::none_of;
 
-		std::unique_ptr<CVar>& try_emplace(std::unique_ptr<CVar> var) override;
+		std::unique_ptr<CVar>& AddVar(std::unique_ptr<CVar> var) override;
 		CVar* Find(uint32_t valueOffset) const;
-		void Erase(const std::string& name) override;
+		void Erase(std::string_view name) override;
 
 		bool none_of(uint32_t valueOffset);
 	private:

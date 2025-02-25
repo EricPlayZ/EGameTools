@@ -8,22 +8,24 @@ namespace EGSDK::Engine {
     VarMapBase<VarT>::VarMapBase() : vars(), varsOrdered(), writeMutex(), readMutex() {}
 
     template <typename VarT>
-    std::unique_ptr<VarT>& VarMapBase<VarT>::try_emplace(std::unique_ptr<VarT> var) {
+    std::unique_ptr<VarT>& VarMapBase<VarT>::AddVar(std::unique_ptr<VarT> var) {
         std::lock_guard lock(writeMutex);
-        const std::string& name = var->GetName();
+        const char* name = var->GetName();
         auto [it, inserted] = vars.try_emplace(name, std::move(var));
         if (inserted)
             varsOrdered.push_back(name);
+        else
+            var.release();
         return it->second;
     }
     template <typename VarT>
-    VarT* VarMapBase<VarT>::Find(const std::string& name) const {
+    VarT* VarMapBase<VarT>::Find(std::string_view name) const {
         std::shared_lock lock(readMutex);
         auto it = vars.find(name);
         return (it != vars.end()) ? it->second.get() : nullptr;
     }
     template <typename VarT>
-    void VarMapBase<VarT>::Erase(const std::string& name) {
+    void VarMapBase<VarT>::Erase(std::string_view name) {
         std::lock_guard lock(writeMutex);
         auto it = vars.find(name);
         if (it == vars.end())
@@ -40,7 +42,7 @@ namespace EGSDK::Engine {
         return vars.empty();
     }
     template <typename VarT>
-    bool VarMapBase<VarT>::none_of(const std::string& name) const {
+    bool VarMapBase<VarT>::none_of(std::string_view name) const {
         std::shared_lock lock(readMutex);
         return vars.find(name) == vars.end();
     }

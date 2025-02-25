@@ -87,15 +87,17 @@ namespace EGSDK::Engine {
 		SetType(VarType::Vec4);
 	}
 
-	std::unique_ptr<CVar>& CVarMap::try_emplace(std::unique_ptr<CVar> cVar) {
+	std::unique_ptr<CVar>& CVarMap::AddVar(std::unique_ptr<CVar> cVar) {
 		std::lock_guard lock(writeMutex);
-		const std::string& name = cVar->GetName();
+		const char* name = cVar->GetName();
 		auto [it, inserted] = vars.try_emplace(name, std::move(cVar));
 		if (inserted) {
-			varsOrdered.emplace_back(name);
+			varsOrdered.push_back(name);
 			if (uint32_t valueOffset = it->second->valueOffset.data; valueOffset || valueOffset != 0xCDCDCDCD)
 				varsByValueOffset[valueOffset] = it->second.get();
 		}
+		else
+			cVar.release();
 		return it->second;
 	}
 	CVar* CVarMap::Find(uint32_t valueOffset) const {
@@ -103,7 +105,7 @@ namespace EGSDK::Engine {
 		auto it = varsByValueOffset.find(valueOffset);
 		return it == varsByValueOffset.end() ? nullptr : it->second;
 	}
-	void CVarMap::Erase(const std::string& name) {
+	void CVarMap::Erase(std::string_view name) {
 		std::lock_guard lock(writeMutex);
 		auto it = vars.find(name);
 		if (it == vars.end())

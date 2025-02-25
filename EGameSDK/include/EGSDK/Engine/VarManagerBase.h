@@ -84,9 +84,9 @@ namespace EGSDK::Engine {
                 }
             }
             if (!customVar)
-                customVar = customVars.try_emplace(std::make_unique<VarT>(name, var->GetType())).get();
+                customVar = customVars.AddVar(std::make_unique<VarT>(name, var->GetType())).get();
             if (!defVar) {
-                defVar = defaultVars.try_emplace(std::make_unique<VarT>(name, var->GetType())).get();
+                defVar = defaultVars.AddVar(std::make_unique<VarT>(name, var->GetType())).get();
                 if (auto varValue = var->GetValue<T>(); defVar && varValue)
                     defVar->SetValue<T>(*varValue);
             }
