@@ -1,21 +1,21 @@
 #pragma once
 #include <vector>
 #include <EGT\Menu\Menu.h>
-#include <EGSDK\Vec3.h>
-#include <EGSDK\Vec2.h>
+#include <EGSDK\vec3.h>
+#include <EGSDK\vec2.h>
 	
 namespace EGT::Menu {
 	namespace Teleport {
 		struct TeleportLocation {
 			std::string name{};
-			EGSDK::Vec3 pos{};
-			EGSDK::Vec2 orientation{};
+			EGSDK::vec3 pos{};
+			EGSDK::vec2 orientation{};
 		};
 
 		extern std::string savedTeleportLocationsStr;
 		extern std::vector<TeleportLocation> savedTeleportLocations;
 
-		extern EGSDK::Vec3 waypointCoords;
+		extern EGSDK::vec3 waypointCoords;
 		extern bool* waypointIsSet;
 		extern bool justTeleportedToWaypoint;
 

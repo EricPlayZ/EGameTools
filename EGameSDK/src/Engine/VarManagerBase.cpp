@@ -27,7 +27,7 @@ namespace EGSDK::Engine {
 
     template <typename VarMapT, typename VarT>
     std::optional<VarRef<VarMapT, VarT>> VarManagerBase<VarMapT, VarT>::GetVarRefFromPtr(VarT* var) {
-        return var ? std::optional<VarRef<VarMapT, VarT>>(VarRef<VarMapT, VarT>(var)) : std::nullopt;
+        return _GetVarRef(var);
     }
     template <typename VarMapT, typename VarT>
     std::optional<VarRef<VarMapT, VarT>> VarManagerBase<VarMapT, VarT>::GetVarRef(const char* name) {
@@ -46,6 +46,10 @@ namespace EGSDK::Engine {
         return _GetVarRef(name, defaultCustomVars);
     }
 
+    template <typename VarMapT, typename VarT>
+    std::optional<VarRef<VarMapT, VarT>> VarManagerBase<VarMapT, VarT>::_GetVarRef(VarT* var) {
+        return var ? std::optional<VarRef<VarMapT, VarT>>(VarRef<VarMapT, VarT>(var)) : std::nullopt;
+    }
     template <typename VarMapT, typename VarT>
     std::optional<VarRef<VarMapT, VarT>> VarManagerBase<VarMapT, VarT>::_GetVarRef(const char* name, VarMapT& map) {
         VarRef<VarMapT, VarT> varRef(name, map);

@@ -3,9 +3,9 @@
 
 namespace EGSDK::Engine {
 	std::unordered_map<const CVar*, CVar::VarValue> CVar::varValues;
-	CVar::CVar(const std::string& name) : VarBase(name) {}
-	CVar::CVar(const std::string& name, VarType type) : VarBase(name, type) {}
-	VarValueType& CVar::GetValue() {
+	CVar::CVar(std::string_view name) : VarBase(name) {}
+	CVar::CVar(std::string_view name, VarType type) : VarBase(name, type) {}
+	VarValueType CVar::GetValue() {
 		std::shared_lock lock(readMutex);
 		auto it = varValues.find(this);
 		if (it == varValues.end()) {
@@ -17,10 +17,10 @@ namespace EGSDK::Engine {
 					return varValues[this].value = 0;
 					break;
 				case VarType::Vec3:
-					return varValues[this].value = Vec3();
+					return varValues[this].value = vec3();
 					break;
 				case VarType::Vec4:
-					return varValues[this].value = Vec4();
+					return varValues[this].value = vec4();
 					break;
 				default:
 					return varValues[this].value = 0;
@@ -28,22 +28,20 @@ namespace EGSDK::Engine {
 			}
 		}
 		auto& varData = it->second;
-		if (varData.valuePtrs.empty())
+		if (varData.valuePtrs.empty() || !varData.valuePtrs[0])
 			return varData.value;
 		auto ptr = varData.valuePtrs[0];
-		if (!ptr)
-			return varData.value;
 		switch (GetType()) {
 			case VarType::Float:
 				return varData.value = *reinterpret_cast<float*>(ptr);
 			case VarType::Int:
 				return varData.value = *reinterpret_cast<int*>(ptr);
 			case VarType::Vec3:
-				return varData.value = *reinterpret_cast<Vec3*>(ptr);
+				return varData.value = *reinterpret_cast<vec3*>(ptr);
 			case VarType::Vec4:
-				return varData.value = *reinterpret_cast<Vec4*>(ptr);
+				return varData.value = *reinterpret_cast<vec4*>(ptr);
 			default:
-				return it->second.value;
+				return varData.value;
 		}
 	}
 	void CVar::SetValue(const VarValueType& value) {
@@ -52,17 +50,17 @@ namespace EGSDK::Engine {
 
 		std::visit([&](auto&& val) {
 			using T = std::decay_t<decltype(val)>;
-			if constexpr (std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, Vec3> || std::is_same_v<T, Vec4>) {
+			if constexpr (std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, vec3> || std::is_same_v<T, vec4>) {
 				for (auto* ptr : varData.valuePtrs) {
 					if (ptr) {
 						if constexpr (std::is_same_v<T, float>)
 							*reinterpret_cast<float*>(ptr) = val;
 						else if constexpr (std::is_same_v<T, int>)
 							*reinterpret_cast<int*>(ptr) = val;
-						else if constexpr (std::is_same_v<T, Vec3>)
-							*reinterpret_cast<Vec3*>(ptr) = val;
-						else if constexpr (std::is_same_v<T, Vec4>)
-							*reinterpret_cast<Vec4*>(ptr) = val;
+						else if constexpr (std::is_same_v<T, vec3>)
+							*reinterpret_cast<vec3*>(ptr) = val;
+						else if constexpr (std::is_same_v<T, vec4>)
+							*reinterpret_cast<vec4*>(ptr) = val;
 					}
 				}
 				varData.value = val;
@@ -74,16 +72,16 @@ namespace EGSDK::Engine {
 		varValues[this].valuePtrs.push_back(ptr);
 	}
 
-	FloatCVar::FloatCVar(const std::string& name) : CVar(name) {
+	FloatCVar::FloatCVar(std::string_view name) : CVar(name) {
 		SetType(VarType::Float);
 	}
-	IntCVar::IntCVar(const std::string& name) : CVar(name) {
+	IntCVar::IntCVar(std::string_view name) : CVar(name) {
 		SetType(VarType::Int);
 	}
-	Vec3CVar::Vec3CVar(const std::string& name) : CVar(name) {
+	Vec3CVar::Vec3CVar(std::string_view name) : CVar(name) {
 		SetType(VarType::Vec3);
 	}
-	Vec4CVar::Vec4CVar(const std::string& name) : CVar(name) {
+	Vec4CVar::Vec4CVar(std::string_view name) : CVar(name) {
 		SetType(VarType::Vec4);
 	}
 
@@ -92,7 +90,7 @@ namespace EGSDK::Engine {
 		const char* name = cVar->GetName();
 		auto [it, inserted] = vars.try_emplace(name, std::move(cVar));
 		if (inserted) {
-			varsOrdered.push_back(name);
+			varsOrdered.push_back(it->first);
 			if (uint32_t valueOffset = it->second->valueOffset.data; valueOffset || valueOffset != 0xCDCDCDCD)
 				varsByValueOffset[valueOffset] = it->second.get();
 		}

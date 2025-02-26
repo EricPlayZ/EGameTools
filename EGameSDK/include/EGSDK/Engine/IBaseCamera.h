@@ -1,23 +1,23 @@
 #pragma once
 #include <stdint.h>
-#include <EGSDK\Mtx34.h>
+#include <EGSDK\mtx34.h>
 
 namespace EGSDK::Engine {
 	class EGameSDK_API IBaseCamera {
 	public:
 		float GetFOV();
-		Vec3* GetForwardVector(Vec3* outForwardVec);
-		Vec3* GetUpVector(Vec3* outUpVec);
-		Vec3* GetLeftVector(Vec3* outLeftVec);
-		Vec3* GetPosition(Vec3* outPos);
-		Mtx34* GetViewMatrix();
-		Mtx34* GetInvCameraMatrix();
+		vec3* GetForwardVector(vec3* outForwardVec);
+		vec3* GetUpVector(vec3* outUpVec);
+		vec3* GetLeftVector(vec3* outLeftVec);
+		vec3* GetPosition(vec3* outPos);
+		mtx34* GetViewMatrix();
+		mtx34* GetInvCameraMatrix();
 
-		void Rotate(float angle, const Vec3* axis);
+		void Rotate(float angle, const vec3* axis);
 		void SetFOV(float fov);
-		void SetPosition(const Vec3* pos);
-		void SetCameraMatrix(const Mtx34* mtx);
-		void SetInvCameraMatrix(const Mtx34* mtx);
+		void SetPosition(const vec3* pos);
+		void SetCameraMatrix(const mtx34* mtx);
+		void SetInvCameraMatrix(const mtx34* mtx);
 
 		static bool isSetFOVCalledByEGSDK;
 	};

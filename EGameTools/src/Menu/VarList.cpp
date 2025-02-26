@@ -37,15 +37,15 @@ namespace EGT {
 
                 UpdateFilteredList();
 
-                //ImGui::Text("Total listed variables: %zu", filteredVars.size());
+                ImGui::Text("Total listed variables: %zu", filteredVars.size());
 
-                //ImGuiListClipper clipper{};
-                //clipper.Begin(filteredVars.size());
+                ImGuiListClipper clipper{};
+                clipper.Begin(filteredVars.size());
 
-                //while (clipper.Step()) {
-                //    for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
-                //        RenderVar(filteredVars[i]);
-                //}
+                while (clipper.Step()) {
+                    for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+                        RenderVar(filteredVars[i]);
+                }
 
                 ImGui::Unindent();
             }
@@ -69,10 +69,10 @@ namespace EGT {
                         var->RestoreVarToDefault<int>(restoreVarsToSavedVarsEnabled);
                         break;
                     case EGSDK::Engine::VarType::Vec3:
-                        var->RestoreVarToDefault<EGSDK::Vec3>(restoreVarsToSavedVarsEnabled);
+                        var->RestoreVarToDefault<EGSDK::vec3>(restoreVarsToSavedVarsEnabled);
                         break;
                     case EGSDK::Engine::VarType::Vec4:
-                        var->RestoreVarToDefault<EGSDK::Vec4>(restoreVarsToSavedVarsEnabled);
+                        var->RestoreVarToDefault<EGSDK::vec4>(restoreVarsToSavedVarsEnabled);
                         break;
                     case EGSDK::Engine::VarType::Bool:
                         var->RestoreVarToDefault<bool>(restoreVarsToSavedVarsEnabled);
@@ -104,10 +104,10 @@ namespace EGT {
                     var->SaveVarAsDefault<int>();
                     break;
                 case EGSDK::Engine::VarType::Vec3:
-                    var->SaveVarAsDefault<EGSDK::Vec3>();
+                    var->SaveVarAsDefault<EGSDK::vec3>();
                     break;
                 case EGSDK::Engine::VarType::Vec4:
-                    var->SaveVarAsDefault<EGSDK::Vec4>();
+                    var->SaveVarAsDefault<EGSDK::vec4>();
                     break;
                 case EGSDK::Engine::VarType::Bool:
                     var->SaveVarAsDefault<bool>();
@@ -173,7 +173,10 @@ namespace EGT {
                 case EGSDK::Engine::VarType::Float:
                 {
                     auto value = var->GetValue<float>();
-                    if (!value) return;
+                    if (!value) {
+                        ImGui::EndDisabled();
+                        return;
+                    }
                     float newValue = *value;
                     if (ImGui::InputFloat(var->GetName(), &newValue))
                         var->SetValueFromList(newValue);
@@ -182,8 +185,10 @@ namespace EGT {
                 case EGSDK::Engine::VarType::Int:
                 {
                     auto value = var->GetValue<int>();
-                    if (!value)
+                    if (!value) {
+                        ImGui::EndDisabled();
                         return;
+                    }
                     auto newValue = *value;
                     if (ImGui::InputInt(var->GetName(), &newValue))
                         var->SetValueFromList(newValue);
@@ -191,9 +196,11 @@ namespace EGT {
                 }
                 case EGSDK::Engine::VarType::Vec3:
                 {
-                    auto value = var->GetValue<EGSDK::Vec3>();
-                    if (!value)
+                    auto value = var->GetValue<EGSDK::vec3>();
+                    if (!value) {
+                        ImGui::EndDisabled();
                         return;
+                    }
                     auto newValue = *value;
                     if (ImGui::InputFloat3(var->GetName(), reinterpret_cast<float*>(&newValue)))
                         var->SetValueFromList(newValue);
@@ -201,9 +208,11 @@ namespace EGT {
                 }
                 case EGSDK::Engine::VarType::Vec4:
                 {
-                    auto value = var->GetValue<EGSDK::Vec4>();
-                    if (!value)
+                    auto value = var->GetValue<EGSDK::vec4>();
+                    if (!value) {
+                        ImGui::EndDisabled();
                         return;
+                    }
                     auto newValue = *value;
                     if (ImGui::InputFloat4(var->GetName(), reinterpret_cast<float*>(&newValue)))
                         var->SetValueFromList(newValue);
@@ -212,7 +221,10 @@ namespace EGT {
                 case EGSDK::Engine::VarType::Bool:
                 {
                     auto value = var->GetValue<bool>();
-                    if (!value) return;
+                    if (!value) {
+                        ImGui::EndDisabled();
+                        return;
+                    }
                     bool newValue = *value;
                     if (ImGui::Checkbox(var->GetName(), &newValue))
                         var->SetValueFromList(newValue);

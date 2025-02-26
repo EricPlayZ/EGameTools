@@ -1,5 +1,5 @@
 #pragma once
-#include <EGSDK\Vec3.h>
+#include <EGSDK\vec3.h>
 #include <EGSDK\ClassHelpers.h>
 
 namespace EGSDK::Engine {

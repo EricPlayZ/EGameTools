@@ -1,9 +1,9 @@
 #pragma once
-#include <EGSDK\Vec3.h>
+#include <EGSDK\vec3.h>
 
 namespace EGSDK::Engine {
 	class EGameSDK_API IControlObject {
 	public:
-		void SetLocalDir(const Vec3* dir);
+		void SetLocalDir(const vec3* dir);
 	};
 }

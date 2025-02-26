@@ -8,8 +8,8 @@
 #include <variant>
 #include <optional>
 #include <EGSDK\Exports.h>
-#include <EGSDK\Vec3.h>
-#include <EGSDK\Vec4.h>
+#include <EGSDK\vec3.h>
+#include <EGSDK\vec4.h>
 #include <EGSDK\Utils\Values.h>
 #include <EGSDK\Engine\VarBase.h>
 #include <EGSDK\Engine\VarRef.h>
@@ -51,6 +51,7 @@ namespace EGSDK::Engine {
         static std::mutex writeMutex;
         static std::shared_mutex readMutex;
 
+        static std::optional<VarRef<VarMapT, VarT>> _GetVarRef(VarT* var);
         static std::optional<VarRef<VarMapT, VarT>> _GetVarRef(const char* name, VarMapT& map);
 
         static bool _IsManagedByBool(const char* name);

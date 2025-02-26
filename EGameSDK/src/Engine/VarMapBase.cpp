@@ -13,7 +13,7 @@ namespace EGSDK::Engine {
         const char* name = var->GetName();
         auto [it, inserted] = vars.try_emplace(name, std::move(var));
         if (inserted)
-            varsOrdered.push_back(name);
+            varsOrdered.push_back(it->first);
         else
             var.release();
         return it->second;

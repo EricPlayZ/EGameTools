@@ -10,10 +10,10 @@ namespace EGSDK::Engine {
 		union {
 			ClassHelpers::StaticBuffer<0x50, uint32_t> valueOffset;
 		};
-		explicit CVar(const std::string& name);
-		explicit CVar(const std::string& name, VarType type);
+		explicit CVar(std::string_view name);
+		explicit CVar(std::string_view name, VarType type);
 
-		VarValueType& GetValue();
+		VarValueType GetValue();
 		void SetValue(const VarValueType& value);
 		void AddValuePtr(uint64_t* ptr);
 	private:
@@ -26,19 +26,19 @@ namespace EGSDK::Engine {
 
 	class EGameSDK_API FloatCVar : public CVar {
 	public:
-		explicit FloatCVar(const std::string& name);
+		explicit FloatCVar(std::string_view name);
 	};
 	class EGameSDK_API IntCVar : public CVar {
 	public:
-		explicit IntCVar(const std::string& name);
+		explicit IntCVar(std::string_view name);
 	};
 	class EGameSDK_API Vec3CVar : public CVar {
 	public:
-		explicit Vec3CVar(const std::string& name);
+		explicit Vec3CVar(std::string_view name);
 	};
 	class EGameSDK_API Vec4CVar : public CVar {
 	public:
-		explicit Vec4CVar(const std::string& name);
+		explicit Vec4CVar(std::string_view name);
 	};
 
 	class EGameSDK_API CVarMap : public VarMapBase<CVar> {

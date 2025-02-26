@@ -19,15 +19,15 @@ namespace EGSDK::Utils {
             return std::round(value * multiplier) / multiplier;
         }
 
-        float GetPitchDegreesRelativeTo(const Vec3& dirVec, const Vec3& referenceAxis) {
-            Vec3 relativeDirVec = dirVec;
+        float GetPitchDegreesRelativeTo(const vec3& dirVec, const vec3& referenceAxis) {
+            vec3 relativeDirVec = dirVec;
 
-            if (referenceAxis == Vec3(0.0f, 1.0f, 0.0f))
-                relativeDirVec = Vec3(dirVec.X, dirVec.Z, dirVec.Y);
-            else if (referenceAxis == Vec3(1.0f, 0.0f, 0.0f))
-                relativeDirVec = Vec3(dirVec.Z, dirVec.Y, dirVec.X);
+            if (referenceAxis == vec3(0.0f, 1.0f, 0.0f))
+                relativeDirVec = vec3(dirVec.X, dirVec.Z, dirVec.Y);
+            else if (referenceAxis == vec3(1.0f, 0.0f, 0.0f))
+                relativeDirVec = vec3(dirVec.Z, dirVec.Y, dirVec.X);
 
-            Vec3 normalizedVec = relativeDirVec.normalize();
+            vec3 normalizedVec = relativeDirVec.normalize();
             float pitchRadians = std::atan2(normalizedVec.Y, std::sqrt(normalizedVec.X * normalizedVec.X + normalizedVec.Z * normalizedVec.Z));
             return pitchRadians * (180.0f / M_PI);
         }

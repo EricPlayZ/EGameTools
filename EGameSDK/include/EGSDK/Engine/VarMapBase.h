@@ -39,6 +39,7 @@ namespace EGSDK::Engine {
         }
     private:
         struct CaseInsensitiveHash {
+            using is_transparent = void;
             size_t operator()(std::string_view s) const {
                 size_t h = 0;
                 for (char c : s)
@@ -47,16 +48,16 @@ namespace EGSDK::Engine {
             }
         };
         struct CaseInsensitiveEqual {
+            using is_transparent = void;
             bool operator()(std::string_view lhs, std::string_view rhs) const {
-                return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
-                    [](unsigned char a, unsigned char b) {
+                return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](unsigned char a, unsigned char b) {
                     return std::tolower(a) == std::tolower(b);
                 });
             }
         };
     protected:
-        std::unordered_map<std::string_view, std::unique_ptr<VarT>, CaseInsensitiveHash, CaseInsensitiveEqual> vars;
-        std::vector<std::string_view> varsOrdered;
+        std::unordered_map<std::string, std::unique_ptr<VarT>, CaseInsensitiveHash, CaseInsensitiveEqual> vars;
+        std::vector<std::string> varsOrdered;
         mutable std::mutex writeMutex;
         mutable std::shared_mutex readMutex;
     };

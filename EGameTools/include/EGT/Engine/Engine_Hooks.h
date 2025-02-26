@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <EGSDK\Vec3.h>
+#include <EGSDK\vec3.h>
 #include <EGSDK\Utils\Hook.h>
 
 namespace EGT::Engine {

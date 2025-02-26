@@ -16,8 +16,8 @@ namespace EGSDK::GamePH {
 			EGSDK::ClassHelpers::StaticBuffer<0xC, float> defaultFloatValue;
 			EGSDK::ClassHelpers::StaticBuffer<0x9, bool> defaultBoolValue;
 		};
-		explicit PlayerVar(const std::string& name);
-		explicit PlayerVar(const std::string& name, Engine::VarType type);
+		explicit PlayerVar(std::string_view name);
+		explicit PlayerVar(std::string_view name, Engine::VarType type);
 
 		Engine::VarValueType GetValue();
 		Engine::VarValueType GetDefaultValue();
@@ -26,15 +26,15 @@ namespace EGSDK::GamePH {
 
 	class EGameSDK_API StringPlayerVariable : public PlayerVar {
 	public:
-		explicit StringPlayerVariable(const std::string& name);
+		explicit StringPlayerVariable(std::string_view name);
 	};
 	class EGameSDK_API FloatPlayerVariable : public PlayerVar {
 	public:
-		explicit FloatPlayerVariable(const std::string& name);
+		explicit FloatPlayerVariable(std::string_view name);
 	};
 	class EGameSDK_API BoolPlayerVariable : public PlayerVar {
 	public:
-		explicit BoolPlayerVariable(const std::string& name);
+		explicit BoolPlayerVariable(std::string_view name);
 	};
 
 	class EGameSDK_API PlayerVarMap : public Engine::VarMapBase<PlayerVar> {

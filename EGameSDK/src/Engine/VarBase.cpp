@@ -6,7 +6,7 @@ namespace EGSDK::Engine {
 	std::mutex VarBase::writeMutex{};
 	std::shared_mutex VarBase::readMutex{};
 
-	VarBase::VarBase(const std::string& name, VarType type) {
+	VarBase::VarBase(std::string_view name, VarType type) {
 		SetName(name);
 		SetType(type);
 	}
@@ -20,7 +20,7 @@ namespace EGSDK::Engine {
 		auto it = varNames.find(this);
 		return it != varNames.end() ? it->second.c_str() : nullptr;
 	}
-	void VarBase::SetName(const std::string& newName) {
+	void VarBase::SetName(std::string_view newName) {
 		std::lock_guard lock(writeMutex);
 		varNames[this] = newName;
 	}

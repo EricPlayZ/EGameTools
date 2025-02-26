@@ -236,7 +236,7 @@
     <ClInclude Include="include\EGSDK\Offsets.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\EGSDK\Vec3.h">
+    <ClInclude Include="include\EGSDK\vec3.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Utils\Hook.h">
@@ -392,10 +392,10 @@
     <ClInclude Include="include\EGSDK\GamePH\TimeWeather\ISubsystem.h">
       <Filter>include\GamePH\TimeWeather</Filter>
     </ClInclude>
-    <ClInclude Include="include\EGSDK\Mtx34.h">
+    <ClInclude Include="include\EGSDK\mtx34.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\EGSDK\Vec4.h">
+    <ClInclude Include="include\EGSDK\vec4.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\IControlObject.h">
@@ -410,7 +410,7 @@
     <ClInclude Include="include\EGSDK\GamePH\PlayerFppVis_PH.h">
       <Filter>include\GamePH</Filter>
     </ClInclude>
-    <ClInclude Include="include\EGSDK\Vec2.h">
+    <ClInclude Include="include\EGSDK\vec2.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\VarMapBase.h">
@@ -423,6 +423,12 @@
       <Filter>include\Engine</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\VarRef.h">
+      <Filter>include\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGSDK\Engine\IModelObject.h">
+      <Filter>include\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGSDK\Engine\ttl.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
   </ItemGroup>

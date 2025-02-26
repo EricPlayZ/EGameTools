@@ -303,7 +303,7 @@ namespace EGT::Menu {
 			if (!freeCam)
 				return;
 
-			EGSDK::Vec3 camPos{};
+			EGSDK::vec3 camPos{};
 			freeCam->GetPosition(&camPos);
 			if (!camPos.isDefault())
 				playerCharacter->MoveCharacter(camPos);

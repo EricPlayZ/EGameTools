@@ -12,8 +12,8 @@ namespace EGSDK::GamePH {
 	static constexpr int FLOAT_SIZE_OFFSET = 3;
 	static constexpr int BOOL_SIZE_OFFSET = 2;
 
-	PlayerVar::PlayerVar(const std::string& name) : VarBase(name) {}
-	PlayerVar::PlayerVar(const std::string& name, Engine::VarType type) : Engine::VarBase(name, type) {}
+	PlayerVar::PlayerVar(std::string_view name) : VarBase(name) {}
+	PlayerVar::PlayerVar(std::string_view name, Engine::VarType type) : Engine::VarBase(name, type) {}
 	Engine::VarValueType PlayerVar::GetValue() {
 		std::shared_lock lock(readMutex);
 		switch (GetType()) {
@@ -63,13 +63,13 @@ namespace EGSDK::GamePH {
 	}
 
 
-	StringPlayerVariable::StringPlayerVariable(const std::string& name) : PlayerVar(name) {
+	StringPlayerVariable::StringPlayerVariable(std::string_view name) : PlayerVar(name) {
 		SetType(Engine::VarType::String);
 	}
-	FloatPlayerVariable::FloatPlayerVariable(const std::string& name) : PlayerVar(name) {
+	FloatPlayerVariable::FloatPlayerVariable(std::string_view name) : PlayerVar(name) {
 		SetType(Engine::VarType::Float);
 	}
-	BoolPlayerVariable::BoolPlayerVariable(const std::string& name) : PlayerVar(name) {
+	BoolPlayerVariable::BoolPlayerVariable(std::string_view name) : PlayerVar(name) {
 		SetType(Engine::VarType::Bool);
 	}
 
@@ -78,7 +78,7 @@ namespace EGSDK::GamePH {
 
 #pragma region Player Variables Processing
 	template <typename T>
-	static void updateDefaultVar(PlayerVarMap& defaultVars, const std::string& name, T value, T defaultValue) {
+	static void updateDefaultVar(PlayerVarMap& defaultVars, std::string_view name, T value, T defaultValue) {
 		static_assert(std::is_same_v<T, std::string> || std::is_same_v<T, float> || std::is_same_v<T, bool>, "Invalid type: value must be string, float or bool");
 
 		auto playerVar = defaultVars.Find(name);

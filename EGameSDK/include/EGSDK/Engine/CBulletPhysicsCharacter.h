@@ -1,5 +1,5 @@
 #pragma once
-#include <EGSDK\Vec3.h>
+#include <EGSDK\vec3.h>
 #include <EGSDK\Engine\IPhysicsCharacter.h>
 #include <EGSDK\ClassHelpers.h>
 
@@ -7,15 +7,15 @@ namespace EGSDK::Engine {
 	class EGameSDK_API CBulletPhysicsCharacter : IPhysicsCharacter {
 	public:
 		union {
-			DynamicField(CBulletPhysicsCharacter, Vec3, playerPos);
-			DynamicField(CBulletPhysicsCharacter, Vec3, playerPos2);
+			DynamicField(CBulletPhysicsCharacter, vec3, playerPos);
+			DynamicField(CBulletPhysicsCharacter, vec3, playerPos2);
 			DynamicField(CBulletPhysicsCharacter, float, playerDownwardVelocity);
 		};
 
-		static Vec3 posBeforeFreeze;
+		static vec3 posBeforeFreeze;
 
 		void FreezeCharacter();
-		void MoveCharacter(const Vec3& pos);
+		void MoveCharacter(const vec3& pos);
 
 		static CBulletPhysicsCharacter* Get();
 	};

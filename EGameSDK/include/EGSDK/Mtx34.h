@@ -1,32 +1,32 @@
 #pragma once
-#include <EGSDK\Vec3.h>
-#include <EGSDK\Vec4.h>
+#include <EGSDK\vec3.h>
+#include <EGSDK\vec4.h>
 #include <EGSDK\Exports.h>
 
 namespace EGSDK {
-	struct EGameSDK_API alignas(16) Mtx34 {
-		Vec4 Row1;
-		Vec4 Row2;
-		Vec4 Row3;
+	struct EGameSDK_API alignas(16) mtx34 {
+		vec4 Row1;
+		vec4 Row2;
+		vec4 Row3;
 
-        Mtx34();
-        Mtx34(const Vec4& row1, const Vec4& row2, const Vec4& row3);
+        mtx34();
+        mtx34(const vec4& row1, const vec4& row2, const vec4& row3);
 
-		bool operator==(const Mtx34& m) const;
-		Mtx34& operator+=(const Mtx34& m);
-		Mtx34& operator-=(const Mtx34& m);
-		Mtx34 operator+(const Mtx34& m) const;
-		Mtx34 operator-(const Mtx34& m) const;
-		Mtx34 operator*(const Mtx34& scalar) const;
-		Mtx34 operator/(const Mtx34& scalar) const;
-		Mtx34 operator*(const Vec4& scalar) const;
-		Mtx34 operator/(const Vec4& scalar) const;
+		bool operator==(const mtx34& m) const;
+		mtx34& operator+=(const mtx34& m);
+		mtx34& operator-=(const mtx34& m);
+		mtx34 operator+(const mtx34& m) const;
+		mtx34 operator-(const mtx34& m) const;
+		mtx34 operator*(const mtx34& scalar) const;
+		mtx34 operator/(const mtx34& scalar) const;
+		mtx34 operator*(const vec4& scalar) const;
+		mtx34 operator/(const vec4& scalar) const;
 
-		Vec3 GetXAxis() const;
-		Vec3 GetYAxis() const;
-		Vec3 GetZAxis() const;
-		Vec3 GetPosition() const;
+		vec3 GetXAxis() const;
+		vec3 GetYAxis() const;
+		vec3 GetZAxis() const;
+		vec3 GetPosition() const;
 
-		Mtx34 normalize();
+		mtx34 normalize();
 	};
 }

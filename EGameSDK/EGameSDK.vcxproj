@@ -89,10 +89,12 @@
     <ClInclude Include="include\EGSDK\Engine\IBaseCamera.h" />
     <ClInclude Include="include\EGSDK\Engine\IControlObject.h" />
     <ClInclude Include="include\EGSDK\Engine\IGSObject.h" />
+    <ClInclude Include="include\EGSDK\Engine\IModelObject.h" />
     <ClInclude Include="include\EGSDK\Engine\IPhysicsCharacter.h" />
     <ClInclude Include="include\EGSDK\Engine\CVars.h" />
     <ClInclude Include="include\EGSDK\Engine\CVideoSettings.h" />
     <ClInclude Include="include\EGSDK\Engine\Engine_Misc.h" />
+    <ClInclude Include="include\EGSDK\Engine\ttl.h" />
     <ClInclude Include="include\EGSDK\Engine\VarBase.h" />
     <ClInclude Include="include\EGSDK\Engine\VarManagerBase.h" />
     <ClInclude Include="include\EGSDK\Engine\VarMapBase.h" />
@@ -125,7 +127,7 @@
     <ClInclude Include="include\EGSDK\GamePH\TimeWeather\EWeather.h" />
     <ClInclude Include="include\EGSDK\GamePH\TimeWeather\ISubsystem.h" />
     <ClInclude Include="include\EGSDK\GamePH\TPPCameraDI.h" />
-    <ClInclude Include="include\EGSDK\Mtx34.h" />
+    <ClInclude Include="include\EGSDK\mtx34.h" />
     <ClInclude Include="include\EGSDK\Offsets.h" />
     <ClInclude Include="include\EGSDK\Utils\Files.h" />
     <ClInclude Include="include\EGSDK\Utils\Hook.h" />
@@ -135,9 +137,9 @@
     <ClInclude Include="include\EGSDK\Utils\Time.h" />
     <ClInclude Include="include\EGSDK\Utils\Values.h" />
     <ClInclude Include="include\EGSDK\Utils\WinMemory.h" />
-    <ClInclude Include="include\EGSDK\Vec2.h" />
-    <ClInclude Include="include\EGSDK\Vec3.h" />
-    <ClInclude Include="include\EGSDK\Vec4.h" />
+    <ClInclude Include="include\EGSDK\vec2.h" />
+    <ClInclude Include="include\EGSDK\vec3.h" />
+    <ClInclude Include="include\EGSDK\vec4.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -221,12 +223,12 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>DbgHelp.lib;Version.lib;libMinHook-x64-v141-mdd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DbgHelp.lib;Version.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>deps\MinHook\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>deps\MinHook\lib;..\$(PlatformShortName)\$(Configuration);</AdditionalLibraryDirectories>
       <AssemblyDebug>true</AssemblyDebug>
       <ImportLibrary />
       <FixedBaseAddress>
@@ -257,8 +259,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>deps\MinHook\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DbgHelp.lib;Version.lib;libMinHook-x64-v141-mdd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>deps\MinHook\lib;..\$(PlatformShortName)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>DbgHelp.lib;Version.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary />
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <AssemblyDebug>true</AssemblyDebug>
