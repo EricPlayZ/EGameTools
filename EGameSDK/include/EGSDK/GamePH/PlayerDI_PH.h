@@ -12,7 +12,7 @@ namespace EGSDK::Engine {
 }
 
 namespace EGSDK::GamePH {
-	class EGameSDK_API PlayerDI_PH : public Engine::IControlObject, public Engine::IModelObject {
+	class EGameSDK_API PlayerDI_PH : public Engine::IControlObject, public IModelObject {
 	public:
 		union {
 			DynamicField(PlayerDI_PH, Engine::CoPhysicsProperty*, pCoPhysicsProperty);

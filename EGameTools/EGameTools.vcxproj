@@ -152,12 +152,12 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;freetype-mdd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;freetype-mdd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;..\$(PlatformShortName)\$(Configuration);</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;$(SolutionDir)$(Platform)\$(Configuration);</AdditionalLibraryDirectories>
       <AssemblyDebug>true</AssemblyDebug>
       <ImportLibrary />
       <FixedBaseAddress>
@@ -192,8 +192,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;..\$(PlatformShortName)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;freetype-md.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;$(SolutionDir)$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;freetype-md.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary />
       <AdditionalOptions>/NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
       <AssemblyDebug>true</AssemblyDebug>

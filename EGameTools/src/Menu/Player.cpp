@@ -409,6 +409,7 @@ namespace EGT::Menu {
 			return false;
 		}
 
+		static bool enablePlayerShadows = true;
 		Tab Tab::instance{};
 		void Tab::Init() {}
 		void Tab::Update() {
@@ -451,6 +452,13 @@ namespace EGT::Menu {
 			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled());
 			ImGui::CheckboxHotkey("Freeze Player", &freezePlayer, "Freezes player position");
 			ImGui::EndDisabled();
+			
+			if (ImGui::Checkbox("Enable Player Shadows", &enablePlayerShadows)) {
+				auto player = EGSDK::GamePH::PlayerDI_PH::Get();
+				if (player) {
+					player->EnableRenderingShadows(enablePlayerShadows);
+				}
+			}
 
 			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity, "Stops immunity from draining");
 			ImGui::SameLine();

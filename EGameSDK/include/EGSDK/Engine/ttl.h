@@ -28,7 +28,7 @@ namespace EGSDK::Engine {
         class map;
 
         template <typename T1>
-        class less;
+        struct less;
 
         class allocator;
     }

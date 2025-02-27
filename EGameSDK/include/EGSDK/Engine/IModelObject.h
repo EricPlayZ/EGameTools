@@ -1,282 +1,182 @@
 #pragma once
-#include <EGSDK\Engine\ttl.h>
-#include <EGSDK\vec3.h>
-#include <EGSDK\vec4.h>
-#include <EGSDK\mtx34.h>
 
-namespace EGSDK {
-    namespace Engine {
-        namespace Anim {
-            class IPoseElement;
-        }
-
-        namespace Audio {
-            class SAudioEventExtraData;
-            class SAudioEventExtraDataID;
-        }
-
-        namespace COFlags {
-            class TYPE;
-        }
-
-        namespace EBones {
-            class TYPE;
-        }
-
-        namespace EObjectToSimpleObjectsQueryResult {
-            class TYPE;
-        }
-
-        namespace LodDissolves {
-            class SState;
-        }
-
-        namespace cbs {
-            class CEntity;
-            template <typename T>
-            class CPointer;
-        }
-
-        class AnimEventInfo;
-        class CHierarchyElement;
-        class CModelObject;
-        class CRTTI;
-        class IAnimBind;
-        class ICoSkeleton;
-        class IGSObject;
-        class IMpc;
-        class ISGChunk;
-        class SCollision;
-        class SMeshVisibilityParams;
-        class SSurfParams;
-        class TAnimId;
-        class aabb;
-        class extents;
-        class uint4;
-
-        class __declspec(dllimport) IModelObject {
-        public:
-            IModelObject();
-            IModelObject(IModelObject const&);
-            virtual ~IModelObject();
-            void AdjustExtentsToAllElements(bool, bool);
-            virtual void AllowSkinsToModifyElementFlags(int, bool);
-            Anim::IPoseElement* AnimGetMeshPoseElement();
-            Anim::IPoseElement const* AnimGetMeshPoseElement() const;
-            Anim::IPoseElement* AnimGetModelObjectMorphPoseElement();
-            Anim::IPoseElement const* AnimGetModelObjectMorphPoseElement() const;
-            Anim::IPoseElement* AnimGetModelObjectPoseElement();
-            Anim::IPoseElement const* AnimGetModelObjectPoseElement() const;
-            bool AnimReInit(ttl::string_base<char> const&);
-            virtual bool AreSkinsAllowedToModifyElementFlags(int) const;
-            virtual unsigned int AttachAudioEvent(int, ttl::string_base<char> const&, Audio::SAudioEventExtraData const*, vec3 const&);
-            virtual void AttachChildToMeshElement(IControlObject*, int, bool);
-            virtual EObjectToSimpleObjectsQueryResult::TYPE CanGoToSimpleObjectsEditor() const;
-            virtual bool CharacterPresetExists(ttl::string_base<char> const&) const;
-            static void CollectMeshSkins(ttl::string_base<char> const&, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&);
-            void CollectUsedTextures(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&);
-            void CopyElementsPosition(IModelObject*);
-            virtual void DebugRenderElementBoxes();
-            void DissolveObject(bool);
-            virtual void DissolveObjectProgress(float, bool);
-            void DumpAnims();
-            virtual void ElementSetWorldMatrixFromQuatPos(int, vec3 const&, float, vec3 const&);
-            virtual bool EnableCollisionsElement(int, bool);
-            bool EnableElementPhysics(int, bool, bool);
-            virtual bool EnableElementTraceColl(int, bool);
-            void EnableHierarchySerialization(bool);
-            virtual void EnableMotionBlur(bool);
-            virtual void EnableRendering(bool);
-            void EnableRenderingRayTracing(bool);
-            void EnableRenderingScene(bool);
-            void EnableRenderingShadows(bool);
-            void EnableUpdateExtents(bool);
-            virtual void ExecuteAnimActions(int, int, TAnimId, void const*, unsigned int);
-            virtual void ForceUpdateAnimations();
-            virtual void FromUpForwardPosElementLocal(int, vec3 const&, vec3 const&, vec3 const&);
-            virtual void FromUpForwardPosElementWorld(int, vec3 const&, vec3 const&, vec3 const&);
-            virtual void GatherMeshAndSkinName(ttl::string_base<char>&, ttl::string_base<char>&) const;
-            aabb const& GetAABBExtents() const;
-            virtual IAnimBind* GetAnimBind();
-            virtual IAnimBind const* GetAnimBind() const;
-            virtual float GetAnimCurrentTime(TAnimId);
-            virtual float GetAnimLength(ttl::string_base<char> const&) const;
-            virtual float GetAnimLength(TAnimId) const;
-            virtual float GetAnimTimeDelta() const;
-            virtual ttl::string_base<char> GetAnimationFile(ttl::string_base<char> const&) const;
-            virtual TAnimId GetAnimationId(ttl::string_const<char>, bool) const;
-            void GetAnimationNames(ttl::map<ttl::string_base<char>, TAnimId, ttl::less<ttl::string_base<char>>, ttl::allocator>&);
-            virtual vec3 GetBoneDirVector(EBones::TYPE) const;
-            virtual EBones::TYPE GetBoneIDFromMeshElem(int) const;
-            virtual vec3 GetBoneJointPos(EBones::TYPE) const;
-            virtual vec3 GetBonePerpVector(EBones::TYPE) const;
-            virtual ttl::string_base<char> GetCharacterName(unsigned int) const;
-            virtual void GetCharacterNames(ttl::string_base<char>&, ttl::string_base<char>&);
-            virtual int GetChildrenElementsNumber(int) const;
-            int GetCurrentLOD() const;
-            LodDissolves::SState GetCurrentLodState() const;
-            static COFlags::TYPE GetDefaultCOFlags();
-            virtual int GetElementChild(int) const;
-            virtual extents GetElementExtentsInWorld(int) const;
-            virtual extents GetElementExtentsLocal(int) const;
-            virtual unsigned int GetElementFlags(int) const;
-            virtual int GetElementID(unsigned int) const;
-            virtual int GetElementID(char const*) const;
-            virtual int GetElementIDByLowercaseName(char const*) const;
-            virtual int GetElementIndex(char const*) const;
-            virtual void GetElementInvWorldMatrix(int, mtx34&) const;
-            virtual void GetElementLocalMatrices(int const*, unsigned int, mtx34*);
-            virtual mtx34 const& GetElementLocalMatrix(int) const;
-            virtual vec3 GetElementLocalPos(int) const;
-            virtual ttl::string_base<char> GetElementName(int) const;
-            virtual char const* GetElementNameCStr(int) const;
-            virtual int GetElementNext(int) const;
-            virtual int GetElementParent(int) const;
-            virtual extents GetElementReferenceExtents(int) const;
-            virtual mtx34 const& GetElementWorldMatrix(int) const;
-            virtual mtx34 GetElementWorldMtx(int) const;
-            virtual vec3 GetElementWorldPos(int) const;
-            virtual int GetElementsNumber() const;
-            char GetForcedAnimLod() const;
-            virtual CHierarchyElement* GetHElement(int) const;
-            virtual float GetLastAnimApplyTime() const;
-            virtual float GetLastAnimUpdateTime() const;
-            float GetLodDissolveStep() const;
-            virtual vec4 const& GetMeshAttribute(unsigned int) const;
-            virtual mtx34 const& GetMeshAttributeMtx(unsigned int) const;
-            virtual unsigned int GetMeshAttributesCount() const;
-            virtual uint4 const& GetMeshColor() const;
-            virtual vec4 const& GetMeshColor(unsigned int) const;
-            virtual bool GetMeshDataForSimpleObjectsEditor(ttl::string_base<char>*, ttl::string_base<char>*, __int64*, __int64*, int*);
-            virtual int GetMeshElemFromBoneID(EBones::TYPE) const;
-            void GetMeshElementsMatrices(ttl::vector<mtx34, ttl::vector_allocators::heap_allocator<mtx34>, 0>&) const;
-            unsigned int GetMeshElementsMatricesCount() const;
-            int GetMeshElementsState(ttl::vector<unsigned char, ttl::vector_allocators::heap_allocator<unsigned char>, 8>&, ttl::vector<int, ttl::vector_allocators::heap_allocator<int>, 2> const&) const;
-            int GetMeshElementsStateSize(ttl::vector<int, ttl::vector_allocators::heap_allocator<int>, 2> const&) const;
-            float GetMeshLodDistance(int) const;
-            virtual ttl::string_const<char> GetMeshName() const;
-            SMeshVisibilityParams const* GetMeshVisibilityParams() const;
-            float GetMeshVisibilityRange();
-            static IModelObject* GetModelObject(IGSObject*);
-            static IModelObject* GetModelObject(cbs::CEntity const*);
-            static IModelObject const* GetModelObject(IGSObject const*);
-            static CRTTI const* GetNativeClass();
-            unsigned int GetNumCollisionHullFaces() const;
-            unsigned int GetNumCollisionHullPrimitives() const;
-            unsigned int GetNumCollisionHullVertices() const;
-            unsigned int GetNumSurfaceParams() const;
-            unsigned int GetNumTraceHullFaces() const;
-            unsigned int GetNumTraceHullPrimitives() const;
-            unsigned int GetNumTraceHullVertices() const;
-            virtual cbs::CPointer<ICoSkeleton> GetSkeleton() const;
-            ttl::string_const<char> GetSkin() const;
-            virtual unsigned int GetSkinCount() const;
-            virtual __int64 GetSkinMustHaveTags() const;
-            virtual __int64 GetSkinMustNotHaveTags() const;
-            virtual ttl::string_const<char> GetSkinName() const;
-            virtual void GetSkinName(unsigned int, ttl::string_base<char>&) const;
-            virtual int GetSkinSeed() const;
-            static __int64 GetSkinTagsFromStr(char const*);
-            SSurfParams* GetSurfaceParams() const;
-            int GetTraceCollType() const;
-            bool GetValidSkinsEditor(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&) const;
-            virtual float GetWaterCurrentSpeed();
-            virtual mtx34 const& GetWorldXform() const;
-            virtual bool HideElement(int);
-            virtual void HideElementsByMask(bool, ttl::string_base<char> const&);
-            virtual bool InitAnimSeqFile(ttl::string_base<char> const&);
-            virtual bool IsBiped() const;
-            bool IsDefaultMeshLoaded();
-            virtual bool IsElementABone(int);
-            virtual bool IsElementCollsionsEnabled(int);
-            virtual bool IsElementHidden(int) const;
-            bool IsElementIDValid(int) const;
-            bool IsElementPhysicsEnabled(int);
-            virtual bool IsElementTraceCollEnabled(int);
-            bool IsObjectDissolved() const;
-            virtual bool IsRenderable() const;
-            void LoadMesh(bool);
-            void LoadMeshElements(ISGChunk*);
-            int MT_GetCount();
-            char const* MT_GetName(unsigned int);
-            float MT_WeightGet(unsigned int);
-            static bool MeshAndSkinExists(ttl::string_base<char> const&, ttl::string_base<char> const&);
-            static bool MeshExist(ttl::string_base<char> const&);
-            void MeshUseDefaultVisibilityParameters();
-            void MoveElementBoxSide(int, int, float);
-            void MoveElementBoxSides(int, vec3 const&, vec3 const&);
-            void MoveElementBoxSides(int, float, float, float, float, float, float);
-            virtual void OnAnimBindDestroyed();
-            virtual void OnAnimEvent(AnimEventInfo const&);
-            virtual void OnMpcCreated(IMpc*);
-            virtual unsigned int PlayAudioEvent(ttl::string_base<char> const&, Audio::SAudioEventExtraData const*, vec3 const&, vec3 const&);
-            virtual unsigned int PlayAudioEvent(unsigned int, Audio::SAudioEventExtraDataID const*, vec3 const&, vec3 const&);
-            virtual vec3 PointLocalToWorld(int, vec3 const&);
-            virtual vec3 PointWorldToLocal(int, vec3 const&);
-            bool RaytestMe(vec3 const&, vec3&, unsigned short, bool, unsigned short);
-            bool RaytraceMe(SCollision*, vec3 const&, vec3&, unsigned short, bool, unsigned short);
-            bool ReplaceMaterial(ttl::string_base<char> const&, ttl::string_base<char> const&);
-            void ResetBoneAndDescendantsToReferenceFrame(int);
-            void ResetBonesExtentsToReferenceFrame();
-            void ResetBonesToReferenceFrame(bool);
-            void ResetElementsDescendantsToReferenceFrame(int);
-            virtual void RestoreAnimationUpdateAbility(bool const&, ttl::vector<bool, ttl::vector_allocators::heap_allocator<bool>, 8> const&);
-            virtual void RotateElement(int, vec3 const&, float);
-            void SaveMeshElements(ISGChunk*);
-            virtual void SetAudioEventSwitch(unsigned int, ttl::string_base<char> const&, ttl::string_base<char> const&);
-            void SetBestGeomLods();
-            virtual void SetBoneOrientation(unsigned char, vec3 const&, vec3 const&);
-            virtual void SetCharacterNames(ttl::string_base<char> const&, ttl::string_base<char> const&);
-            void SetDontApplyAnim(bool);
-            virtual void SetElementExtentsLocal(extents const&, int);
-            virtual void SetElementLocalMatrices(int const*, unsigned int, mtx34 const*);
-            virtual void SetElementLocalMatrix(int, mtx34 const&);
-            virtual void SetElementLocalMatrixNoPropagate(int, mtx34 const&);
-            virtual void SetElementLocalPos(int, vec3 const&);
-            virtual void SetElementWorldMatrix(int, mtx34 const&);
-            virtual void SetElementWorldMatrixNoPropagate(int, mtx34 const&);
-            virtual void SetElementWorldPos(int, vec3 const&);
-            virtual void SetEngineObject(CGSObject*);
-            void SetExtentsLocal(extents const&);
-            void SetForcedAnimLod(char);
-            virtual void SetInitializeMesh(bool);
-            void SetLodDissolveStep(float);
-            void SetLodStateForSpawnedObjects(LodDissolves::SState);
-            virtual void SetMeshAttribute(unsigned int, vec4 const&);
-            virtual void SetMeshAttributeMtx(unsigned int, mtx34 const&);
-            virtual void SetMeshColor(uint4 const&);
-            virtual void SetMeshColor(unsigned int, vec4 const&);
-            void SetMeshCullSizeEnable(bool);
-            bool SetMeshElementsMatrices(ttl::vector<mtx34, ttl::vector_allocators::heap_allocator<mtx34>, 0> const&);
-            int SetMeshElementsState(ttl::vector<unsigned char, ttl::vector_allocators::heap_allocator<unsigned char>, 8> const&, ttl::vector<int, ttl::vector_allocators::heap_allocator<int>, 2> const&, bool, bool);
-            void SetMeshLodDistance(int, float);
-            virtual void SetMeshName(ttl::string_const<char>);
-            void SetMeshVisibilityRange(float);
-            virtual void SetPivotPointFromElement(int);
-            bool SetSkin();
-            virtual void SetSkinMustHaveTags(__int64);
-            virtual void SetSkinMustNotHaveTags(__int64);
-            virtual void SetSkinName(ttl::string_const<char>);
-            bool SetSkinNoCharacterPreset();
-            virtual void SetSkinSeed(int);
-            void SetTraceCollType(int);
-            virtual void SetupMeshPartClothSet(bool, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>*);
-            bool ShouldApplyAnim() const;
-            void ShowCollisionHull(bool);
-            void ShowElementBox(ttl::string_base<char> const&);
-            void ShowElementBoxes(bool);
-            void ShowElementBoxesFrom(ttl::string_base<char> const&);
-            void ShowElementBoxesFromTo(ttl::string_base<char> const&, ttl::string_base<char> const&);
-            void ShowElementBoxesTo(ttl::string_base<char> const&);
-            void ShowExtents(bool);
-            bool SkinExists(ttl::string_base<char> const&);
-            virtual void StopAnimActions(int, TAnimId, void const*, float);
-            CModelObject* ToCModelObject();
-            CModelObject const* ToCModelObject() const;
-            virtual bool UnhideElement(int);
-            virtual void UnlockAnimationUpdateAbility(bool&, ttl::vector<bool, ttl::vector_allocators::heap_allocator<bool>, 8>&);
-            virtual vec3 VectorLocalToWorld(int, vec3 const&) const;
-            virtual vec3 VectorWorldToLocal(int, vec3 const&);
-        };
-    }
+namespace Anim {
+    class IPoseElement;
 }
+
+namespace Audio {
+    struct SAudioEventExtraData;
+    struct SAudioEventExtraDataID;
+}
+
+namespace COFlags {
+    enum TYPE;
+}
+
+namespace EBones {
+    enum TYPE;
+}
+
+namespace EObjectToSimpleObjectsQueryResult {
+    enum TYPE;
+}
+
+namespace LodDissolves {
+    union SState;
+}
+
+namespace cbs {
+    class CEntity;
+    template <typename T>
+    class CPointer;
+}
+
+struct AnimEventInfo;
+class CHierarchyElement;
+class CModelObject;
+class CRTTI;
+class IAnimBind;
+class ICoSkeleton;
+class IGSObject;
+class IMpc;
+class ISGChunk;
+struct SCollision;
+struct SMeshVisibilityParams;
+struct SSurfParams;
+struct TAnimId;
+class aabb;
+class extents;
+struct uint4;
+
+namespace ttl {
+    namespace vector_allocators {
+        template <typename T>
+        class heap_allocator;
+    }
+
+    template <typename T>
+    class string_base;
+
+    template <typename T>
+    class string_const;
+
+    template <typename T1, typename T2, size_t T3>
+    class vector;
+
+    template <typename T1, typename T2, typename T3, typename T4>
+    class map;
+
+    template <typename T1>
+    struct less;
+
+    class allocator;
+}
+
+class vec3;
+class vec4;
+class mtx34;
+class CGSObject;
+class IControlObject;
+
+class __declspec(dllimport) IModelObject {
+public:
+    __cdecl IModelObject(class IModelObject const&);
+    void AdjustExtentsToAllElements(bool, bool);
+    class Anim::IPoseElement* AnimGetMeshPoseElement(void);
+    class Anim::IPoseElement const* AnimGetMeshPoseElement(void) const;
+    class Anim::IPoseElement* AnimGetModelObjectMorphPoseElement(void);
+    class Anim::IPoseElement const* AnimGetModelObjectMorphPoseElement(void) const;
+    class Anim::IPoseElement* AnimGetModelObjectPoseElement(void);
+    class Anim::IPoseElement const* AnimGetModelObjectPoseElement(void) const;
+    bool AnimReInit(class ttl::string_base<char> const&);
+    static void CollectMeshSkins(class ttl::string_base<char> const&, bool, class ttl::vector<class ttl::string_base<char>, class ttl::vector_allocators::heap_allocator<class ttl::string_base<char>>, 1>&);
+    void CollectUsedTextures(class ttl::vector<class ttl::string_base<char>, class ttl::vector_allocators::heap_allocator<class ttl::string_base<char>>, 1>&);
+    void CopyElementsPosition(class IModelObject*);
+    void DissolveObject(bool);
+    void DumpAnims(void);
+    bool EnableElementPhysics(int, bool, bool);
+    void EnableHierarchySerialization(bool);
+    void EnableRenderingRayTracing(bool);
+    void EnableRenderingScene(bool);
+    void EnableRenderingShadows(bool);
+    void EnableUpdateExtents(bool);
+    class aabb const& GetAABBExtents(void) const;
+    void GetAnimationNames(class ttl::map<class ttl::string_base<char>, struct TAnimId, struct ttl::less<class ttl::string_base<char>>, class ttl::allocator>&);
+    int GetCurrentLOD(void) const;
+    union LodDissolves::SState GetCurrentLodState(void) const;
+    static enum COFlags::TYPE GetDefaultCOFlags(void);
+    char GetForcedAnimLod(void) const;
+    float GetLodDissolveStep(void) const;
+    void GetMeshElementsMatrices(class ttl::vector<class mtx34, class ttl::vector_allocators::heap_allocator<class mtx34>, 0>&) const;
+    unsigned int GetMeshElementsMatricesCount(void) const;
+    int GetMeshElementsState(class ttl::vector<unsigned char, class ttl::vector_allocators::heap_allocator<unsigned char>, 8>&, class ttl::vector<int, class ttl::vector_allocators::heap_allocator<int>, 2> const&) const;
+    int GetMeshElementsStateSize(class ttl::vector<int, class ttl::vector_allocators::heap_allocator<int>, 2> const&) const;
+    float GetMeshLodDistance(int) const;
+    struct SMeshVisibilityParams const* GetMeshVisibilityParams(void) const;
+    float GetMeshVisibilityRange(void);
+    static class IModelObject* GetModelObject(class IGSObject*);
+    static class IModelObject* GetModelObject(class cbs::CEntity const*);
+    static class IModelObject const* GetModelObject(class IGSObject const*);
+    static class CRTTI const* GetNativeClass(void);
+    unsigned int GetNumCollisionHullFaces(void) const;
+    unsigned int GetNumCollisionHullPrimitives(void) const;
+    unsigned int GetNumCollisionHullVertices(void) const;
+    unsigned int GetNumSurfaceParams(void) const;
+    unsigned int GetNumTraceHullFaces(void) const;
+    unsigned int GetNumTraceHullPrimitives(void) const;
+    unsigned int GetNumTraceHullVertices(void) const;
+    class ttl::string_const<char> GetSkin(void) const;
+    static __int64 GetSkinTagsFromStr(char const*);
+    struct SSurfParams* GetSurfaceParams(void) const;
+    int GetTraceCollType(void) const;
+    bool GetValidSkinsEditor(class ttl::vector<class ttl::string_base<char>, class ttl::vector_allocators::heap_allocator<class ttl::string_base<char>>, 1>&, class ttl::vector<class ttl::string_base<char>, class ttl::vector_allocators::heap_allocator<class ttl::string_base<char>>, 1>&) const;
+    bool IsDefaultMeshLoaded(void);
+    bool IsElementIDValid(int) const;
+    bool IsElementPhysicsEnabled(int);
+    bool IsObjectDissolved(void) const;
+    void LoadMesh(bool);
+    void LoadMeshElements(class ISGChunk*);
+    int MT_GetCount(void);
+    char const* MT_GetName(unsigned int);
+    float MT_WeightGet(unsigned int);
+    static bool MeshAndSkinExists(class ttl::string_base<char> const&, class ttl::string_base<char> const&);
+    static bool MeshExist(class ttl::string_base<char> const&);
+    void MeshUseDefaultVisibilityParameters(void);
+    void MoveElementBoxSide(int, int, float);
+    void MoveElementBoxSides(int, class vec3 const&, class vec3 const&);
+    void MoveElementBoxSides(int, float, float, float, float, float, float);
+    bool RaytestMe(class vec3 const&, class vec3&, unsigned short, bool, unsigned short);
+    bool RaytraceMe(struct SCollision*, class vec3 const&, class vec3&, unsigned short, bool, unsigned short);
+    bool ReplaceMaterial(class ttl::string_base<char> const&, class ttl::string_base<char> const&);
+    void ResetBoneAndDescendantsToReferenceFrame(int);
+    void ResetBonesExtentsToReferenceFrame(void);
+    void ResetBonesToReferenceFrame(bool);
+    void ResetElementsDescendantsToReferenceFrame(int);
+    void SaveMeshElements(class ISGChunk*);
+    void SetBestGeomLods(void);
+    void SetDontApplyAnim(bool);
+    void SetEngineObject(class CGSObject*);
+    void SetExtentsLocal(class extents const&);
+    void SetForcedAnimLod(char);
+    void SetLodDissolveStep(float);
+    void SetLodStateForSpawnedObjects(union LodDissolves::SState);
+    void SetMeshCullSizeEnable(bool);
+    bool SetMeshElementsMatrices(class ttl::vector<class mtx34, class ttl::vector_allocators::heap_allocator<class mtx34>, 0> const&);
+    int SetMeshElementsState(class ttl::vector<unsigned char, class ttl::vector_allocators::heap_allocator<unsigned char>, 8> const&, class ttl::vector<int, class ttl::vector_allocators::heap_allocator<int>, 2> const&, bool, bool);
+    void SetMeshLodDistance(int, float);
+    void SetMeshVisibilityRange(float);
+    bool SetSkin(void);
+    bool SetSkinNoCharacterPreset(void);
+    void SetTraceCollType(int);
+    bool ShouldApplyAnim(void) const;
+    void ShowCollisionHull(bool);
+    void ShowElementBox(class ttl::string_base<char> const&);
+    void ShowElementBoxes(bool);
+    void ShowElementBoxesFrom(class ttl::string_base<char> const&);
+    void ShowElementBoxesFromTo(class ttl::string_base<char> const&, class ttl::string_base<char> const&);
+    void ShowElementBoxesTo(class ttl::string_base<char> const&);
+    void ShowExtents(bool);
+    bool SkinExists(class ttl::string_base<char> const&);
+    class CModelObject* ToCModelObject(void);
+    class CModelObject const* ToCModelObject(void) const;
+};

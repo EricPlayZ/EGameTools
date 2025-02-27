@@ -228,7 +228,7 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>deps\MinHook\lib;..\$(PlatformShortName)\$(Configuration);</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>deps\MinHook\lib;$(SolutionDir)$(Platform)\$(Configuration)\;</AdditionalLibraryDirectories>
       <AssemblyDebug>true</AssemblyDebug>
       <ImportLibrary />
       <FixedBaseAddress>
@@ -259,7 +259,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>deps\MinHook\lib;..\$(PlatformShortName)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>deps\MinHook\lib;$(SolutionDir)$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DbgHelp.lib;Version.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary />
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>

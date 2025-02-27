@@ -24,7 +24,7 @@ def clean_type(s):
     """Removes unwanted tokens (__cdecl, __ptr64, class, struct, enum) from a type string,
     then fixes spacing."""
     # Remove the unwanted tokens as whole words.
-    s = re.sub(r'\b(__cdecl|__ptr64|class|struct|enum|union)\b', '', s)
+    s = re.sub(r'\b(__ptr64)\b', '', s)
     return fix_spacing(s)
 
 def parse_function_signature(signature):
@@ -92,8 +92,8 @@ def generate_header_for_class(target_class, parsed_functions):
             if rt:
                 rt += " "
             params = clean_type(func['parameters'])
-            if params.strip() == "void":
-                params = ""
+            #if params.strip() == "void":
+                #params = ""
             header_code += f"    {rt}{func['function_name']}({params}){const};\n"
         header_code += "};\n"
     else:
@@ -114,9 +114,9 @@ def extract_custom_types_from_functions(filtered_functions, target_class):
         tokens_rt = extract_types_from_string(raw_rt)
         if len(tokens_rt) > 1:
             if (tokens_rt[0] in ("class", "struct", "enum", "union") and tokens_rt[1] != target_class):
-                custom_types.add(tokens_rt[1])
+                custom_types.add((tokens_rt[0], tokens_rt[1]))
             elif (len(tokens_rt) > 2 and tokens_rt[0] in ("virtual", "static") and tokens_rt[1] in ("class", "struct", "enum", "union") and tokens_rt[2] != target_class):
-                custom_types.add(tokens_rt[2])
+                custom_types.add((tokens_rt[1], tokens_rt[2]))
         if '<' in raw_rt and '>' in raw_rt:
             inner_contents = re.findall(r'<\s*([^>]+?)\s*>', raw_rt)
             for content in inner_contents:
@@ -124,9 +124,9 @@ def extract_custom_types_from_functions(filtered_functions, target_class):
                     part = part.strip()
                     tokens_inner = extract_types_from_string(part)
                     if (tokens_inner[0] in ("class", "struct", "enum", "union") and tokens_inner[1] != target_class):
-                        custom_types.add(tokens_inner[1])
+                        custom_types.add((tokens_inner[0], tokens_inner[1]))
                     elif (len(tokens_inner) > 2 and tokens_inner[0] in ("virtual", "static") and tokens_inner[1] in ("class", "struct", "enum", "union") and tokens_inner[2] != target_class):
-                        custom_types.add(tokens_inner[2])
+                        custom_types.add((tokens_inner[1], tokens_inner[2]))
         
         raw_params = func.get("parameters", "")
         param_chunks = [chunk.strip() for chunk in raw_params.split(',')]
@@ -135,9 +135,9 @@ def extract_custom_types_from_functions(filtered_functions, target_class):
             tokens_params = extract_types_from_string(chunk)
             if len(tokens_params) > 1:
                 if (tokens_params[0] in ("class", "struct", "enum", "union") and tokens_params[1] != target_class):
-                    custom_types.add(tokens_params[1])
+                    custom_types.add((tokens_params[0], tokens_params[1]))
                 elif (len(tokens_params) > 2 and tokens_params[0] in ("virtual", "static") and tokens_params[1] in ("class", "struct", "enum", "union") and tokens_params[2] != target_class):
-                    custom_types.add(tokens_params[2])
+                    custom_types.add((tokens_params[1], tokens_params[2]))
             if '<' in chunk and '>' in chunk:
                 inner_contents = re.findall(r'<\s*([^>]+?)\s*>', chunk)
                 for content in inner_contents:
@@ -145,23 +145,21 @@ def extract_custom_types_from_functions(filtered_functions, target_class):
                         part = part.strip()
                         tokens_inner = extract_types_from_string(part)
                         if (tokens_inner[0] in ("class", "struct", "enum", "union") and tokens_inner[1] != target_class):
-                            custom_types.add(tokens_inner[1])
+                            custom_types.add((tokens_inner[0], tokens_inner[1]))
                         elif (len(tokens_inner) > 2 and tokens_inner[0] in ("virtual", "static") and tokens_inner[1] in ("class", "struct", "enum", "union") and tokens_inner[2] != target_class):
-                            custom_types.add(tokens_inner[2])
+                            custom_types.add((tokens_inner[1], tokens_inner[2]))
 
     return custom_types
 
 def search_for_class_definition(project_folder, full_class_name):
     """
     Searches the given project folder recursively for a file that contains a definition
-    for the specified class or struct. This function uses a regular expression that
-    matches 'class' or 'struct' followed by any number of non-space tokens (to skip qualifiers)
-    and then the target name.
-    For namespaced classes, only the last part is used in the search.
+    for the specified class/struct/enum/union. This function uses a regex that matches
+    'struct', 'class', 'enum', or 'union' followed by any non-space tokens and then the
+    target name, which is then followed by either a semicolon or an opening brace.
+    For namespaced classes, only the last part is used.
     """
     search_name = full_class_name.split("::")[-1]
-    # This pattern matches 'class' or 'struct', followed by any non-space tokens (like macros, qualifiers),
-    # and then the search_name as a whole word.
     pattern = re.compile(r'\b(?:struct|class|enum|union)\s+(?:\S+\s+)*' + re.escape(search_name) + r'\b(?=\s*[;{])', re.MULTILINE)
     for root, dirs, files in os.walk(project_folder):
         for file in files:
@@ -184,39 +182,34 @@ def is_namespace_type(full_class_name):
     return len(full_class_name.split("::")) > 1
 
 def group_placeholder_definitions(custom_types):
-    ns_groups = defaultdict(set)
+    ns_groups = defaultdict(list)
     non_ns = []
-    for typ in sorted(custom_types):
-        if is_namespace_type(typ):
-            parts = typ.split("::")
+    for decl, full_name in sorted(custom_types, key=lambda x: x[1]):
+        if "::" in full_name:
+            parts = full_name.split("::")
             ns_key = tuple(parts[:-1])
-            class_name = parts[-1]
-            ns_groups[ns_key].add(class_name)
+            type_name = parts[-1]
+            ns_groups[ns_key].append((decl, type_name))
         else:
-            non_ns.append(typ)
+            non_ns.append((decl, full_name))
     return ns_groups, non_ns
 
-def generate_namespace_placeholder(ns_key, class_names):
+def generate_namespace_placeholder(ns_key, type_list):
     """
     Given a namespace key (tuple of namespace parts) and a set of class names,
     generate a single forward declaration block with nested namespace blocks.
     """
     ns_open = "\n".join(f"namespace {ns} {{" for ns in ns_key)
-    class_defs = "\n".join(f"    class {cls};" for cls in sorted(class_names))
+    class_defs = "\n".join(f"    {decl} {name};" for decl, name in sorted(type_list, key=lambda x: x[1]))
     ns_close = "\n".join("}" for _ in ns_key)
     return f"{ns_open}\n{class_defs}\n{ns_close}"
 
 def build_final_placeholders_string(custom_types):
-    # Group by namespace.
     ns_groups, non_ns = group_placeholder_definitions(custom_types)
-    # Build namespace placeholder blocks.
-    namespace_placeholders = [generate_namespace_placeholder(ns_key, class_names) for ns_key, class_names in ns_groups.items()]
-    # Build non-namespaced placeholders.
-    class_placeholders = [f"class {typ};" for typ in sorted(non_ns)]
+    namespace_placeholders = [generate_namespace_placeholder(ns_key, type_list) for ns_key, type_list in ns_groups.items()]
+    class_placeholders = [f"{decl} {name};" for decl, name in sorted(non_ns, key=lambda x: x[1])]
     
-    # Join namespace placeholders with a blank line between each.
     ns_part = "\n\n".join(namespace_placeholders) if namespace_placeholders else ""
-    # Join non-namespaced placeholders with a single newline between each.
     cls_part = "\n".join(class_placeholders) if class_placeholders else ""
     
     if ns_part and cls_part:
@@ -232,7 +225,7 @@ def generate_full_header_for_class(target_class, parsed_functions):
     custom_types = extract_custom_types_from_functions(filtered_functions, target_class)
     
     # For each custom type, if not found in the project folder, keep it.
-    missing_custom_types = {typ for typ in custom_types if not search_for_class_definition(PROJECT_FOLDER, typ)}
+    missing_custom_types = {(decl, full_name) for decl, full_name in custom_types if not search_for_class_definition(PROJECT_FOLDER, full_name)}
     
     placeholders_str = build_final_placeholders_string(missing_custom_types)
 
