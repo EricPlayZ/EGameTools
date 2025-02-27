@@ -6,31 +6,53 @@
 
 namespace EGSDK {
     namespace Engine {
-        namespace Audio {
-            struct SAudioEventExtraData;
-            struct SAudioEventExtraDataID;
-        }
         namespace Anim {
             class IPoseElement;
         }
-        namespace EObjectToSimpleObjectsQueryResult {
-            enum TYPE;
+
+        namespace Audio {
+            class SAudioEventExtraData;
+            class SAudioEventExtraDataID;
         }
-        namespace EBones {
-            enum TYPE;
-        }
-        namespace LodDissolves {
-            union SState;
-        };
+
         namespace COFlags {
-            enum TYPE;
-        };
+            class TYPE;
+        }
+
+        namespace EBones {
+            class TYPE;
+        }
+
+        namespace EObjectToSimpleObjectsQueryResult {
+            class TYPE;
+        }
+
+        namespace LodDissolves {
+            class SState;
+        }
+
         namespace cbs {
+            class CEntity;
             template <typename T>
             class CPointer;
-
-            class CEntity;
         }
+
+        class AnimEventInfo;
+        class CHierarchyElement;
+        class CModelObject;
+        class CRTTI;
+        class IAnimBind;
+        class ICoSkeleton;
+        class IGSObject;
+        class IMpc;
+        class ISGChunk;
+        class SCollision;
+        class SMeshVisibilityParams;
+        class SSurfParams;
+        class TAnimId;
+        class aabb;
+        class extents;
+        class uint4;
 
         class __declspec(dllimport) IModelObject {
         public:
@@ -51,8 +73,8 @@ namespace EGSDK {
             virtual void AttachChildToMeshElement(IControlObject*, int, bool);
             virtual EObjectToSimpleObjectsQueryResult::TYPE CanGoToSimpleObjectsEditor() const;
             virtual bool CharacterPresetExists(ttl::string_base<char> const&) const;
-            static void CollectMeshSkins(ttl::string_base<char> const&, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char> >, 1>&);
-            void CollectUsedTextures(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char> >, 1>&);
+            static void CollectMeshSkins(ttl::string_base<char> const&, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&);
+            void CollectUsedTextures(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&);
             void CopyElementsPosition(IModelObject*);
             virtual void DebugRenderElementBoxes();
             void DissolveObject(bool);
@@ -83,7 +105,7 @@ namespace EGSDK {
             virtual float GetAnimTimeDelta() const;
             virtual ttl::string_base<char> GetAnimationFile(ttl::string_base<char> const&) const;
             virtual TAnimId GetAnimationId(ttl::string_const<char>, bool) const;
-            void GetAnimationNames(ttl::map<ttl::string_base<char>, TAnimId, ttl::less<ttl::string_base<char> >, ttl::allocator>&);
+            void GetAnimationNames(ttl::map<ttl::string_base<char>, TAnimId, ttl::less<ttl::string_base<char>>, ttl::allocator>&);
             virtual vec3 GetBoneDirVector(EBones::TYPE) const;
             virtual EBones::TYPE GetBoneIDFromMeshElem(int) const;
             virtual vec3 GetBoneJointPos(EBones::TYPE) const;
@@ -92,7 +114,7 @@ namespace EGSDK {
             virtual void GetCharacterNames(ttl::string_base<char>&, ttl::string_base<char>&);
             virtual int GetChildrenElementsNumber(int) const;
             int GetCurrentLOD() const;
-            union LodDissolves::SState GetCurrentLodState() const;
+            LodDissolves::SState GetCurrentLodState() const;
             static COFlags::TYPE GetDefaultCOFlags();
             virtual int GetElementChild(int) const;
             virtual extents GetElementExtentsInWorld(int) const;
@@ -157,7 +179,7 @@ namespace EGSDK {
             static __int64 GetSkinTagsFromStr(char const*);
             SSurfParams* GetSurfaceParams() const;
             int GetTraceCollType() const;
-            bool GetValidSkinsEditor(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char> >, 1>&, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char> >, 1>&) const;
+            bool GetValidSkinsEditor(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&) const;
             virtual float GetWaterCurrentSpeed();
             virtual mtx34 const& GetWorldXform() const;
             virtual bool HideElement(int);
@@ -219,7 +241,7 @@ namespace EGSDK {
             void SetForcedAnimLod(char);
             virtual void SetInitializeMesh(bool);
             void SetLodDissolveStep(float);
-            void SetLodStateForSpawnedObjects(union LodDissolves::SState);
+            void SetLodStateForSpawnedObjects(LodDissolves::SState);
             virtual void SetMeshAttribute(unsigned int, vec4 const&);
             virtual void SetMeshAttributeMtx(unsigned int, mtx34 const&);
             virtual void SetMeshColor(uint4 const&);
@@ -238,7 +260,7 @@ namespace EGSDK {
             bool SetSkinNoCharacterPreset();
             virtual void SetSkinSeed(int);
             void SetTraceCollType(int);
-            virtual void SetupMeshPartClothSet(bool, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char> >, 1>*);
+            virtual void SetupMeshPartClothSet(bool, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>*);
             bool ShouldApplyAnim() const;
             void ShowCollisionHull(bool);
             void ShowElementBox(ttl::string_base<char> const&);
