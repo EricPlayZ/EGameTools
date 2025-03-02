@@ -1,57 +1,7 @@
 #pragma once
-
-namespace Anim {
-    class IPoseElement;
-}
-
-namespace Audio {
-    struct SAudioEventExtraData;
-    struct SAudioEventExtraDataID;
-}
-
-namespace EBones {
-    enum TYPE;
-}
-
-namespace LodDissolves {
-    union SState;
-}
-
-namespace cbs {
-    class CEntity;
-}
-
-namespace ttl {
-    namespace vector_allocators {
-        class heap_allocator;
-    }
-
-    class allocator;
-    struct less;
-    class map;
-    class string_base;
-    class string_const;
-    class vector;
-}
-
-class CGSObject;
-class IControlObject;
-class IGSObject;
-class ISGChunk;
-struct SCollision;
-struct SMeshVisibilityParams;
-struct SSurfParams;
-struct TAnimId;
-class aabb;
-class extents;
-class mtx34;
-struct uint4;
-class vec3;
-class vec4;
-
 class __declspec(dllimport) IModelObject {
 public:
-    virtual void StrippedVFunc0();
+    virtual void sub_1203B0() = 0;
     virtual IAnimBind const* GetAnimBind() const;
     virtual IAnimBind const* GetAnimBind() const;
     virtual vec3 VectorLocalToWorld(int, vec3 const&) const;
@@ -59,7 +9,7 @@ public:
     virtual TAnimId GetAnimationId(ttl::string_const<char>, bool) const;
     virtual float GetAnimLength(TAnimId) const;
     virtual float GetAnimLength(ttl::string_base<char> const&) const;
-    virtual void StrippedVFunc1();
+    virtual float odb_GetLoadTime(RLROD_Batch*);
     virtual mtx34 const& GetWorldXform() const;
     virtual int GetElementIndex(char const*) const;
     virtual ttl::string_base<char> GetElementName(int) const;
@@ -69,21 +19,21 @@ public:
     virtual vec3 GetElementWorldPos(int) const;
     virtual int GetMeshElemFromBoneID(EBones::TYPE) const;
     virtual extents GetElementExtentsInWorld(int) const;
-    virtual void StrippedVFunc2();
+    virtual void StrippedVFunc0() = 0;
     virtual void ExecuteAnimActions(int, int, TAnimId, void const*, unsigned int);
     virtual void StopAnimActions(int, TAnimId, void const*, float);
-    virtual void StrippedVFunc3();
+    virtual void StrippedVFunc1() = 0;
     virtual void SetEngineObject(CGSObject*);
-    virtual void StrippedVFunc4();
-    virtual void StrippedVFunc5();
-    virtual void StrippedVFunc6();
-    virtual void StrippedVFunc7();
-    virtual void StrippedVFunc8();
-    virtual void StrippedVFunc9();
-    virtual void StrippedVFunc10();
-    virtual void StrippedVFunc11();
-    virtual void StrippedVFunc12();
-    virtual void StrippedVFunc13();
+    virtual void StrippedVFunc2() = 0;
+    virtual void StrippedVFunc3() = 0;
+    virtual void StrippedVFunc4() = 0;
+    virtual void StrippedVFunc5() = 0;
+    virtual void StrippedVFunc6() = 0;
+    virtual void StrippedVFunc7() = 0;
+    virtual void StrippedVFunc8() = 0;
+    virtual void StrippedVFunc9() = 0;
+    virtual void StrippedVFunc10() = 0;
+    virtual void StrippedVFunc11() = 0;
     virtual int GetChildrenElementsNumber(int) const;
     virtual int GetElementParent(int) const;
     virtual int GetElementChild(int) const;
@@ -91,9 +41,9 @@ public:
     virtual void SetMeshName(ttl::string_const<char>);
     virtual void SetInitializeMesh(bool);
     virtual ttl::string_const<char> GetMeshName() const;
-    virtual void StrippedVFunc14();
+    virtual void StrippedVFunc12() = 0;
     virtual void SetSkinName(ttl::string_const<char>);
-    virtual void StrippedVFunc15();
+    virtual void StrippedVFunc13() = 0;
     virtual void GetSkinName(unsigned int, ttl::string_base<char>&) const;
     virtual ttl::string_const<char> GetSkinName() const;
     virtual void SetSkinSeed(int);
@@ -128,8 +78,8 @@ public:
     virtual void SetElementWorldPos(int, vec3 const&);
     virtual vec3 GetElementLocalPos(int) const;
     virtual void SetElementLocalPos(int, vec3 const&);
-    virtual void StrippedVFunc16();
-    virtual void StrippedVFunc17();
+    virtual void StrippedVFunc14() = 0;
+    virtual void StrippedVFunc15() = 0;
     virtual mtx34 const& GetElementLocalMatrix(int) const;
     virtual void SetElementLocalMatrix(int, mtx34 const&);
     virtual void SetElementLocalMatrixNoPropagate(int, mtx34 const&);
@@ -139,7 +89,7 @@ public:
     virtual void SetElementWorldMatrix(int, mtx34 const&);
     virtual void SetElementWorldMatrixNoPropagate(int, mtx34 const&);
     virtual void GetElementInvWorldMatrix(int, mtx34&) const;
-    virtual void StrippedVFunc18();
+    virtual void StrippedVFunc16() = 0;
     virtual void RotateElement(int, vec3 const&, float);
     virtual void ElementSetWorldMatrixFromQuatPos(int, vec3 const&, float, vec3 const&);
     virtual void FromUpForwardPosElementLocal(int, vec3 const&, vec3 const&, vec3 const&);
@@ -149,7 +99,7 @@ public:
     virtual float GetLastAnimUpdateTime() const;
     virtual float GetLastAnimApplyTime() const;
     virtual bool InitAnimSeqFile(ttl::string_base<char> const&);
-    virtual void StrippedVFunc19();
+    virtual void StrippedVFunc17() = 0;
     virtual vec3 GetBoneDirVector(EBones::TYPE) const;
     virtual vec3 GetBonePerpVector(EBones::TYPE) const;
     virtual vec3 GetBoneJointPos(EBones::TYPE) const;
@@ -170,17 +120,17 @@ public:
     virtual bool HideElement(int);
     virtual bool UnhideElement(int);
     virtual bool IsElementHidden(int) const;
-    virtual void StrippedVFunc20();
-    virtual void StrippedVFunc21();
-    virtual void StrippedVFunc22();
-    virtual void StrippedVFunc23();
-    virtual void StrippedVFunc24();
-    virtual void StrippedVFunc25();
-    virtual void StrippedVFunc26();
-    virtual void StrippedVFunc27();
-    virtual void StrippedVFunc28();
-    virtual void StrippedVFunc29();
-    virtual void StrippedVFunc30();
+    virtual void StrippedVFunc18() = 0;
+    virtual void StrippedVFunc19() = 0;
+    virtual void StrippedVFunc20() = 0;
+    virtual void StrippedVFunc21() = 0;
+    virtual void StrippedVFunc22() = 0;
+    virtual void StrippedVFunc23() = 0;
+    virtual void StrippedVFunc24() = 0;
+    virtual void StrippedVFunc25() = 0;
+    virtual void StrippedVFunc26() = 0;
+    virtual void StrippedVFunc27() = 0;
+    virtual void StrippedVFunc28() = 0;
     virtual void UnlockAnimationUpdateAbility(bool&, ttl::vector<bool, ttl::vector_allocators::heap_allocator<bool>, 8>&);
     virtual void RestoreAnimationUpdateAbility(bool const&, ttl::vector<bool, ttl::vector_allocators::heap_allocator<bool>, 8> const&);
     virtual bool EnableCollisionsElement(int, bool);
@@ -191,19 +141,19 @@ public:
     virtual bool IsElementTraceCollEnabled(int);
     virtual bool IsElementABone(int);
     virtual void SetupMeshPartClothSet(bool, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>*);
-    virtual void StrippedVFunc31();
-    virtual void StrippedVFunc32();
-    virtual void StrippedVFunc33();
+    virtual void StrippedVFunc29() = 0;
+    virtual void StrippedVFunc30() = 0;
+    virtual float odb_GetLoadTime(RLROD_Batch*);
     virtual void DissolveObjectProgress(float, bool);
     virtual void GatherMeshAndSkinName(ttl::string_base<char>&, ttl::string_base<char>&) const;
     virtual void EnableMotionBlur(bool);
-    virtual void StrippedVFunc34();
+    virtual void StrippedVFunc31() = 0;
     virtual bool GetMeshDataForSimpleObjectsEditor(ttl::string_base<char>*, ttl::string_base<char>*, __int64*, __int64*, int*);
-    virtual void StrippedVFunc35();
-    virtual void StrippedVFunc36();
-    protected: IModelObject();
-    public: IModelObject(IModelObject const&);
-    void MoveElementBoxSides(int, vec3 const&, vec3 const&);
+    virtual void StrippedVFunc32() = 0;
+    virtual ttl::list<SCommandParam, ttl::allocator>::const_reverse_iterator rend() const;
+
+    IModelObject();
+    IModelObject(IModelObject const&);
     void AdjustExtentsToAllElements(bool, bool);
     Anim::IPoseElement const* AnimGetMeshPoseElement() const;
     Anim::IPoseElement const* AnimGetModelObjectMorphPoseElement() const;
@@ -261,6 +211,7 @@ public:
     static bool MeshExist(ttl::string_base<char> const&);
     void MeshUseDefaultVisibilityParameters();
     void MoveElementBoxSide(int, int, float);
+    void MoveElementBoxSides(int, vec3 const&, vec3 const&);
     void MoveElementBoxSides(int, float, float, float, float, float, float);
     bool RaytestMe(vec3 const&, vec3&, unsigned short, bool, unsigned short);
     bool RaytraceMe(SCollision*, vec3 const&, vec3&, unsigned short, bool, unsigned short);
