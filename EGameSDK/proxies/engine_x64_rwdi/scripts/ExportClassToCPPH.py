@@ -2,7 +2,7 @@ import os
 import idc
 import idaapi
 import idautils
-import ida_kernwin
+import ida_hexrays
 import ida_nalt
 import ida_bytes
 import ida_ida
@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)
 CLASS_TYPES = ("class", "struct", "enum", "union")
 FUNC_QUALIFIERS = ("virtual", "static")
-NON_VALID_VIRTUAL_FUNCS = ("SetPlatform", "RunUnitTests", "_purecall")
 
 # Configuration
 INTERNAL_SCRIPT_NAME = "ExportClassToCPPH"
@@ -25,6 +24,7 @@ GENERATE_CLASS_DEFS_MISSING_TYPES = False   # Flag to generate full class defini
 SEARCH_CLASS_DEFS_IN_PROJECT_FOLDER = False # Flag to search for missing class types in the PROJECT_FOLDER
 
 virtualFuncPlaceholderCounter: int = 0 # Counter for placeholder virtual functions
+virtualFuncDuplicateCounter: dict[str, int] = {} # Counter for duplicate virtual functions
 
 def PrintMsg(*args):
     #ida_kernwin.msg(f"[{INTERNAL_SCRIPT_NAME}] {args}")
@@ -37,6 +37,7 @@ def PrintMsg(*args):
 def FixTypeSpacing(type: str) -> str:
     """Fix spacing for pointers/references, commas, and angle brackets."""
     type = re.sub(r'\s+([*&])', r'\1', type)             # Remove space before '*' or '&'
+    type = re.sub(r'([*&])(?!\s)', r'\1 ', type)         # Ensure '*' or '&' is followed by one space if it's not already.
     type = re.sub(r'\s*,\s*', ', ', type)                # Ensure comma followed by one space
     type = re.sub(r'<\s+', '<', type)                    # Remove space after '<'
     type = re.sub(r'\s+>', '>', type)                    # Remove space before '>'
@@ -45,8 +46,12 @@ def FixTypeSpacing(type: str) -> str:
 
 def CleanType(type: str) -> str:
     """Remove unwanted tokens from a type string, then fix spacing."""
-    type = re.sub(r'\b(__cdecl|__ptr64|class|struct|enum|union)\b', '', type)
+    type = re.sub(r'\b(__cdecl|__fastcall|__ptr64|class|struct|enum|union)\b', '', type)
     return FixTypeSpacing(type)
+
+def ReplaceIDATypes(type: str) -> str:
+    """Replace IDA types with normal ones"""
+    return type.replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
 
 def ExtractTypesFromString(types: str) -> list[str]:
     """Extract potential type names from a string."""
@@ -64,12 +69,16 @@ class ClassName:
     """Split a potentially namespaced class name into namespace parts and class name."""
     namespaces: tuple[str] = field(default_factory=tuple)
     name: str = ""
+    namespacedName: str = ""
     fullName: str = ""
+    type: str = ""
 
     def __init__(self, fullName: str):
         object.__setattr__(self, "namespaces", ())
         object.__setattr__(self, "name", "")
+        object.__setattr__(self, "namespacedName", "")
         object.__setattr__(self, "fullName", "")
+        object.__setattr__(self, "type", "")
         
         fullName = (fullName or "").strip()
         if not fullName:
@@ -79,8 +88,10 @@ class ClassName:
         types = ExtractTypesFromString(fullName)
         if len(types) > 1:
             if (types[0] in CLASS_TYPES):
+                object.__setattr__(self, "type", types[0])
                 fullName = types[1]
             elif (len(types) > 2 and types[0] in FUNC_QUALIFIERS and types[1] in CLASS_TYPES):
+                object.__setattr__(self, "type", types[1])
                 fullName = types[2]
             else:
                 return
@@ -88,9 +99,11 @@ class ClassName:
         parts = fullName.split("::")
         if len(parts) == 1:
             object.__setattr__(self, "name", parts[0])
+            object.__setattr__(self, "namespacedName", self.name)
         else:
             object.__setattr__(self, "namespaces", tuple(parts[:-1]))
             object.__setattr__(self, "name", parts[-1])
+            object.__setattr__(self, "namespacedName", f"{'::'.join(self.namespaces)}::{self.name}")
 
 @dataclass(frozen=True)
 class ParsedFunction:
@@ -105,6 +118,7 @@ class ParsedFunction:
 
     def __init__(self, signature: str, onlyVirtualFuncs: bool):
         global virtualFuncPlaceholderCounter
+        global virtualFuncDuplicateCounter
 
         object.__setattr__(self, "type", "")
         object.__setattr__(self, "access", "")
@@ -115,8 +129,20 @@ class ParsedFunction:
         object.__setattr__(self, "const", False)
 
         signature = signature.strip()
-        remainingInput: str = signature
         
+        isDuplicateFunc: bool = False
+        isIDAGeneratedType: bool = False
+        isIDAGeneratedTypeParsed: bool = False
+        if (signature.startswith("DUPLICATE_FUNC")):
+            isDuplicateFunc = True
+            signature = signature.removeprefix("DUPLICATE_FUNC").strip()
+        if (signature.startswith("IDA_GEN_TYPE")):
+            isIDAGeneratedType = True
+            signature = signature.removeprefix("IDA_GEN_TYPE").strip()
+        elif (signature.startswith("IDA_GEN_PARSED")):
+            isIDAGeneratedTypeParsed = True
+            signature = signature.removeprefix("IDA_GEN_PARSED").strip()
+
         access: str = ""
         if signature.startswith("public:"):
             access = "public"
@@ -124,77 +150,87 @@ class ParsedFunction:
             access = "protected"
         elif signature.startswith("private:"):
             access = "private"
-        remainingInput = signature[len(access)+1:].strip()
-        
+        signature = signature.removeprefix(f"{access}:").strip()
+
         # Find parameters and const qualifier
-        paramsOpenParenIndex: int = remainingInput.find('(')
-        paramsCloseParenIndex: int = remainingInput.rfind(')')
+        paramsOpenParenIndex: int = signature.find('(')
+        paramsCloseParenIndex: int = signature.rfind(')')
         
         if paramsOpenParenIndex != -1 and paramsCloseParenIndex != -1:
-            params: str = remainingInput[paramsOpenParenIndex + 1:paramsCloseParenIndex]
+            params: str = signature[paramsOpenParenIndex + 1:paramsCloseParenIndex]
 
-            remainingInputBeforeParamsParen: str = remainingInput[:paramsOpenParenIndex].strip()
-            remainingInputAfterParamsParen: str = remainingInput[paramsCloseParenIndex + 1:].strip()
+            remainingInputBeforeParamsParen: str = signature[:paramsOpenParenIndex].strip()
+            remainingInputAfterParamsParen: str = signature[paramsCloseParenIndex + 1:].strip()
             const: str = "const" if "const" in remainingInputAfterParamsParen else ""
             
-            # Find the last space outside of angle brackets
-            lastSpaceIndex: int = -1
-            lastClassSeparatorIndex: int = -1
+            returnType: str = ""
+            classAndFuncName: str = ""
+            className: str = ""
+            funcName: str = ""
+            if not isIDAGeneratedType:
+                # Find the last space outside of angle brackets
+                lastSpaceIndex: int = -1
+                lastClassSeparatorIndex: int = -1
 
-            templateDepth: int = 0
-            for i in range(len(remainingInputBeforeParamsParen)):
-                if remainingInputBeforeParamsParen[i] == '<':
-                    templateDepth += 1
-                elif remainingInputBeforeParamsParen[i] == '>':
-                    templateDepth -= 1
-                elif templateDepth == 0 and remainingInputBeforeParamsParen[i] == ' ':
-                    lastSpaceIndex = i
-            
-            if lastSpaceIndex != -1:
-                # Split at the last space outside angle brackets
-                returnType: str = remainingInputBeforeParamsParen[:lastSpaceIndex].strip()
-                if onlyVirtualFuncs and "virtual" not in returnType:
-                    returnType = "virtual " + returnType
-
-                classAndFuncName: str = remainingInputBeforeParamsParen[lastSpaceIndex + 1:].strip()
-                className: str = "::".join(classAndFuncName.split("::")[:-1])
-                funcName: str = classAndFuncName.split("::")[-1]
-            else:
-                returnType: str = ""
-                
-                templateDepth = 0
-                # Find the last class separator outside of angle brackets
+                templateDepth: int = 0
                 for i in range(len(remainingInputBeforeParamsParen)):
                     if remainingInputBeforeParamsParen[i] == '<':
                         templateDepth += 1
                     elif remainingInputBeforeParamsParen[i] == '>':
                         templateDepth -= 1
-                    elif templateDepth == 0 and remainingInputBeforeParamsParen[i:i+2] == '::':
-                        lastClassSeparatorIndex = i
-            
-                classAndFuncName: str = remainingInputBeforeParamsParen.strip()
-                className: str = classAndFuncName[:lastClassSeparatorIndex]
-                funcName: str = classAndFuncName[lastClassSeparatorIndex + 2:]
+                    elif templateDepth == 0 and remainingInputBeforeParamsParen[i] == ' ':
+                        lastSpaceIndex = i
+                
+                if lastSpaceIndex != -1:
+                    # Split at the last space outside angle brackets
+                    returnType = remainingInputBeforeParamsParen[:lastSpaceIndex].strip()
 
-            if lastSpaceIndex != -1 or lastClassSeparatorIndex != -1:
-                object.__setattr__(self, "type", "vfunc" if onlyVirtualFuncs else "func")
-                object.__setattr__(self, "access", access if access else "public")
-                object.__setattr__(self, "returnType", ClassName(returnType))
-                object.__setattr__(self, "className", ClassName(className))
-                object.__setattr__(self, "funcName", funcName)
-                object.__setattr__(self, "params", params)
-                object.__setattr__(self, "const", bool(const))
-                return
+                    classAndFuncName = remainingInputBeforeParamsParen[lastSpaceIndex+1:].strip()
+                    className = "::".join(classAndFuncName.split("::")[:-1])
+                    funcName = classAndFuncName.split("::")[-1]
+                else:
+                    templateDepth = 0
+                    # Find the last class separator outside of angle brackets
+                    for i in range(len(remainingInputBeforeParamsParen)):
+                        if remainingInputBeforeParamsParen[i] == '<':
+                            templateDepth += 1
+                        elif remainingInputBeforeParamsParen[i] == '>':
+                            templateDepth -= 1
+                        elif templateDepth == 0 and remainingInputBeforeParamsParen[i:i+2] == '::':
+                            lastClassSeparatorIndex = i
+                
+                    if lastClassSeparatorIndex != -1:
+                        classAndFuncName: str = remainingInputBeforeParamsParen.strip()
+                        className: str = classAndFuncName[:lastClassSeparatorIndex]
+                        funcName: str = classAndFuncName[lastClassSeparatorIndex + 2:]
+            else:
+                returnType = remainingInputBeforeParamsParen.strip()
+
+            if funcName.startswith("~"):
+                returnType = returnType.removeprefix("virtual").strip()
+            if isDuplicateFunc:
+                if signature not in virtualFuncDuplicateCounter:
+                    virtualFuncDuplicateCounter[signature] = 0
+                virtualFuncDuplicateCounter[signature] += 1
+                funcName = f"_{funcName}{virtualFuncDuplicateCounter[signature]}"
+
+            type = "func" if not (onlyVirtualFuncs or "virtual" in returnType) else ("basic_vfunc" if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc else "vfunc")
+            object.__setattr__(self, "type", type)
+            object.__setattr__(self, "access", access if access else "public")
+            object.__setattr__(self, "returnType", ClassName(returnType) if returnType else None)
+            object.__setattr__(self, "className", ClassName(className) if className else None)
+            object.__setattr__(self, "funcName", funcName)
+            object.__setattr__(self, "params", params)
+            object.__setattr__(self, "const", bool(const))
+            return
 
         # Generate a simple virtual void function
-        if onlyVirtualFuncs:
+        if onlyVirtualFuncs and signature == "_purecall":
+            virtualFuncPlaceholderCounter += 1
             object.__setattr__(self, "type", "stripped_vfunc")
-            returnType = "virtual void"
-            if signature in NON_VALID_VIRTUAL_FUNCS:
-                signature = f"StrippedVFunc{virtualFuncPlaceholderCounter}"
-                virtualFuncPlaceholderCounter += 1
-            object.__setattr__(self, "returnType", ClassName(returnType))
-            object.__setattr__(self, "funcName", signature)
+            object.__setattr__(self, "access", access if access else "public")
+            object.__setattr__(self, "returnType", ClassName("virtual void"))
+            object.__setattr__(self, "funcName", f"_StrippedVFunc{virtualFuncPlaceholderCounter}")
 
 # Global caches
 parsedFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
@@ -210,154 +246,6 @@ template_class_info = {} # Store information about detected template classes
 def DemangleFuncSig(funcSig: str) -> str:
     return idaapi.demangle_name(funcSig, idaapi.MNG_LONG_FORM)
 
-# -----------------------------------------------------------------------------
-# Namespace and template handling utilities
-# -----------------------------------------------------------------------------
-
-def count_template_params(template_str):
-    """
-    Count the number of top-level template parameters while respecting nesting.
-    
-    Example: 
-    - "bool" -> 1
-    - "bool, int" -> 2
-    - "bool, ttl::vector_allocators::heap_allocator<bool>, 8" -> 3
-    """
-    if not template_str:
-        return 0
-    
-    # Count top-level commas (ignoring those in nested templates)
-    count = 1  # Start with 1 since n params have n-1 commas between them
-    bracket_depth = 0
-    
-    for char in template_str:
-        if char == '<':
-            bracket_depth += 1
-        elif char == '>':
-            bracket_depth -= 1
-        elif char == ',' and bracket_depth == 0:
-            count += 1
-            
-    return count
-
-def parse_template_class(full_name):
-    """
-    Parse a possibly templated class name.
-    Returns (base_name, template_params, is_templated)
-    
-    Examples:
-    - "X" -> ("X", [], False)
-    - "X<T>" -> ("X", ["T"], True)
-    - "X<T, U>" -> ("X", ["T", "U"], True)
-    """
-    template_params = []
-    is_templated = False
-    base_name = full_name
-    
-    # Handle nested templates with balanced bracket matching
-    if '<' in full_name:
-        # Find the position of the first '<'
-        start_pos = full_name.find('<')
-        if start_pos > 0:
-            base_name = full_name[:start_pos]
-            is_templated = True
-            
-            # Extract the entire template parameter string
-            template_str = ""
-            bracket_depth = 0
-            
-            for i in range(start_pos, len(full_name)):
-                char = full_name[i]
-                if char == '<':
-                    bracket_depth += 1
-                    if bracket_depth == 1:
-                        continue  # Skip the opening bracket of the main template
-                elif char == '>':
-                    bracket_depth -= 1
-                    if bracket_depth == 0:
-                        break  # End of template parameters
-                
-                if bracket_depth > 0:
-                    template_str += char
-            
-            # Split parameters at top level
-            if template_str:
-                bracket_depth = 0
-                param_start = 0
-                
-                for i in range(len(template_str)):
-                    char = template_str[i]
-                    if char == '<':
-                        bracket_depth += 1
-                    elif char == '>':
-                        bracket_depth -= 1
-                    elif char == ',' and bracket_depth == 0:
-                        # Extract the parameter
-                        param = template_str[param_start:i].strip()
-                        if param:  # Only add non-empty parameters
-                            template_params.append(param)
-                        param_start = i + 1
-                
-                # Add the last parameter
-                if param_start < len(template_str):
-                    param = template_str[param_start:].strip()
-                    if param:  # Only add non-empty parameters
-                        template_params.append(param)
-    
-    return base_name, template_params, is_templated
-
-def extract_template_info(template_class_name):
-    """
-    Extract template information from a template class name.
-    
-    Returns:
-    - base_name: The class name without template parameters
-    - param_count: Number of template parameters
-    """
-    base_name, template_params, is_templated = parse_template_class(template_class_name)
-    
-    if is_templated:
-        # Register the template with its parameter count
-        register_template_class(base_name, len(template_params))
-        return base_name, len(template_params)
-    
-    return template_class_name, 0
-
-def is_template_class(class_name):
-    """Check if a class name contains template parameters."""
-    return '<' in class_name and '>' in class_name
-
-def extract_template_class_name(full_template_name):
-    """
-    Extract the base class name from a template class name.
-    Example: "ttl::vector<int>" -> "ttl::vector"
-    """
-    template_start = full_template_name.find('<')
-    if template_start > 0:
-        return full_template_name[:template_start]
-    return full_template_name
-
-def generate_template_param_placeholders(num_params):
-    """
-    Generate template parameter placeholders based on the number of parameters.
-    For one parameter, use T. For multiple, use T1, T2, etc.
-    """
-    if num_params == 0:
-        return []
-    elif num_params == 1:
-        return ["typename T"]
-    else:
-        return [f"typename T{i+1}" for i in range(num_params)]
-
-def register_template_class(full_name, params_count):
-    """Register a template class with the number of parameters it takes."""
-    base_name = extract_template_class_name(full_name)
-    template_class_info[base_name] = params_count
-    
-    # Also store the full namespaced version if it differs
-    if base_name != full_name and "::" in full_name:
-        template_class_info[full_name] = params_count
-
 def GetMangledTypePrefix(targetClass: ClassName) -> str:
     """
     Get the appropriate mangled type prefix for a class name.
@@ -372,50 +260,6 @@ def GetMangledTypePrefix(targetClass: ClassName) -> str:
     # For nested namespaces, they are separated with @ in reverse order
     mangledNamespaces = "@".join(reversed(targetClass.namespaces))
     return f".?AV{targetClass.name}@{mangledNamespaces}@@"
-
-def get_mangled_name_for_template(namespace, class_name, template_params):
-    """
-    Get the appropriate mangled name for a templated class.
-    Much simplified implementation that only handles specific known cases.
-    
-    Example:
-    - ttl::string_const<char> -> .?AV?$string_const@D@ttl@@
-    """
-    # Map of C++ types to MSVC mangled codes
-    type_to_code = {
-        'char': 'D',
-        'int': 'H',
-        'unsigned int': 'I',
-        'long': 'J',
-        'unsigned long': 'K',
-        'float': 'M',
-        'double': 'N',
-        # Add more mappings as needed
-    }
-    
-    # Convert template parameters to their mangled codes
-    param_codes = []
-    for param in template_params:
-        if param in type_to_code:
-            param_codes.append(type_to_code[param])
-        else:
-            # For user-defined types or unknown types, just use the name
-            # (This is a simplification, real MSVC mangling is more complex)
-            param_codes.append(param)
-    
-    # Create the mangled name
-    param_part = "@".join(param_codes)
-    
-    if not namespace:
-        return f".?AV?${class_name}@{param_part}@@"
-    
-    # Handle the namespace
-    if isinstance(namespace, list):
-        namespace_part = "@".join(reversed(namespace))
-    else:
-        namespace_part = namespace
-    
-    return f".?AV?${class_name}@{param_part}@{namespace_part}@@"
 
 # -----------------------------------------------------------------------------
 # IDA pattern search utilities
@@ -454,49 +298,6 @@ def FindAllPatternsInRange(pattern: str, start: int, size: int) -> list[int]:
         ea = patternAddr + 8  # advance past found pattern
         
     return addresses
-
-# -----------------------------------------------------------------------------
-# Inheritance tracking
-# -----------------------------------------------------------------------------
-
-# Dictionary to track inheritance relationships: class_name -> [base_classes]
-inheritance_map = {}
-
-def register_inheritance(derived_class, base_class):
-    """Register an inheritance relationship between derived and base class."""
-    if derived_class not in inheritance_map:
-        inheritance_map[derived_class] = []
-    
-    if base_class not in inheritance_map[derived_class]:
-        inheritance_map[derived_class].append(base_class)
-        ida_kernwin.msg(f"Registered inheritance: {derived_class} inherits from {base_class}\n")
-
-def get_base_classes(class_name):
-    """Get the direct base classes for a given class."""
-    return inheritance_map.get(class_name, [])
-
-def get_all_base_classes(class_name, visited=None):
-    """
-    Get all base classes for a given class, including indirect base classes.
-    Returns a list of class names.
-    """
-    if visited is None:
-        visited = set()
-    
-    if class_name in visited:
-        return []
-    
-    visited.add(class_name)
-    base_classes = get_base_classes(class_name)
-    all_bases = base_classes.copy()
-    
-    for base in base_classes:
-        indirect_bases = get_all_base_classes(base, visited)
-        for indirect_base in indirect_bases:
-            if indirect_base not in all_bases:
-                all_bases.append(indirect_base)
-    
-    return all_bases
 
 # -----------------------------------------------------------------------------
 # RTTI and vtable analysis
@@ -586,7 +387,35 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
     PrintMsg(f"Failed to locate vtable pointer for {targetClass.fullName}.\n")
     return 0
 
-def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str = "") -> list[str]:
+# -----------------------------------------------------------------------------
+# Function collection and parsing
+# -----------------------------------------------------------------------------
+
+def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) -> str:
+    paramsList: list[str] = [param.strip() for param in parsedFunc.params.split(',')
+                   if param.strip()]
+    if len(paramsList) == 1 and paramsList[0] == "void":
+        return "void"
+    # Skip the first parameter (typically the "this" pointer)
+    if skipFirstParam:
+        paramsList = paramsList[1:]
+    paramsList = [FixTypeSpacing(param.strip()) for param in paramsList]
+    
+    paramNames: list[str] = [f"a{i+1}" for i in range(len(paramsList))]
+    newParams: str = ", ".join(f"{paramType} {paramName}" for paramType, paramName in zip(paramsList, paramNames))
+    return newParams
+
+def ExtractParamNames(params: str) -> str:
+    paramsList: list[str] = [param.strip() for param in params.split(',')
+                   if param.strip()]
+    if len(paramsList) == 1 and paramsList[0] == "void":
+        return ""
+    
+    paramNames: list[str] = [param.split(" ")[-1].strip() for param in paramsList]
+    newParams: str = ", ".join(paramNames)
+    return newParams
+
+def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
     """
     Get the ordered list of function names from a class's vtable.
     For templated classes, you can provide the rtti_name pattern.
@@ -596,7 +425,7 @@ def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str 
         idaapi.msg(f"Vtable pointer not found for {targetClass.fullName}.\n")
         return []
         
-    demangledVTableFuncSigsList: list[str] = []
+    demangledVTableFuncSigsList: list[tuple[str, str]] = []
     segmEnd: int = idc.get_segm_end(vtablePtr)
     ea: int = vtablePtr
     
@@ -607,13 +436,26 @@ def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str 
         seg = idaapi.getseg(ptr)
         if seg is None or seg.type != idaapi.SEG_CODE:
             break
-            
-        funcSig: str = idc.get_func_name(ptr) or idc.get_name(ptr)
-        if not funcSig:
+        
+        # Force function decompilation to generate the full function type signature
+        funcSig: str = idc.get_func_name(ptr)
+        demangledFuncSig: str = DemangleFuncSig(funcSig)
+        demangledFuncSig = demangledFuncSig if demangledFuncSig else funcSig
+        rawType: str = ""
+
+        if not demangledFuncSig:
             ea += 8
             continue
-        demangledFuncSig: str = DemangleFuncSig(funcSig)
-        demangledVTableFuncSigsList.append(demangledFuncSig if demangledFuncSig else funcSig)
+        
+        if demangledFuncSig != "_purecall":
+            if " " not in demangledFuncSig:
+                ida_hexrays.decompile(ptr)
+                rawType = "IDA_GEN_TYPE " + idc.get_type(ptr)
+            if (demangledFuncSig, rawType) in demangledVTableFuncSigsList:
+                demangledFuncSig = "DUPLICATE_FUNC " + demangledFuncSig# if not rawType else demangledFuncSig
+                #rawType = "DUPLICATE_FUNC " + rawType if rawType else rawType
+        
+        demangledVTableFuncSigsList.append((demangledFuncSig, rawType))
         ea += 8
         
     return demangledVTableFuncSigsList
@@ -628,258 +470,26 @@ def GetParsedVTableFuncs(targetClass: ClassName) -> list[ParsedFunction]:
     
     if targetClass not in parsedVTableFuncsByClass:
         parsedVTableFuncsByClass[targetClass] = []
+        
+        for (demangledFuncSig, rawType) in GetDemangledVTableFuncSigs(targetClass):
+            if rawType:
+                parsedFunc: ParsedFunction = ParsedFunction(rawType, True)
+                if parsedFunc.returnType:
+                    newParamTypes: str = CreateParamNamesForVTFunc(parsedFunc, True) if parsedFunc.params else ""
+                    demangledFuncSig = f"{'DUPLICATE_FUNC ' if demangledFuncSig.startswith('DUPLICATE_FUNC') else ''}IDA_GEN_PARSED virtual {parsedFunc.returnType.fullName} {demangledFuncSig.removeprefix('DUPLICATE_FUNC').strip()}({newParamTypes})"
+            elif demangledFuncSig.startswith("DUPLICATE_FUNC"):
+                parsedFunc: ParsedFunction = ParsedFunction(demangledFuncSig.removeprefix("DUPLICATE_FUNC").strip(), True)
+                if parsedFunc.returnType:
+                    newParamTypes: str = CreateParamNamesForVTFunc(parsedFunc, False) if parsedFunc.params else ""
+                    demangledFuncSig = f"DUPLICATE_FUNC {parsedFunc.returnType.fullName} {parsedFunc.funcName}({newParamTypes})"
 
-        for demangledVTableFuncSig in GetDemangledVTableFuncSigs(targetClass):
-            demangledVTableFuncSig: str
-
-            parsedFunc: ParsedFunction = ParsedFunction(demangledVTableFuncSig, True)
+            parsedFunc: ParsedFunction = ParsedFunction(demangledFuncSig, True)
             if not parsedFunc.className:
                 object.__setattr__(parsedFunc, "className", targetClass)
             
             parsedVTableFuncsByClass[targetClass].append(parsedFunc)
         
     return parsedVTableFuncsByClass.get(targetClass, [])
-
-# -----------------------------------------------------------------------------
-# Type extraction and processing
-# -----------------------------------------------------------------------------
-
-def extract_template_type(template_type):
-    """
-    Extract the base class name and template parameters from a template type.
-    
-    Example:
-    - "ttl::vector<int>" -> ("ttl::vector", ["int"])
-    - "ttl::vector_allocators::heap_allocator<class ttl::string_base<char>>, 1>" 
-      -> ("ttl::vector_allocators::heap_allocator", ["class ttl::string_base<char>", "1"])
-    """
-    try:
-        base_name, template_params, is_templated = parse_template_class(template_type)
-        if is_templated:
-            return base_name, template_params
-        return template_type, []
-    except Exception as e:
-        idaapi.msg(f"Error parsing template type {template_type}: {str(e)}\n")
-        return template_type, []
-
-def extract_custom_types_from_template(content, target_class, custom_types):
-    """Extract custom types from template parameters."""
-    if '<' in content and '>' in content:
-        # Try to extract template info
-        try:
-            base_name, template_params, is_templated = parse_template_class(content)
-            if is_templated:
-                # Extract and register template class information
-                full_template_class = extract_template_class_name(content)
-                register_template_class(full_template_class, len(template_params))
-                
-                # Add the base class as a custom type
-                tokens = ExtractTypesFromString(base_name)
-                for token in tokens:
-                    if token not in ("class", "struct", "enum", "union", "typename", "template", "virtual", "static"):
-                        # Check if token is a class, not primitive type or keyword
-                        if token not in ("int", "char", "bool", "float", "double", "void", "unsigned", "signed", "long", "short"):
-                            if ':' in token:  # Namespaced class
-                                custom_types.add(("class", token))
-                
-                # Process each template parameter
-                for param in template_params:
-                    param = param.strip()
-                    
-                    # Check if the parameter itself is a templated type
-                    if '<' in param and '>' in param:
-                        # Recursively process nested templates
-                        extract_custom_types_from_template(param, target_class, custom_types)
-                    else:
-                        tokens = ExtractTypesFromString(param)
-                        for i, token in enumerate(tokens):
-                            if token not in ("class", "struct", "enum", "union", "typename", "template", "virtual", "static", 
-                                             "int", "char", "bool", "float", "double", "void", "unsigned", "signed", "long", "short"):
-                                if i > 0 and tokens[i-1] in ("class", "struct", "enum", "union"):
-                                    custom_types.add((tokens[i-1], token))
-                                elif ':' in token:  # Namespaced class
-                                    custom_types.add(("class", token))
-        except Exception as e:
-            idaapi.msg(f"Error processing template: {content} - {str(e)}\n")
-
-def ExtractCustomTypesFromFuncs(functions, target_class):
-    """Extract all custom types from a list of function dictionaries."""
-    custom_types = set()
-    
-    for func in functions:
-        # Process return type
-        raw_rt = func.get("return_type", "")
-        tokens_rt = ExtractTypesFromString(raw_rt)
-        
-        if len(tokens_rt) > 1:
-            if (tokens_rt[0] in ("class", "struct", "enum", "union") and 
-                tokens_rt[1] != target_class):
-                custom_types.add((tokens_rt[0], tokens_rt[1]))
-            elif (len(tokens_rt) > 2 and 
-                  tokens_rt[0] in ("virtual", "static") and 
-                  tokens_rt[1] in ("class", "struct", "enum", "union") and 
-                  tokens_rt[2] != target_class):
-                custom_types.add((tokens_rt[1], tokens_rt[2]))
-                
-        # Process template parameters in return type
-        extract_custom_types_from_template(raw_rt, target_class, custom_types)
-        
-        # Process parameters
-        raw_params = func.get("parameters", "")
-        param_chunks = [chunk.strip() for chunk in raw_params.split(',') if chunk.strip()]
-            
-        for chunk in param_chunks:
-            tokens_params = ExtractTypesFromString(chunk)
-            
-            if len(tokens_params) > 1:
-                if (tokens_params[0] in ("class", "struct", "enum", "union") and 
-                    tokens_params[1] != target_class):
-                    custom_types.add((tokens_params[0], tokens_params[1]))
-                elif (len(tokens_params) > 2 and 
-                      tokens_params[0] in ("virtual", "static") and 
-                      tokens_params[1] in ("class", "struct", "enum", "union") and 
-                      tokens_params[2] != target_class):
-                    custom_types.add((tokens_params[1], tokens_params[2]))
-                    
-            # Process template parameters in chunk
-            extract_custom_types_from_template(chunk, target_class, custom_types)
-
-    return custom_types
-
-def search_for_class_definition(project_folder, full_class_name):
-    """
-    Searches the given project folder recursively for a file that contains a definition
-    for the specified class/struct/enum/union. This function uses a regex that matches
-    'struct', 'class', 'enum', or 'union' followed by any non-space tokens and then the
-    target name, which is then followed by either a semicolon or an opening brace.
-    For namespaced classes, only the last part is used.
-    """
-    if not SEARCH_CLASS_DEFS_IN_PROJECT_FOLDER:
-        return False
-    
-    search_name = full_class_name.split("::")[-1]
-    pattern = re.compile(r'\b(?:struct|class|enum|union)\s+(?:\S+\s+)*' + re.escape(search_name) + r'\b(?=\s*[;{])', re.MULTILINE)
-    for root, dirs, files in os.walk(project_folder):
-        for file in files:
-            if file.endswith('.h'):
-                file_path = os.path.join(root, file)
-                try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read()
-                        if pattern.search(content):
-                            return True
-                except Exception as e:
-                    print(f"Error reading {file_path}: {e}")
-    return False
-
-# -----------------------------------------------------------------------------
-# Forward declaration generation
-# -----------------------------------------------------------------------------
-
-def is_template_class_name(name):
-    """Check if a class name represents a template class (has been registered)."""
-    # First, remove any namespace
-    if '::' in name:
-        _, class_name = name.split('::')[-2:]
-    else:
-        class_name = name
-    
-    # Check in template_class_info or if it's explicitly a template
-    return name in template_class_info or class_name in template_class_info or is_template_class(name)
-
-def get_template_param_count(class_name):
-    """Get the number of template parameters for a registered template class."""
-    # Try the full name first
-    if class_name in template_class_info:
-        return template_class_info[class_name]
-    
-    # Try without namespace
-    if '::' in class_name:
-        _, simple_name = class_name.split('::')[-2:]
-        if simple_name in template_class_info:
-            return template_class_info[simple_name]
-    
-    # Default to 1 parameter if we don't know
-    return 1
-
-def build_namespace_tree(custom_types):
-    """
-    Build a namespace tree from custom types.
-    Returns a tree structure representing nested namespaces.
-    """
-    tree = {"decls": [], "children": {}}
-    
-    for decl, full_name in custom_types:
-        # Check if this might be a template class
-        is_template = is_template_class_name(full_name)
-        
-        # Extract the template param count if it's a template
-        param_count = get_template_param_count(full_name) if is_template else 0
-        
-        parts = full_name.split("::")
-        
-        if len(parts) == 1:
-            # No namespace: add to root declarations
-            tree["decls"].append((decl, full_name, is_template, param_count))
-        else:
-            namespaces = parts[:-1]  # All but the last part
-            type_name = parts[-1]    # The last part is the type name
-            
-            # Navigate to the correct namespace node
-            node = tree
-            for ns in namespaces:
-                node = node["children"].setdefault(ns, {"decls": [], "children": {}})
-                
-            # Add the declaration to this namespace
-            node["decls"].append((decl, type_name, is_template, param_count))
-            
-    return tree
-
-def generate_namespace_tree_code(tree, indent=""):
-    """
-    Generate code for a namespace tree with proper indentation.
-    Now includes template declarations where appropriate.
-    """
-    lines = []
-    
-    # Generate child namespace blocks first
-    children = sorted(tree.get("children", {}).items(), key=lambda x: x[0])
-    for idx, (ns, subtree) in enumerate(children):
-        lines.append(f"{indent}namespace {ns} {{")
-        child_code = generate_namespace_tree_code(subtree, indent + "    ")
-        lines.append(child_code)
-        lines.append(f"{indent}}}")
-        
-        # Add blank line between top-level namespaces
-        if indent == "" and idx < len(children) - 1:
-            lines.append("")
-            
-    # Add blank line between namespaces and declarations
-    if children and tree.get("decls", []):
-        lines.append("")
-        
-    # Output direct declarations in the current namespace
-    for decl, name, is_template, param_count in sorted(tree.get("decls", []), key=lambda x: x[1]):
-        if is_template:
-            # Generate template declaration with appropriate placeholder params
-            template_params = generate_template_param_placeholders(param_count)
-            template_header = f"template <{', '.join(template_params)}>"
-            lines.append(f"{indent}{template_header}")
-            lines.append(f"{indent}{decl} {name};")
-        else:
-            # Regular declaration
-            lines.append(f"{indent}{decl} {name};")
-        
-    return "\n".join(lines)
-
-def build_forward_declarations(custom_types):
-    """Generate forward declaration code from custom types."""
-    tree = build_namespace_tree(custom_types)
-    return generate_namespace_tree_code(tree)
-
-# -----------------------------------------------------------------------------
-# Function collection and parsing
-# -----------------------------------------------------------------------------
 
 def GetDemangledFuncSigs() -> list[str]:
     """
@@ -931,29 +541,13 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
             demangledFuncSig: str
 
             # Skip invalid functions
-            if demangledFuncSig.endswith("::$TSS0") or "::`vftable'" in demangledFuncSig or "virtual" in demangledFuncSig:
+            if demangledFuncSig.endswith("::$TSS0") or "::`vftable'" in demangledFuncSig:
                 continue
 
             parsedFunc: ParsedFunction = ParsedFunction(demangledFuncSig, False)
             if not parsedFunc.type or not parsedFunc.className:
                 PrintMsg(f"Failed parsing func sig: \"{demangledFuncSig}\"")
                 continue
-            
-            # Check if this is from a template class and extract template info
-            # if "<" in class_name and "<" in class_name:
-            #     base_class_name, param_count = extract_template_info(class_name)
-            #     idaapi.msg(f"Detected template class: {base_class_name} with {param_count} parameters\n")
-            
-            # Also extract templates from parameters and return types
-            # if 'parameters' in parsed_func:
-            #     params = parsed_func['parameters']
-            #     if '<' in params and '>' in params:
-            #         extract_custom_types_from_template(params, class_name, set())
-            
-            # if 'return_type' in parsed_func:
-            #     return_type = parsed_func['return_type']
-            #     if '<' in return_type and '>' in return_type:
-            #         extract_custom_types_from_template(return_type, class_name, set())
             
             if parsedFunc.className not in parsedFuncsByClass:
                 parsedFuncsByClass[parsedFunc.className] = []
@@ -973,140 +567,95 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
         # Return only functions for the specified class
         return parsedFuncsByClass.get(targetClass, [])
 
-def ShouldGenerateClassDef(class_name):
-    """
-    Determine if a class should have a full definition generated.
-    Returns True if the class has virtual or exported functions.
-    Uses the cached function signatures for efficiency.
-    """
-    # Extract base name if this is a template
-    if is_template_class(class_name):
-        class_name = extract_template_class_name(class_name)
-    
-    # Check if class has a vtable
-    vtable_entries = GetDemangledVTableFuncSigs(class_name)
-    if vtable_entries:
-        return True
-        
-    # Check if class has any functions in our parsed functions cache
-    if class_name in parsedFuncsByClass and parsedFuncsByClass[class_name]:
-        return True
-    
-    return False
-
-def ProcessMissingTypes(missing_types):
-    """
-    Process missing types to generate class definitions when appropriate.
-    Returns a tuple: (class_definitions, remaining_forward_decls)
-    """
-    class_definitions = []
-    remaining_forward_decls = set()
-    
-    for decl, full_name in missing_types:          
-        # Skip if already processed to prevent infinite recursion
-        if full_name in processedClasses:
-            #remaining_forward_decls.add((decl, full_name))
-            continue
-            
-        # Extract the simple class name (without namespace)
-        class_name = full_name.split("::")[-1]
-        
-        # Check if we should generate a full definition
-        if GENERATE_CLASS_DEFS_MISSING_TYPES and ShouldGenerateClassDef(class_name):
-            processedClasses.add(full_name)
-            
-            # Collect functions for this class
-            parsed_functions = GetParsedFuncs(class_name)
-            
-            # if parsed_functions:
-            #     # Generate the class definition
-            #     class_def = GenerateHeaderCode(class_name, parsed_functions)
-            #     class_definitions.append(class_def)
-                
-            #     # Note: this might recursively handle dependencies of this class
-            # else:
-            #     # No functions found, just forward declare
-            #     remaining_forward_decls.add((decl, full_name))
-        else:
-            # No virtual or exported functions, just forward declare
-            remaining_forward_decls.add((decl, full_name))
-    
-    return class_definitions, remaining_forward_decls
-
 # -----------------------------------------------------------------------------
 # Header generation
 # -----------------------------------------------------------------------------
 
-def GenerateClassFuncCode(func: ParsedFunction) -> str:
+currentAccess: str = "public"
+def GenerateClassFuncCode(func: ParsedFunction, cleanedTypes: bool = True, vtFuncIndex: int = 0) -> str:
     """Generate code for a single class method."""
+    global currentAccess
+
+    access: str = f"{func.access}:\n    " if func.access else "    "
+    if currentAccess == func.access:
+        access = "    "
+    else:
+        currentAccess = func.access
+
     const: str = " const" if func.const else ""
     stripped_vfunc: str = " = 0" if func.type == "stripped_vfunc" else ""
+
     if func.returnType:
-        returnType: str = CleanType(func.returnType.fullName)
+        returnType: str = ReplaceIDATypes(func.returnType.fullName)
+        returnType = CleanType(returnType) if cleanedTypes else func.returnType.fullName
         if returnType:
-            returnType += " "
+            if func.type == "basic_vfunc":
+                returnType = returnType.removeprefix("virtual").strip()
+            else:
+                returnType += " "
     else:
         returnType: str = ""
-        
-    params: str = CleanType(func.params)
-    if params == "void":
-        params = ""
-        
-    return f"    {returnType}{func.funcName}({params}){const}{stripped_vfunc};"
+    if func.type != "stripped_vfunc" and func.type != "basic_vfunc":
+        returnType = "GAME_IMPORT " + returnType
+    
+    if func.params:
+        params: str = ReplaceIDATypes(func.params)
+        params = CleanType(params) if cleanedTypes else func.params
+        if params == "void":
+            params = ""
+    else:
+        params: str = ""
 
-def GenerateClassDefinition(targetClass: ClassName, allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]]) -> str:
+    targetParams: str = ""
+    if func.type == "basic_vfunc":
+        targetParams = ExtractParamNames(params)
+        targetParams = ", " + targetParams if targetParams else ""
+
+    funcSig: str = f"{returnType}{func.funcName}({params}){const}{stripped_vfunc}" if func.type != "basic_vfunc" else f"VIRTUAL_CALL({vtFuncIndex}, {returnType}, {func.funcName}, ({params}){targetParams})"
+    return f"{access}{funcSig};"
+
+def GenerateClassDefinition(targetClass: ClassName, allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
     """Generate a class definition from a list of methods."""
     # Build the class definition
-    classLines: list[str] = [f"class __declspec(dllimport) {targetClass.name} {{", "public:"]
+    if not allParsedClassFuncs[0] and not allParsedClassFuncs[1]:
+        return ""
     
-    for vTableFunc in allParsedClassFuncs[0]:
-        classLines.append(GenerateClassFuncCode(vTableFunc))
-    if allParsedClassFuncs[0]:
+    if not targetClass.type:
+        targetClassType: str = ""
+        for parsedFuncsList in allParsedClassFuncs:
+            for parsedFunc in parsedFuncsList:
+                if parsedFunc.returnType and parsedFunc.returnType.namespacedName == targetClass.namespacedName and parsedFunc.returnType.type:
+                    targetClassType = parsedFunc.returnType.type
+                    object.__setattr__(targetClass, "type", targetClassType)
+                    break
+            if targetClassType:
+                break
+    
+    classLines: list[str] = [f"{targetClass.type if targetClass.type else 'class'} {targetClass.name} {{", "public:"]
+    
+    for index, vTableFunc in enumerate(allParsedClassFuncs[0]):
+        classLines.append(GenerateClassFuncCode(vTableFunc, cleanedTypes, index))
+    if allParsedClassFuncs[0] and allParsedClassFuncs[1]:
         classLines.append("")
     for func in allParsedClassFuncs[1]:
-        classLines.append(GenerateClassFuncCode(func))
+        classLines.append(GenerateClassFuncCode(func, cleanedTypes))
         
     classLines.append("};")
     return "\n".join(classLines)
 
-def GenerateHeaderCode(targetClass: ClassName, allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]]) -> str:
+def GenerateHeaderCode(targetClass: ClassName, allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
     """
     Generate a C++ header file for the target class.
     Organizes methods with vtable order first, then remaining methods.
     Also handles dependencies by generating classes for missing types.
     """
     # Generate the class definition
-    classDefinition: str = GenerateClassDefinition(targetClass, allParsedClassFuncs)
-
-    # Extract custom types used by this class
-    custom_types = ExtractCustomTypesFromFuncs(targetClass, allParsedClassFuncs)
-    missing_types = {
-        (decl, full_name) 
-        for (decl, full_name) in custom_types 
-        if not search_for_class_definition(PROJECT_FOLDER, full_name)
-    }
-    
-    # # Process missing classes - generate definitions for those with virtual/exported functions
-    # dependent_class_defs, types_to_forward_declare = ProcessMissingTypes(missing_types)
-    
-    # # Generate forward declarations for remaining types
-    # forward_decls = build_forward_declarations(types_to_forward_declare)
+    classDefinition: str = GenerateClassDefinition(targetClass, allParsedClassFuncs, cleanedTypes)
+    if not classDefinition:
+        return ""
 
     # Combine all parts of the header
-    header_parts = ["#pragma once"]
-    
-    # Add dependent class definitions
-    # if dependent_class_defs:
-    #     for classDefinition in dependent_class_defs:
-    #         # Remove the #pragma once from dependent class definitions
-    #         clean_def = classDefinition.replace("#pragma once", "").strip()
-    #         if clean_def:
-    #             header_parts.append("\n" + clean_def)
-    
-    # # Add forward declarations
-    # if forward_decls:
-    #     header_parts.append("\n" + forward_decls + "\n")
-        
+    header_parts = ["#pragma once\n", r"#include <EGSDK\Imports.h>", "\n"]
     # Add the main class definition
     header_parts.append("\n" + classDefinition)
     
@@ -1132,7 +681,7 @@ def GetAllParsedClassFuncs(targetClass: ClassName) -> tuple[list[ParsedFunction]
     
     return (parsedVTableClassFuncs, finalParsedClassFuncs)
 
-def WriteHeaderToFile(targetClass: ClassName, headerCode: str) -> bool:
+def WriteHeaderToFile(targetClass: ClassName, headerCode: str, fileName: str = "") -> bool:
     if targetClass.namespaces:
         # Create folder structure for namespaces
         classFolderPath: str = os.path.join(*targetClass.namespaces)
@@ -1142,10 +691,10 @@ def WriteHeaderToFile(targetClass: ClassName, headerCode: str) -> bool:
         os.makedirs(outputFolderPath, exist_ok=True)
         
         # Output file path is inside the namespace folder
-        outputFilePath: str = os.path.join(classFolderPath, f"{targetClass.name}.h")
+        outputFilePath: str = os.path.join(classFolderPath, f"{targetClass.name}.h" if not fileName else fileName)
     else:
         # No namespace, just save in current directory
-        outputFilePath: str = f"{targetClass.name}.h"
+        outputFilePath: str = f"{targetClass.name}.h" if not fileName else fileName
     
     outputFilePath: str = os.path.join(OUTPUT_FOLDER, outputFilePath)
 
@@ -1159,7 +708,7 @@ def WriteHeaderToFile(targetClass: ClassName, headerCode: str) -> bool:
         PrintMsg(f"Error writing header file '{outputFilePath}': {e}\n")
         return False
 
-def ExportClassHeader(targetClass: ClassName) -> bool:
+def ExportClassHeader(targetClass: ClassName):
     """
     Generate and save a C++ header file for the target class.
     For namespaced classes, creates appropriate folder structure.
@@ -1172,13 +721,19 @@ def ExportClassHeader(targetClass: ClassName) -> bool:
     allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]] = GetAllParsedClassFuncs(targetClass)
 
     headerCode: str = GenerateHeaderCode(targetClass, allParsedClassFuncs)
-    return WriteHeaderToFile(targetClass, headerCode)
+    if not headerCode:
+        PrintMsg(f"No functions were found for class {targetClass.fullName}, therefore will not generate.")
+        return
+    WriteHeaderToFile(targetClass, headerCode) 
+
+    nonCleanedHeaderCode: str = GenerateHeaderCode(targetClass, allParsedClassFuncs, False)
+    WriteHeaderToFile(targetClass, nonCleanedHeaderCode, f"{targetClass.name}-unclean.h")
 
 def Main():
     """Main entry point for the script."""
     # Ask user for target class
     #targetClass = ida_kernwin.ask_str("IModelObject", 0, "Enter target class name (supports namespaces and templates):")
-    targetClassName: str = "IModelObject"
+    targetClassName: str = "SCommandParam"
     if not targetClassName:
         PrintMsg("No target class specified. Aborting.\n")
         return

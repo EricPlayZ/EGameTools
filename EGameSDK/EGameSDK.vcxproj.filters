@@ -431,5 +431,8 @@
     <ClInclude Include="include\EGSDK\Engine\ttl.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="include\EGSDK\Imports.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

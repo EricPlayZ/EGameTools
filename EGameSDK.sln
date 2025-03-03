@@ -9,9 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EGameTools", "EGameTools\EG
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EGameSDK", "EGameSDK\EGameSDK.vcxproj", "{152BCFEC-E42D-4370-AEDD-36F044085C0C}"
-	ProjectSection(ProjectDependencies) = postProject
-		{43D9B339-9A92-4D78-BD8E-5026ABFC8604} = {43D9B339-9A92-4D78-BD8E-5026ABFC8604}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ultimate-ASI-Loader-x64", "Ultimate-ASI-Loader-x64\Ultimate-ASI-Loader-x64.vcxproj", "{47F0BD81-B327-0619-BC31-6A3C28E82C12}"
 EndProject

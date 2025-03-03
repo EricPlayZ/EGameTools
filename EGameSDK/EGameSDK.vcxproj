@@ -127,6 +127,7 @@
     <ClInclude Include="include\EGSDK\GamePH\TimeWeather\EWeather.h" />
     <ClInclude Include="include\EGSDK\GamePH\TimeWeather\ISubsystem.h" />
     <ClInclude Include="include\EGSDK\GamePH\TPPCameraDI.h" />
+    <ClInclude Include="include\EGSDK\Imports.h" />
     <ClInclude Include="include\EGSDK\mtx34.h" />
     <ClInclude Include="include\EGSDK\Offsets.h" />
     <ClInclude Include="include\EGSDK\Utils\Files.h" />
