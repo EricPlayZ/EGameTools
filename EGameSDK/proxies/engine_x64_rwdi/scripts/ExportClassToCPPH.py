@@ -108,6 +108,7 @@ class ClassName:
 @dataclass(frozen=True)
 class ParsedFunction:
     """Parse a demangled function signature and return an instance."""
+    fullFuncSig: str = ""
     type: str = ""
     access: str = ""
     returnType: Optional[ClassName] = None
@@ -120,6 +121,7 @@ class ParsedFunction:
         global virtualFuncPlaceholderCounter
         global virtualFuncDuplicateCounter
 
+        object.__setattr__(self, "fullFuncSig", signature)
         object.__setattr__(self, "type", "")
         object.__setattr__(self, "access", "")
         object.__setattr__(self, "returnType", None)
@@ -214,15 +216,14 @@ class ParsedFunction:
                             lastClassSeparatorIndex = i
                 
                     if lastClassSeparatorIndex != -1:
-                        classAndFuncName: str = remainingInputBeforeParamsParen.strip()
+                        classAndFuncName: str = remainingInputBeforeParamsParen
                         className: str = classAndFuncName[:lastClassSeparatorIndex]
                         funcName: str = classAndFuncName[lastClassSeparatorIndex+2:]
             else:
-                returnType = remainingInputBeforeParamsParen.strip()
+                returnType = remainingInputBeforeParamsParen
 
             if funcName.startswith("~"):
                 return
-                #returnType = returnType.removeprefix("virtual").strip()
             if isDuplicateFunc:
                 if signature not in virtualFuncDuplicateCounter:
                     virtualFuncDuplicateCounter[signature] = 0
@@ -255,10 +256,7 @@ class ParsedClassVar:
     className: Optional[ClassName] = None
     varName: str = ""
 
-    def __init__(self, signature: str, onlyVirtualFuncs: bool):
-        global virtualFuncPlaceholderCounter
-        global virtualFuncDuplicateCounter
-
+    def __init__(self, signature: str):
         object.__setattr__(self, "access", "")
         object.__setattr__(self, "varType", None)
         object.__setattr__(self, "className", None)
@@ -266,19 +264,6 @@ class ParsedClassVar:
 
         signature = signature.strip()
         
-        isDuplicateFunc: bool = False
-        isIDAGeneratedType: bool = False
-        isIDAGeneratedTypeParsed: bool = False
-        if (signature.startswith("DUPLICATE_FUNC")):
-            isDuplicateFunc = True
-            signature = signature.removeprefix("DUPLICATE_FUNC").strip()
-        if (signature.startswith("IDA_GEN_TYPE")):
-            isIDAGeneratedType = True
-            signature = signature.removeprefix("IDA_GEN_TYPE").strip()
-        elif (signature.startswith("IDA_GEN_PARSED")):
-            isIDAGeneratedTypeParsed = True
-            signature = signature.removeprefix("IDA_GEN_PARSED").strip()
-
         access: str = ""
         if signature.startswith("public:"):
             access = "public"
@@ -292,99 +277,74 @@ class ParsedClassVar:
         paramsOpenParenIndex: int = signature.find('(')
         paramsCloseParenIndex: int = signature.rfind(')')
         
-        if paramsOpenParenIndex != -1 and paramsCloseParenIndex != -1:
-            params: str = signature[paramsOpenParenIndex + 1:paramsCloseParenIndex]
-
-            remainingInputBeforeParamsParen: str = signature[:paramsOpenParenIndex].strip()
-            remainingInputAfterParamsParen: str = signature[paramsCloseParenIndex + 1:].strip()
-            const: str = "const" if "const" in remainingInputAfterParamsParen else ""
-            
+        if paramsOpenParenIndex == -1 and paramsCloseParenIndex == -1:
             varType: str = ""
             classAndVarName: str = ""
             className: str = ""
             varName: str = ""
-            if not isIDAGeneratedType:
-                # Find the last space outside of angle brackets
-                lastSpaceIndex: int = -1
-                lastClassSeparatorIndex: int = -1
 
-                templateDepth: int = 0
-                for i in range(len(remainingInputBeforeParamsParen)):
-                    if remainingInputBeforeParamsParen[i] == '<':
+            # Find the last space outside of angle brackets
+            lastSpaceIndex: int = -1
+            lastClassSeparatorIndex: int = -1
+
+            templateDepth: int = 0
+            for i in range(len(signature)):
+                if signature[i] == '<':
+                    templateDepth += 1
+                elif signature[i] == '>':
+                    templateDepth -= 1
+                elif templateDepth == 0 and signature[i] == ' ':
+                    lastSpaceIndex = i
+            
+            if lastSpaceIndex != -1:
+                # Split at the last space outside angle brackets
+                varType = signature[:lastSpaceIndex].strip()
+                classAndVarName = signature[lastSpaceIndex+1:].strip()
+
+                templateDepth = 0
+                # Find the last class separator outside of angle brackets
+                for i in range(len(classAndVarName)):
+                    if classAndVarName[i] == '<':
                         templateDepth += 1
-                    elif remainingInputBeforeParamsParen[i] == '>':
+                    elif classAndVarName[i] == '>':
                         templateDepth -= 1
-                    elif templateDepth == 0 and remainingInputBeforeParamsParen[i] == ' ':
-                        lastSpaceIndex = i
+                    elif templateDepth == 0 and classAndVarName[i:i+2] == '::':
+                        lastClassSeparatorIndex = i
                 
-                if lastSpaceIndex != -1:
-                    # Split at the last space outside angle brackets
-                    varType = remainingInputBeforeParamsParen[:lastSpaceIndex].strip()
-                    classAndVarName = remainingInputBeforeParamsParen[lastSpaceIndex+1:].strip()
-
-                    templateDepth = 0
-                    # Find the last class separator outside of angle brackets
-                    for i in range(len(classAndVarName)):
-                        if classAndVarName[i] == '<':
-                            templateDepth += 1
-                        elif classAndVarName[i] == '>':
-                            templateDepth -= 1
-                        elif templateDepth == 0 and classAndVarName[i:i+2] == '::':
-                            lastClassSeparatorIndex = i
-                    
-                    if lastClassSeparatorIndex != -1:
-                        className = classAndVarName[:lastClassSeparatorIndex]
-                        varName = classAndVarName[lastClassSeparatorIndex+2:]
-                    else:
-                        className = "::".join(classAndVarName.split("::")[:-1])
-                        varName = classAndVarName.split("::")[-1]
+                if lastClassSeparatorIndex != -1:
+                    className = classAndVarName[:lastClassSeparatorIndex]
+                    varName = classAndVarName[lastClassSeparatorIndex+2:]
                 else:
-                    templateDepth = 0
-                    # Find the last class separator outside of angle brackets
-                    for i in range(len(remainingInputBeforeParamsParen)):
-                        if remainingInputBeforeParamsParen[i] == '<':
-                            templateDepth += 1
-                        elif remainingInputBeforeParamsParen[i] == '>':
-                            templateDepth -= 1
-                        elif templateDepth == 0 and remainingInputBeforeParamsParen[i:i+2] == '::':
-                            lastClassSeparatorIndex = i
-                
-                    if lastClassSeparatorIndex != -1:
-                        classAndVarName: str = remainingInputBeforeParamsParen.strip()
-                        className: str = classAndVarName[:lastClassSeparatorIndex]
-                        varName: str = classAndVarName[lastClassSeparatorIndex+2:]
+                    className = "::".join(classAndVarName.split("::")[:-1])
+                    varName = classAndVarName.split("::")[-1]
             else:
-                varType = remainingInputBeforeParamsParen.strip()
+                templateDepth = 0
+                # Find the last class separator outside of angle brackets
+                for i in range(len(signature)):
+                    if signature[i] == '<':
+                        templateDepth += 1
+                    elif signature[i] == '>':
+                        templateDepth -= 1
+                    elif templateDepth == 0 and signature[i:i+2] == '::':
+                        lastClassSeparatorIndex = i
+            
+                if lastClassSeparatorIndex != -1:
+                    classAndVarName: str = signature
+                    className: str = classAndVarName[:lastClassSeparatorIndex]
+                    varName: str = classAndVarName[lastClassSeparatorIndex+2:]
 
-            if varName.startswith("~"):
-                return
-                #varType = varType.removeprefix("virtual").strip()
-            if isDuplicateFunc:
-                if signature not in virtualFuncDuplicateCounter:
-                    virtualFuncDuplicateCounter[signature] = 0
-                virtualFuncDuplicateCounter[signature] += 1
-                varName = f"_{varName}{virtualFuncDuplicateCounter[signature]}"
-
-            type = "func" if not (onlyVirtualFuncs or "virtual" in varType) else ("basic_vfunc" if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc else "vfunc")
-            object.__setattr__(self, "type", type)
             object.__setattr__(self, "access", access if access else "public")
             object.__setattr__(self, "varType", ClassName(varType) if varType else None)
             object.__setattr__(self, "className", ClassName(className) if className else None)
             object.__setattr__(self, "varName", varName)
             return
 
-        # Generate a simple virtual void function
-        if onlyVirtualFuncs and signature == "_purecall":
-            virtualFuncPlaceholderCounter += 1
-            object.__setattr__(self, "type", "stripped_vfunc")
-            object.__setattr__(self, "access", access if access else "public")
-            object.__setattr__(self, "varType", ClassName("virtual void"))
-            object.__setattr__(self, "varName", f"_StrippedVFunc{virtualFuncPlaceholderCounter}")
-
 # Global caches
-parsedFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+parsedClassVarsByClass: dict[ClassName, list[ParsedClassVar]] = {} # Cache of parsed class vars by class name
 parsedVTableFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
-allFunctionsAreParsed = False # Flag to indicate if all functions have been parsed
+parsedFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+allClassVarsAreParsed = False # Flag to indicate if all class vars have been parsed
+allFuncsAreParsed = False # Flag to indicate if all functions have been parsed
 processedClasses: set[ClassName] = set() # Track classes we've already processed to avoid recursion
 template_class_info = {} # Store information about detected template classes
 
@@ -392,8 +352,8 @@ template_class_info = {} # Store information about detected template classes
 # IDA util functions
 # -----------------------------------------------------------------------------
 
-def DemangleFuncSig(funcSig: str) -> str:
-    return idaapi.demangle_name(funcSig, idaapi.MNG_LONG_FORM)
+def DemangleSig(sig: str) -> str:
+    return idaapi.demangle_name(sig, idaapi.MNG_LONG_FORM)
 
 def GetMangledTypePrefix(targetClass: ClassName) -> str:
     """
@@ -564,6 +524,90 @@ def ExtractParamNames(params: str) -> str:
     newParams: str = ", ".join(paramNames)
     return newParams
 
+def GetDemangledExportedSigs() -> list[str]:
+    """
+    Generate a list of demangled function sigs from IDA's database
+    """
+    cachedFilePath = os.path.join(CACHE_FOLDER, "demangled_exported_sigs_cache.txt")
+    
+    if os.path.exists(cachedFilePath):
+        try:
+            with open(cachedFilePath, "r") as cachedFile:
+                return [line.strip() for line in cachedFile if line.strip()]
+        except Exception as e:
+            PrintMsg(f"Error opening '{cachedFilePath}' for reading: {e}\n")
+        
+    demangledExportedSigsList: list[str] = []
+
+    for i in range(idc.get_entry_qty()):
+        ea: int = idc.get_entry(i)
+        exportedSig: str = idc.get_func_name(ea) or idc.get_name(ea)
+        if not exportedSig:
+            continue
+        demangledExportedSig: str = DemangleSig(exportedSig)
+        if not demangledExportedSig:
+            continue
+
+        if demangledExportedSig not in demangledExportedSigsList:
+            demangledExportedSigsList.append(demangledExportedSig)
+
+    os.makedirs(CACHE_FOLDER, exist_ok=True)
+    try:
+        with open(cachedFilePath, "w") as cachedFile:
+            for demangledExportedSig in demangledExportedSigsList:
+                cachedFile.write(demangledExportedSig + "\n")
+    except Exception as e:
+        PrintMsg(f"Error opening '{cachedFilePath}' for writing: {e}\n")
+    
+    return demangledExportedSigsList
+
+def GetParsedClassVars(targetClass: Optional[ClassName] = None) -> list[ParsedClassVar]:
+    """
+    Collect and parse all class var signatures from the IDA database.
+    If target_class is provided, only return class vars for that class.
+    Caches results for better performance on subsequent calls.
+    """
+    global parsedClassVarsByClass, allClassVarsAreParsed, parsedFuncsByClass
+    
+    if not allClassVarsAreParsed:
+        for demangledExportedSig in GetDemangledExportedSigs():
+            isAlreadyPresentInParsedFuncs: bool = False
+            for parsedFuncList in list(parsedFuncsByClass.values()):
+                for parsedFunc in parsedFuncList:
+                    if demangledExportedSig in parsedFunc.fullFuncSig:
+                        isAlreadyPresentInParsedFuncs = True
+                        break
+                if isAlreadyPresentInParsedFuncs:
+                    break
+            if isAlreadyPresentInParsedFuncs:
+                continue
+
+            # Skip invalid functions
+            if demangledExportedSig.endswith("::$TSS0") or "::`vftable'" in demangledExportedSig:
+                continue
+
+            parsedClassVar: ParsedClassVar = ParsedClassVar(demangledExportedSig)
+            if not parsedClassVar.className or not parsedClassVar.varName:
+                PrintMsg(f"Failed parsing class var sig: \"{demangledExportedSig}\"")
+                continue
+            
+            if parsedClassVar.className not in parsedClassVarsByClass:
+                parsedClassVarsByClass[parsedClassVar.className] = []
+            parsedClassVarsByClass[parsedClassVar.className].append(parsedClassVar)
+        
+        allClassVarsAreParsed = True
+    
+    # Return the requested functions
+    if not targetClass:
+        # Return all parsed functions
+        allClassVars: list[ParsedClassVar] = []
+        for classVars in parsedClassVarsByClass.values():
+            allClassVars.extend(classVars)
+        return allClassVars
+    else:
+        # Return only functions for the specified class
+        return parsedClassVarsByClass.get(targetClass, [])
+
 def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
     """
     Get the ordered list of function names from a class's vtable.
@@ -588,7 +632,7 @@ def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str 
         
         # Force function decompilation to generate the full function type signature
         funcSig: str = idc.get_func_name(ptr)
-        demangledFuncSig: str = DemangleFuncSig(funcSig)
+        demangledFuncSig: str = DemangleSig(funcSig)
         demangledFuncSig = demangledFuncSig if demangledFuncSig else funcSig
         rawType: str = ""
 
@@ -640,55 +684,16 @@ def GetParsedVTableFuncs(targetClass: ClassName) -> list[ParsedFunction]:
         
     return parsedVTableFuncsByClass.get(targetClass, [])
 
-def GetDemangledFuncSigs() -> list[str]:
-    """
-    Generate a list of demangled function sigs from IDA's database
-    """
-    cachedFilePath = os.path.join(CACHE_FOLDER, "demangled_func_sigs_cache.txt")
-    
-    if os.path.exists(cachedFilePath):
-        try:
-            with open(cachedFilePath, "r") as cachedFile:
-                return [line.strip() for line in cachedFile if line.strip()]
-        except Exception as e:
-            PrintMsg(f"Error opening '{cachedFilePath}' for reading: {e}\n")
-        
-    demangledFuncSigsList: list[str] = []
-
-    for i in range(idc.get_entry_qty()):
-        ea: int = idc.get_entry(i)
-        funcSig: str = idc.get_func_name(ea) or idc.get_name(ea)
-        if not funcSig:
-            continue
-        demangledFuncSig: str = DemangleFuncSig(funcSig)
-        if not demangledFuncSig:
-            continue
-
-        if demangledFuncSig not in demangledFuncSigsList:
-            demangledFuncSigsList.append(demangledFuncSig)
-
-    os.makedirs(CACHE_FOLDER, exist_ok=True)
-    try:
-        with open(cachedFilePath, "w") as cachedFile:
-            for demangledFuncSig in demangledFuncSigsList:
-                cachedFile.write(demangledFuncSig + "\n")
-    except Exception as e:
-        PrintMsg(f"Error opening '{cachedFilePath}' for writing: {e}\n")
-    
-    return demangledFuncSigsList
-
 def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFunction]:
     """
     Collect and parse all function signatures from the IDA database.
     If target_class is provided, only return functions for that class.
     Caches results for better performance on subsequent calls.
     """
-    global parsedFuncsByClass, allFunctionsAreParsed
+    global parsedFuncsByClass, allFuncsAreParsed
     
-    if not allFunctionsAreParsed:
-        for demangledFuncSig in GetDemangledFuncSigs():
-            demangledFuncSig: str
-
+    if not allFuncsAreParsed:
+        for demangledFuncSig in GetDemangledExportedSigs():
             # Skip invalid functions
             if demangledFuncSig.endswith("::$TSS0") or "::`vftable'" in demangledFuncSig:
                 continue
@@ -702,16 +707,15 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
                 parsedFuncsByClass[parsedFunc.className] = []
             parsedFuncsByClass[parsedFunc.className].append(parsedFunc)
         
-        allFunctionsAreParsed = True
+        allFuncsAreParsed = True
     
     # Return the requested functions
     if not targetClass:
         # Return all parsed functions
-        all_functions: list[ParsedFunction] = []
+        allFuncs: list[ParsedFunction] = []
         for funcs in parsedFuncsByClass.values():
-            funcs: list[ParsedFunction]
-            all_functions.extend(funcs)
-        return all_functions
+            allFuncs.extend(funcs)
+        return allFuncs
     else:
         # Return only functions for the specified class
         return parsedFuncsByClass.get(targetClass, [])
@@ -721,6 +725,28 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
 # -----------------------------------------------------------------------------
 
 currentAccess: str = "public"
+def GenerateClassVarCode(classVar: ParsedClassVar, cleanedTypes: bool = True) -> str:
+    """Generate code for a single class method."""
+    global currentAccess
+
+    access: str = f"{classVar.access}:\n    " if classVar.access else "    "
+    if currentAccess == classVar.access:
+        access = "    "
+    else:
+        currentAccess = classVar.access
+
+    if classVar.varType:
+        varType: str = ReplaceIDATypes(classVar.varType.fullName)
+        varType = CleanType(varType) if cleanedTypes else classVar.varType.fullName
+        if varType:
+            varType += " "
+    else:
+        varType: str = ""
+        varType = "GAME_IMPORT " + varType
+    
+    classVarSig: str = f"{varType}{classVar.varName}"
+    return f"{access}{classVarSig};"
+
 def GenerateClassFuncCode(func: ParsedFunction, cleanedTypes: bool = True, vtFuncIndex: int = 0) -> str:
     """Generate code for a single class method."""
     global currentAccess
@@ -763,67 +789,79 @@ def GenerateClassFuncCode(func: ParsedFunction, cleanedTypes: bool = True, vtFun
     funcSig: str = f"{returnType}{func.funcName}({params}){const}{stripped_vfunc}" if func.type != "basic_vfunc" else f"VIRTUAL_CALL({vtFuncIndex}, {returnType}, {func.funcName}, ({params}){targetParams})"
     return f"{access}{funcSig};"
 
-def GenerateClassDefinition(targetClass: ClassName, allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
+def GenerateClassDefinition(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
     """Generate a class definition from a list of methods."""
     # Build the class definition
-    if not allParsedClassFuncs[0] and not allParsedClassFuncs[1]:
+    if not allParsedClassVarsAndFuncs[0] and not allParsedClassVarsAndFuncs[1] and not allParsedClassVarsAndFuncs[2]:
         return ""
     
     if not targetClass.type:
         targetClassType: str = ""
-        for parsedFuncsList in allParsedClassFuncs:
-            for parsedFunc in parsedFuncsList:
-                if parsedFunc.returnType and parsedFunc.returnType.namespacedName == targetClass.namespacedName and parsedFunc.returnType.type:
-                    targetClassType = parsedFunc.returnType.type
+        for parsedClassVarsList in allParsedClassVarsAndFuncs[1:]:
+            for parsedClassVar in parsedClassVarsList:
+                if parsedClassVar.returnType and parsedClassVar.returnType.namespacedName == targetClass.namespacedName and parsedClassVar.returnType.type:
+                    targetClassType = parsedClassVar.returnType.type
                     object.__setattr__(targetClass, "type", targetClassType)
                     break
             if targetClassType:
                 break
+        if not targetClassType:
+            for parsedClassVar in allParsedClassVarsAndFuncs[0]:
+                if parsedClassVar.varType and parsedClassVar.varType.namespacedName == targetClass.namespacedName and parsedClassVar.varType.type:
+                    targetClassType = parsedClassVar.varType.type
+                    object.__setattr__(targetClass, "type", targetClassType)
+                    break
     
     classLines: list[str] = [f"{targetClass.type if targetClass.type else 'class'} {targetClass.name} {{", "    #pragma region GENERATED by ExportClassToCPPH.py"]
     
-    firstFuncAccess: str = ""
-    for index, vTableFunc in enumerate(allParsedClassFuncs[0]):
-        if not firstFuncAccess:
-            firstFuncAccess = vTableFunc.access
-        classLines.append(GenerateClassFuncCode(vTableFunc, cleanedTypes, index))
-    if allParsedClassFuncs[0] and allParsedClassFuncs[1]:
+    firstVarOrFuncAccess: str = ""
+    for classVar in allParsedClassVarsAndFuncs[0]:
+        if not firstVarOrFuncAccess:
+            firstVarOrFuncAccess = classVar.access
+        classLines.append(GenerateClassVarCode(classVar, cleanedTypes))
+    if allParsedClassVarsAndFuncs[0] and allParsedClassVarsAndFuncs[1] and allParsedClassVarsAndFuncs[2]:
         classLines.append("")
-    for func in allParsedClassFuncs[1]:
-        if not firstFuncAccess:
-            firstFuncAccess = func.access
+    for index, vTableFunc in enumerate(allParsedClassVarsAndFuncs[1]):
+        if not firstVarOrFuncAccess:
+            firstVarOrFuncAccess = vTableFunc.access
+        classLines.append(GenerateClassFuncCode(vTableFunc, cleanedTypes, index))
+    if allParsedClassVarsAndFuncs[0] and allParsedClassVarsAndFuncs[1] and allParsedClassVarsAndFuncs[2]:
+        classLines.append("")
+    for func in allParsedClassVarsAndFuncs[2]:
+        if not firstVarOrFuncAccess:
+            firstVarOrFuncAccess = func.access
         classLines.append(GenerateClassFuncCode(func, cleanedTypes))
         
     classLines.append("    #pragma endregion")
     classLines.append("};")
     # Insert first function access if there is any, otherwise just make it public by default
-    classLines.insert(2, f"{firstFuncAccess if firstFuncAccess else 'public'}:")
+    classLines.insert(2, f"{firstVarOrFuncAccess if firstVarOrFuncAccess else 'public'}:")
 
     return "\n".join(classLines)
 
-def GenerateHeaderCode(targetClass: ClassName, allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
+def GenerateHeaderCode(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
     """
     Generate a C++ header file for the target class.
     Organizes methods with vtable order first, then remaining methods.
     Also handles dependencies by generating classes for missing types.
     """
     # Generate the class definition
-    classDefinition: str = GenerateClassDefinition(targetClass, allParsedClassFuncs, cleanedTypes)
+    classDefinition: str = GenerateClassDefinition(targetClass, allParsedClassVarsAndFuncs, cleanedTypes)
     if not classDefinition:
         return ""
 
     # Combine all parts of the header
-    header_parts = ["#pragma once\n", r"#include <EGSDK\Imports.h>", "\n"]
+    headerParts = ["#pragma once\n", r"#include <EGSDK\Imports.h>", "\n"]
     # Add the main class definition
-    header_parts.append("\n" + classDefinition)
+    headerParts.append("\n" + classDefinition)
     
-    return "".join(header_parts)
+    return "".join(headerParts)
 
 # -----------------------------------------------------------------------------
 # Main functionality
 # -----------------------------------------------------------------------------
 
-def GetAllParsedClassFuncs(targetClass: ClassName) -> tuple[list[ParsedFunction], list[ParsedFunction]]:
+def GetAllParsedClassVarsAndFuncs(targetClass: ClassName) -> tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]:
     parsedVTableClassFuncs: list[ParsedFunction] = GetParsedVTableFuncs(targetClass)
     if not parsedVTableClassFuncs:
         PrintMsg(f"No matching VTable function signatures were found for {targetClass.fullName}.\n")
@@ -831,13 +869,18 @@ def GetAllParsedClassFuncs(targetClass: ClassName) -> tuple[list[ParsedFunction]
     parsedClassFuncs: list[ParsedFunction] = GetParsedFuncs(targetClass)
     if not parsedClassFuncs:
         PrintMsg(f"No matching function signatures were found for {targetClass.fullName}.\n")
+
+    parsedClassVars: list[ParsedClassVar] = GetParsedClassVars(targetClass)
+    if not parsedClassVars:
+        PrintMsg(f"No matching class var signatures were found for {targetClass.fullName}.\n")
+
     # Get non-vtable methods
     finalParsedClassFuncs: list[ParsedFunction] = [
         parsedFunc for parsedFunc in parsedClassFuncs
         if parsedFunc not in parsedVTableClassFuncs
     ]
     
-    return (parsedVTableClassFuncs, finalParsedClassFuncs)
+    return (parsedClassVars, parsedVTableClassFuncs, finalParsedClassFuncs)
 
 def WriteHeaderToFile(targetClass: ClassName, headerCode: str, fileName: str = "") -> bool:
     if targetClass.namespaces:
@@ -876,22 +919,22 @@ def ExportClassHeader(targetClass: ClassName):
     # Add the target class to processed classes to prevent recursion
     processedClasses.add(targetClass)
 
-    allParsedClassFuncs: tuple[list[ParsedFunction], list[ParsedFunction]] = GetAllParsedClassFuncs(targetClass)
+    allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]] = GetAllParsedClassVarsAndFuncs(targetClass)
 
-    headerCode: str = GenerateHeaderCode(targetClass, allParsedClassFuncs)
+    headerCode: str = GenerateHeaderCode(targetClass, allParsedClassVarsAndFuncs)
     if not headerCode:
         PrintMsg(f"No functions were found for class {targetClass.fullName}, therefore will not generate.")
         return
     WriteHeaderToFile(targetClass, headerCode)
 
-    nonCleanedHeaderCode: str = GenerateHeaderCode(targetClass, allParsedClassFuncs, False)
+    nonCleanedHeaderCode: str = GenerateHeaderCode(targetClass, allParsedClassVarsAndFuncs, False)
     WriteHeaderToFile(targetClass, nonCleanedHeaderCode, f"{targetClass.name}-unclean.h")
 
 def Main():
     """Main entry point for the script."""
     # Ask user for target class
     #targetClass = ida_kernwin.ask_str("IModelObject", 0, "Enter target class name (supports namespaces and templates):")
-    targetClassName: str = "CRTTI"
+    targetClassName: str = "CModelObject"
     if not targetClassName:
         PrintMsg("No target class specified. Aborting.\n")
         return
