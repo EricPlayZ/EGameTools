@@ -1,69 +1,26 @@
 import os
+import struct
 import idc
 import idaapi
-import idautils
 import ida_hexrays
-import ida_nalt
 import ida_bytes
 import ida_ida
-import struct
-import re
-from typing import Optional, Tuple
+import cloudpickle
 from dataclasses import dataclass, field
+from typing import Optional
 
-IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)
-CLASS_TYPES = ("class", "struct", "enum", "union")
-FUNC_QUALIFIERS = ("virtual", "static")
+idaapi.require("ExportClassToCPPH")
+from ExportClassToCPPH import Utils, Config
 
-# Configuration
-INTERNAL_SCRIPT_NAME = "ExportClassToCPPH"
-PROJECT_FOLDER = r"D:\PROJECTS\Visual Studio\EGameSDK\EGameSDK\include"
-OUTPUT_FOLDER = r"D:\PROJECTS\Visual Studio\EGameSDK\EGameSDK\proxies\engine_x64_rwdi\scripts\generated"
-CACHE_FOLDER = r"D:\PROJECTS\Visual Studio\EGameSDK\EGameSDK\proxies\engine_x64_rwdi\scripts\cache"
-GENERATE_CLASS_DEFS_MISSING_TYPES = False   # Flag to generate full class definitions for missing types, or just forward declare if false
-SEARCH_CLASS_DEFS_IN_PROJECT_FOLDER = False # Flag to search for missing class types in the PROJECT_FOLDER
-
-virtualFuncPlaceholderCounter: int = 0 # Counter for placeholder virtual functions
-virtualFuncDuplicateCounter: dict[str, int] = {} # Counter for duplicate virtual functions
-
-def PrintMsg(*args):
-    #ida_kernwin.msg(f"[{INTERNAL_SCRIPT_NAME}] {args}")
-    print(f"[{INTERNAL_SCRIPT_NAME}] {args}")
-
-# -----------------------------------------------------------------------------
-# String and type formatting utilities
-# -----------------------------------------------------------------------------
-
-def FixTypeSpacing(type: str) -> str:
-    """Fix spacing for pointers/references, commas, and angle brackets."""
-    type = re.sub(r'\s+([*&])', r'\1', type)             # Remove space before '*' or '&'
-    type = re.sub(r'([*&])(?!\s)', r'\1 ', type)         # Ensure '*' or '&' is followed by one space if it's not already.
-    type = re.sub(r'\s*,\s*', ', ', type)                # Ensure comma followed by one space
-    type = re.sub(r'<\s+', '<', type)                    # Remove space after '<'
-    type = re.sub(r'\s+>', '>', type)                    # Remove space before '>'
-    type = re.sub(r'\s+', ' ', type)                     # Collapse multiple spaces
-    return type.strip()
-
-def CleanType(type: str) -> str:
-    """Remove unwanted tokens from a type string, then fix spacing."""
-    type = re.sub(r'\b(__cdecl|__fastcall|__ptr64|class|struct|enum|union)\b', '', type)
-    return FixTypeSpacing(type)
-
-def ReplaceIDATypes(type: str) -> str:
-    """Replace IDA types with normal ones"""
-    return type.replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
-
-def ExtractTypesFromString(types: str) -> list[str]:
-    """Extract potential type names from a string."""
-    # Remove pointer/reference symbols and qualifiers
-    cleanedTypes: str = types.replace("*", " ").replace("&", " ")
-    cleanedTypesList: list[str] = re.findall(r"[A-Za-z_][\w:]*", cleanedTypes)
-    return cleanedTypesList
-
-# -----------------------------------------------------------------------------
-# Various class implementations
-# -----------------------------------------------------------------------------
-
+def reconstruct_ClassName(namespaces, name, namespacedName, fullName, type_str):
+    # Bypass __init__ by creating a new instance directly.
+    obj = object.__new__(ClassName)
+    object.__setattr__(obj, "namespaces", namespaces)
+    object.__setattr__(obj, "name", name)
+    object.__setattr__(obj, "namespacedName", namespacedName)
+    object.__setattr__(obj, "fullName", fullName)
+    object.__setattr__(obj, "type", type_str)
+    return obj
 @dataclass(frozen=True)
 class ClassName:
     """Split a potentially namespaced class name into namespace parts and class name."""
@@ -85,12 +42,12 @@ class ClassName:
             return
         
         object.__setattr__(self, "fullName", fullName)
-        types = ExtractTypesFromString(fullName)
+        types = Utils.ExtractTypesFromString(fullName)
         if len(types) > 1:
-            if (types[0] in CLASS_TYPES):
+            if (types[0] in Utils.CLASS_TYPES):
                 object.__setattr__(self, "type", types[0])
                 fullName = types[1]
-            elif (len(types) > 2 and types[0] in FUNC_QUALIFIERS and types[1] in CLASS_TYPES):
+            elif (len(types) > 2 and types[0] in Utils.FUNC_QUALIFIERS and types[1] in Utils.CLASS_TYPES):
                 object.__setattr__(self, "type", types[1])
                 fullName = types[2]
             else:
@@ -104,7 +61,25 @@ class ClassName:
             object.__setattr__(self, "namespaces", tuple(parts[:-1]))
             object.__setattr__(self, "name", parts[-1])
             object.__setattr__(self, "namespacedName", f"{'::'.join(self.namespaces)}::{self.name}")
+    
+    def __reduce__(self):
+        return (reconstruct_ClassName, (self.namespaces, self.name, self.namespacedName, self.fullName, self.type))
 
+virtualFuncPlaceholderCounter: int = 0 # Counter for placeholder virtual functions
+virtualFuncDuplicateCounter: dict[str, int] = {} # Counter for duplicate virtual functions
+
+def reconstruct_ParsedFunction(fullFuncSig, type, access, returnType, className, funcName, params, const):
+    # Bypass __init__ by creating a new instance directly.
+    obj = object.__new__(ParsedFunction)
+    object.__setattr__(obj, "fullFuncSig", fullFuncSig)
+    object.__setattr__(obj, "type", type)
+    object.__setattr__(obj, "access", access)
+    object.__setattr__(obj, "returnType", returnType)
+    object.__setattr__(obj, "className", className)
+    object.__setattr__(obj, "funcName", funcName)
+    object.__setattr__(obj, "params", params)
+    object.__setattr__(obj, "const", const)
+    return obj
 @dataclass(frozen=True)
 class ParsedFunction:
     """Parse a demangled function signature and return an instance."""
@@ -222,15 +197,25 @@ class ParsedFunction:
             else:
                 returnType = remainingInputBeforeParamsParen
 
-            if funcName.startswith("~"):
-                return
             if isDuplicateFunc:
                 if signature not in virtualFuncDuplicateCounter:
                     virtualFuncDuplicateCounter[signature] = 0
                 virtualFuncDuplicateCounter[signature] += 1
                 funcName = f"_{funcName}{virtualFuncDuplicateCounter[signature]}"
 
-            type = "func" if not (onlyVirtualFuncs or "virtual" in returnType) else ("basic_vfunc" if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc else "vfunc")
+            if onlyVirtualFuncs:
+                if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc or "virtual" not in returnType:
+                    type = "basic_vfunc"
+                else:
+                    type = "vfunc"
+            else:
+                if "virtual" not in returnType:
+                    type = "func"
+                elif isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc:
+                    type = "basic_vfunc"
+                else:
+                    type = "vfunc"
+            #type = "func" if not (onlyVirtualFuncs or "virtual" in returnType) else ("basic_vfunc" if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc else "vfunc")
             object.__setattr__(self, "type", type)
             object.__setattr__(self, "access", access if access else "public")
             object.__setattr__(self, "returnType", ClassName(returnType) if returnType else None)
@@ -247,7 +232,18 @@ class ParsedFunction:
             object.__setattr__(self, "access", access if access else "public")
             object.__setattr__(self, "returnType", ClassName("virtual void"))
             object.__setattr__(self, "funcName", f"_StrippedVFunc{virtualFuncPlaceholderCounter}")
+    
+    def __reduce__(self):
+        return (reconstruct_ParsedFunction, (self.fullFuncSig, self.type, self.access, self.returnType, self.className, self.funcName, self.params, self.const))
 
+def reconstruct_ParsedClassVar(access, varType, className, varName):
+    # Bypass __init__ by creating a new instance directly.
+    obj = object.__new__(ParsedClassVar)
+    object.__setattr__(obj, "access", access)
+    object.__setattr__(obj, "varType", varType)
+    object.__setattr__(obj, "className", className)
+    object.__setattr__(obj, "varName", varName)
+    return obj
 @dataclass(frozen=True)
 class ParsedClassVar:
     """Parse a demangled global class var signature and return an instance."""
@@ -257,156 +253,65 @@ class ParsedClassVar:
     varName: str = ""
 
     def __init__(self, signature: str):
+        # Initialize defaults.
         object.__setattr__(self, "access", "")
         object.__setattr__(self, "varType", None)
         object.__setattr__(self, "className", None)
         object.__setattr__(self, "varName", "")
-
+        
         signature = signature.strip()
         
-        access: str = ""
-        if signature.startswith("public:"):
-            access = "public"
-        elif signature.startswith("protected:"):
-            access = "protected"
-        elif signature.startswith("private:"):
-            access = "private"
-        signature = signature.removeprefix(f"{access}:").strip()
+        # Extract access specifier.
+        access = ""
+        for kw in ("public:", "protected:", "private:"):
+            if signature.startswith(kw):
+                access = kw[:-1]  # remove the colon
+                signature = signature[len(kw):].strip()
+                break
 
-        # Find parameters and const qualifier
-        paramsOpenParenIndex: int = signature.find('(')
-        paramsCloseParenIndex: int = signature.rfind(')')
-        
-        if paramsOpenParenIndex == -1 and paramsCloseParenIndex == -1:
-            varType: str = ""
-            classAndVarName: str = ""
-            className: str = ""
-            varName: str = ""
-
-            # Find the last space outside of angle brackets
-            lastSpaceIndex: int = -1
-            lastClassSeparatorIndex: int = -1
-
-            templateDepth: int = 0
-            for i in range(len(signature)):
-                if signature[i] == '<':
-                    templateDepth += 1
-                elif signature[i] == '>':
-                    templateDepth -= 1
-                elif templateDepth == 0 and signature[i] == ' ':
-                    lastSpaceIndex = i
-            
-            if lastSpaceIndex != -1:
-                # Split at the last space outside angle brackets
-                varType = signature[:lastSpaceIndex].strip()
-                classAndVarName = signature[lastSpaceIndex+1:].strip()
-
-                templateDepth = 0
-                # Find the last class separator outside of angle brackets
-                for i in range(len(classAndVarName)):
-                    if classAndVarName[i] == '<':
-                        templateDepth += 1
-                    elif classAndVarName[i] == '>':
-                        templateDepth -= 1
-                    elif templateDepth == 0 and classAndVarName[i:i+2] == '::':
-                        lastClassSeparatorIndex = i
-                
-                if lastClassSeparatorIndex != -1:
-                    className = classAndVarName[:lastClassSeparatorIndex]
-                    varName = classAndVarName[lastClassSeparatorIndex+2:]
-                else:
-                    className = "::".join(classAndVarName.split("::")[:-1])
-                    varName = classAndVarName.split("::")[-1]
+        # For class variables, we expect no parameters (i.e. no parentheses).
+        if signature.find('(') == -1 and signature.rfind(')') == -1:
+            # Use a backward search to find the last space outside templates.
+            last_space = Utils.FindLastSpaceOutsideTemplates(signature)
+            if last_space != -1:
+                varType = signature[:last_space].strip()
+                classAndVarName = signature[last_space+1:].strip()
             else:
-                templateDepth = 0
-                # Find the last class separator outside of angle brackets
-                for i in range(len(signature)):
-                    if signature[i] == '<':
-                        templateDepth += 1
-                    elif signature[i] == '>':
-                        templateDepth -= 1
-                    elif templateDepth == 0 and signature[i:i+2] == '::':
-                        lastClassSeparatorIndex = i
+                # If no space, assume there's no varType
+                varType = ""
+                classAndVarName = signature
             
-                if lastClassSeparatorIndex != -1:
-                    classAndVarName: str = signature
-                    className: str = classAndVarName[:lastClassSeparatorIndex]
-                    varName: str = classAndVarName[lastClassSeparatorIndex+2:]
-
+            # Find the last "::" separator outside templates.
+            last_sep = Utils.FindLastClassSeparatorOutsideTemplates(classAndVarName)
+            if last_sep != -1:
+                class_name_str = classAndVarName[:last_sep].strip()
+                var_name = classAndVarName[last_sep+2:].strip()
+            else:
+                # Fallback: if there are "::" tokens, split them; otherwise, take entire string as varName.
+                parts = classAndVarName.split("::")
+                if len(parts) > 1:
+                    class_name_str = "::".join(parts[:-1]).strip()
+                    var_name = parts[-1].strip()
+                else:
+                    class_name_str = ""
+                    var_name = classAndVarName.strip()
+            
             object.__setattr__(self, "access", access if access else "public")
             object.__setattr__(self, "varType", ClassName(varType) if varType else None)
-            object.__setattr__(self, "className", ClassName(className) if className else None)
-            object.__setattr__(self, "varName", varName)
+            object.__setattr__(self, "className", ClassName(class_name_str) if class_name_str else None)
+            object.__setattr__(self, "varName", var_name)
             return
+        
+    def __reduce__(self):
+        return (reconstruct_ParsedClassVar, (self.access, self.varType, self.className, self.varName))
 
 # Global caches
 parsedClassVarsByClass: dict[ClassName, list[ParsedClassVar]] = {} # Cache of parsed class vars by class name
 parsedVTableFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
 parsedFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+unparsedExportedSigs: list[str] = []
 allClassVarsAreParsed = False # Flag to indicate if all class vars have been parsed
 allFuncsAreParsed = False # Flag to indicate if all functions have been parsed
-processedClasses: set[ClassName] = set() # Track classes we've already processed to avoid recursion
-template_class_info = {} # Store information about detected template classes
-
-# -----------------------------------------------------------------------------
-# IDA util functions
-# -----------------------------------------------------------------------------
-
-def DemangleSig(sig: str) -> str:
-    return idaapi.demangle_name(sig, idaapi.MNG_LONG_FORM)
-
-def GetMangledTypePrefix(targetClass: ClassName) -> str:
-    """
-    Get the appropriate mangled type prefix for a class name.
-    For class "X" this would be ".?AVX@@"
-    For class "NS::X" this would be ".?AVX@NS@@"
-    For templated classes, best to use get_mangled_name_for_template instead.
-    """
-    if not targetClass.namespaces:
-        return f".?AV{targetClass.name}@@"
-    
-    # For namespaced classes, the format is .?AVClassName@Namespace@@
-    # For nested namespaces, they are separated with @ in reverse order
-    mangledNamespaces = "@".join(reversed(targetClass.namespaces))
-    return f".?AV{targetClass.name}@{mangledNamespaces}@@"
-
-# -----------------------------------------------------------------------------
-# IDA pattern search utilities
-# -----------------------------------------------------------------------------
-
-def BytesToIDAPattern(data: bytes) -> str:
-    """Convert bytes to IDA-friendly hex pattern string."""
-    return " ".join("{:02X}".format(b) for b in data)
-
-def GetSectionInfo(sectionName: str) -> Tuple[int, int]:
-    """Get start address and size of a specified section."""
-    for seg_ea in idautils.Segments():
-        if idc.get_segm_name(seg_ea) == sectionName:
-            start = seg_ea
-            end = idc.get_segm_end(seg_ea)
-            return start, end - start
-    return 0, 0
-
-def FindAllPatternsInRange(pattern: str, start: int, size: int) -> list[int]:
-    """Find all occurrences of a pattern within a memory range."""
-    addresses: list[int] = []
-    ea: int = start
-    end: int = start + size
-    
-    while ea < end:
-        compiledIDAPattern = ida_bytes.compiled_binpat_vec_t()
-        errorParsingIDAPattern = ida_bytes.parse_binpat_str(compiledIDAPattern, 0, pattern, 16, IDA_NALT_ENCODING)
-        if errorParsingIDAPattern:
-            return []
-            
-        patternAddr: int = ida_bytes.bin_search(ea, end, compiledIDAPattern, ida_bytes.BIN_SEARCH_FORWARD)
-        if patternAddr == idc.BADADDR:
-            break
-            
-        addresses.append(patternAddr)
-        ea = patternAddr + 8  # advance past found pattern
-        
-    return addresses
 
 # -----------------------------------------------------------------------------
 # RTTI and vtable analysis
@@ -425,29 +330,29 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
     # Use provided RTTI name if available (for templates), otherwise generate it
     if not targetClassRTTIName:
         # Check if this is a templated class
-        typeDescriptorName: str = GetMangledTypePrefix(targetClass)
+        typeDescriptorName: str = Utils.GetMangledTypePrefix(targetClass.namespaces, targetClass.name)
     else:
         # Use the provided RTTI name directly
         typeDescriptorName: str = targetClassRTTIName
     
     # Search for the RTTI type descriptor
     typeDescriptorBytes: bytes = typeDescriptorName.encode('ascii')
-    idaPattern: str = BytesToIDAPattern(typeDescriptorBytes)
+    idaPattern: str = Utils.BytesToIDAPattern(typeDescriptorBytes)
     
     # Search in .rdata
-    rdataStartAddr, rdataSize = GetSectionInfo(".rdata")
+    rdataStartAddr, rdataSize = Utils.GetSectionInfo(".rdata")
     if not rdataStartAddr:
         return 0
         
     # Look for the type descriptor
     compiledIDAPattern = ida_bytes.compiled_binpat_vec_t()
-    errorParsingIDAPattern = ida_bytes.parse_binpat_str(compiledIDAPattern, 0, idaPattern, 16, IDA_NALT_ENCODING)
+    errorParsingIDAPattern = ida_bytes.parse_binpat_str(compiledIDAPattern, 0, idaPattern, 16, Utils.IDA_NALT_ENCODING)
     if errorParsingIDAPattern:
         return 0
         
     typeDescriptorPatternAddr: int = ida_bytes.bin_search(rdataStartAddr, ida_ida.cvar.inf.max_ea, compiledIDAPattern, ida_bytes.BIN_SEARCH_FORWARD)
     if typeDescriptorPatternAddr == idc.BADADDR:
-        PrintMsg(f"Type descriptor pattern '{typeDescriptorName}' not found for {targetClass.fullName}.\n")
+        print(f"Type descriptor pattern '{typeDescriptorName}' not found for {targetClass.fullName}.")
         return 0
         
     # Adjust to get RTTI type descriptor
@@ -456,10 +361,10 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
     # Compute offset relative to base address
     rttiTypeDescriptorOffset: int = rttiTypeDescriptorAddr - baseDLLAddr
     rttiTypeDescriptorOffsetBytes: bytes = struct.pack("<I", rttiTypeDescriptorOffset)
-    rttiTypeDescriptorOffsetPattern: str = BytesToIDAPattern(rttiTypeDescriptorOffsetBytes)
+    rttiTypeDescriptorOffsetPattern: str = Utils.BytesToIDAPattern(rttiTypeDescriptorOffsetBytes)
     
     # Search for references to this offset
-    xrefs: list[int] = FindAllPatternsInRange(rttiTypeDescriptorOffsetPattern, rdataStartAddr, rdataSize)
+    xrefs: list[int] = Utils.FindAllPatternsInRange(rttiTypeDescriptorOffsetPattern, rdataStartAddr, rdataSize)
     
     # Analyze each reference to find the vtable
     for xref in xrefs:
@@ -475,10 +380,10 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
         
         # Look for references to the object locator
         objectLocatorBytes: bytes = struct.pack("<Q", objectLocatorOffsetAddr)
-        objectLocatorPattern: str = BytesToIDAPattern(objectLocatorBytes)
+        objectLocatorPattern: str = Utils.BytesToIDAPattern(objectLocatorBytes)
         
         compiledIDAPattern = ida_bytes.compiled_binpat_vec_t()
-        errorParsingIDAPattern = ida_bytes.parse_binpat_str(compiledIDAPattern, 0, objectLocatorPattern, 16, IDA_NALT_ENCODING)
+        errorParsingIDAPattern = ida_bytes.parse_binpat_str(compiledIDAPattern, 0, objectLocatorPattern, 16, Utils.IDA_NALT_ENCODING)
         if errorParsingIDAPattern:
             continue
             
@@ -493,7 +398,7 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
             
         return vtableAddr
         
-    PrintMsg(f"Failed to locate vtable pointer for {targetClass.fullName}.\n")
+    print(f"Failed to locate vtable pointer for {targetClass.fullName}.")
     return 0
 
 # -----------------------------------------------------------------------------
@@ -508,7 +413,7 @@ def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) 
     # Skip the first parameter (typically the "this" pointer)
     if skipFirstParam:
         paramsList = paramsList[1:]
-    paramsList = [FixTypeSpacing(param.strip()) for param in paramsList]
+    paramsList = [Utils.FixTypeSpacing(param.strip()) for param in paramsList]
     
     paramNames: list[str] = [f"a{i+1}" for i in range(len(paramsList))]
     newParams: str = ", ".join(f"{paramType} {paramName}" for paramType, paramName in zip(paramsList, paramNames))
@@ -524,42 +429,40 @@ def ExtractParamNames(params: str) -> str:
     newParams: str = ", ".join(paramNames)
     return newParams
 
+def ComputeUnparsedExportedSigs(demangledExportedSigs: list[str], parsedSigs: list[str]) -> list[str]:
+    # Join all parsed signatures into one large string.
+    big_parsed = "\n".join(parsedSigs)
+    # Then, for each exported signature, check if it appears in the big string.
+    return [sig for sig in demangledExportedSigs if sig not in big_parsed]
+    # # Start with a set of all exported signatures.
+    # unparsed = set(demangledExportedSigs)
+    # # For each parsed function signature, remove any exported signature that is a substring.
+    # for ps in parsedSigs:
+    #     # Create a temporary list of matching exported signatures to remove
+    #     toRemove = [sig for sig in unparsed if sig in ps]
+    #     for sig in toRemove:
+    #         unparsed.discard(sig)
+    #     # If the set becomes empty, we can break early.
+    #     if not unparsed:
+    #         break
+    # return list(unparsed)
+
 def GetDemangledExportedSigs() -> list[str]:
     """
-    Generate a list of demangled function sigs from IDA's database
+    Generate a list of demangled function signatures from IDA's database.
+    Uses a set to avoid duplicate entries.
     """
-    cachedFilePath = os.path.join(CACHE_FOLDER, "demangled_exported_sigs_cache.txt")
-    
-    if os.path.exists(cachedFilePath):
-        try:
-            with open(cachedFilePath, "r") as cachedFile:
-                return [line.strip() for line in cachedFile if line.strip()]
-        except Exception as e:
-            PrintMsg(f"Error opening '{cachedFilePath}' for reading: {e}\n")
-        
-    demangledExportedSigsList: list[str] = []
-
-    for i in range(idc.get_entry_qty()):
+    sigs_set = set()
+    entry_qty = idc.get_entry_qty()
+    for i in range(entry_qty):
         ea: int = idc.get_entry(i)
         exportedSig: str = idc.get_func_name(ea) or idc.get_name(ea)
         if not exportedSig:
             continue
-        demangledExportedSig: str = DemangleSig(exportedSig)
-        if not demangledExportedSig:
-            continue
-
-        if demangledExportedSig not in demangledExportedSigsList:
-            demangledExportedSigsList.append(demangledExportedSig)
-
-    os.makedirs(CACHE_FOLDER, exist_ok=True)
-    try:
-        with open(cachedFilePath, "w") as cachedFile:
-            for demangledExportedSig in demangledExportedSigsList:
-                cachedFile.write(demangledExportedSig + "\n")
-    except Exception as e:
-        PrintMsg(f"Error opening '{cachedFilePath}' for writing: {e}\n")
-    
-    return demangledExportedSigsList
+        demangledExportedSig: str = Utils.DemangleSig(exportedSig)
+        if demangledExportedSig and "~" not in demangledExportedSig:
+            sigs_set.add(demangledExportedSig)
+    return list(sigs_set)
 
 def GetParsedClassVars(targetClass: Optional[ClassName] = None) -> list[ParsedClassVar]:
     """
@@ -567,45 +470,58 @@ def GetParsedClassVars(targetClass: Optional[ClassName] = None) -> list[ParsedCl
     If target_class is provided, only return class vars for that class.
     Caches results for better performance on subsequent calls.
     """
-    global parsedClassVarsByClass, allClassVarsAreParsed, parsedFuncsByClass
-    
+    global parsedClassVarsByClass, allClassVarsAreParsed, parsedFuncsByClass, unparsedExportedSigs
+
     if not allClassVarsAreParsed:
-        for demangledExportedSig in GetDemangledExportedSigs():
-            isAlreadyPresentInParsedFuncs: bool = False
-            for parsedFuncList in list(parsedFuncsByClass.values()):
-                for parsedFunc in parsedFuncList:
-                    if demangledExportedSig in parsedFunc.fullFuncSig:
-                        isAlreadyPresentInParsedFuncs = True
-                        break
-                if isAlreadyPresentInParsedFuncs:
-                    break
-            if isAlreadyPresentInParsedFuncs:
-                continue
+        # Attempt to load from cache
+        if os.path.exists(Config.PARSED_VARS_CACHE_FILENAME):
+            try:
+                with open(Config.PARSED_VARS_CACHE_FILENAME, "rb") as cache_file:
+                    parsedClassVarsByClass = cloudpickle.load(cache_file)
+                allClassVarsAreParsed = True
+                print(f"Loaded cached class variables from \"{Config.PARSED_VARS_CACHE_FILENAME}\"")
+            except Exception as e:
+                print(f"Failed to load cache from \"{Config.PARSED_VARS_CACHE_FILENAME}\": {e}")
 
-            # Skip invalid functions
-            if demangledExportedSig.endswith("::$TSS0") or "::`vftable'" in demangledExportedSig:
-                continue
+        # If cache not loaded, parse from unparsed signatures.
+        if not allClassVarsAreParsed:
+            # Build the list of unparsed exported signatures only once
+            if not unparsedExportedSigs:
+                demangledExportedSigs = GetDemangledExportedSigs()
+                # Precompute a flat list of all parsed function signatures.
+                parsedSigs = [pf.fullFuncSig for funcList in parsedFuncsByClass.values() for pf in funcList]
+                unparsedExportedSigs = ComputeUnparsedExportedSigs(demangledExportedSigs, parsedSigs)
+            # Use existing unparsedExportedSigs if available; otherwise, generate them.
+            sigs = unparsedExportedSigs if unparsedExportedSigs else GetDemangledExportedSigs()
 
-            parsedClassVar: ParsedClassVar = ParsedClassVar(demangledExportedSig)
-            if not parsedClassVar.className or not parsedClassVar.varName:
-                PrintMsg(f"Failed parsing class var sig: \"{demangledExportedSig}\"")
-                continue
-            
-            if parsedClassVar.className not in parsedClassVarsByClass:
-                parsedClassVarsByClass[parsedClassVar.className] = []
-            parsedClassVarsByClass[parsedClassVar.className].append(parsedClassVar)
-        
-        allClassVarsAreParsed = True
-    
-    # Return the requested functions
-    if not targetClass:
-        # Return all parsed functions
-        allClassVars: list[ParsedClassVar] = []
-        for classVars in parsedClassVarsByClass.values():
-            allClassVars.extend(classVars)
-        return allClassVars
+            for sig in sigs:
+                # Skip invalid signatures
+                if sig.endswith("::$TSS0") or "::`vftable'" in sig:
+                    continue
+
+                parsedVar = ParsedClassVar(sig)
+                if not parsedVar.className or not parsedVar.varName:
+                    print(f"Failed parsing class var sig: \"{sig}\"")
+                    continue
+
+                parsedClassVarsByClass.setdefault(parsedVar.className, []).append(parsedVar)
+
+            allClassVarsAreParsed = True
+
+            # Cache the parsed class variables
+            try:
+                # Create directory if it doesn't exist
+                os.makedirs(Config.CACHE_OUTPUT_PATH, exist_ok=True)
+                with open(Config.PARSED_VARS_CACHE_FILENAME, "wb") as cache_file:
+                    cloudpickle.dump(parsedClassVarsByClass, cache_file)
+                print(f"Cached class variables to \"{Config.PARSED_VARS_CACHE_FILENAME}\"")
+            except Exception as e:
+                print(f"Failed to write cache to \"{Config.PARSED_VARS_CACHE_FILENAME}\": {e}")
+
+    # Return all class variables or only those for the target class
+    if targetClass is None:
+        return [var for vars_list in parsedClassVarsByClass.values() for var in vars_list]
     else:
-        # Return only functions for the specified class
         return parsedClassVarsByClass.get(targetClass, [])
 
 def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
@@ -615,7 +531,7 @@ def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str 
     """
     vtablePtr: int = GetVTablePtr(targetClass, targetClassRTTIName)
     if not vtablePtr:
-        idaapi.msg(f"Vtable pointer not found for {targetClass.fullName}.\n")
+        print(f"Vtable pointer not found for {targetClass.fullName}.")
         return []
         
     demangledVTableFuncSigsList: list[tuple[str, str]] = []
@@ -632,7 +548,7 @@ def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str 
         
         # Force function decompilation to generate the full function type signature
         funcSig: str = idc.get_func_name(ptr)
-        demangledFuncSig: str = DemangleSig(funcSig)
+        demangledFuncSig: str = Utils.DemangleSig(funcSig)
         demangledFuncSig = demangledFuncSig if demangledFuncSig else funcSig
         rawType: str = ""
 
@@ -645,8 +561,7 @@ def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str 
                 ida_hexrays.decompile(ptr)
                 rawType = "IDA_GEN_TYPE " + idc.get_type(ptr)
             if (demangledFuncSig, rawType) in demangledVTableFuncSigsList:
-                demangledFuncSig = "DUPLICATE_FUNC " + demangledFuncSig# if not rawType else demangledFuncSig
-                #rawType = "DUPLICATE_FUNC " + rawType if rawType else rawType
+                demangledFuncSig = "DUPLICATE_FUNC " + demangledFuncSig
         
         demangledVTableFuncSigsList.append((demangledFuncSig, rawType))
         ea += 8
@@ -687,37 +602,48 @@ def GetParsedVTableFuncs(targetClass: ClassName) -> list[ParsedFunction]:
 def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFunction]:
     """
     Collect and parse all function signatures from the IDA database.
-    If target_class is provided, only return functions for that class.
-    Caches results for better performance on subsequent calls.
+    If targetClass is provided, only return functions for that class.
+    Caches results in a file for better performance on subsequent calls.
+    Also builds a list of unparsed exported signatures for later use.
     """
-    global parsedFuncsByClass, allFuncsAreParsed
-    
-    if not allFuncsAreParsed:
-        for demangledFuncSig in GetDemangledExportedSigs():
-            # Skip invalid functions
-            if demangledFuncSig.endswith("::$TSS0") or "::`vftable'" in demangledFuncSig:
-                continue
+    global parsedFuncsByClass, allFuncsAreParsed, unparsedExportedSigs
 
-            parsedFunc: ParsedFunction = ParsedFunction(demangledFuncSig, False)
-            if not parsedFunc.type or not parsedFunc.className:
-                PrintMsg(f"Failed parsing func sig: \"{demangledFuncSig}\"")
-                continue
-            
-            if parsedFunc.className not in parsedFuncsByClass:
-                parsedFuncsByClass[parsedFunc.className] = []
-            parsedFuncsByClass[parsedFunc.className].append(parsedFunc)
-        
-        allFuncsAreParsed = True
-    
-    # Return the requested functions
-    if not targetClass:
-        # Return all parsed functions
-        allFuncs: list[ParsedFunction] = []
-        for funcs in parsedFuncsByClass.values():
-            allFuncs.extend(funcs)
-        return allFuncs
+    # Attempt to load cache if we haven't parsed everything yet.
+    if not allFuncsAreParsed:
+        if os.path.exists(Config.PARSED_FUNCS_CACHE_FILENAME):
+            try:
+                with open(Config.PARSED_FUNCS_CACHE_FILENAME, "rb") as cache_file:
+                    breakpoint()
+                    parsedFuncsByClass = cloudpickle.load(cache_file)
+                allFuncsAreParsed = True
+                print(f"Loaded cached parsed functions from \"{Config.PARSED_FUNCS_CACHE_FILENAME}\"")
+            except Exception as e:
+                print(f"Failed to load cache from \"{Config.PARSED_FUNCS_CACHE_FILENAME}\": {e}")
+        # If no cache was loaded, parse the signatures
+        if not allFuncsAreParsed:
+            demangledExportedSigs = GetDemangledExportedSigs()
+            for demangledFuncSig in demangledExportedSigs:
+                # Skip known invalid functions
+                if demangledFuncSig.endswith("::$TSS0") or "::`vftable'" in demangledFuncSig:
+                    continue
+                parsedFunc: ParsedFunction = ParsedFunction(demangledFuncSig, False)
+                if not parsedFunc.type or not parsedFunc.className:
+                    print(f"Failed parsing func sig: \"{demangledFuncSig}\"")
+                    continue
+                parsedFuncsByClass.setdefault(parsedFunc.className, []).append(parsedFunc)
+            allFuncsAreParsed = True
+            try:
+                os.makedirs(Config.CACHE_OUTPUT_PATH, exist_ok=True)
+                with open(Config.PARSED_FUNCS_CACHE_FILENAME, "wb") as cache_file:
+                    cloudpickle.dump(parsedFuncsByClass, cache_file)
+                print(f"Cached parsed functions to \"{Config.PARSED_FUNCS_CACHE_FILENAME}\"")
+            except Exception as e:
+                print(f"Failed to write cache to \"{Config.PARSED_FUNCS_CACHE_FILENAME}\": {e}")
+
+    # Return functions based on targetClass if specified
+    if targetClass is None:
+        return [pf for funcList in parsedFuncsByClass.values() for pf in funcList]
     else:
-        # Return only functions for the specified class
         return parsedFuncsByClass.get(targetClass, [])
 
 # -----------------------------------------------------------------------------
@@ -736,13 +662,13 @@ def GenerateClassVarCode(classVar: ParsedClassVar, cleanedTypes: bool = True) ->
         currentAccess = classVar.access
 
     if classVar.varType:
-        varType: str = ReplaceIDATypes(classVar.varType.fullName)
-        varType = CleanType(varType) if cleanedTypes else classVar.varType.fullName
+        varType: str = Utils.ReplaceIDATypes(classVar.varType.fullName)
+        varType = Utils.CleanType(varType) if cleanedTypes else classVar.varType.fullName
         if varType:
             varType += " "
+        varType = "GAME_IMPORT " + varType
     else:
         varType: str = ""
-        varType = "GAME_IMPORT " + varType
     
     classVarSig: str = f"{varType}{classVar.varName}"
     return f"{access}{classVarSig};"
@@ -761,8 +687,8 @@ def GenerateClassFuncCode(func: ParsedFunction, cleanedTypes: bool = True, vtFun
     stripped_vfunc: str = " = 0" if func.type == "stripped_vfunc" else ""
 
     if func.returnType:
-        returnType: str = ReplaceIDATypes(func.returnType.fullName)
-        returnType = CleanType(returnType) if cleanedTypes else func.returnType.fullName
+        returnType: str = Utils.ReplaceIDATypes(func.returnType.fullName)
+        returnType = Utils.CleanType(returnType) if cleanedTypes else func.returnType.fullName
         if returnType:
             if func.type == "basic_vfunc":
                 returnType = returnType.removeprefix("virtual").strip()
@@ -774,8 +700,8 @@ def GenerateClassFuncCode(func: ParsedFunction, cleanedTypes: bool = True, vtFun
         returnType = "GAME_IMPORT " + returnType
     
     if func.params:
-        params: str = ReplaceIDATypes(func.params)
-        params = CleanType(params) if cleanedTypes else func.params
+        params: str = Utils.ReplaceIDATypes(func.params)
+        params = Utils.CleanType(params) if cleanedTypes else func.params
         if params == "void":
             params = ""
     else:
@@ -819,13 +745,13 @@ def GenerateClassDefinition(targetClass: ClassName, allParsedClassVarsAndFuncs: 
         if not firstVarOrFuncAccess:
             firstVarOrFuncAccess = classVar.access
         classLines.append(GenerateClassVarCode(classVar, cleanedTypes))
-    if allParsedClassVarsAndFuncs[0] and allParsedClassVarsAndFuncs[1] and allParsedClassVarsAndFuncs[2]:
+    if allParsedClassVarsAndFuncs[0] and (allParsedClassVarsAndFuncs[1] or allParsedClassVarsAndFuncs[2]):
         classLines.append("")
     for index, vTableFunc in enumerate(allParsedClassVarsAndFuncs[1]):
         if not firstVarOrFuncAccess:
             firstVarOrFuncAccess = vTableFunc.access
         classLines.append(GenerateClassFuncCode(vTableFunc, cleanedTypes, index))
-    if allParsedClassVarsAndFuncs[0] and allParsedClassVarsAndFuncs[1] and allParsedClassVarsAndFuncs[2]:
+    if (allParsedClassVarsAndFuncs[0] or allParsedClassVarsAndFuncs[1]) and allParsedClassVarsAndFuncs[2]:
         classLines.append("")
     for func in allParsedClassVarsAndFuncs[2]:
         if not firstVarOrFuncAccess:
@@ -864,20 +790,21 @@ def GenerateHeaderCode(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple
 def GetAllParsedClassVarsAndFuncs(targetClass: ClassName) -> tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]:
     parsedVTableClassFuncs: list[ParsedFunction] = GetParsedVTableFuncs(targetClass)
     if not parsedVTableClassFuncs:
-        PrintMsg(f"No matching VTable function signatures were found for {targetClass.fullName}.\n")
+        print(f"No matching VTable function signatures were found for {targetClass.fullName}.")
 
     parsedClassFuncs: list[ParsedFunction] = GetParsedFuncs(targetClass)
     if not parsedClassFuncs:
-        PrintMsg(f"No matching function signatures were found for {targetClass.fullName}.\n")
+        print(f"No matching function signatures were found for {targetClass.fullName}.")
 
     parsedClassVars: list[ParsedClassVar] = GetParsedClassVars(targetClass)
     if not parsedClassVars:
-        PrintMsg(f"No matching class var signatures were found for {targetClass.fullName}.\n")
+        print(f"No matching class var signatures were found for {targetClass.fullName}.")
 
     # Get non-vtable methods
+    vTableFuncsSet: set[str] = {pf.fullFuncSig for pf in parsedVTableClassFuncs}
     finalParsedClassFuncs: list[ParsedFunction] = [
         parsedFunc for parsedFunc in parsedClassFuncs
-        if parsedFunc not in parsedVTableClassFuncs
+        if parsedFunc.fullFuncSig not in vTableFuncsSet
     ]
     
     return (parsedClassVars, parsedVTableClassFuncs, finalParsedClassFuncs)
@@ -886,7 +813,7 @@ def WriteHeaderToFile(targetClass: ClassName, headerCode: str, fileName: str = "
     if targetClass.namespaces:
         # Create folder structure for namespaces
         classFolderPath: str = os.path.join(*targetClass.namespaces)
-        outputFolderPath: str = os.path.join(OUTPUT_FOLDER, classFolderPath)
+        outputFolderPath: str = os.path.join(Config.HEADER_OUTPUT_PATH, classFolderPath)
         
         # Create directory if it doesn't exist
         os.makedirs(outputFolderPath, exist_ok=True)
@@ -897,16 +824,16 @@ def WriteHeaderToFile(targetClass: ClassName, headerCode: str, fileName: str = "
         # No namespace, just save in current directory
         outputFilePath: str = f"{targetClass.name}.h" if not fileName else fileName
     
-    outputFilePath: str = os.path.join(OUTPUT_FOLDER, outputFilePath)
+    outputFilePath: str = os.path.join(Config.HEADER_OUTPUT_PATH, outputFilePath)
 
     try:
         with open(outputFilePath, 'w') as headerFile:
             headerFile.write(headerCode)
-        PrintMsg(f"Header file '{outputFilePath}' created successfully.\n")
+        print(f"Header file '{outputFilePath}' created successfully.")
         
         return True
     except Exception as e:
-        PrintMsg(f"Error writing header file '{outputFilePath}': {e}\n")
+        print(f"Error writing header file '{outputFilePath}': {e}")
         return False
 
 def ExportClassHeader(targetClass: ClassName):
@@ -914,16 +841,11 @@ def ExportClassHeader(targetClass: ClassName):
     Generate and save a C++ header file for the target class.
     For namespaced classes, creates appropriate folder structure.
     """
-    global processedClasses
-    processedClasses = set()
-    # Add the target class to processed classes to prevent recursion
-    processedClasses.add(targetClass)
-
     allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]] = GetAllParsedClassVarsAndFuncs(targetClass)
 
     headerCode: str = GenerateHeaderCode(targetClass, allParsedClassVarsAndFuncs)
     if not headerCode:
-        PrintMsg(f"No functions were found for class {targetClass.fullName}, therefore will not generate.")
+        print(f"No functions were found for class {targetClass.fullName}, therefore will not generate.")
         return
     WriteHeaderToFile(targetClass, headerCode)
 
@@ -934,12 +856,13 @@ def Main():
     """Main entry point for the script."""
     # Ask user for target class
     #targetClass = ida_kernwin.ask_str("IModelObject", 0, "Enter target class name (supports namespaces and templates):")
-    targetClassName: str = "CModelObject"
+    targetClassName: str = "CLevel"
     if not targetClassName:
-        PrintMsg("No target class specified. Aborting.\n")
+        print("No target class specified. Aborting.")
         return
     targetClass: ClassName = ClassName(targetClassName)
 
+    breakpoint()
     ExportClassHeader(targetClass)
 
 # -----------------------------------------------------------------------------
@@ -955,19 +878,19 @@ class ExportClassToCPPH(idaapi.plugin_t):
     wanted_hotkey = "Shift-F"
     
     def init(self):
-        PrintMsg(f"Initializing \"{self.wanted_name}\" Plugin\n")
+        print(f"Initializing \"{self.wanted_name}\" Plugin")
         return idaapi.PLUGIN_OK
 
     def run(self, arg):
-        PrintMsg(f"Running \"{self.wanted_name}\" Plugin\n")
+        print(f"Running \"{self.wanted_name}\" Plugin")
         Main()
 
     def term(self):
-        PrintMsg(f"Terminating \"{self.wanted_name}\" Plugin\n")
+        print(f"Terminating \"{self.wanted_name}\" Plugin")
         pass
 
 def PLUGIN_ENTRY():
-    idaapi.msg(f"Creating \"Export Class to C++ Header\" Plugin entry\n")
+    idaapi.msg(f"Creating \"Export Class to C++ Header\" Plugin entry")
     return ExportClassToCPPH()
 
 if __name__ == "__main__":
