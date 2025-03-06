@@ -1,314 +1,24 @@
 import os
+import re
 import struct
 import idc
 import idaapi
 import ida_hexrays
 import ida_bytes
 import ida_ida
-import cloudpickle
-from dataclasses import dataclass, field
+import pickle
+import importlib
 from typing import Optional
 
 idaapi.require("ExportClassToCPPH")
+import ExportClassToCPPH.ClassDefs
 from ExportClassToCPPH import Utils, Config
-
-def reconstruct_ClassName(namespaces, name, namespacedName, fullName, type_str):
-    # Bypass __init__ by creating a new instance directly.
-    obj = object.__new__(ClassName)
-    object.__setattr__(obj, "namespaces", namespaces)
-    object.__setattr__(obj, "name", name)
-    object.__setattr__(obj, "namespacedName", namespacedName)
-    object.__setattr__(obj, "fullName", fullName)
-    object.__setattr__(obj, "type", type_str)
-    return obj
-@dataclass(frozen=True)
-class ClassName:
-    """Split a potentially namespaced class name into namespace parts and class name."""
-    namespaces: tuple[str] = field(default_factory=tuple)
-    name: str = ""
-    namespacedName: str = ""
-    fullName: str = ""
-    type: str = ""
-
-    def __init__(self, fullName: str):
-        object.__setattr__(self, "namespaces", ())
-        object.__setattr__(self, "name", "")
-        object.__setattr__(self, "namespacedName", "")
-        object.__setattr__(self, "fullName", "")
-        object.__setattr__(self, "type", "")
-        
-        fullName = (fullName or "").strip()
-        if not fullName:
-            return
-        
-        object.__setattr__(self, "fullName", fullName)
-        types = Utils.ExtractTypesFromString(fullName)
-        if len(types) > 1:
-            if (types[0] in Utils.CLASS_TYPES):
-                object.__setattr__(self, "type", types[0])
-                fullName = types[1]
-            elif (len(types) > 2 and types[0] in Utils.FUNC_QUALIFIERS and types[1] in Utils.CLASS_TYPES):
-                object.__setattr__(self, "type", types[1])
-                fullName = types[2]
-            else:
-                return
-
-        parts = fullName.split("::")
-        if len(parts) == 1:
-            object.__setattr__(self, "name", parts[0])
-            object.__setattr__(self, "namespacedName", self.name)
-        else:
-            object.__setattr__(self, "namespaces", tuple(parts[:-1]))
-            object.__setattr__(self, "name", parts[-1])
-            object.__setattr__(self, "namespacedName", f"{'::'.join(self.namespaces)}::{self.name}")
-    
-    def __reduce__(self):
-        return (reconstruct_ClassName, (self.namespaces, self.name, self.namespacedName, self.fullName, self.type))
-
-virtualFuncPlaceholderCounter: int = 0 # Counter for placeholder virtual functions
-virtualFuncDuplicateCounter: dict[str, int] = {} # Counter for duplicate virtual functions
-
-def reconstruct_ParsedFunction(fullFuncSig, type, access, returnType, className, funcName, params, const):
-    # Bypass __init__ by creating a new instance directly.
-    obj = object.__new__(ParsedFunction)
-    object.__setattr__(obj, "fullFuncSig", fullFuncSig)
-    object.__setattr__(obj, "type", type)
-    object.__setattr__(obj, "access", access)
-    object.__setattr__(obj, "returnType", returnType)
-    object.__setattr__(obj, "className", className)
-    object.__setattr__(obj, "funcName", funcName)
-    object.__setattr__(obj, "params", params)
-    object.__setattr__(obj, "const", const)
-    return obj
-@dataclass(frozen=True)
-class ParsedFunction:
-    """Parse a demangled function signature and return an instance."""
-    fullFuncSig: str = ""
-    type: str = ""
-    access: str = ""
-    returnType: Optional[ClassName] = None
-    className: Optional[ClassName] = None
-    funcName: str = ""
-    params: str = ""
-    const: bool = False
-
-    def __init__(self, signature: str, onlyVirtualFuncs: bool):
-        global virtualFuncPlaceholderCounter
-        global virtualFuncDuplicateCounter
-
-        object.__setattr__(self, "fullFuncSig", signature)
-        object.__setattr__(self, "type", "")
-        object.__setattr__(self, "access", "")
-        object.__setattr__(self, "returnType", None)
-        object.__setattr__(self, "className", None)
-        object.__setattr__(self, "funcName", "")
-        object.__setattr__(self, "params", "")
-        object.__setattr__(self, "const", False)
-
-        signature = signature.strip()
-        
-        isDuplicateFunc: bool = False
-        isIDAGeneratedType: bool = False
-        isIDAGeneratedTypeParsed: bool = False
-        if (signature.startswith("DUPLICATE_FUNC")):
-            isDuplicateFunc = True
-            signature = signature.removeprefix("DUPLICATE_FUNC").strip()
-        if (signature.startswith("IDA_GEN_TYPE")):
-            isIDAGeneratedType = True
-            signature = signature.removeprefix("IDA_GEN_TYPE").strip()
-        elif (signature.startswith("IDA_GEN_PARSED")):
-            isIDAGeneratedTypeParsed = True
-            signature = signature.removeprefix("IDA_GEN_PARSED").strip()
-
-        access: str = ""
-        if signature.startswith("public:"):
-            access = "public"
-        elif signature.startswith("protected:"):
-            access = "protected"
-        elif signature.startswith("private:"):
-            access = "private"
-        signature = signature.removeprefix(f"{access}:").strip()
-
-        # Find parameters and const qualifier
-        paramsOpenParenIndex: int = signature.find('(')
-        paramsCloseParenIndex: int = signature.rfind(')')
-        
-        if paramsOpenParenIndex != -1 and paramsCloseParenIndex != -1:
-            params: str = signature[paramsOpenParenIndex + 1:paramsCloseParenIndex]
-
-            remainingInputBeforeParamsParen: str = signature[:paramsOpenParenIndex].strip()
-            remainingInputAfterParamsParen: str = signature[paramsCloseParenIndex + 1:].strip()
-            const: str = "const" if "const" in remainingInputAfterParamsParen else ""
-            
-            returnType: str = ""
-            classAndFuncName: str = ""
-            className: str = ""
-            funcName: str = ""
-            if not isIDAGeneratedType:
-                # Find the last space outside of angle brackets
-                lastSpaceIndex: int = -1
-                lastClassSeparatorIndex: int = -1
-
-                templateDepth: int = 0
-                for i in range(len(remainingInputBeforeParamsParen)):
-                    if remainingInputBeforeParamsParen[i] == '<':
-                        templateDepth += 1
-                    elif remainingInputBeforeParamsParen[i] == '>':
-                        templateDepth -= 1
-                    elif templateDepth == 0 and remainingInputBeforeParamsParen[i] == ' ':
-                        lastSpaceIndex = i
-                
-                if lastSpaceIndex != -1:
-                    # Split at the last space outside angle brackets
-                    returnType = remainingInputBeforeParamsParen[:lastSpaceIndex].strip()
-                    classAndFuncName = remainingInputBeforeParamsParen[lastSpaceIndex+1:].strip()
-
-                    templateDepth = 0
-                    # Find the last class separator outside of angle brackets
-                    for i in range(len(classAndFuncName)):
-                        if classAndFuncName[i] == '<':
-                            templateDepth += 1
-                        elif classAndFuncName[i] == '>':
-                            templateDepth -= 1
-                        elif templateDepth == 0 and classAndFuncName[i:i+2] == '::':
-                            lastClassSeparatorIndex = i
-                    
-                    if lastClassSeparatorIndex != -1:
-                        className = classAndFuncName[:lastClassSeparatorIndex]
-                        funcName = classAndFuncName[lastClassSeparatorIndex+2:]
-                    else:
-                        className = "::".join(classAndFuncName.split("::")[:-1])
-                        funcName = classAndFuncName.split("::")[-1]
-                else:
-                    templateDepth = 0
-                    # Find the last class separator outside of angle brackets
-                    for i in range(len(remainingInputBeforeParamsParen)):
-                        if remainingInputBeforeParamsParen[i] == '<':
-                            templateDepth += 1
-                        elif remainingInputBeforeParamsParen[i] == '>':
-                            templateDepth -= 1
-                        elif templateDepth == 0 and remainingInputBeforeParamsParen[i:i+2] == '::':
-                            lastClassSeparatorIndex = i
-                
-                    if lastClassSeparatorIndex != -1:
-                        classAndFuncName: str = remainingInputBeforeParamsParen
-                        className: str = classAndFuncName[:lastClassSeparatorIndex]
-                        funcName: str = classAndFuncName[lastClassSeparatorIndex+2:]
-            else:
-                returnType = remainingInputBeforeParamsParen
-
-            if isDuplicateFunc:
-                if signature not in virtualFuncDuplicateCounter:
-                    virtualFuncDuplicateCounter[signature] = 0
-                virtualFuncDuplicateCounter[signature] += 1
-                funcName = f"_{funcName}{virtualFuncDuplicateCounter[signature]}"
-
-            if onlyVirtualFuncs:
-                if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc or "virtual" not in returnType:
-                    type = "basic_vfunc"
-                else:
-                    type = "vfunc"
-            else:
-                if "virtual" not in returnType:
-                    type = "func"
-                elif isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc:
-                    type = "basic_vfunc"
-                else:
-                    type = "vfunc"
-            #type = "func" if not (onlyVirtualFuncs or "virtual" in returnType) else ("basic_vfunc" if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc else "vfunc")
-            object.__setattr__(self, "type", type)
-            object.__setattr__(self, "access", access if access else "public")
-            object.__setattr__(self, "returnType", ClassName(returnType) if returnType else None)
-            object.__setattr__(self, "className", ClassName(className) if className else None)
-            object.__setattr__(self, "funcName", funcName)
-            object.__setattr__(self, "params", params)
-            object.__setattr__(self, "const", bool(const))
-            return
-
-        # Generate a simple virtual void function
-        if onlyVirtualFuncs and signature == "_purecall":
-            virtualFuncPlaceholderCounter += 1
-            object.__setattr__(self, "type", "stripped_vfunc")
-            object.__setattr__(self, "access", access if access else "public")
-            object.__setattr__(self, "returnType", ClassName("virtual void"))
-            object.__setattr__(self, "funcName", f"_StrippedVFunc{virtualFuncPlaceholderCounter}")
-    
-    def __reduce__(self):
-        return (reconstruct_ParsedFunction, (self.fullFuncSig, self.type, self.access, self.returnType, self.className, self.funcName, self.params, self.const))
-
-def reconstruct_ParsedClassVar(access, varType, className, varName):
-    # Bypass __init__ by creating a new instance directly.
-    obj = object.__new__(ParsedClassVar)
-    object.__setattr__(obj, "access", access)
-    object.__setattr__(obj, "varType", varType)
-    object.__setattr__(obj, "className", className)
-    object.__setattr__(obj, "varName", varName)
-    return obj
-@dataclass(frozen=True)
-class ParsedClassVar:
-    """Parse a demangled global class var signature and return an instance."""
-    access: str = ""
-    varType: Optional[ClassName] = None
-    className: Optional[ClassName] = None
-    varName: str = ""
-
-    def __init__(self, signature: str):
-        # Initialize defaults.
-        object.__setattr__(self, "access", "")
-        object.__setattr__(self, "varType", None)
-        object.__setattr__(self, "className", None)
-        object.__setattr__(self, "varName", "")
-        
-        signature = signature.strip()
-        
-        # Extract access specifier.
-        access = ""
-        for kw in ("public:", "protected:", "private:"):
-            if signature.startswith(kw):
-                access = kw[:-1]  # remove the colon
-                signature = signature[len(kw):].strip()
-                break
-
-        # For class variables, we expect no parameters (i.e. no parentheses).
-        if signature.find('(') == -1 and signature.rfind(')') == -1:
-            # Use a backward search to find the last space outside templates.
-            last_space = Utils.FindLastSpaceOutsideTemplates(signature)
-            if last_space != -1:
-                varType = signature[:last_space].strip()
-                classAndVarName = signature[last_space+1:].strip()
-            else:
-                # If no space, assume there's no varType
-                varType = ""
-                classAndVarName = signature
-            
-            # Find the last "::" separator outside templates.
-            last_sep = Utils.FindLastClassSeparatorOutsideTemplates(classAndVarName)
-            if last_sep != -1:
-                class_name_str = classAndVarName[:last_sep].strip()
-                var_name = classAndVarName[last_sep+2:].strip()
-            else:
-                # Fallback: if there are "::" tokens, split them; otherwise, take entire string as varName.
-                parts = classAndVarName.split("::")
-                if len(parts) > 1:
-                    class_name_str = "::".join(parts[:-1]).strip()
-                    var_name = parts[-1].strip()
-                else:
-                    class_name_str = ""
-                    var_name = classAndVarName.strip()
-            
-            object.__setattr__(self, "access", access if access else "public")
-            object.__setattr__(self, "varType", ClassName(varType) if varType else None)
-            object.__setattr__(self, "className", ClassName(class_name_str) if class_name_str else None)
-            object.__setattr__(self, "varName", var_name)
-            return
-        
-    def __reduce__(self):
-        return (reconstruct_ParsedClassVar, (self.access, self.varType, self.className, self.varName))
+from ExportClassToCPPH.ClassDefs import ClassName, ParsedFunction, ParsedClassVar
 
 # Global caches
-parsedClassVarsByClass: dict[ClassName, list[ParsedClassVar]] = {} # Cache of parsed class vars by class name
-parsedVTableFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
-parsedFuncsByClass: dict[ClassName, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+parsedClassVarsByClass: dict[str, list[ParsedClassVar]] = {} # Cache of parsed class vars by class name
+parsedVTableFuncsByClass: dict[str, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+parsedFuncsByClass: dict[str, list[ParsedFunction]] = {} # Cache of parsed functions by class name
 unparsedExportedSigs: list[str] = []
 allClassVarsAreParsed = False # Flag to indicate if all class vars have been parsed
 allFuncsAreParsed = False # Flag to indicate if all functions have been parsed
@@ -434,18 +144,6 @@ def ComputeUnparsedExportedSigs(demangledExportedSigs: list[str], parsedSigs: li
     big_parsed = "\n".join(parsedSigs)
     # Then, for each exported signature, check if it appears in the big string.
     return [sig for sig in demangledExportedSigs if sig not in big_parsed]
-    # # Start with a set of all exported signatures.
-    # unparsed = set(demangledExportedSigs)
-    # # For each parsed function signature, remove any exported signature that is a substring.
-    # for ps in parsedSigs:
-    #     # Create a temporary list of matching exported signatures to remove
-    #     toRemove = [sig for sig in unparsed if sig in ps]
-    #     for sig in toRemove:
-    #         unparsed.discard(sig)
-    #     # If the set becomes empty, we can break early.
-    #     if not unparsed:
-    #         break
-    # return list(unparsed)
 
 def GetDemangledExportedSigs() -> list[str]:
     """
@@ -477,7 +175,7 @@ def GetParsedClassVars(targetClass: Optional[ClassName] = None) -> list[ParsedCl
         if os.path.exists(Config.PARSED_VARS_CACHE_FILENAME):
             try:
                 with open(Config.PARSED_VARS_CACHE_FILENAME, "rb") as cache_file:
-                    parsedClassVarsByClass = cloudpickle.load(cache_file)
+                    parsedClassVarsByClass = pickle.load(cache_file)
                 allClassVarsAreParsed = True
                 print(f"Loaded cached class variables from \"{Config.PARSED_VARS_CACHE_FILENAME}\"")
             except Exception as e:
@@ -504,7 +202,7 @@ def GetParsedClassVars(targetClass: Optional[ClassName] = None) -> list[ParsedCl
                     print(f"Failed parsing class var sig: \"{sig}\"")
                     continue
 
-                parsedClassVarsByClass.setdefault(parsedVar.className, []).append(parsedVar)
+                parsedClassVarsByClass.setdefault(parsedVar.className.fullName, []).append(parsedVar)
 
             allClassVarsAreParsed = True
 
@@ -513,16 +211,18 @@ def GetParsedClassVars(targetClass: Optional[ClassName] = None) -> list[ParsedCl
                 # Create directory if it doesn't exist
                 os.makedirs(Config.CACHE_OUTPUT_PATH, exist_ok=True)
                 with open(Config.PARSED_VARS_CACHE_FILENAME, "wb") as cache_file:
-                    cloudpickle.dump(parsedClassVarsByClass, cache_file)
+                    pickle.dump(parsedClassVarsByClass, cache_file)
                 print(f"Cached class variables to \"{Config.PARSED_VARS_CACHE_FILENAME}\"")
             except Exception as e:
                 print(f"Failed to write cache to \"{Config.PARSED_VARS_CACHE_FILENAME}\": {e}")
+                if os.path.exists(Config.PARSED_VARS_CACHE_FILENAME):
+                    os.remove(Config.PARSED_VARS_CACHE_FILENAME)
 
     # Return all class variables or only those for the target class
     if targetClass is None:
         return [var for vars_list in parsedClassVarsByClass.values() for var in vars_list]
     else:
-        return parsedClassVarsByClass.get(targetClass, [])
+        return parsedClassVarsByClass.get(targetClass.fullName, [])
 
 def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
     """
@@ -577,7 +277,7 @@ def GetParsedVTableFuncs(targetClass: ClassName) -> list[ParsedFunction]:
     global parsedVTableFuncsByClass
     
     if targetClass not in parsedVTableFuncsByClass:
-        parsedVTableFuncsByClass[targetClass] = []
+        parsedVTableFuncsByClass[targetClass.fullName] = []
         
         for (demangledFuncSig, rawType) in GetDemangledVTableFuncSigs(targetClass):
             if rawType:
@@ -595,9 +295,9 @@ def GetParsedVTableFuncs(targetClass: ClassName) -> list[ParsedFunction]:
             if not parsedFunc.className:
                 object.__setattr__(parsedFunc, "className", targetClass)
             
-            parsedVTableFuncsByClass[targetClass].append(parsedFunc)
+            parsedVTableFuncsByClass[targetClass.fullName].append(parsedFunc)
         
-    return parsedVTableFuncsByClass.get(targetClass, [])
+    return parsedVTableFuncsByClass.get(targetClass.fullName, [])
 
 def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFunction]:
     """
@@ -613,8 +313,7 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
         if os.path.exists(Config.PARSED_FUNCS_CACHE_FILENAME):
             try:
                 with open(Config.PARSED_FUNCS_CACHE_FILENAME, "rb") as cache_file:
-                    breakpoint()
-                    parsedFuncsByClass = cloudpickle.load(cache_file)
+                    parsedFuncsByClass = pickle.load(cache_file)
                 allFuncsAreParsed = True
                 print(f"Loaded cached parsed functions from \"{Config.PARSED_FUNCS_CACHE_FILENAME}\"")
             except Exception as e:
@@ -630,34 +329,36 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
                 if not parsedFunc.type or not parsedFunc.className:
                     print(f"Failed parsing func sig: \"{demangledFuncSig}\"")
                     continue
-                parsedFuncsByClass.setdefault(parsedFunc.className, []).append(parsedFunc)
+                parsedFuncsByClass.setdefault(parsedFunc.className.fullName, []).append(parsedFunc)
             allFuncsAreParsed = True
             try:
                 os.makedirs(Config.CACHE_OUTPUT_PATH, exist_ok=True)
                 with open(Config.PARSED_FUNCS_CACHE_FILENAME, "wb") as cache_file:
-                    cloudpickle.dump(parsedFuncsByClass, cache_file)
+                    pickle.dump(parsedFuncsByClass, cache_file)
                 print(f"Cached parsed functions to \"{Config.PARSED_FUNCS_CACHE_FILENAME}\"")
             except Exception as e:
                 print(f"Failed to write cache to \"{Config.PARSED_FUNCS_CACHE_FILENAME}\": {e}")
+                if os.path.exists(Config.PARSED_FUNCS_CACHE_FILENAME):
+                    os.remove(Config.PARSED_FUNCS_CACHE_FILENAME)
 
     # Return functions based on targetClass if specified
     if targetClass is None:
         return [pf for funcList in parsedFuncsByClass.values() for pf in funcList]
     else:
-        return parsedFuncsByClass.get(targetClass, [])
+        return parsedFuncsByClass.get(targetClass.fullName, [])
 
 # -----------------------------------------------------------------------------
 # Header generation
 # -----------------------------------------------------------------------------
 
 currentAccess: str = "public"
-def GenerateClassVarCode(classVar: ParsedClassVar, cleanedTypes: bool = True) -> str:
+def GenerateClassVarCode(classVar: ParsedClassVar, indent: str = "\t", cleanedTypes: bool = True) -> str:
     """Generate code for a single class method."""
     global currentAccess
 
-    access: str = f"{classVar.access}:\n    " if classVar.access else "    "
+    access: str = f"{indent}{classVar.access}:\n{indent}\t" if classVar.access else f"{indent}\t"
     if currentAccess == classVar.access:
-        access = "    "
+        access = f"{indent}\t"
     else:
         currentAccess = classVar.access
 
@@ -673,13 +374,13 @@ def GenerateClassVarCode(classVar: ParsedClassVar, cleanedTypes: bool = True) ->
     classVarSig: str = f"{varType}{classVar.varName}"
     return f"{access}{classVarSig};"
 
-def GenerateClassFuncCode(func: ParsedFunction, cleanedTypes: bool = True, vtFuncIndex: int = 0) -> str:
+def GenerateClassFuncCode(func: ParsedFunction, indent: str = "\t", cleanedTypes: bool = True, vtFuncIndex: int = 0) -> str:
     """Generate code for a single class method."""
     global currentAccess
 
-    access: str = f"{func.access}:\n    " if func.access else "    "
+    access: str = f"{indent}{func.access}:\n{indent}\t" if func.access else f"{indent}\t"
     if currentAccess == func.access:
-        access = "    "
+        access = f"{indent}\t"
     else:
         currentAccess = func.access
 
@@ -715,55 +416,285 @@ def GenerateClassFuncCode(func: ParsedFunction, cleanedTypes: bool = True, vtFun
     funcSig: str = f"{returnType}{func.funcName}({params}){const}{stripped_vfunc}" if func.type != "basic_vfunc" else f"VIRTUAL_CALL({vtFuncIndex}, {returnType}, {func.funcName}, ({params}){targetParams})"
     return f"{access}{funcSig};"
 
+def GetClassTypeFromParsedSigs(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]) -> str:
+    if not targetClass.type:
+        for parsedClassVarsList in allParsedClassVarsAndFuncs[1:]:
+            for parsedClassVar in parsedClassVarsList:
+                if parsedClassVar.returnType and parsedClassVar.returnType.namespacedName == targetClass.namespacedName and parsedClassVar.returnType.type:
+                    return parsedClassVar.returnType.type
+
+    for parsedClassVar in allParsedClassVarsAndFuncs[0]:
+        if parsedClassVar.varType and parsedClassVar.varType.namespacedName == targetClass.namespacedName and parsedClassVar.varType.type:
+            return parsedClassVar.varType.type
+    
+    return ""
+
+def GenerateClassContent(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]], indent: str = "\t", cleanedTypes: bool = True) -> str:
+    """
+    Generate the content to be inserted into an existing header file.
+    This is just the class members, not the full header with includes, etc.
+    """
+    if not allParsedClassVarsAndFuncs[0] and not allParsedClassVarsAndFuncs[1] and not allParsedClassVarsAndFuncs[2]:
+        return ""
+    global currentAccess
+    currentAccess = ""
+
+    classType: str = GetClassTypeFromParsedSigs(targetClass, allParsedClassVarsAndFuncs)
+    if classType:
+        object.__setattr__(targetClass, "type", classType)
+    
+    # Generate class content (just the members, not the full class definition)
+    contentLines = [f"#pragma region GENERATED by ExportClassToCPPH.py"]
+    
+    firstVarOrFuncAccess = ""
+    for classVar in allParsedClassVarsAndFuncs[0]:
+        if not firstVarOrFuncAccess:
+            firstVarOrFuncAccess = classVar.access
+        contentLines.append(GenerateClassVarCode(classVar, indent, cleanedTypes))
+    if allParsedClassVarsAndFuncs[0] and (allParsedClassVarsAndFuncs[1] or allParsedClassVarsAndFuncs[2]):
+        contentLines.append("")
+    for index, vTableFunc in enumerate(allParsedClassVarsAndFuncs[1]):
+        if not firstVarOrFuncAccess:
+            firstVarOrFuncAccess = vTableFunc.access
+        contentLines.append(GenerateClassFuncCode(vTableFunc, indent, cleanedTypes, index))
+    if (allParsedClassVarsAndFuncs[0] or allParsedClassVarsAndFuncs[1]) and allParsedClassVarsAndFuncs[2]:
+        contentLines.append("")
+    for func in allParsedClassVarsAndFuncs[2]:
+        if not firstVarOrFuncAccess:
+            firstVarOrFuncAccess = func.access
+        contentLines.append(GenerateClassFuncCode(func, indent, cleanedTypes))
+        
+    contentLines.append("#pragma endregion")
+    
+    # Insert access specifier if needed
+    if not firstVarOrFuncAccess:
+        contentLines.insert(1, f"{indent}public:")
+    
+    return "\n".join(contentLines)
+
 def GenerateClassDefinition(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
     """Generate a class definition from a list of methods."""
     # Build the class definition
     if not allParsedClassVarsAndFuncs[0] and not allParsedClassVarsAndFuncs[1] and not allParsedClassVarsAndFuncs[2]:
         return ""
     
-    if not targetClass.type:
-        targetClassType: str = ""
-        for parsedClassVarsList in allParsedClassVarsAndFuncs[1:]:
-            for parsedClassVar in parsedClassVarsList:
-                if parsedClassVar.returnType and parsedClassVar.returnType.namespacedName == targetClass.namespacedName and parsedClassVar.returnType.type:
-                    targetClassType = parsedClassVar.returnType.type
-                    object.__setattr__(targetClass, "type", targetClassType)
-                    break
-            if targetClassType:
-                break
-        if not targetClassType:
-            for parsedClassVar in allParsedClassVarsAndFuncs[0]:
-                if parsedClassVar.varType and parsedClassVar.varType.namespacedName == targetClass.namespacedName and parsedClassVar.varType.type:
-                    targetClassType = parsedClassVar.varType.type
-                    object.__setattr__(targetClass, "type", targetClassType)
-                    break
+    classContent: str = GenerateClassContent(targetClass, allParsedClassVarsAndFuncs, "\t", cleanedTypes)
     
-    classLines: list[str] = [f"{targetClass.type if targetClass.type else 'class'} {targetClass.name} {{", "    #pragma region GENERATED by ExportClassToCPPH.py"]
-    
-    firstVarOrFuncAccess: str = ""
-    for classVar in allParsedClassVarsAndFuncs[0]:
-        if not firstVarOrFuncAccess:
-            firstVarOrFuncAccess = classVar.access
-        classLines.append(GenerateClassVarCode(classVar, cleanedTypes))
-    if allParsedClassVarsAndFuncs[0] and (allParsedClassVarsAndFuncs[1] or allParsedClassVarsAndFuncs[2]):
-        classLines.append("")
-    for index, vTableFunc in enumerate(allParsedClassVarsAndFuncs[1]):
-        if not firstVarOrFuncAccess:
-            firstVarOrFuncAccess = vTableFunc.access
-        classLines.append(GenerateClassFuncCode(vTableFunc, cleanedTypes, index))
-    if (allParsedClassVarsAndFuncs[0] or allParsedClassVarsAndFuncs[1]) and allParsedClassVarsAndFuncs[2]:
-        classLines.append("")
-    for func in allParsedClassVarsAndFuncs[2]:
-        if not firstVarOrFuncAccess:
-            firstVarOrFuncAccess = func.access
-        classLines.append(GenerateClassFuncCode(func, cleanedTypes))
-        
-    classLines.append("    #pragma endregion")
+    classLines: list[str] = [f"{targetClass.type if targetClass.type else 'class'} {targetClass.name} {{"]
+    if classContent:
+        classLines.append(classContent)
     classLines.append("};")
-    # Insert first function access if there is any, otherwise just make it public by default
-    classLines.insert(2, f"{firstVarOrFuncAccess if firstVarOrFuncAccess else 'public'}:")
 
     return "\n".join(classLines)
+
+def FindClassDefInFile(className: str, filePath: str) -> tuple[bool, str, int, int, str]:
+    """
+    Search for a class definition in a header file.
+    Returns:
+        - bool: Whether the class was found
+        - str: The class type (class, struct, union, etc.)
+        - int: Start line of the class definition
+        - int: End line of the class definition (or -1 if not found)
+    """
+    try:
+        with open(filePath, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+        
+        # Regular expression to match class definitions with potential attributes like EGameSDK_API
+        classPattern = re.compile(r'^\s*(class|struct|union|enum)\s+(?:[A-Za-z0-9_]+\s+)*' + re.escape(className) + r'\s*(?::|{)')
+        
+        for i, line in enumerate(lines):
+            match = classPattern.search(line)
+            if match:
+                # Found the class definition
+                classType = match.group(1)
+                
+                # Find the end of the class definition (closing brace)
+                braceCount = 0
+                foundOpenBrace = False
+                indent = ""
+                
+                for j in range(i, len(lines)):
+                    if '{' in lines[j]:
+                        foundOpenBrace = True
+                        braceCount += lines[j].count('{')
+                        
+                        # If this is the first open brace, determine the indentation for the class content
+                        if braceCount == 1:
+                            # Look at the next non-empty line to determine indentation
+                            if lines[j].strip():
+                                # Extract indentation
+                                indentMatch = re.match(r'^(\s+)', lines[j])
+                                if indentMatch:
+                                    indent = indentMatch.group(1)
+                                break
+                    
+                    if '}' in lines[j]:
+                        braceCount -= lines[j].count('}')
+                    
+                    if foundOpenBrace and braceCount == 0:
+                        return True, classType, i, j, indent
+                
+                # If we couldn't find the end, just return the start
+                return True, classType, i, -1, indent
+        
+        return False, "", -1, -1, ""
+    
+    except Exception as e:
+        print(f"Error reading file '{filePath}': {e}")
+        return False, "", -1, -1, ""
+
+def FindGeneratedRegionInFile(filePath: str) -> tuple[int, int, str]:
+    """
+    Search for an existing generated region in a header file.
+    Returns:
+        - int: Start line of the generated region
+        - int: End line of the generated region
+    """
+    try:
+        with open(filePath, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+        
+        startPattern = r'^\s*#pragma\s+region\s+GENERATED\s+by\s+ExportClassToCPPH\.py'
+        endPattern = r'^\s*#pragma\s+endregion'
+        
+        startLine = -1
+        indent = ""
+        
+        for i, line in enumerate(lines):
+            if re.search(startPattern, line):
+                startLine = i
+                # Extract indentation
+                indentMatch = re.match(r'^(\s+)', line)
+                if indentMatch:
+                    indent = indentMatch.group(1)
+                break
+        
+        if startLine != -1:
+            for i in range(startLine + 1, len(lines)):
+                if re.search(endPattern, lines[i]):
+                    return startLine, i, indent
+        
+        return -1, -1, ""
+    
+    except Exception as e:
+        print(f"Error reading file '{filePath}': {e}")
+        return -1, -1, ""
+
+def FindExistingHeaderFiles(basePath: str) -> dict[str, str]:
+    """
+    Find all header files in the project directory.
+    Returns a dictionary mapping class names to file paths.
+    """
+    classToFile = {}
+    
+    for root, _, files in os.walk(basePath):
+        for file in files:
+            if file.endswith(".h") or file.endswith(".hpp"):
+                filePath = os.path.join(root, file)
+                
+                # Extract the base name without extension
+                className = os.path.splitext(file)[0]
+                
+                # If the file name matches a potential class name, add it to our dictionary
+                classToFile[className] = filePath
+    
+    return classToFile
+
+def UpdateExistingHeaderFile(targetClass: ClassName, filePath: str, generatedCode: str) -> bool:
+    """
+    Update an existing header file with the generated code.
+    If a generated region already exists, replace it.
+    Otherwise, insert the generated code at the start of the class definition.
+    """
+    try:
+        with open(filePath, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+        
+        # First, check if there's an existing generated region
+        startRegion, endRegion, indent = FindGeneratedRegionInFile(filePath)
+        
+        if startRegion != -1 and endRegion != -1:
+            # Replace existing region
+            updatedLines = lines[:startRegion] + [generatedCode + '\n'] + lines[endRegion+1:]
+            
+            with open(filePath, 'w', encoding='utf-8') as f:
+                f.writelines(updatedLines)
+            
+            print(f"Updated existing generated region in '{filePath}'")
+            return True
+        
+        # If no existing region, find the class definition
+        found, classType, classStart, _, indent = FindClassDefInFile(targetClass.name, filePath)
+        
+        if found:
+            # Find the line after the opening brace
+            braceLine = -1
+            for i in range(classStart, len(lines)):
+                if '{' in lines[i]:
+                    braceLine = i
+                    break
+            
+            if braceLine != -1:
+                # Insert generated code after the opening brace
+                insertPos = braceLine + 1
+                
+                updatedLines = lines[:insertPos] + [generatedCode + '\n'] + lines[insertPos:]
+                
+                with open(filePath, 'w', encoding='utf-8') as f:
+                    f.writelines(updatedLines)
+                
+                print(f"Inserted generated code in '{filePath}'")
+                return True
+        
+        print(f"Could not find a suitable position to insert code in '{filePath}'")
+        return False
+    
+    except Exception as e:
+        print(f"Error updating file '{filePath}': {e}")
+        return False
+
+def ProcessExistingHeaders():
+    """
+    Scan PROJECT_PATH for header files, find matching class definitions,
+    and update them with generated code.
+    """
+    projectPath = r"D:\PROJECTS\Visual Studio\EGameSDK\EGameSDK\proxies\engine_x64_rwdi\scripts\include_test"
+    print(f"Scanning {projectPath} for header files...")
+    classFiles = FindExistingHeaderFiles(projectPath)
+    print(f"Found {len(classFiles)} header files.")
+    
+    processedCount = 0
+    for className, filePath in classFiles.items():
+        # Create a ClassName object
+        targetClass = ClassName(className)
+        
+        # Check if this class has any functions or variables to export
+        allParsedClassVarsAndFuncs = GetAllParsedClassVarsAndFuncs(targetClass)
+        hasContent = (
+            len(allParsedClassVarsAndFuncs[0]) > 0 or 
+            len(allParsedClassVarsAndFuncs[1]) > 0 or 
+            len(allParsedClassVarsAndFuncs[2]) > 0
+        )
+        
+        if hasContent:
+            # Verify the class exists in the file
+            found, class_type, _, _, indent = FindClassDefInFile(className, filePath)
+            
+            if found:
+                print(f"Found {class_type} {className} in {filePath}")
+                
+                # Set the class type
+                #object.__setattr__(targetClass, "type", class_type)
+                
+                # Generate and insert the code
+                generatedContent = f"{GenerateClassContent(targetClass, allParsedClassVarsAndFuncs, indent)}\n"
+                if generatedContent:
+                    success = UpdateExistingHeaderFile(targetClass, filePath, generatedContent)
+                    if success:
+                        processedCount += 1
+    
+    print(f"Successfully processed {processedCount} header files.")
 
 def GenerateHeaderCode(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]], cleanedTypes: bool = True) -> str:
     """
@@ -854,22 +785,24 @@ def ExportClassHeader(targetClass: ClassName):
 
 def Main():
     """Main entry point for the script."""
+    ProcessExistingHeaders()
     # Ask user for target class
     #targetClass = ida_kernwin.ask_str("IModelObject", 0, "Enter target class name (supports namespaces and templates):")
-    targetClassName: str = "CLevel"
-    if not targetClassName:
-        print("No target class specified. Aborting.")
-        return
-    targetClass: ClassName = ClassName(targetClassName)
+    # targetClassName: str = "CLevel"
+    # if not targetClassName:
+    #     print("No target class specified. Aborting.")
+    #     return
+    # targetClass: ClassName = ClassName(targetClassName)
 
-    breakpoint()
-    ExportClassHeader(targetClass)
+    # breakpoint()
+    # ExportClassHeader(targetClass)
+    importlib.reload(ExportClassToCPPH.ClassDefs)
 
 # -----------------------------------------------------------------------------
 # IDA plugin integration
 # -----------------------------------------------------------------------------
 
-class ExportClassToCPPH(idaapi.plugin_t):
+class ExportClassToCPPHClass(idaapi.plugin_t):
     """IDA Pro plugin for exporting C++ class definitions to header files."""
     flags = idaapi.PLUGIN_UNL
     comment = "Extract exported and virtual functions and generate a C++ header"
@@ -891,7 +824,7 @@ class ExportClassToCPPH(idaapi.plugin_t):
 
 def PLUGIN_ENTRY():
     idaapi.msg(f"Creating \"Export Class to C++ Header\" Plugin entry")
-    return ExportClassToCPPH()
+    return ExportClassToCPPHClass()
 
 if __name__ == "__main__":
     Main()

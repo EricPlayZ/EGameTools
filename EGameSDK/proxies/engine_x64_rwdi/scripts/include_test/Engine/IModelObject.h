@@ -1,0 +1,316 @@
+#pragma once
+#include <EGSDK\Imports.h>
+#include <EGSDK\Exports.h>
+#include <EGSDK\Engine\ttl.h>
+
+namespace Anim {
+    class IPoseElement;
+}
+
+namespace Audio {
+    struct SAudioEventExtraData;
+    struct SAudioEventExtraDataID;
+}
+
+namespace COFlags {
+    enum TYPE;
+}
+
+namespace EBones {
+    enum TYPE;
+}
+
+namespace EObjectToSimpleObjectsQueryResult {
+    enum TYPE;
+}
+
+namespace LodDissolves {
+    union SState;
+}
+
+namespace cbs {
+    class CEntity;
+    template <typename T>
+    class CPointer;
+}
+
+struct AnimEventInfo;
+class CHierarchyElement;
+class CModelObject;
+class CRTTI;
+class IAnimBind;
+class ICoSkeleton;
+class IGSObject;
+class IMpc;
+class ISGChunk;
+struct SCollision;
+struct SMeshVisibilityParams;
+struct SSurfParams;
+struct TAnimId;
+class aabb;
+class extents;
+struct uint4;
+
+class vec3;
+class vec4;
+class mtx34;
+class CGSObject;
+class IControlObject;
+struct RLROD_Batch;
+struct SCommandParam;
+
+class IModelObject {
+public:
+    VIRTUAL_CALL(0, uint64_t*, sub_1203B0, (char a1), a1);
+    GAME_IMPORT virtual IAnimBind const* GetAnimBind() const;
+    VIRTUAL_CALL(2, IAnimBind const*, _GetAnimBind1, ());
+    GAME_IMPORT virtual vec3 VectorLocalToWorld(int, vec3 const&) const;
+    GAME_IMPORT virtual ttl::string_base<char> GetAnimationFile(ttl::string_base<char> const&) const;
+    GAME_IMPORT virtual TAnimId GetAnimationId(ttl::string_const<char>, bool) const;
+    GAME_IMPORT virtual float GetAnimLength(TAnimId) const;
+    GAME_IMPORT virtual float GetAnimLength(ttl::string_base<char> const&) const;
+    GAME_IMPORT float odb_GetLoadTime(RLROD_Batch*);
+    GAME_IMPORT virtual mtx34 const& GetWorldXform() const;
+    GAME_IMPORT virtual int GetElementIndex(char const*) const;
+    GAME_IMPORT virtual ttl::string_base<char> GetElementName(int) const;
+    GAME_IMPORT virtual int GetElementsNumber() const;
+    GAME_IMPORT virtual uint32_t GetElementFlags(int) const;
+    GAME_IMPORT virtual mtx34 GetElementWorldMtx(int) const;
+    GAME_IMPORT virtual vec3 GetElementWorldPos(int) const;
+    GAME_IMPORT virtual int GetMeshElemFromBoneID(EBones::TYPE) const;
+    GAME_IMPORT virtual extents GetElementExtentsInWorld(int) const;
+    VIRTUAL_CALL(18, void, SetPlatform, ());
+    GAME_IMPORT virtual void ExecuteAnimActions(int, int, TAnimId, void const*, uint32_t);
+    GAME_IMPORT virtual void StopAnimActions(int, TAnimId, void const*, float);
+    VIRTUAL_CALL(21, int64_t, RunUnitTests, ());
+protected:
+    GAME_IMPORT virtual void SetEngineObject(CGSObject*);
+public:
+    virtual void _StrippedVFunc1() = 0;
+    virtual void _StrippedVFunc2() = 0;
+    virtual void _StrippedVFunc3() = 0;
+    virtual void _StrippedVFunc4() = 0;
+    virtual void _StrippedVFunc5() = 0;
+    virtual void _StrippedVFunc6() = 0;
+    virtual void _StrippedVFunc7() = 0;
+    virtual void _StrippedVFunc8() = 0;
+    virtual void _StrippedVFunc9() = 0;
+    virtual void _StrippedVFunc10() = 0;
+    GAME_IMPORT virtual int GetChildrenElementsNumber(int) const;
+    GAME_IMPORT virtual int GetElementParent(int) const;
+    GAME_IMPORT virtual int GetElementChild(int) const;
+    GAME_IMPORT virtual int GetElementNext(int) const;
+    GAME_IMPORT virtual void SetMeshName(ttl::string_const<char>);
+    GAME_IMPORT virtual void SetInitializeMesh(bool);
+    GAME_IMPORT virtual ttl::string_const<char> GetMeshName() const;
+    virtual void _StrippedVFunc11() = 0;
+    GAME_IMPORT virtual void SetSkinName(ttl::string_const<char>);
+    virtual void _StrippedVFunc12() = 0;
+    GAME_IMPORT virtual void GetSkinName(uint32_t, ttl::string_base<char>&) const;
+    GAME_IMPORT virtual ttl::string_const<char> GetSkinName() const;
+    GAME_IMPORT virtual void SetSkinSeed(int);
+    GAME_IMPORT virtual int GetSkinSeed() const;
+    GAME_IMPORT virtual int64_t GetSkinMustHaveTags() const;
+    GAME_IMPORT virtual void SetSkinMustHaveTags(int64_t);
+    GAME_IMPORT virtual int64_t GetSkinMustNotHaveTags() const;
+    GAME_IMPORT virtual void SetSkinMustNotHaveTags(int64_t);
+    GAME_IMPORT virtual uint32_t GetSkinCount() const;
+    GAME_IMPORT virtual void SetCharacterNames(ttl::string_base<char> const&, ttl::string_base<char> const&);
+    GAME_IMPORT virtual bool CharacterPresetExists(ttl::string_base<char> const&) const;
+    GAME_IMPORT virtual void GetCharacterNames(ttl::string_base<char>&, ttl::string_base<char>&);
+    GAME_IMPORT virtual ttl::string_base<char> GetCharacterName(uint32_t) const;
+    GAME_IMPORT virtual void SetMeshColor(uint4 const&);
+    GAME_IMPORT virtual void SetMeshColor(uint32_t, vec4 const&);
+    GAME_IMPORT virtual uint4 const& GetMeshColor() const;
+    GAME_IMPORT virtual vec4 const& GetMeshColor(uint32_t) const;
+    GAME_IMPORT virtual void SetMeshAttribute(uint32_t, vec4 const&);
+    GAME_IMPORT virtual void SetMeshAttributeMtx(uint32_t, mtx34 const&);
+    GAME_IMPORT virtual vec4 const& GetMeshAttribute(uint32_t) const;
+    GAME_IMPORT virtual mtx34 const& GetMeshAttributeMtx(uint32_t) const;
+    GAME_IMPORT virtual uint32_t GetMeshAttributesCount() const;
+    GAME_IMPORT virtual extents GetElementReferenceExtents(int) const;
+    GAME_IMPORT virtual extents GetElementExtentsLocal(int) const;
+    GAME_IMPORT virtual void SetElementExtentsLocal(extents const&, int);
+    GAME_IMPORT virtual int GetElementID(uint32_t) const;
+    GAME_IMPORT virtual int GetElementIDByLowercaseName(char const*) const;
+    VIRTUAL_CALL(70, int, _GetElementIndex1, (char const* a1), a1);
+    GAME_IMPORT virtual char const* GetElementNameCStr(int) const;
+    GAME_IMPORT virtual bool IsBiped() const;
+    GAME_IMPORT virtual bool IsRenderable() const;
+    GAME_IMPORT virtual void SetElementWorldPos(int, vec3 const&);
+    GAME_IMPORT virtual vec3 GetElementLocalPos(int) const;
+    GAME_IMPORT virtual void SetElementLocalPos(int, vec3 const&);
+    virtual void _StrippedVFunc13() = 0;
+    virtual void _StrippedVFunc14() = 0;
+    GAME_IMPORT virtual mtx34 const& GetElementLocalMatrix(int) const;
+    GAME_IMPORT virtual void SetElementLocalMatrix(int, mtx34 const&);
+    GAME_IMPORT virtual void SetElementLocalMatrixNoPropagate(int, mtx34 const&);
+    GAME_IMPORT virtual void GetElementLocalMatrices(int const*, uint32_t, mtx34*);
+    GAME_IMPORT virtual void SetElementLocalMatrices(int const*, uint32_t, mtx34 const*);
+    GAME_IMPORT virtual mtx34 const& GetElementWorldMatrix(int) const;
+    GAME_IMPORT virtual void SetElementWorldMatrix(int, mtx34 const&);
+    GAME_IMPORT virtual void SetElementWorldMatrixNoPropagate(int, mtx34 const&);
+    GAME_IMPORT virtual void GetElementInvWorldMatrix(int, mtx34&) const;
+    virtual void _StrippedVFunc15() = 0;
+    GAME_IMPORT virtual void RotateElement(int, vec3 const&, float);
+    GAME_IMPORT virtual void ElementSetWorldMatrixFromQuatPos(int, vec3 const&, float, vec3 const&);
+    GAME_IMPORT virtual void FromUpForwardPosElementLocal(int, vec3 const&, vec3 const&, vec3 const&);
+    GAME_IMPORT virtual void FromUpForwardPosElementWorld(int, vec3 const&, vec3 const&, vec3 const&);
+    GAME_IMPORT virtual void SetPivotPointFromElement(int);
+    GAME_IMPORT virtual float GetAnimTimeDelta() const;
+    GAME_IMPORT virtual float GetLastAnimUpdateTime() const;
+    GAME_IMPORT virtual float GetLastAnimApplyTime() const;
+    GAME_IMPORT virtual bool InitAnimSeqFile(ttl::string_base<char> const&);
+    VIRTUAL_CALL(98, void, _SetPlatform1, ());
+    GAME_IMPORT virtual vec3 GetBoneDirVector(EBones::TYPE) const;
+    GAME_IMPORT virtual vec3 GetBonePerpVector(EBones::TYPE) const;
+    GAME_IMPORT virtual vec3 GetBoneJointPos(EBones::TYPE) const;
+    GAME_IMPORT virtual EBones::TYPE GetBoneIDFromMeshElem(int) const;
+    GAME_IMPORT virtual void AttachChildToMeshElement(IControlObject*, int, bool);
+    GAME_IMPORT virtual CHierarchyElement* GetHElement(int) const;
+    GAME_IMPORT virtual void EnableRendering(bool);
+    GAME_IMPORT virtual void DebugRenderElementBoxes();
+    GAME_IMPORT virtual void ForceUpdateAnimations();
+    GAME_IMPORT virtual uint32_t AttachAudioEvent(int, ttl::string_base<char> const&, Audio::SAudioEventExtraData const*, vec3 const&);
+    GAME_IMPORT virtual uint32_t PlayAudioEvent(uint32_t, Audio::SAudioEventExtraDataID const*, vec3 const&, vec3 const&);
+    GAME_IMPORT virtual uint32_t PlayAudioEvent(ttl::string_base<char> const&, Audio::SAudioEventExtraData const*, vec3 const&, vec3 const&);
+    GAME_IMPORT virtual void SetAudioEventSwitch(uint32_t, ttl::string_base<char> const&, ttl::string_base<char> const&);
+    GAME_IMPORT virtual vec3 PointLocalToWorld(int, vec3 const&);
+    GAME_IMPORT virtual vec3 PointWorldToLocal(int, vec3 const&);
+    GAME_IMPORT virtual vec3 VectorWorldToLocal(int, vec3 const&);
+    GAME_IMPORT virtual void HideElementsByMask(bool, ttl::string_base<char> const&);
+    GAME_IMPORT virtual bool HideElement(int);
+    GAME_IMPORT virtual bool UnhideElement(int);
+    GAME_IMPORT virtual bool IsElementHidden(int) const;
+    virtual void _StrippedVFunc16() = 0;
+    virtual void _StrippedVFunc17() = 0;
+    virtual void _StrippedVFunc18() = 0;
+    virtual void _StrippedVFunc19() = 0;
+    virtual void _StrippedVFunc20() = 0;
+    virtual void _StrippedVFunc21() = 0;
+    virtual void _StrippedVFunc22() = 0;
+    virtual void _StrippedVFunc23() = 0;
+    virtual void _StrippedVFunc24() = 0;
+    virtual void _StrippedVFunc25() = 0;
+    virtual void _StrippedVFunc26() = 0;
+    GAME_IMPORT virtual void UnlockAnimationUpdateAbility(bool&, ttl::vector<bool, ttl::vector_allocators::heap_allocator<bool>, 8>&);
+    GAME_IMPORT virtual void RestoreAnimationUpdateAbility(bool const&, ttl::vector<bool, ttl::vector_allocators::heap_allocator<bool>, 8> const&);
+    GAME_IMPORT virtual bool EnableCollisionsElement(int, bool);
+    GAME_IMPORT virtual bool IsElementCollsionsEnabled(int);
+    GAME_IMPORT virtual bool AreSkinsAllowedToModifyElementFlags(int) const;
+    GAME_IMPORT virtual void AllowSkinsToModifyElementFlags(int, bool);
+    GAME_IMPORT virtual bool EnableElementTraceColl(int, bool);
+    GAME_IMPORT virtual bool IsElementTraceCollEnabled(int);
+    GAME_IMPORT virtual bool IsElementABone(int);
+    GAME_IMPORT virtual void SetupMeshPartClothSet(bool, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>*);
+    VIRTUAL_CALL(140, void, _SetPlatform2, ());
+    virtual void _StrippedVFunc27() = 0;
+    VIRTUAL_CALL(142, float, _odb_GetLoadTime1, (RLROD_Batch* a1), a1);
+    GAME_IMPORT virtual void DissolveObjectProgress(float, bool);
+    GAME_IMPORT virtual void GatherMeshAndSkinName(ttl::string_base<char>&, ttl::string_base<char>&) const;
+    GAME_IMPORT virtual void EnableMotionBlur(bool);
+    VIRTUAL_CALL(146, void, _SetPlatform3, ());
+    GAME_IMPORT virtual bool GetMeshDataForSimpleObjectsEditor(ttl::string_base<char>*, ttl::string_base<char>*, int64_t*, int64_t*, int*);
+    VIRTUAL_CALL(148, int64_t, _RunUnitTests1, ());
+    GAME_IMPORT ttl::list<SCommandParam, ttl::allocator>::const_reverse_iterator rend() const;
+
+protected:
+    GAME_IMPORT IModelObject();
+public:
+    GAME_IMPORT IModelObject(IModelObject const&);
+protected:
+    //GAME_IMPORT ~IModelObject();
+public:
+    GAME_IMPORT void AdjustExtentsToAllElements(bool, bool);
+    GAME_IMPORT Anim::IPoseElement const* AnimGetMeshPoseElement() const;
+    GAME_IMPORT Anim::IPoseElement const* AnimGetModelObjectMorphPoseElement() const;
+    GAME_IMPORT Anim::IPoseElement const* AnimGetModelObjectPoseElement() const;
+    GAME_IMPORT bool AnimReInit(ttl::string_base<char> const&);
+    GAME_IMPORT static void CollectMeshSkins(ttl::string_base<char> const&, bool, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&);
+    GAME_IMPORT void CollectUsedTextures(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&);
+    GAME_IMPORT void CopyElementsPosition(IModelObject*);
+    GAME_IMPORT void DumpAnims();
+    GAME_IMPORT bool EnableElementPhysics(int, bool, bool);
+    GAME_IMPORT void EnableHierarchySerialization(bool);
+    GAME_IMPORT void EnableRenderingRayTracing(bool);
+    GAME_IMPORT void EnableRenderingScene(bool);
+    GAME_IMPORT void EnableRenderingShadows(bool);
+    GAME_IMPORT void EnableUpdateExtents(bool);
+    GAME_IMPORT aabb const& GetAABBExtents() const;
+    GAME_IMPORT void GetAnimationNames(ttl::map<ttl::string_base<char>, TAnimId, ttl::less<ttl::string_base<char>>, ttl::allocator>&);
+    GAME_IMPORT static COFlags::TYPE GetDefaultCOFlags();
+    GAME_IMPORT int GetCurrentLOD() const;
+    GAME_IMPORT LodDissolves::SState GetCurrentLodState() const;
+    GAME_IMPORT char GetForcedAnimLod() const;
+    GAME_IMPORT float GetLodDissolveStep() const;
+    GAME_IMPORT void GetMeshElementsMatrices(ttl::vector<mtx34, ttl::vector_allocators::heap_allocator<mtx34>, 0>&) const;
+    GAME_IMPORT uint32_t GetMeshElementsMatricesCount() const;
+    GAME_IMPORT int GetMeshElementsState(ttl::vector<unsigned char, ttl::vector_allocators::heap_allocator<unsigned char>, 8>&, ttl::vector<int, ttl::vector_allocators::heap_allocator<int>, 2> const&) const;
+    GAME_IMPORT int GetMeshElementsStateSize(ttl::vector<int, ttl::vector_allocators::heap_allocator<int>, 2> const&) const;
+    GAME_IMPORT float GetMeshLodDistance(int) const;
+    GAME_IMPORT SMeshVisibilityParams const* GetMeshVisibilityParams() const;
+    GAME_IMPORT float GetMeshVisibilityRange();
+    GAME_IMPORT static IModelObject* GetModelObject(IGSObject*);
+    GAME_IMPORT static IModelObject* GetModelObject(cbs::CEntity const*);
+    GAME_IMPORT static IModelObject const* GetModelObject(IGSObject const*);
+    GAME_IMPORT uint32_t GetNumCollisionHullFaces() const;
+    GAME_IMPORT uint32_t GetNumCollisionHullPrimitives() const;
+    GAME_IMPORT uint32_t GetNumCollisionHullVertices() const;
+    GAME_IMPORT uint32_t GetNumSurfaceParams() const;
+    GAME_IMPORT uint32_t GetNumTraceHullFaces() const;
+    GAME_IMPORT uint32_t GetNumTraceHullPrimitives() const;
+    GAME_IMPORT uint32_t GetNumTraceHullVertices() const;
+    GAME_IMPORT ttl::string_const<char> GetSkin() const;
+    GAME_IMPORT static int64_t GetSkinTagsFromStr(char const*);
+    GAME_IMPORT SSurfParams* GetSurfaceParams() const;
+    GAME_IMPORT int GetTraceCollType() const;
+    GAME_IMPORT bool GetValidSkinsEditor(ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&) const;
+    GAME_IMPORT bool IsDefaultMeshLoaded();
+private:
+    GAME_IMPORT bool IsElementIDValid(int) const;
+public:
+    GAME_IMPORT bool IsElementPhysicsEnabled(int);
+    GAME_IMPORT bool IsObjectDissolved() const;
+    GAME_IMPORT void LoadMesh(bool);
+    GAME_IMPORT void LoadMeshElements(ISGChunk*);
+    GAME_IMPORT int MT_GetCount();
+    GAME_IMPORT char const* MT_GetName(uint32_t);
+    GAME_IMPORT float MT_WeightGet(uint32_t);
+    GAME_IMPORT static bool MeshAndSkinExists(ttl::string_base<char> const&, ttl::string_base<char> const&);
+    GAME_IMPORT static bool MeshExist(ttl::string_base<char> const&);
+    GAME_IMPORT void MeshUseDefaultVisibilityParameters();
+    GAME_IMPORT void MoveElementBoxSide(int, int, float);
+    GAME_IMPORT void MoveElementBoxSides(int, vec3 const&, vec3 const&);
+    GAME_IMPORT void MoveElementBoxSides(int, float, float, float, float, float, float);
+    GAME_IMPORT bool RaytestMe(vec3 const&, vec3&, unsigned short, bool, unsigned short);
+    GAME_IMPORT bool RaytraceMe(SCollision*, vec3 const&, vec3&, unsigned short, bool, unsigned short);
+    GAME_IMPORT bool ReplaceMaterial(ttl::string_base<char> const&, ttl::string_base<char> const&);
+    GAME_IMPORT void ResetBoneAndDescendantsToReferenceFrame(int);
+    GAME_IMPORT void ResetBonesExtentsToReferenceFrame();
+    GAME_IMPORT void ResetBonesToReferenceFrame(bool);
+    GAME_IMPORT void ResetElementsDescendantsToReferenceFrame(int);
+    GAME_IMPORT void SaveMeshElements(ISGChunk*);
+    GAME_IMPORT void SetBestGeomLods();
+    GAME_IMPORT void SetDontApplyAnim(bool);
+    GAME_IMPORT void SetExtentsLocal(extents const&);
+    GAME_IMPORT void SetForcedAnimLod(char);
+    GAME_IMPORT void SetLodDissolveStep(float);
+    GAME_IMPORT void SetLodStateForSpawnedObjects(LodDissolves::SState);
+    GAME_IMPORT void SetMeshCullSizeEnable(bool);
+    GAME_IMPORT bool SetMeshElementsMatrices(ttl::vector<mtx34, ttl::vector_allocators::heap_allocator<mtx34>, 0> const&);
+    GAME_IMPORT int SetMeshElementsState(ttl::vector<unsigned char, ttl::vector_allocators::heap_allocator<unsigned char>, 8> const&, ttl::vector<int, ttl::vector_allocators::heap_allocator<int>, 2> const&, bool, bool);
+    GAME_IMPORT void SetMeshLodDistance(int, float);
+    GAME_IMPORT void SetMeshVisibilityRange(float);
+    GAME_IMPORT bool SetSkin();
+    GAME_IMPORT bool SetSkinNoCharacterPreset();
+    GAME_IMPORT void SetTraceCollType(int);
+    GAME_IMPORT bool ShouldApplyAnim() const;
+    GAME_IMPORT void ShowCollisionHull(bool);
+    GAME_IMPORT void ShowElementBox(ttl::string_base<char> const&);
+    GAME_IMPORT void ShowElementBoxes(bool);
+    GAME_IMPORT void ShowElementBoxesFrom(ttl::string_base<char> const&);
+    GAME_IMPORT void ShowElementBoxesFromTo(ttl::string_base<char> const&, ttl::string_base<char> const&);
+    GAME_IMPORT void ShowElementBoxesTo(ttl::string_base<char> const&);
+    GAME_IMPORT void ShowExtents(bool);
+    GAME_IMPORT bool SkinExists(ttl::string_base<char> const&);
+};
