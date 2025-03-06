@@ -3,17 +3,19 @@ import re
 import struct
 import idc
 import idaapi
+import ida_kernwin
 import ida_hexrays
 import ida_bytes
 import ida_ida
 import pickle
-import importlib
+import json
 from typing import Optional
 
 idaapi.require("ExportClassToCPPH")
-import ExportClassToCPPH.ClassDefs
 from ExportClassToCPPH import Utils, Config
 from ExportClassToCPPH.ClassDefs import ClassName, ParsedFunction, ParsedClassVar
+
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ExportClassToCPPH.json")
 
 # Global caches
 parsedClassVarsByClass: dict[str, list[ParsedClassVar]] = {} # Cache of parsed class vars by class name
@@ -616,7 +618,7 @@ def UpdateExistingHeaderFile(targetClass: ClassName, filePath: str, generatedCod
         
         if startRegion != -1 and endRegion != -1:
             # Replace existing region
-            updatedLines = lines[:startRegion] + [generatedCode + '\n'] + lines[endRegion+1:]
+            updatedLines = lines[:startRegion] + [generatedCode + ('\n' if endRegion + 1 < len(lines) and lines[endRegion + 1].strip() == "};" else '\n\n')] + lines[endRegion+1:]
             
             with open(filePath, 'w', encoding='utf-8') as f:
                 f.writelines(updatedLines)
@@ -659,9 +661,8 @@ def ProcessExistingHeaders():
     Scan PROJECT_PATH for header files, find matching class definitions,
     and update them with generated code.
     """
-    projectPath = r"D:\PROJECTS\Visual Studio\EGameSDK\EGameSDK\proxies\engine_x64_rwdi\scripts\include_test"
-    print(f"Scanning {projectPath} for header files...")
-    classFiles = FindExistingHeaderFiles(projectPath)
+    print(f"Scanning {Config.PROJECT_INCLUDES_PATH} for header files...")
+    classFiles = FindExistingHeaderFiles(Config.PROJECT_INCLUDES_PATH)
     print(f"Found {len(classFiles)} header files.")
     
     processedCount = 0
@@ -688,7 +689,7 @@ def ProcessExistingHeaders():
                 #object.__setattr__(targetClass, "type", class_type)
                 
                 # Generate and insert the code
-                generatedContent = f"{GenerateClassContent(targetClass, allParsedClassVarsAndFuncs, indent)}\n"
+                generatedContent = f"{GenerateClassContent(targetClass, allParsedClassVarsAndFuncs, indent)}"
                 if generatedContent:
                     success = UpdateExistingHeaderFile(targetClass, filePath, generatedContent)
                     if success:
@@ -783,20 +784,140 @@ def ExportClassHeader(targetClass: ClassName):
     nonCleanedHeaderCode: str = GenerateHeaderCode(targetClass, allParsedClassVarsAndFuncs, False)
     WriteHeaderToFile(targetClass, nonCleanedHeaderCode, f"{targetClass.name}-unclean.h")
 
+# -----------------------------------------------------------------------------
+# UI Integration
+# -----------------------------------------------------------------------------
+
+# Load settings from file
+def load_settings():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r") as f:
+            return json.load(f)
+    return Config.DEFAULT_CONFIG
+
+# Save settings to file
+def save_settings(settings):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(settings, f, indent=4)
+
+class SettingsDialog(ida_kernwin.Form):
+    def __init__(self, current_config):
+        self.config = current_config
+        ida_kernwin.Form.__init__(self, r"""STARTITEM 0
+BUTTON YES* Save
+BUTTON CANCEL Cancel
+Settings
+
+Modify the paths below:
+
+<##Project Includes Path:{i_project_path}>
+<##Output Path:{i_output_path}>
+""", {
+            'i_project_path': ida_kernwin.Form.StringInput(swidth=50, value=self.config["PROJECT_INCLUDES_PATH"]),
+            'i_output_path': ida_kernwin.Form.StringInput(swidth=50, value=self.config["OUTPUT_PATH"]),
+        })
+
+    def GetValues(self):
+        return {
+            "PROJECT_INCLUDES_PATH": self.i_project_path.value,
+            "OUTPUT_PATH": self.i_output_path.value
+        }
+    
+    def OnFormChange(self, fid):
+        return 1  # Required for form functionality
+
+class MainDialog(ida_kernwin.Form):
+    def __init__(self):
+        ida_kernwin.Form.__init__(self, r"""STARTITEM 0
+BUTTON YES* OK
+BUTTON CANCEL Cancel
+Export Class to C++ Header
+
+{FormChangeCb}
+
+<##Update Project Code:{r_update}>
+<##Generate Class Code:{r_generate}>
+<##Settings:{r_settings}>{radioGroup}>
+""", {
+            'radioGroup': ida_kernwin.Form.RadGroupControl(("r_update", "r_generate", "r_settings")),
+            'FormChangeCb': ida_kernwin.Form.FormChangeCb(self.OnFormChange),
+        })
+
+    def OnFormChange(self, fid):
+        return 1  # Required for form functionality
+
+def open_settings_dialog():
+    """Opens the Settings Dialog and returns to Main Dialog on Cancel"""
+    settings = load_settings()
+    settingsDlg = SettingsDialog(settings)
+    settingsDlg.Compile()
+    result = settingsDlg.Execute()
+
+    if result == 1:  # Save clicked
+        new_settings = settingsDlg.GetValues()
+        save_settings(new_settings)  # Save new settings to file
+        print("[INFO] Settings saved successfully!")
+
+    settingsDlg.Free()
+    
+    # Always return to the main dialog after closing settings
+    open_main_dialog()
+
+def open_main_dialog():
+    """Reopens the Main Dialog"""
+    mainDlg = MainDialog()
+    mainDlg.Compile()
+    result = mainDlg.Execute()
+
+    if result == 1:  # OK clicked
+        selectedOption = mainDlg.radioGroup.value
+
+        if selectedOption == 0:
+            print("[INFO] Update Project Code selected!")
+            ProcessExistingHeaders()
+        elif selectedOption == 1:
+            print("[INFO] Generate Class Code selected!")
+            targetClassName = ida_kernwin.ask_str("", 0, "Enter target class name:")
+            if not targetClassName:
+                print("No target class specified. Aborting.")
+                return
+            ExportClassHeader(ClassName(targetClassName))
+        elif selectedOption == 2:
+            print("[INFO] Settings selected!")
+            open_settings_dialog()  # Open settings when selected
+    else:
+        print("[INFO] User clicked Cancel. No action taken.")
+
+    mainDlg.Free()
+
 def Main():
     """Main entry point for the script."""
-    ProcessExistingHeaders()
-    # Ask user for target class
-    #targetClass = ida_kernwin.ask_str("IModelObject", 0, "Enter target class name (supports namespaces and templates):")
-    # targetClassName: str = "CLevel"
-    # if not targetClassName:
-    #     print("No target class specified. Aborting.")
-    #     return
-    # targetClass: ClassName = ClassName(targetClassName)
+    open_main_dialog()
+    
+    # Reload modules to apply any changes
 
-    # breakpoint()
-    # ExportClassHeader(targetClass)
+    import importlib
+    import ExportClassToCPPH.ClassDefs
+    import ExportClassToCPPH.Config
+    import ExportClassToCPPH.Utils
     importlib.reload(ExportClassToCPPH.ClassDefs)
+    importlib.reload(ExportClassToCPPH.Config)
+    importlib.reload(ExportClassToCPPH.Utils)
+
+# def Main():
+#     """Main entry point for the script."""
+#     ProcessExistingHeaders()
+#     # Ask user for target class
+#     #targetClass = ida_kernwin.ask_str("IModelObject", 0, "Enter target class name (supports namespaces and templates):")
+#     # targetClassName: str = "CLevel"
+#     # if not targetClassName:
+#     #     print("No target class specified. Aborting.")
+#     #     return
+#     # targetClass: ClassName = ClassName(targetClassName)
+
+#     # breakpoint()
+#     # ExportClassHeader(targetClass)
+#     importlib.reload(ExportClassToCPPH.ClassDefs)
 
 # -----------------------------------------------------------------------------
 # IDA plugin integration
