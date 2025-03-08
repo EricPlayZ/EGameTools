@@ -59,7 +59,7 @@ class CBaseObject {
 		GAME_IMPORT virtual int FromBufferReplicated(char*, int);
 		GAME_IMPORT virtual int GetBufferReplicatedDataSize();
 		VIRTUAL_CALL(51, void, _SetPlatform6, ());
-		VIRTUAL_CALL(52, static bool, ValidateVec4, (IGSObject const*, vec4 const&), const*, const&);
+		VIRTUAL_CALL(52, bool, ValidateVec4, (IGSObject const*, vec4 const&), const*, const&);
 		GAME_IMPORT virtual bool CopyFields(CRTTIObject const*, bool);
 		GAME_IMPORT virtual bool CopyPointerFields(CRTTIObject const*);
 		GAME_IMPORT virtual bool ExchangePointerFields(CRTTIObject*);
@@ -73,7 +73,7 @@ class CBaseObject {
 		VIRTUAL_CALL(63, void, _SetPlatform7, ());
 		GAME_IMPORT virtual bool GetValidFieldValuesEditor(CRTTIField const&, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&, ttl::vector<ttl::string_base<char>, ttl::vector_allocators::heap_allocator<ttl::string_base<char>>, 1>&);
 		VIRTUAL_CALL(65, bool, _updateRttiParams11, ());
-		VIRTUAL_CALL(66, static bool, _ValidateVec41, (IGSObject const* a1, vec4 const& a2), a1, a2);
+		VIRTUAL_CALL(66, bool, _ValidateVec41, (IGSObject const* a1, vec4 const& a2), a1, a2);
 		VIRTUAL_CALL(67, int64_t, _RunUnitTests9, ());
 		GAME_IMPORT virtual ttl::string_base<char> ValueToString(CRTTIObject* const&) const;
 		GAME_IMPORT virtual bool IsFieldChanged(CRTTIField const*) const;

@@ -30,7 +30,7 @@ def CleanType(type: str) -> str:
 
 def ReplaceIDATypes(type: str) -> str:
     """Replace IDA types with normal ones"""
-    return type.replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
+    return type.replace("unsigned __int64", "uint64_t").replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
 
 def ExtractTypesFromString(types: str) -> list[str]:
     """Extract potential type names from a string."""

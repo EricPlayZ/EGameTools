@@ -171,6 +171,7 @@ class ParsedFunction:
                 funcName = f"_{funcName}{virtualFuncDuplicateCounter[signature]}"
 
             if onlyVirtualFuncs:
+                returnType = returnType.replace("static", "").strip()
                 if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc or "virtual" not in returnType:
                     type = "basic_vfunc"
                 else:
@@ -182,7 +183,6 @@ class ParsedFunction:
                     type = "basic_vfunc"
                 else:
                     type = "vfunc"
-            #type = "func" if not (onlyVirtualFuncs or "virtual" in returnType) else ("basic_vfunc" if isIDAGeneratedType or isIDAGeneratedTypeParsed or isDuplicateFunc else "vfunc")
             object.__setattr__(self, "type", type)
             object.__setattr__(self, "access", access if access else "public")
             object.__setattr__(self, "returnType", ClassName(returnType) if returnType else None)

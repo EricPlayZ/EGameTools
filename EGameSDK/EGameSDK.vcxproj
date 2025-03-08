@@ -72,7 +72,6 @@
     <ClCompile Include="src\Vec4.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\_IDAScripts\generated\MED.h" />
     <ClInclude Include="include\EGSDK\ClassHelpers.h" />
     <ClInclude Include="include\EGSDK\Core\Core.h" />
     <ClInclude Include="include\EGSDK\Core\SaveGameManager.h" />
@@ -113,6 +112,7 @@
     <ClInclude Include="include\EGSDK\Engine\ITextDeserializer.h" />
     <ClInclude Include="include\EGSDK\Engine\ITextSerializer.h" />
     <ClInclude Include="include\EGSDK\Engine\MaterialEditorCommon.h" />
+    <ClInclude Include="include\EGSDK\Engine\MED.h" />
     <ClInclude Include="include\EGSDK\Engine\Net\Repl\CRttiInfo.h" />
     <ClInclude Include="include\EGSDK\Engine\Net\Repl\Rtti\Serializer.h" />
     <ClInclude Include="include\EGSDK\Engine\parser.h" />

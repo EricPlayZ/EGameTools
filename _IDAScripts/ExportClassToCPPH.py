@@ -21,6 +21,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), "ExportClassToCPPH.json")
 parsedClassVarsByClass: dict[str, list[ParsedClassVar]] = {} # Cache of parsed class vars by class name
 parsedVTableFuncsByClass: dict[str, list[ParsedFunction]] = {} # Cache of parsed functions by class name
 parsedFuncsByClass: dict[str, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+allParsedFuncs: list[ParsedFunction] = []
 unparsedExportedSigs: list[str] = []
 allClassVarsAreParsed = False # Flag to indicate if all class vars have been parsed
 allFuncsAreParsed = False # Flag to indicate if all functions have been parsed
@@ -419,15 +420,20 @@ def GenerateClassFuncCode(func: ParsedFunction, indent: str = "\t", cleanedTypes
     return f"{access}{funcSig};"
 
 def GetClassTypeFromParsedSigs(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]) -> str:
-    if not targetClass.type:
-        for parsedClassVarsList in allParsedClassVarsAndFuncs[1:]:
-            for parsedClassVar in parsedClassVarsList:
-                if parsedClassVar.returnType and parsedClassVar.returnType.namespacedName == targetClass.namespacedName and parsedClassVar.returnType.type:
-                    return parsedClassVar.returnType.type
+    global allParsedFuncs
 
+    if targetClass.type:
+        return ""
+    
     for parsedClassVar in allParsedClassVarsAndFuncs[0]:
         if parsedClassVar.varType and parsedClassVar.varType.namespacedName == targetClass.namespacedName and parsedClassVar.varType.type:
             return parsedClassVar.varType.type
+    for parsedVTFunc in allParsedClassVarsAndFuncs[1]:
+        if parsedVTFunc.returnType and parsedVTFunc.returnType.namespacedName == targetClass.namespacedName and parsedVTFunc.returnType.type:
+            return parsedVTFunc.returnType.type
+    for parsedFunc in allParsedFuncs:
+        if parsedFunc.returnType and parsedFunc.returnType.namespacedName == targetClass.namespacedName and parsedFunc.returnType.type:
+            return parsedFunc.returnType.type
     
     return ""
 
@@ -720,6 +726,8 @@ def GenerateHeaderCode(targetClass: ClassName, allParsedClassVarsAndFuncs: tuple
 # -----------------------------------------------------------------------------
 
 def GetAllParsedClassVarsAndFuncs(targetClass: ClassName) -> tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]:
+    global allParsedFuncs
+
     parsedVTableClassFuncs: list[ParsedFunction] = GetParsedVTableFuncs(targetClass)
     if not parsedVTableClassFuncs:
         print(f"No matching VTable function signatures were found for {targetClass.fullName}.")
@@ -727,6 +735,7 @@ def GetAllParsedClassVarsAndFuncs(targetClass: ClassName) -> tuple[list[ParsedCl
     parsedClassFuncs: list[ParsedFunction] = GetParsedFuncs(targetClass)
     if not parsedClassFuncs:
         print(f"No matching function signatures were found for {targetClass.fullName}.")
+    allParsedFuncs = GetParsedFuncs()
 
     parsedClassVars: list[ParsedClassVar] = GetParsedClassVars(targetClass)
     if not parsedClassVars:
@@ -922,14 +931,13 @@ def Main():
     OpenMainDlg()
     
     # Reload modules to apply any changes
-
     import importlib
-    import ExportClassToCPPH.ClassDefs
-    import ExportClassToCPPH.Config
     import ExportClassToCPPH.Utils
-    importlib.reload(ExportClassToCPPH.ClassDefs)
+    import ExportClassToCPPH.Config
+    import ExportClassToCPPH.ClassDefs
     importlib.reload(ExportClassToCPPH.Config)
     importlib.reload(ExportClassToCPPH.Utils)
+    importlib.reload(ExportClassToCPPH.ClassDefs)
 
 # -----------------------------------------------------------------------------
 # IDA plugin integration

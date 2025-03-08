@@ -479,9 +479,6 @@
     <ClInclude Include="include\EGSDK\Engine\parser.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\_IDAScripts\generated\MED.h">
-      <Filter>include\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\rtti.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
@@ -555,6 +552,9 @@
       <Filter>include\Engine</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\IClassWriter.h">
+      <Filter>include\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGSDK\Engine\MED.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
   </ItemGroup>

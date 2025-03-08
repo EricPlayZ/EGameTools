@@ -45,7 +45,7 @@ class CRTTI {
 		GAME_IMPORT bool IsAbstract() const;
 		GAME_IMPORT void AddExternalField(CRTTIField const*);
 		GAME_IMPORT void CreateGuiGameDataEventDispatcher();
-		GAME_IMPORT cbs::msg::RttiMessageDispatcher const* FindMessageDispatcherForPipe(uint32_t64_t) const;
+		GAME_IMPORT cbs::msg::RttiMessageDispatcher const* FindMessageDispatcherForPipe(uint64_t) const;
 		GAME_IMPORT CRTTIField const* FindFieldAtOffset(uint32_t) const;
 		GAME_IMPORT void SetPrefabName(ttl::string_base<char> const&);
 		GAME_IMPORT bool CopyFields(CRTTIObject*, CRTTIObject const*, bool) const;
@@ -68,7 +68,7 @@ class CRTTI {
 		GAME_IMPORT CRTTI const* GetNativeClass() const;
 		GAME_IMPORT void CreateRttiSerialization();
 		GAME_IMPORT void ResolveGuiGameDataEventDispatchers();
-		GAME_IMPORT cbs::msg::RttiMessageDispatcher* GetMessageDispatcherForPipe(uint32_t64_t);
+		GAME_IMPORT cbs::msg::RttiMessageDispatcher* GetMessageDispatcherForPipe(uint64_t);
 		GAME_IMPORT bool FromClassByName(char const*) const;
 		GAME_IMPORT void CopyGuiGameDataEventDispatcher(CRTTI const*);
 		GAME_IMPORT bool FromClassOrInterfaceByName(char const*) const;
