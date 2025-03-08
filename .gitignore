@@ -1,4 +1,7 @@
-﻿# Ultimate-ASI-Loader
+﻿_IDAScripts/.env
+_IDAScripts/_generated/
+
+# Ultimate-ASI-Loader
 data/
 !data/**/*.ini
 
