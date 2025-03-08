@@ -303,7 +303,7 @@ namespace EGT::Menu {
 			if (!freeCam)
 				return;
 
-			EGSDK::vec3 camPos{};
+			vec3 camPos{};
 			freeCam->GetPosition(&camPos);
 			if (!camPos.isDefault())
 				playerCharacter->MoveCharacter(camPos);
@@ -456,21 +456,21 @@ namespace EGT::Menu {
 			if (ImGui::Checkbox("Enable Player Shadows", &enablePlayerShadows)) {
 				auto player = EGSDK::GamePH::PlayerDI_PH::Get();
 				if (player) {
-					int LOD = player->GetCurrentLOD();
-					float meshVisibilityRange = player->GetMeshVisibilityRange();
-					unsigned int numCollisionHullFaces = player->GetNumCollisionHullFaces();
-					unsigned int numCollisionHullPrimitives = player->GetNumCollisionHullPrimitives();
-					unsigned int numCollisionHullVertices = player->GetNumCollisionHullVertices();
-					unsigned int numSurfaceParams = player->GetNumSurfaceParams();
-					unsigned int numTraceHullFaces = player->GetNumTraceHullFaces();
-					unsigned int numTraceHullPrimitives = player->GetNumTraceHullPrimitives();
-					unsigned int numTraceHullVertices = player->GetNumTraceHullVertices();
+					//int LOD = player->GetCurrentLOD();
+					//float meshVisibilityRange = player->GetMeshVisibilityRange();
+					//unsigned int numCollisionHullFaces = player->GetNumCollisionHullFaces();
+					//unsigned int numCollisionHullPrimitives = player->GetNumCollisionHullPrimitives();
+					//unsigned int numCollisionHullVertices = player->GetNumCollisionHullVertices();
+					//unsigned int numSurfaceParams = player->GetNumSurfaceParams();
+					//unsigned int numTraceHullFaces = player->GetNumTraceHullFaces();
+					//unsigned int numTraceHullPrimitives = player->GetNumTraceHullPrimitives();
+					//unsigned int numTraceHullVertices = player->GetNumTraceHullVertices();
 
-					player->EnableRenderingShadows(enablePlayerShadows);
-					player->EnableElementPhysics(0, enablePlayerShadows, enablePlayerShadows);
-					player->EnableRenderingScene(enablePlayerShadows);
-					player->ShowElementBoxes(!enablePlayerShadows);
-					player->ShowExtents(!enablePlayerShadows);
+					//player->EnableRenderingShadows(enablePlayerShadows);
+					//player->EnableElementPhysics(0, enablePlayerShadows, enablePlayerShadows);
+					//player->EnableRenderingScene(enablePlayerShadows);
+					//player->ShowElementBoxes(!enablePlayerShadows);
+					//player->ShowExtents(!enablePlayerShadows);
 				}
 			}
 

@@ -17,11 +17,11 @@ namespace EGT::Engine {
 	namespace Hooks {
 #pragma region MoveCameraFromForwardUpPos
 		static bool switchedFreeCamByGamePause = false;
-		static EGSDK::vec3 freeCamPosBeforeGamePause{};
-		static EGSDK::vec3 freeCamTargetDirBeforeGamePause{};
-		static EGSDK::vec3 freeCamUpDirBeforeGamePause{};
+		static vec3 freeCamPosBeforeGamePause{};
+		static vec3 freeCamTargetDirBeforeGamePause{};
+		static vec3 freeCamUpDirBeforeGamePause{};
 
-		static EGSDK::Utils::Hook::MHook<void*, void(*)(void*, EGSDK::vec3*, EGSDK::vec3*, EGSDK::vec3*), void*, EGSDK::vec3*, EGSDK::vec3*, EGSDK::vec3*> MoveCameraFromForwardUpPosHook{ "MoveCameraFromForwardUpPos", &EGSDK::OffsetManager::Get_MoveCameraFromForwardUpPos, [](void* pCBaseCamera, EGSDK::vec3* targetDirection, EGSDK::vec3* upDirection, EGSDK::vec3* pos) -> void {
+		static EGSDK::Utils::Hook::MHook<void*, void(*)(void*, vec3*, vec3*, vec3*), void*, vec3*, vec3*, vec3*> MoveCameraFromForwardUpPosHook{ "MoveCameraFromForwardUpPos", &EGSDK::OffsetManager::Get_MoveCameraFromForwardUpPos, [](void* pCBaseCamera, vec3* targetDirection, vec3* upDirection, vec3* pos) -> void {
 			auto iLevel = EGSDK::GamePH::LevelDI::Get();
 			if (!iLevel || !iLevel->IsLoaded())
 				return MoveCameraFromForwardUpPosHook.ExecuteCallbacksWithOriginal(pCBaseCamera, targetDirection, upDirection, pos);
@@ -53,7 +53,7 @@ namespace EGT::Engine {
 			if ((!Menu::Camera::thirdPersonCamera.GetValue() && Menu::Camera::cameraOffset.isDefault()) || Menu::Camera::photoMode.GetValue() || Menu::Camera::freeCam.GetValue())
 				return MoveCameraFromForwardUpPosHook.ExecuteCallbacksWithOriginal(pCBaseCamera, targetDirection, upDirection, pos);
 
-			EGSDK::vec3 forwardVec, upVec, leftVec = {};
+			vec3 forwardVec, upVec, leftVec = {};
 			viewCam->GetForwardVector(&forwardVec);
 			viewCam->GetUpVector(&upVec);
 			viewCam->GetLeftVector(&leftVec);
@@ -62,7 +62,7 @@ namespace EGT::Engine {
 			const auto normUpVec = upVec.normalize();
 			const auto normLeftVec = leftVec.normalize();
 
-			EGSDK::vec3 newCamPos = *pos;
+			vec3 newCamPos = *pos;
 
 			if (!Menu::Camera::cameraOffset.isDefault() && !Menu::Camera::thirdPersonCamera.GetValue()) {
 				newCamPos -= normLeftVec * Menu::Camera::cameraOffset.X;
@@ -348,14 +348,14 @@ namespace EGT::Engine {
 				}
 				case EGSDK::Engine::VarType::Vec3:
 				{
-					auto value = customCVar->GetValue<EGSDK::vec3>();
+					auto value = customCVar->GetValue<vec3>();
 					if (value)
 						cVar->SetValue(*value);
 					break;
 				}
 				case EGSDK::Engine::VarType::Vec4:
 				{
-					auto value = customCVar->GetValue<EGSDK::vec4>();
+					auto value = customCVar->GetValue<vec4>();
 					if (value)
 						cVar->SetValue(*value);
 					break;

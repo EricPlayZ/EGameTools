@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from ExportClassToCPPH import Utils
+from ExportClassH import Utils
 
 @dataclass(frozen=True)
 class ClassName:
@@ -22,7 +22,7 @@ class ClassName:
         fullName = (fullName or "").strip()
         if not fullName:
             return
-        
+
         object.__setattr__(self, "fullName", fullName)
         types = Utils.ExtractTypesFromString(fullName)
         if len(types) > 1:
@@ -34,6 +34,7 @@ class ClassName:
                 fullName = types[2]
             else:
                 return
+
 
         parts = fullName.split("::")
         if len(parts) == 1:
@@ -214,8 +215,6 @@ class ParsedClassVar:
         object.__setattr__(self, "varType", None)
         object.__setattr__(self, "className", None)
         object.__setattr__(self, "varName", "")
-        
-        signature = signature.strip()
         
         # Extract access specifier.
         access = ""

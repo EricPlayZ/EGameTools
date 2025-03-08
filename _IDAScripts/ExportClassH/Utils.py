@@ -10,9 +10,6 @@ IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)
 CLASS_TYPES = ("class", "struct", "enum", "union")
 FUNC_QUALIFIERS = ("virtual", "static")
 
-# def PrintMsg(*args):
-#     print(f"[{Config.INTERNAL_SCRIPT_NAME}] {args}")
-
 def FixTypeSpacing(type: str) -> str:
     """Fix spacing for pointers/references, commas, and angle brackets."""
     type = re.sub(r'\s+([*&])', r'\1', type)             # Remove space before '*' or '&'
@@ -33,11 +30,36 @@ def ReplaceIDATypes(type: str) -> str:
     return type.replace("unsigned __int64", "uint64_t").replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
 
 def ExtractTypesFromString(types: str) -> list[str]:
-    """Extract potential type names from a string."""
-    # Remove pointer/reference symbols and qualifiers
-    cleanedTypes: str = types.replace("*", " ").replace("&", " ")
-    cleanedTypesList: list[str] = re.findall(r"[A-Za-z_][\w:]*", cleanedTypes)
-    return cleanedTypesList
+    """Extract potential type names from a string, properly handling template types."""
+    if not types:
+        return []
+    
+    types = FixTypeSpacing(types)
+    result = []
+    currentWord = ""
+    templateDepth = 0
+    
+    for char in types:
+        if char == '<':
+            templateDepth += 1
+            currentWord += char
+        elif char == '>':
+            templateDepth -= 1
+            currentWord += char
+        elif char.isspace() and templateDepth == 0:
+            # Only split on spaces outside of templates
+            if currentWord:
+                result.append(currentWord)
+                currentWord = ""
+        else:
+            currentWord += char
+    
+    # Add the last word if there is one
+    if currentWord:
+        result.append(currentWord)
+    
+    # Filter out empty strings
+    return [word for word in result if word]
 
 def FindLastSpaceOutsideTemplates(s: str) -> int:
     """Return the index of the last space in s that is not inside '<' and '>'."""

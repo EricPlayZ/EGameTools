@@ -18,7 +18,7 @@ namespace EGT::Menu {
 		static constexpr float baseSafezoneFOVReduction = -10.0f;
 		static constexpr float baseSprintHeadCorrectionFactor = 0.55f;
 
-		EGSDK::vec3 cameraOffset{};
+		vec3 cameraOffset{};
 		float firstPersonFOV = baseFOV;
 		float originalFirstPersonFOVBeforeZoomIn = firstPersonFOV;
 		ImGui::KeyBindOption firstPersonZoomIn{ false, 'Q', false };

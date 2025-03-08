@@ -3,7 +3,6 @@
 #include <EGSDK\ClassHelpers.h>
 #include <EGSDK\vec2.h>
 #include <EGSDK\Engine\IControlObject.h>
-#include <EGSDK\Engine\IModelObject.h>
 #include <EGSDK\GamePH\InventoryItem.h>
 #include <EGSDK\GamePH\InventoryContainerDI.h>
 
@@ -12,7 +11,7 @@ namespace EGSDK::Engine {
 }
 
 namespace EGSDK::GamePH {
-	class EGameSDK_API PlayerDI_PH : public Engine::IControlObject, public IModelObject {
+	class EGameSDK_API PlayerDI_PH : public Engine::IControlObject {
 	public:
 		union {
 			DynamicField(PlayerDI_PH, Engine::CoPhysicsProperty*, pCoPhysicsProperty);

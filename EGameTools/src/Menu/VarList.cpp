@@ -69,10 +69,10 @@ namespace EGT {
                         var->RestoreVarToDefault<int>(restoreVarsToSavedVarsEnabled);
                         break;
                     case EGSDK::Engine::VarType::Vec3:
-                        var->RestoreVarToDefault<EGSDK::vec3>(restoreVarsToSavedVarsEnabled);
+                        var->RestoreVarToDefault<vec3>(restoreVarsToSavedVarsEnabled);
                         break;
                     case EGSDK::Engine::VarType::Vec4:
-                        var->RestoreVarToDefault<EGSDK::vec4>(restoreVarsToSavedVarsEnabled);
+                        var->RestoreVarToDefault<vec4>(restoreVarsToSavedVarsEnabled);
                         break;
                     case EGSDK::Engine::VarType::Bool:
                         var->RestoreVarToDefault<bool>(restoreVarsToSavedVarsEnabled);
@@ -104,10 +104,10 @@ namespace EGT {
                     var->SaveVarAsDefault<int>();
                     break;
                 case EGSDK::Engine::VarType::Vec3:
-                    var->SaveVarAsDefault<EGSDK::vec3>();
+                    var->SaveVarAsDefault<vec3>();
                     break;
                 case EGSDK::Engine::VarType::Vec4:
-                    var->SaveVarAsDefault<EGSDK::vec4>();
+                    var->SaveVarAsDefault<vec4>();
                     break;
                 case EGSDK::Engine::VarType::Bool:
                     var->SaveVarAsDefault<bool>();
@@ -196,7 +196,7 @@ namespace EGT {
                 }
                 case EGSDK::Engine::VarType::Vec3:
                 {
-                    auto value = var->GetValue<EGSDK::vec3>();
+                    auto value = var->GetValue<vec3>();
                     if (!value) {
                         ImGui::EndDisabled();
                         return;
@@ -208,7 +208,7 @@ namespace EGT {
                 }
                 case EGSDK::Engine::VarType::Vec4:
                 {
-                    auto value = var->GetValue<EGSDK::vec4>();
+                    auto value = var->GetValue<vec4>();
                     if (!value) {
                         ImGui::EndDisabled();
                         return;

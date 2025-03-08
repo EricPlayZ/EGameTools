@@ -1,6 +1,6 @@
 import os
 
-INTERNAL_SCRIPT_NAME = "ExportClassToCPPH"
+INTERNAL_SCRIPT_NAME = "ExportClassH"
 
 PROJECT_INCLUDES_PATH = r"D:\PROJECTS\Visual Studio\EGameSDK\EGameSDK\include"
 OUTPUT_PATH = r"D:\PROJECTS\Visual Studio\EGameSDK\_IDAScripts"
@@ -15,3 +15,4 @@ DEFAULT_CONFIG = {
     "OUTPUT_PATH": OUTPUT_PATH,
     "LAST_CLICKED_RADIO": LAST_CLICKED_RADIO,
 }
+CONFIG_FILE = os.path.join(os.path.join(os.path.dirname(__file__), os.pardir), "ExportClassH.json")

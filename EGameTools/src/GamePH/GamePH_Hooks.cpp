@@ -196,7 +196,7 @@ namespace EGT::GamePH {
 #pragma endregion
 
 #pragma region SetNewWaypointLocation
-		static EGSDK::Utils::Hook::MHook<void*, uint64_t(*)(uint64_t, int, EGSDK::vec3*), uint64_t, int, EGSDK::vec3*> SetNewWaypointLocationHook{ "SetNewWaypointLocation", &EGSDK::OffsetManager::Get_SetNewWaypointLocation, [](uint64_t pLogicalPlayer, int a2, EGSDK::vec3* newWaypointLoc) -> uint64_t {
+		static EGSDK::Utils::Hook::MHook<void*, uint64_t(*)(uint64_t, int, vec3*), uint64_t, int, vec3*> SetNewWaypointLocationHook{ "SetNewWaypointLocation", &EGSDK::OffsetManager::Get_SetNewWaypointLocation, [](uint64_t pLogicalPlayer, int a2, vec3* newWaypointLoc) -> uint64_t {
 			uint64_t result = SetNewWaypointLocationHook.ExecuteCallbacksWithOriginal(pLogicalPlayer, a2, newWaypointLoc);
 			Menu::Teleport::waypointCoords = *newWaypointLoc;
 			if (EGSDK::OffsetManager::Get_SetNewWaypointLocationWaypointIsSetBoolInstr()) {

@@ -19,10 +19,10 @@ namespace EGT::Menu {
 		static int selectedTPLocation = -1;
 		static char newLocationName[125]{};
 
-		EGSDK::vec3 waypointCoords{};
+		vec3 waypointCoords{};
 		bool* waypointIsSet = nullptr;
 		bool justTeleportedToWaypoint = false;
-		static EGSDK::vec3 teleportCoords{};
+		static vec3 teleportCoords{};
 
 		ImGui::KeyBindOption teleportToSelectedLocation{ false, VK_F9 };
 		ImGui::KeyBindOption teleportToCoords{ false, VK_NONE };
@@ -95,7 +95,7 @@ namespace EGT::Menu {
 
 			return ss.str();
 		}
-		static std::string GetFormattedPosition(const EGSDK::vec3* position) {
+		static std::string GetFormattedPosition(const vec3* position) {
 			if (!position || position->isDefault())
 				return "X: 0.00, Y: 0.00, Z: 0.00";
 			static std::string formattedStr{};
@@ -129,7 +129,7 @@ namespace EGT::Menu {
 					teleportCoords = playerCharacter->playerPos;
 			}
 		}
-		static bool TeleportPlayerTo(const EGSDK::vec3& pos, const EGSDK::vec2& orientation = {}) {
+		static bool TeleportPlayerTo(const vec3& pos, const vec2& orientation = {}) {
 			if (isTeleportationDisabled() || pos.isDefault()) {
 				if (pos.isDefault())
 					SPDLOG_ERROR("Teleport position was default, couldn't teleport player");
@@ -218,8 +218,8 @@ namespace EGT::Menu {
 				}
 			}
 
-			EGSDK::vec3 playerPos{};
-			EGSDK::vec2 playerOrientation{};
+			vec3 playerPos{};
+			vec2 playerOrientation{};
 
 			if (Camera::freeCam.GetValue()) {
 				EGSDK::GamePH::FreeCamera* freeCam = EGSDK::GamePH::FreeCamera::Get();
@@ -231,9 +231,9 @@ namespace EGT::Menu {
 					return false;
 				}
 
-				EGSDK::vec3 camPos{};
+				vec3 camPos{};
 				freeCam->GetPosition(&camPos);
-				EGSDK::vec3 camForwardVec{};
+				vec3 camForwardVec{};
 				freeCam->GetForwardVector(&camForwardVec);
 				if (camPos.isDefault() || camForwardVec.isDefault()) {
 					ImGui::CloseCurrentPopup();
@@ -376,7 +376,7 @@ namespace EGT::Menu {
 			auto playerCharacter = EGSDK::Engine::CBulletPhysicsCharacter::Get();
 			auto freeCam = EGSDK::GamePH::FreeCamera::Get();
 
-			EGSDK::vec3 camPos{};
+			vec3 camPos{};
 			ImGui::Text("Player Position: %s", GetFormattedPosition(playerCharacter ? &*playerCharacter->playerPos.getPointer() : nullptr).data());
 			ImGui::Text("Free Camera Position: %s", GetFormattedPosition(freeCam && Camera::freeCam.GetValue() ? freeCam->GetPosition(&camPos) : nullptr).data());
 			ImGui::Text("Waypoint Position: %s", GetFormattedPosition(waypointIsSet && *waypointIsSet && !waypointCoords.isDefault() ? &waypointCoords : nullptr).data());
