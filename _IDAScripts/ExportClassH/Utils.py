@@ -13,16 +13,17 @@ FUNC_QUALIFIERS = ("virtual", "static")
 def FixTypeSpacing(type: str) -> str:
     """Fix spacing for pointers/references, commas, and angle brackets."""
     type = re.sub(r'\s+([*&])', r'\1', type)             # Remove space before '*' or '&'
-    type = re.sub(r'([*&])(?!\s)', r'\1 ', type)         # Ensure '*' or '&' is followed by one space if it's not already.
+    type = re.sub(r'([*&])(?![\s*&])', r'\1 ', type)       # Ensure '*' or '&' is followed by one space if it's not already.
     type = re.sub(r'\s*,\s*', ', ', type)                # Ensure comma followed by one space
     type = re.sub(r'<\s+', '<', type)                    # Remove space after '<'
     type = re.sub(r'\s+>', '>', type)                    # Remove space before '>'
+    type = re.sub(r'\s+([\),])', r'\1', type)
     type = re.sub(r'\s+', ' ', type)                     # Collapse multiple spaces
     return type.strip()
 
 def CleanType(type: str) -> str:
     """Remove unwanted tokens from a type string, then fix spacing."""
-    type = re.sub(r'\b(__cdecl|__fastcall|__ptr64|class|struct|enum|union)\b', '', type)
+    type = re.sub(r'\b(__cdecl|__fastcall|__ptr64)\b', '', type)
     return FixTypeSpacing(type)
 
 def ReplaceIDATypes(type: str) -> str:
@@ -60,6 +61,30 @@ def ExtractTypesFromString(types: str) -> list[str]:
     
     # Filter out empty strings
     return [word for word in result if word]
+
+def SplitByCommaOutsideTemplates(params: str) -> list[str]:
+    parts = []
+    current = []
+    depth = 0
+
+    for char in params:
+        if char == '<':
+            depth += 1
+        elif char == '>':
+            # It's good to check for consistency:
+            if depth > 0:
+                depth -= 1
+        # If we see a comma at top level, split here.
+        if char == ',' and depth == 0:
+            parts.append(''.join(current).strip())
+            current = []
+        else:
+            current.append(char)
+
+    # Append any remaining characters as the last parameter.
+    if current:
+        parts.append(''.join(current).strip())
+    return parts
 
 def FindLastSpaceOutsideTemplates(s: str) -> int:
     """Return the index of the last space in s that is not inside '<' and '>'."""

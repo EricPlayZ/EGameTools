@@ -16,8 +16,7 @@ allClassVarsAreParsed = False # Flag to indicate if all class vars have been par
 allFuncsAreParsed = False # Flag to indicate if all functions have been parsed
 
 def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) -> str:
-    paramsList: list[str] = [param.strip() for param in parsedFunc.params.split(',')
-                   if param.strip()]
+    paramsList: list[str] = [param.fullName for param in parsedFunc.params if param.fullName]
     if len(paramsList) == 1 and paramsList[0] == "void":
         return "void"
     # Skip the first parameter (typically the "this" pointer)
@@ -30,14 +29,39 @@ def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) 
     return newParams
 
 def ExtractParamNames(params: str) -> str:
-    paramsList: list[str] = [param.strip() for param in params.split(',')
-                   if param.strip()]
+    paramsList: list[str] = [param.strip() for param in params.split(',') if param.strip()]
     if len(paramsList) == 1 and paramsList[0] == "void":
         return ""
     
     paramNames: list[str] = [param.split(" ")[-1].strip() for param in paramsList]
     newParams: str = ", ".join(paramNames)
     return newParams
+
+def GetClassTypeFromParsedSigs(targetClass: ClassName, allParsedElements: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]) -> str:
+    """Determine the class type (class, struct, etc.) from parsed signatures."""
+    if targetClass.type:
+        return ""
+    parsedClassVars, parsedVtFuncs, _ = allParsedElements
+    # Check class vars first
+    for parsedClassVar in parsedClassVars:
+        if (parsedClassVar.varType and 
+            parsedClassVar.varType.namespacedName == targetClass.namespacedName and 
+            parsedClassVar.varType.type):
+            return parsedClassVar.varType.type
+    # Check vtable functions next
+    for parsedVTFunc in parsedVtFuncs:
+        if (parsedVTFunc.returnType and 
+            parsedVTFunc.returnType.namespacedName == targetClass.namespacedName and 
+            parsedVTFunc.returnType.type):
+            return parsedVTFunc.returnType.type
+    # Check all parsed functions last
+    for parsedFunc in allParsedFuncs:
+        if (parsedFunc.returnType and 
+            parsedFunc.returnType.namespacedName == targetClass.namespacedName and 
+            parsedFunc.returnType.type):
+            return parsedFunc.returnType.type
+    
+    return ""
 
 def ComputeUnparsedExportedSigs(demangledExportedSigs: list[str], parsedSigs: list[str]) -> list[str]:
     # Join all parsed signatures into one large string.
@@ -225,5 +249,12 @@ def GetAllParsedClassVarsAndFuncs(targetClass: ClassName) -> tuple[list[ParsedCl
         parsedFunc for parsedFunc in parsedClassFuncs
         if parsedFunc.fullFuncSig not in vTableFuncsSet
     ]
+
+    allParsedElements = (parsedClassVars, parsedVTableClassFuncs, finalParsedClassFuncs)
+
+    # Get and set class type if available
+    classType: str = GetClassTypeFromParsedSigs(targetClass, allParsedElements)
+    if classType:
+        object.__setattr__(targetClass, "type", classType)
     
-    return (parsedClassVars, parsedVTableClassFuncs, finalParsedClassFuncs)
+    return allParsedElements

@@ -6,7 +6,7 @@ from ExportClassH import Utils
 @dataclass(frozen=True)
 class ClassName:
     """Split a potentially namespaced class name into namespace parts and class name."""
-    namespaces: tuple[str] = field(default_factory=tuple)
+    namespaces: tuple[str] = field(default_factory=tuple[str])
     name: str = ""
     namespacedName: str = ""
     fullName: str = ""
@@ -35,7 +35,6 @@ class ClassName:
             else:
                 return
 
-
         parts = fullName.split("::")
         if len(parts) == 1:
             object.__setattr__(self, "name", parts[0])
@@ -57,7 +56,7 @@ class ParsedFunction:
     returnType: Optional[ClassName] = None
     className: Optional[ClassName] = None
     funcName: str = ""
-    params: str = ""
+    params: list[ClassName] = field(default_factory=list[ClassName])
     const: bool = False
 
     def __init__(self, signature: str, onlyVirtualFuncs: bool):
@@ -70,7 +69,7 @@ class ParsedFunction:
         object.__setattr__(self, "returnType", None)
         object.__setattr__(self, "className", None)
         object.__setattr__(self, "funcName", "")
-        object.__setattr__(self, "params", "")
+        object.__setattr__(self, "params", [])
         object.__setattr__(self, "const", False)
 
         signature = signature.strip()
@@ -89,13 +88,11 @@ class ParsedFunction:
             signature = signature.removeprefix("IDA_GEN_PARSED").strip()
 
         access: str = ""
-        if signature.startswith("public:"):
-            access = "public"
-        elif signature.startswith("protected:"):
-            access = "protected"
-        elif signature.startswith("private:"):
-            access = "private"
-        signature = signature.removeprefix(f"{access}:").strip()
+        for keyword in ("public:", "protected:", "private:"):
+            if signature.startswith(keyword):
+                access = keyword[:-1]  # remove the colon
+                signature = signature[len(keyword):].strip()
+                break
 
         # Find parameters and const qualifier
         paramsOpenParenIndex: int = signature.find('(')
@@ -103,6 +100,8 @@ class ParsedFunction:
         
         if paramsOpenParenIndex != -1 and paramsCloseParenIndex != -1:
             params: str = signature[paramsOpenParenIndex + 1:paramsCloseParenIndex]
+            paramsStrList: list[str] = Utils.SplitByCommaOutsideTemplates(params)
+            paramsList: list[ClassName] = [ClassName(paramStr) for paramStr in paramsStrList if paramStr]
 
             remainingInputBeforeParamsParen: str = signature[:paramsOpenParenIndex].strip()
             remainingInputAfterParamsParen: str = signature[paramsCloseParenIndex + 1:].strip()
@@ -189,7 +188,7 @@ class ParsedFunction:
             object.__setattr__(self, "returnType", ClassName(returnType) if returnType else None)
             object.__setattr__(self, "className", ClassName(className) if className else None)
             object.__setattr__(self, "funcName", funcName)
-            object.__setattr__(self, "params", params)
+            object.__setattr__(self, "params", paramsList)
             object.__setattr__(self, "const", bool(const))
             return
 
@@ -200,7 +199,7 @@ class ParsedFunction:
             object.__setattr__(self, "access", access if access else "public")
             object.__setattr__(self, "returnType", ClassName("virtual void"))
             object.__setattr__(self, "funcName", f"_StrippedVFunc{virtualFuncPlaceholderCounter}")
-    
+
 @dataclass(frozen=True)
 class ParsedClassVar:
     """Parse a demangled global class var signature and return an instance."""
@@ -218,10 +217,10 @@ class ParsedClassVar:
         
         # Extract access specifier.
         access = ""
-        for kw in ("public:", "protected:", "private:"):
-            if signature.startswith(kw):
-                access = kw[:-1]  # remove the colon
-                signature = signature[len(kw):].strip()
+        for keyword in ("public:", "protected:", "private:"):
+            if signature.startswith(keyword):
+                access = keyword[:-1]  # remove the colon
+                signature = signature[len(keyword):].strip()
                 break
 
         # For class variables, we expect no parameters (i.e. no parentheses).
