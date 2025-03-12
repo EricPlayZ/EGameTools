@@ -7,8 +7,6 @@ import idautils
 import idc
 
 IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)
-CLASS_TYPES = ("class", "struct", "enum", "union")
-FUNC_QUALIFIERS = ("virtual", "static")
 
 def FixTypeSpacing(type: str) -> str:
     """Fix spacing for pointers/references, commas, and angle brackets."""
@@ -30,13 +28,13 @@ def ReplaceIDATypes(type: str) -> str:
     """Replace IDA types with normal ones"""
     return type.replace("unsigned __int64", "uint64_t").replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
 
-def ExtractTypesFromString(types: str) -> list[str]:
+def ExtractTypeTokensFromString(types: str) -> list[str]:
     """Extract potential type names from a string, properly handling template types."""
     if not types:
         return []
     
     types = FixTypeSpacing(types)
-    result = []
+    result: list[str] = []
     currentWord = ""
     templateDepth = 0
     
@@ -60,7 +58,7 @@ def ExtractTypesFromString(types: str) -> list[str]:
         result.append(currentWord)
     
     # Filter out empty strings
-    return [word for word in result if word]
+    return [word.strip() for word in result if word]
 
 def SplitByCommaOutsideTemplates(params: str) -> list[str]:
     parts = []

@@ -3,49 +3,14 @@ import os
 from ExportClassH import Utils, Config, ClassParser
 from ExportClassH.ClassDefs import ClassName, ParsedFunction, ParsedClassVar
 
-def IsClassGenerable(className: ClassName) -> bool:
-    """
-    Check if a class has any parsable elements (class vars, vtable functions, regular functions).
-    Returns True if the class is generable, False if it should be treated as a namespace.
-    """
-    parsedVars = ClassParser.GetParsedClassVars(className)
-    parsedVtFuncs = ClassParser.GetParsedVTableFuncs(className) if className else []
-    parsedFuncs = ClassParser.GetParsedFuncs(className)
-    
-    return len(parsedVars) > 0 or len(parsedVtFuncs) > 0 or len(parsedFuncs) > 0
-
-def IdentifyClassHierarchy(targetClass: ClassName) -> list[tuple[ClassName, bool]]:
-    """
-    Given a class name with namespace/nested parts, identify which parts are classes
-    and which are namespaces.
-    
-    Returns a list of tuples (ClassName, isClass) for each part of the hierarchy.
-    """
-    if not targetClass.namespaces:
-        return [(targetClass, IsClassGenerable(targetClass))]
-    
-    hierarchy = []
-    
-    # Check each part of the namespace to see if it's a class
-    currentNamespace = []
-    for part in targetClass.namespaces:
-        currentNamespace.append(part)
-        partClass = ClassName("::".join(currentNamespace))
-        
-        isClass = IsClassGenerable(partClass)
-        hierarchy.append((partClass, isClass))
-    
-    # Add the target class at the end
-    hierarchy.append((targetClass, IsClassGenerable(targetClass)))
-    
-    return hierarchy
+processedClasses: set[str] = set()
 
 currentAccess: str = "public"
-def GenerateClassVarCode(classVar: ParsedClassVar) -> str:
+def GenerateClassVarCode(classVar: ParsedClassVar) -> list[str]:
     """Generate code for a single class variable."""
     global currentAccess
 
-    access: str = f"{classVar.access}:\n\t" if classVar.access else "\t"
+    access: str = f"{classVar.access}:" if classVar.access else ""
     if currentAccess == classVar.access:
         access = "\t"
     else:
@@ -61,15 +26,21 @@ def GenerateClassVarCode(classVar: ParsedClassVar) -> str:
         varType: str = ""
     
     classVarSig: str = f"{varType}{classVar.varName}"
-    return f"{access}{classVarSig};"
+    
+    classVarLines: list[str] = []
+    if access:
+        classVarLines.append(access)
+    if classVarSig:
+        classVarLines.append(f"\t{classVarSig};")
+    return classVarLines
 
-def GenerateClassFuncCode(func: ParsedFunction, vtFuncIndex: int = 0) -> str:
+def GenerateClassFuncCode(func: ParsedFunction, vtFuncIndex: int = 0) -> list[str]:
     """Generate code for a single class method."""
     global currentAccess
 
-    access: str = f"{func.access}:\n\t" if func.access else "\t"
+    access: str = f"{func.access}:" if func.access else ""
     if currentAccess == func.access:
-        access = "\t"
+        access = ""
     else:
         currentAccess = func.access
 
@@ -106,7 +77,13 @@ def GenerateClassFuncCode(func: ParsedFunction, vtFuncIndex: int = 0) -> str:
         targetParams = ", " + targetParams if targetParams else ""
 
     funcSig: str = f"{returnType}{func.funcName}({params}){const}{stripped_vfunc}" if func.type != "basic_vfunc" else f"VIRTUAL_CALL({vtFuncIndex}, {returnType}, {func.funcName}, ({params}){targetParams})"
-    return f"{access}{funcSig};"
+
+    classFuncLines: list[str] = []
+    if access:
+        classFuncLines.append(access)
+    if funcSig:
+        classFuncLines.append(f"\t{funcSig};")
+    return classFuncLines
 
 def GenerateClassContent(allParsedElements: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]) -> list[str]:
     """
@@ -129,7 +106,7 @@ def GenerateClassContent(allParsedElements: tuple[list[ParsedClassVar], list[Par
     for classVar in parsedVars:
         if not firstVarOrFuncAccess:
             firstVarOrFuncAccess = classVar.access
-        contentLines.append(GenerateClassVarCode(classVar))
+        contentLines.extend(GenerateClassVarCode(classVar))
     
     # Add newline between sections if both exist
     if parsedVars and (parsedVtFuncs or parsedFuncs):
@@ -139,7 +116,7 @@ def GenerateClassContent(allParsedElements: tuple[list[ParsedClassVar], list[Par
     for index, vTableFunc in enumerate(parsedVtFuncs):
         if not firstVarOrFuncAccess:
             firstVarOrFuncAccess = vTableFunc.access
-        contentLines.append(GenerateClassFuncCode(vTableFunc, index))
+        contentLines.extend(GenerateClassFuncCode(vTableFunc, index))
     
     # Add newline between sections if both exist
     if parsedVtFuncs and parsedFuncs:
@@ -149,7 +126,7 @@ def GenerateClassContent(allParsedElements: tuple[list[ParsedClassVar], list[Par
     for func in parsedFuncs:
         if not firstVarOrFuncAccess:
             firstVarOrFuncAccess = func.access
-        contentLines.append(GenerateClassFuncCode(func))
+        contentLines.extend(GenerateClassFuncCode(func))
         
     contentLines.append("#pragma endregion")
     
@@ -159,36 +136,37 @@ def GenerateClassContent(allParsedElements: tuple[list[ParsedClassVar], list[Par
     
     return contentLines
 
-def GenerateClassDefinition(targetClass: ClassName, allParsedElements: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]) -> list[str]:
+def GenerateClassDefinition(targetClass: ClassName, forwardDeclare: bool = False) -> list[str]:
     """Generate a class definition from a list of methods."""
-    parsedVars, parsedVtFuncs, parsedFuncs = allParsedElements
-    if not parsedVars and not parsedVtFuncs and not parsedFuncs:
-        return []
-    
-    classContent: list[str] = GenerateClassContent(allParsedElements)
-    
-    classLines: list[str] = []
-    if classContent:
-        classLines.extend(classContent)
+    classDefLines: list[str] = [f"{targetClass.type} {targetClass.name}{' {' if not forwardDeclare else ';'}"]
+    if not forwardDeclare:
+        if targetClass.type == "class":
+            classDefLines.append("public:")
+        classDefLines.append("};")
+    return classDefLines
 
-    classLines.insert(0, f"{targetClass.type if targetClass.type else 'class'} {targetClass.name}")
-    if classContent:
-        classLines[0] = f"{classLines[0]} {{"
-        if targetClass.type == "struct":
-            classLines[1] = "public:"
-        classLines.append("};")
-    else:
-        classLines[0] = f"{classLines[0]};"
-
-    return classLines
-
-def GenerateHeaderCode(targetClass: ClassName, allParsedElements: tuple[list[ParsedClassVar], list[ParsedFunction], list[ParsedFunction]]) -> list[str]:
+def GenerateHeaderCode(targetClass: ClassName) -> list[str]:
     """Generate header code for a standard class (not nested)."""
-    classDefinition = GenerateClassDefinition(targetClass, allParsedElements)
-    if not classDefinition:
-        return []
+    # Reset processed classes for this generation
+    global processedClasses, forwardDeclarations
+    processedClasses = set()
+    forwardDeclarations = set()
     
-    # Wrap in namespace blocks if needed
+    # Mark target class as processed to avoid self-dependency issues
+    processedClasses.add(targetClass.namespacedClassedName)
+    
+    # Get all parsed elements for the target class
+    allParsedElements = ClassParser.GetAllParsedClassVarsAndFuncs(targetClass)
+    
+    # Generate the target class definition
+    classContent = GenerateClassContent(allParsedElements)
+    classDefinition = GenerateClassDefinition(targetClass)
+
+    fullClassDefinition = classDefinition
+    if (classContent):
+        fullClassDefinition = fullClassDefinition[:len(classDefinition) - 1] + classContent + fullClassDefinition[len(classDefinition) - 1:]
+
+    # Wrap target class in namespace blocks if needed
     if targetClass.namespaces:
         namespaceCode = []
         indentLevel = ""
@@ -197,19 +175,30 @@ def GenerateHeaderCode(targetClass: ClassName, allParsedElements: tuple[list[Par
         for namespace in targetClass.namespaces:
             namespaceCode.append(f"{indentLevel}namespace {namespace} {{")
             indentLevel += "\t"
+        
+        for cls in targetClass.classes:
+            clsType: str = ClassParser.GetClassTypeFromParsedSigs(ClassName(targetClass.namespacedClassedName), allParsedElements)
+            namespaceCode.append(f"{indentLevel}{clsType if clsType else 'class'} {cls} {{")
+            indentLevel += "\t"
 
-        indentedClassDefinition = [f"{indentLevel}{line}" for line in classDefinition]
+        indentedClassDefinition = [f"{indentLevel if '#pragma' not in line else ''}{line}" for line in fullClassDefinition]
         namespaceCode.extend(indentedClassDefinition)
+
+        for cls in reversed(targetClass.classes):
+            indentLevel = indentLevel[:-1]  # Remove one level of indentation
+            namespaceCode.append(f"{indentLevel}}}")
 
         for namespace in reversed(targetClass.namespaces):
             indentLevel = indentLevel[:-1]  # Remove one level of indentation
             namespaceCode.append(f"{indentLevel}}}")
         
-        classDefinition = namespaceCode
+        fullClassDefinition = namespaceCode
     
     # Combine all parts of the header
     headerParts = ["#pragma once", r"#include <EGSDK\Imports.h>", ""]
-    headerParts.extend(classDefinition)
+    
+    # Add the target class definition
+    headerParts.extend(fullClassDefinition)
     
     return headerParts
 
@@ -249,13 +238,20 @@ def ExportClassHeader(targetClass: ClassName):
     Generate and save a C++ header file for the target class.
     Handles multiple levels of nested classes and also generates dependencies.
     """  
-    # Get the parsed elements for the target class
-    allParsedElements = ClassParser.GetAllParsedClassVarsAndFuncs(targetClass)
+    global processedClasses
+
+    # Skip if we've already processed this class
+    if targetClass.namespacedClassedName in processedClasses:
+        print(f"Already processed class {targetClass.namespacedClassedName}, skipping.")
+        return
     
+    # Add to processed set to prevent infinite recursion
+    processedClasses.add(targetClass.namespacedClassedName)
+
     # Generate the header code
-    headerCodeLines = GenerateHeaderCode(targetClass, allParsedElements)
+    headerCodeLines = GenerateHeaderCode(targetClass)
     if not headerCodeLines:
-        print(f"No functions were found for class {targetClass.namespacedName}, therefore will not generate.")
+        print(f"No functions were found for class {targetClass.namespacedClassedName}, therefore will not generate.")
         return
     headerCode: str = "\n".join(headerCodeLines)
     

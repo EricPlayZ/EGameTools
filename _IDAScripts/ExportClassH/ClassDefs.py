@@ -1,48 +1,86 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from ExportClassH import Utils
+from ExportClassH import Utils, HeaderGen
 
 @dataclass(frozen=True)
 class ClassName:
     """Split a potentially namespaced class name into namespace parts and class name."""
-    namespaces: tuple[str] = field(default_factory=tuple[str])
+    namespaces: tuple[str] = field(default_factory=tuple)
+    classes: tuple[str] = field(default_factory=tuple)
     name: str = ""
-    namespacedName: str = ""
+    namespacedClassedName: str = ""
+    templateParams: tuple["ClassName"] = field(default_factory=tuple)
+    templatedName: str = ""
+    templatedNamespacedClassedName: str = ""
     fullName: str = ""
     type: str = ""
 
     def __init__(self, fullName: str):
         object.__setattr__(self, "namespaces", ())
+        object.__setattr__(self, "classes", ())
         object.__setattr__(self, "name", "")
-        object.__setattr__(self, "namespacedName", "")
+        object.__setattr__(self, "namespacedClassedName", "")
+        object.__setattr__(self, "templateParams", ())
+        object.__setattr__(self, "templatedName", "")
+        object.__setattr__(self, "templatedNamespacedClassedName", "")
         object.__setattr__(self, "fullName", "")
         object.__setattr__(self, "type", "")
         
-        fullName = (fullName or "").strip()
+        fullName = fullName.strip()
         if not fullName:
             return
 
         object.__setattr__(self, "fullName", fullName)
-        types = Utils.ExtractTypesFromString(fullName)
+        types = Utils.ExtractTypeTokensFromString(fullName)
         if len(types) > 1:
-            if (types[0] in Utils.CLASS_TYPES):
-                object.__setattr__(self, "type", types[0])
-                fullName = types[1]
-            elif (len(types) > 2 and types[0] in Utils.FUNC_QUALIFIERS and types[1] in Utils.CLASS_TYPES):
-                object.__setattr__(self, "type", types[1])
-                fullName = types[2]
+            if (types[0].strip() in Utils.CLASS_TYPES):
+                object.__setattr__(self, "type", types[0].strip())
+                fullName = types[1].strip()
+            elif (len(types) > 2 and types[0].strip() in Utils.FUNC_QUALIFIERS and types[1].strip() in Utils.CLASS_TYPES):
+                object.__setattr__(self, "type", types[1].strip())
+                fullName = types[2].strip()
             else:
                 return
+        
+        lastClassSeparatorIndex: int = Utils.FindLastClassSeparatorOutsideTemplates(fullName)
+        namespacesStr: str = ""
+        className: str = fullName
+        templatedClassName: str = fullName
+        if lastClassSeparatorIndex != -1:
+            namespacesStr = fullName[:lastClassSeparatorIndex].strip()
+            templatedClassName = fullName[lastClassSeparatorIndex+2:].strip()
+            className = templatedClassName
+        namespaces: list[str] = list(filter(None, namespacesStr.split("::")))
+        classes: list[str] = []
 
-        parts = fullName.split("::")
-        if len(parts) == 1:
-            object.__setattr__(self, "name", parts[0])
-            object.__setattr__(self, "namespacedName", self.name)
-        else:
-            object.__setattr__(self, "namespaces", tuple(parts[:-1]))
-            object.__setattr__(self, "name", parts[-1])
-            object.__setattr__(self, "namespacedName", f"{'::'.join(self.namespaces)}::{self.name}")
+        parsedNamespaces: list[str] = []
+        for namespace in namespaces:
+            fullNamespace: str = "::".join(filter(None, ["::".join(parsedNamespaces), namespace]))
+            if HeaderGen.IsClassGenerable(ClassName(fullNamespace)):
+                classes = namespaces
+                break
+            parsedNamespaces.append(namespace)
+            namespaces.pop(0)
+        namespacesAndClasses: str = "::".join(filter(None, ["::".join(namespaces).strip(), "::".join(classes).strip()]))
+        
+        templateParamsOpenIndex: int = templatedClassName.find('<')
+        templateParamsCloseIndex: int = templatedClassName.rfind('>')
+        
+        templateParamsList: list[ClassName] = []
+        if templateParamsOpenIndex != -1 and templateParamsCloseIndex != -1:
+            templateParams: str = templatedClassName[templateParamsOpenIndex + 1:templateParamsCloseIndex].strip()
+            templateParamsStrList: list[str] = Utils.SplitByCommaOutsideTemplates(templateParams)
+            templateParamsList = [ClassName(templateParamStr) for templateParamStr in templateParamsStrList if templateParamStr]
+            className = templatedClassName[:templateParamsOpenIndex].strip()
+        
+        object.__setattr__(self, "namespaces", tuple(namespaces))
+        object.__setattr__(self, "classes", tuple(classes))
+        object.__setattr__(self, "name", className)
+        object.__setattr__(self, "namespacedClassedName", "::".join(filter(None, [namespacesAndClasses, className])).strip())
+        object.__setattr__(self, "templateParams", tuple(templateParamsList))
+        object.__setattr__(self, "templatedName", templatedClassName)
+        object.__setattr__(self, "templatedNamespacedClassedName", fullName)
 
 virtualFuncPlaceholderCounter: int = 0 # Counter for placeholder virtual functions
 virtualFuncDuplicateCounter: dict[str, int] = {} # Counter for duplicate virtual functions

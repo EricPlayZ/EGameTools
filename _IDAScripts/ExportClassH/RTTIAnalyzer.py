@@ -43,7 +43,7 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
         
     typeDescriptorPatternAddr: int = ida_bytes.bin_search(rdataStartAddr, ida_ida.cvar.inf.max_ea, compiledIDAPattern, ida_bytes.BIN_SEARCH_FORWARD)
     if typeDescriptorPatternAddr == idc.BADADDR:
-        print(f"Type descriptor pattern '{typeDescriptorName}' not found for {targetClass.namespacedName}.")
+        print(f"Type descriptor pattern '{typeDescriptorName}' not found for {targetClass.namespacedClassedName}.")
         return 0
         
     # Adjust to get RTTI type descriptor
@@ -89,7 +89,7 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
             
         return vtableAddr
         
-    print(f"Failed to locate vtable pointer for {targetClass.namespacedName}.")
+    print(f"Failed to locate vtable pointer for {targetClass.namespacedClassedName}.")
     return 0
 
 def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
@@ -99,7 +99,7 @@ def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str 
     """
     vtablePtr: int = GetVTablePtr(targetClass, targetClassRTTIName)
     if not vtablePtr:
-        print(f"Vtable pointer not found for {targetClass.namespacedName}.")
+        print(f"Vtable pointer not found for {targetClass.namespacedClassedName}.")
         return []
         
     demangledVTableFuncSigsList: list[tuple[str, str]] = []
