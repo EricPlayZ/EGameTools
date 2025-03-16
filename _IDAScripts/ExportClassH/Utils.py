@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 from typing import Tuple
 import ida_nalt
 import ida_bytes
@@ -11,13 +12,23 @@ IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)
 def FixTypeSpacing(type: str) -> str:
     """Fix spacing for pointers/references, commas, and angle brackets."""
     type = re.sub(r'\s+([*&])', r'\1', type)             # Remove space before '*' or '&'
-    type = re.sub(r'([*&])(?![\s*&])', r'\1 ', type)       # Ensure '*' or '&' is followed by one space if it's not already.
+    type = re.sub(r'([*&])(?![\s*&])', r'\1 ', type)     # Ensure '*' or '&' is followed by one space if it's not already.
     type = re.sub(r'\s*,\s*', ', ', type)                # Ensure comma followed by one space
     type = re.sub(r'<\s+', '<', type)                    # Remove space after '<'
     type = re.sub(r'\s+>', '>', type)                    # Remove space before '>'
     type = re.sub(r'\s+([\),])', r'\1', type)
     type = re.sub(r'\s+', ' ', type)                     # Collapse multiple spaces
     return type.strip()
+
+def CleanDoubleSpaces(str: str) -> str:
+    return " ".join(str.split())
+
+def CleanEndOfClassStr(clsStr: str) -> str:
+    clsStr = clsStr.removesuffix("const")
+    while clsStr and clsStr[-1] in {')', ',', '&', '*'}:
+        clsStr = clsStr[:-1]
+    clsStr = clsStr.removesuffix("const")
+    return clsStr
 
 def CleanType(type: str) -> str:
     """Remove unwanted tokens from a type string, then fix spacing."""
@@ -28,6 +39,7 @@ def ReplaceIDATypes(type: str) -> str:
     """Replace IDA types with normal ones"""
     return type.replace("unsigned __int64", "uint64_t").replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
 
+@lru_cache(maxsize=None)
 def ExtractTypeTokensFromString(types: str) -> list[str]:
     """Extract potential type names from a string, properly handling template types."""
     if not types:
@@ -60,30 +72,65 @@ def ExtractTypeTokensFromString(types: str) -> list[str]:
     # Filter out empty strings
     return [word.strip() for word in result if word]
 
+@lru_cache(maxsize=None)
 def SplitByCommaOutsideTemplates(params: str) -> list[str]:
     parts = []
     current = []
     depth = 0
+    i = 0
 
-    for char in params:
-        if char == '<':
+    while i < len(params):
+        if params[i] == '<':
             depth += 1
-        elif char == '>':
+        elif params[i] == '>':
             # It's good to check for consistency:
             if depth > 0:
                 depth -= 1
-        # If we see a comma at top level, split here.
-        if char == ',' and depth == 0:
+                
+        # If we see a , at top level, split here.
+        if params[i] == ',' and depth == 0:
             parts.append(''.join(current).strip())
             current = []
+            i += 1
         else:
-            current.append(char)
+            current.append(params[i])
+            i += 1
 
     # Append any remaining characters as the last parameter.
     if current:
         parts.append(''.join(current).strip())
     return parts
 
+@lru_cache(maxsize=None)
+def SplitByClassSeparatorOutsideTemplates(params: str) -> list[str]:
+    parts = []
+    current = []
+    depth = 0
+    i = 0
+
+    while i < len(params):
+        if params[i] == '<':
+            depth += 1
+        elif params[i] == '>':
+            # It's good to check for consistency:
+            if depth > 0:
+                depth -= 1
+
+        # If we see a :: at top level, split here.
+        if params[i] == ':' and params[i + 1] == ":" and depth == 0:
+            parts.append(''.join(current).strip())
+            current = []
+            i += 2
+        else:
+            current.append(params[i])
+            i += 1
+
+    # Append any remaining characters as the last parameter.
+    if current:
+        parts.append(''.join(current).strip())
+    return parts
+
+@lru_cache(maxsize=None)
 def FindLastSpaceOutsideTemplates(s: str) -> int:
     """Return the index of the last space in s that is not inside '<' and '>'."""
     depth = 0
@@ -97,6 +144,7 @@ def FindLastSpaceOutsideTemplates(s: str) -> int:
             return i
     return -1
 
+@lru_cache(maxsize=None)
 def FindLastClassSeparatorOutsideTemplates(s: str) -> int:
     """Return the index of the last occurrence of "::" in s that is not inside '<' and '>'."""
     depth = 0
@@ -137,6 +185,7 @@ def GetMangledTypePrefix(namespaces: tuple[str], className: str) -> str:
 # IDA pattern search utilities
 # -----------------------------------------------------------------------------
 
+@lru_cache(maxsize=None)
 def BytesToIDAPattern(data: bytes) -> str:
     """Convert bytes to IDA-friendly hex pattern string."""
     return " ".join("{:02X}".format(b) for b in data)

@@ -7,12 +7,14 @@ def Main():
     UI.OpenMainDlg()
     
     # Reload modules to apply any changes
-    from ExportClassH import Utils, Config, ClassDefs, RTTIAnalyzer, ClassParser, HeaderGen, ProjectManager
+    from ExportClassH import Config, Utils, IDAUtils, ClassDefs, JSONGen#, RTTIAnalyzer, ClassParser, HeaderGen, ProjectManager
     importlib.reload(Config)
     importlib.reload(Utils)
+    importlib.reload(IDAUtils)
     importlib.reload(ClassDefs)
-    importlib.reload(RTTIAnalyzer)
-    importlib.reload(ClassParser)
-    importlib.reload(HeaderGen)
-    importlib.reload(ProjectManager)
+    importlib.reload(JSONGen)
+    # importlib.reload(RTTIAnalyzer)
+    # importlib.reload(ClassParser)
+    # importlib.reload(HeaderGen)
+    # importlib.reload(ProjectManager)
     importlib.reload(UI)

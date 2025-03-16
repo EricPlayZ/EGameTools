@@ -1,20 +1,20 @@
 import os
 import pickle
-import idc
 from typing import Optional
 
 from ExportClassH import Utils, Config, RTTIAnalyzer
+from ExportClassH.ClassDefs import ParsedClass, ParsedFunction
 
 # Global caches
-parsedClassVarsByClass: dict[str, list[dict]] = {} # Cache of parsed class vars by class name
-parsedVTableFuncsByClass: dict[str, list[dict]] = {} # Cache of parsed functions by class name
-parsedFuncsByClass: dict[str, list[dict]] = {} # Cache of parsed functions by class name
-allParsedFuncs: list[dict] = []
+parsedClassVarsByClass: dict[str, list[ParsedClass]] = {} # Cache of parsed class vars by class name
+parsedVTableFuncsByClass: dict[str, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+parsedFuncsByClass: dict[str, list[ParsedFunction]] = {} # Cache of parsed functions by class name
+allParsedFuncs: list[ParsedFunction] = []
 unparsedExportedSigs: list[str] = []
 allClassVarsAreParsed = False # Flag to indicate if all class vars have been parsed
 allFuncsAreParsed = False # Flag to indicate if all functions have been parsed
 
-def IsClassGenerable(cls: dict) -> bool:
+def IsClassGenerable(cls: ParsedClass) -> bool:
     """
     Check if a class has any parsable elements (class vars, vtable functions, regular functions).
     Returns True if the class is generable, False if it should be treated as a namespace.
@@ -52,19 +52,19 @@ def GetClassTypeFromParsedSigs(targetClass: ClassName, allParsedElements: tuple[
     # Check class vars first
     for parsedClassVar in parsedClassVars:
         if (parsedClassVar.varType and 
-            parsedClassVar.varType.namespacedClassedName == targetClass.namespacedClassedName and 
+            parsedClassVar.varType.fullClassStr == targetClass.fullClassStr and 
             parsedClassVar.varType.type):
             return parsedClassVar.varType.type
     # Check vtable functions next
     for parsedVTFunc in parsedVtFuncs:
         if (parsedVTFunc.returnType and 
-            parsedVTFunc.returnType.namespacedClassedName == targetClass.namespacedClassedName and 
+            parsedVTFunc.returnType.fullClassStr == targetClass.fullClassStr and 
             parsedVTFunc.returnType.type):
             return parsedVTFunc.returnType.type
     # Check all parsed functions last
     for parsedFunc in allParsedFuncs:
         if (parsedFunc.returnType and 
-            parsedFunc.returnType.namespacedClassedName == targetClass.namespacedClassedName and 
+            parsedFunc.returnType.fullClassStr == targetClass.fullClassStr and 
             parsedFunc.returnType.type):
             return parsedFunc.returnType.type
     
@@ -75,23 +75,6 @@ def ComputeUnparsedExportedSigs(demangledExportedSigs: list[str], parsedSigs: li
     big_parsed = "\n".join(parsedSigs)
     # Then, for each exported signature, check if it appears in the big string.
     return [sig for sig in demangledExportedSigs if sig not in big_parsed]
-
-def GetDemangledExportedSigs() -> list[str]:
-    """
-    Generate a list of demangled function signatures from IDA's database.
-    Uses a set to avoid duplicate entries.
-    """
-    sigs_set = set()
-    entry_qty = idc.get_entry_qty()
-    for i in range(entry_qty):
-        ea: int = idc.get_entry(i)
-        exportedSig: str = idc.get_func_name(ea) or idc.get_name(ea)
-        if not exportedSig:
-            continue
-        demangledExportedSig: str = Utils.DemangleSig(exportedSig)
-        if demangledExportedSig and "~" not in demangledExportedSig:
-            sigs_set.add(demangledExportedSig)
-    return list(sigs_set)
 
 def GetParsedClassVars(targetClass: dict = {}) -> list[ParsedClassVar]:
     """
@@ -133,7 +116,7 @@ def GetParsedClassVars(targetClass: dict = {}) -> list[ParsedClassVar]:
                     print(f"Failed parsing class var sig: \"{sig}\"")
                     continue
 
-                parsedClassVarsByClass.setdefault(parsedVar.className.namespacedClassedName, []).append(parsedVar)
+                parsedClassVarsByClass.setdefault(parsedVar.className.fullClassStr, []).append(parsedVar)
 
             allClassVarsAreParsed = True
 
@@ -153,9 +136,9 @@ def GetParsedClassVars(targetClass: dict = {}) -> list[ParsedClassVar]:
     if targetClass is None:
         return [var for vars_list in parsedClassVarsByClass.values() for var in vars_list]
     else:
-        return parsedClassVarsByClass.get(targetClass.namespacedClassedName, [])
+        return parsedClassVarsByClass.get(targetClass.fullClassStr, [])
 
-def GetParsedVTableFuncs(targetClass: ClassName) -> list[ParsedFunction]:
+def GetParsedVTableFuncs(targetClass: ParsedClass) -> list[ParsedFunction]:
     """
     Collect and parse all function signatures from the IDA database.
     If target_class is provided, only return functions for that class.
@@ -164,27 +147,27 @@ def GetParsedVTableFuncs(targetClass: ClassName) -> list[ParsedFunction]:
     global parsedVTableFuncsByClass
     
     if targetClass not in parsedVTableFuncsByClass:
-        parsedVTableFuncsByClass[targetClass.namespacedClassedName] = []
+        parsedVTableFuncsByClass[targetClass.fullClassStr] = []
         
         for (demangledFuncSig, rawType) in RTTIAnalyzer.GetDemangledVTableFuncSigs(targetClass):
             if rawType:
                 parsedFunc: ParsedFunction = ParsedFunction(rawType, True)
                 if parsedFunc.returnType:
                     newParamTypes: str = CreateParamNamesForVTFunc(parsedFunc, True) if parsedFunc.params else ""
-                    demangledFuncSig = f"{'DUPLICATE_FUNC ' if demangledFuncSig.startswith('DUPLICATE_FUNC') else ''}IDA_GEN_PARSED virtual {parsedFunc.returnType.namespacedClassedName} {demangledFuncSig.removeprefix('DUPLICATE_FUNC').strip()}({newParamTypes})"
+                    demangledFuncSig = f"{'DUPLICATE_FUNC ' if demangledFuncSig.startswith('DUPLICATE_FUNC') else ''}IDA_GEN_PARSED virtual {parsedFunc.returnType.fullClassStr} {demangledFuncSig.removeprefix('DUPLICATE_FUNC').strip()}({newParamTypes})"
             elif demangledFuncSig.startswith("DUPLICATE_FUNC"):
                 parsedFunc: ParsedFunction = ParsedFunction(demangledFuncSig.removeprefix("DUPLICATE_FUNC").strip(), True)
                 if parsedFunc.returnType:
                     newParamTypes: str = CreateParamNamesForVTFunc(parsedFunc, False) if parsedFunc.params else ""
-                    demangledFuncSig = f"DUPLICATE_FUNC {parsedFunc.returnType.namespacedClassedName} {parsedFunc.funcName}({newParamTypes})"
+                    demangledFuncSig = f"DUPLICATE_FUNC {parsedFunc.returnType.fullClassStr} {parsedFunc.funcName}({newParamTypes})"
 
             parsedFunc: ParsedFunction = ParsedFunction(demangledFuncSig, True)
             if not parsedFunc.className:
                 object.__setattr__(parsedFunc, "className", targetClass)
             
-            parsedVTableFuncsByClass[targetClass.namespacedClassedName].append(parsedFunc)
+            parsedVTableFuncsByClass[targetClass.fullClassStr].append(parsedFunc)
         
-    return parsedVTableFuncsByClass.get(targetClass.namespacedClassedName, [])
+    return parsedVTableFuncsByClass.get(targetClass.fullClassStr, [])
 
 def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFunction]:
     """
@@ -216,7 +199,7 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
                 if not parsedFunc.type or not parsedFunc.className:
                     print(f"Failed parsing func sig: \"{demangledFuncSig}\"")
                     continue
-                parsedFuncsByClass.setdefault(parsedFunc.className.namespacedClassedName, []).append(parsedFunc)
+                parsedFuncsByClass.setdefault(parsedFunc.className.fullClassStr, []).append(parsedFunc)
             allFuncsAreParsed = True
             try:
                 os.makedirs(Config.CACHE_OUTPUT_PATH, exist_ok=True)
@@ -232,23 +215,23 @@ def GetParsedFuncs(targetClass: Optional[ClassName] = None) -> list[ParsedFuncti
     if targetClass is None:
         return [pf for funcList in parsedFuncsByClass.values() for pf in funcList]
     else:
-        return parsedFuncsByClass.get(targetClass.namespacedClassedName, [])
+        return parsedFuncsByClass.get(targetClass.fullClassStr, [])
 
-def GetAllParsedClassVarsAndFuncs(cls: dict) -> tuple[list[dict], list[dict], list[dict]]:
+def GetAllParsedClassVarsAndFuncs(cls: ParsedClass) -> tuple[list[ParsedClass], list[ParsedClass], list[ParsedClass]]:
     global allParsedFuncs
 
-    parsedVTableClassFuncs: list[dict] = GetParsedVTableFuncs(cls)
+    parsedVTableClassFuncs: list[ParsedFunction] = GetParsedVTableFuncs(cls)
     if not parsedVTableClassFuncs:
-        print(f"No matching VTable function signatures were found for {cls.namespacedClassedName}.")
+        print(f"No matching VTable function signatures were found for {cls.fullClassStr}.")
 
-    parsedClassFuncs: list[dict] = GetParsedFuncs(cls)
+    parsedClassFuncs: list[ParsedFunction] = GetParsedFuncs(cls)
     if not parsedClassFuncs:
-        print(f"No matching function signatures were found for {cls.namespacedClassedName}.")
+        print(f"No matching function signatures were found for {cls.fullClassStr}.")
     allParsedFuncs = GetParsedFuncs()
 
     parsedClassVars: list[dict] = GetParsedClassVars(cls)
     if not parsedClassVars:
-        print(f"No matching class var signatures were found for {cls.namespacedClassedName}.")
+        print(f"No matching class var signatures were found for {cls.fullClassStr}.")
 
     # Get non-vtable methods
     vTableFuncsSet: set[str] = {pf.fullFuncSig for pf in parsedVTableClassFuncs}

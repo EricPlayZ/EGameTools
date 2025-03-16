@@ -6,9 +6,9 @@ import ida_ida
 import ida_hexrays
 
 from ExportClassH import Utils
-from ExportClassH.ClassDefs import ClassName
+from ExportClassH.ClassDefs import ParsedClass
 
-def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
+def GetVTablePtr(targetClass: ParsedClass, targetClassRTTIName: str = "") -> int:
     """
     Find vtable pointer for a class using RTTI information.
     Supports both simple class names and namespaced class names.
@@ -21,7 +21,7 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
     # Use provided RTTI name if available (for templates), otherwise generate it
     if not targetClassRTTIName:
         # Check if this is a templated class
-        typeDescriptorName: str = Utils.GetMangledTypePrefix(targetClass.namespaces, targetClass.name)
+        typeDescriptorName: str = Utils.GetMangledTypePrefix(targetClass.parentNamespaces + targetClass.parentClasses, targetClass.name)
     else:
         # Use the provided RTTI name directly
         typeDescriptorName: str = targetClassRTTIName
@@ -43,7 +43,7 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
         
     typeDescriptorPatternAddr: int = ida_bytes.bin_search(rdataStartAddr, ida_ida.cvar.inf.max_ea, compiledIDAPattern, ida_bytes.BIN_SEARCH_FORWARD)
     if typeDescriptorPatternAddr == idc.BADADDR:
-        print(f"Type descriptor pattern '{typeDescriptorName}' not found for {targetClass.namespacedClassedName}.")
+        print(f"Type descriptor pattern '{typeDescriptorName}' not found for {targetClass.fullClassStr}.")
         return 0
         
     # Adjust to get RTTI type descriptor
@@ -89,17 +89,17 @@ def GetVTablePtr(targetClass: ClassName, targetClassRTTIName: str = "") -> int:
             
         return vtableAddr
         
-    print(f"Failed to locate vtable pointer for {targetClass.namespacedClassedName}.")
+    print(f"Failed to locate vtable pointer for {targetClass.fullClassStr}.")
     return 0
 
-def GetDemangledVTableFuncSigs(targetClass: ClassName, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
+def GetDemangledVTableFuncSigs(targetClass: ParsedClass, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
     """
     Get the ordered list of function names from a class's vtable.
     For templated classes, you can provide the rtti_name pattern.
     """
     vtablePtr: int = GetVTablePtr(targetClass, targetClassRTTIName)
     if not vtablePtr:
-        print(f"Vtable pointer not found for {targetClass.namespacedClassedName}.")
+        print(f"Vtable pointer not found for {targetClass.fullClassStr}.")
         return []
         
     demangledVTableFuncSigsList: list[tuple[str, str]] = []

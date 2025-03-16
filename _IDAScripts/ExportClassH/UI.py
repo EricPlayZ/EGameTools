@@ -2,8 +2,7 @@ import os
 import json
 import ida_kernwin
 
-from ExportClassH import Config, HeaderGen, ProjectManager
-from ExportClassH.ClassDefs import ClassName
+from ExportClassH import Config, JSONGen
 
 def SetConfigVars(settings):
     Config.PROJECT_INCLUDES_PATH = settings["PROJECT_INCLUDES_PATH"]
@@ -118,14 +117,15 @@ def OpenMainDlg():
 
         if selectedOption == 0:
             print("[INFO] Update Project Code selected!")
-            ProjectManager.ProcessExistingHeaders()
+            #ProjectManager.ProcessExistingHeaders()
         elif selectedOption == 1:
             print("[INFO] Generate Class Code selected!")
-            targetClassName = ida_kernwin.ask_str("", 0, "Enter target class name:")
-            if not targetClassName:
-                print("No target class specified. Aborting.")
-                return
-            HeaderGen.ExportClassHeader(ClassName(targetClassName))
+            # targetClassName = ida_kernwin.ask_str("", 0, "Enter target class name:")
+            # if not targetClassName:
+            #     print("No target class specified. Aborting.")
+            #     return
+            #HeaderGen.ExportClassHeader(ClassName(targetClassName))
+            JSONGen.GetAllParsedClasses()
         elif selectedOption == 2:
             print("[INFO] Settings selected!")
             OpenSettingsDlg()  # Open settings when selected
