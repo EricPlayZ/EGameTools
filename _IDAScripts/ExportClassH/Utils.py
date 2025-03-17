@@ -55,9 +55,10 @@ def ExtractTypeTokensFromString(types: str) -> list[str]:
             templateDepth += 1
             currentWord += char
         elif char == '>':
-            templateDepth -= 1
+            if templateDepth > 0:
+                templateDepth -= 1
             currentWord += char
-        elif char.isspace() and templateDepth == 0:
+        elif char == ' ' and templateDepth == 0:
             # Only split on spaces outside of templates
             if currentWord:
                 result.append(currentWord)
@@ -139,7 +140,8 @@ def FindLastSpaceOutsideTemplates(s: str) -> int:
         if ch == '>':
             depth += 1
         elif ch == '<':
-            depth -= 1
+            if depth > 0:
+                depth -= 1
         elif depth == 0 and ch == ' ':
             return i
     return -1
@@ -153,7 +155,8 @@ def FindLastClassSeparatorOutsideTemplates(s: str) -> int:
         if s[i] == '>':
             depth += 1
         elif s[i] == '<':
-            depth -= 1
+            if depth > 0:
+                depth -= 1
         # Only if we're not inside a template.
         if depth == 0 and i > 0 and s[i-1:i+1] == "::":
             return i - 1  # return the index of the first colon
@@ -166,7 +169,7 @@ def FindLastClassSeparatorOutsideTemplates(s: str) -> int:
 def DemangleSig(sig: str) -> str:
     return idaapi.demangle_name(sig, idaapi.MNG_LONG_FORM)
 
-def GetMangledTypePrefix(namespaces: tuple[str], className: str) -> str:
+def GetMangledTypePrefix(namespaces: tuple[str, ...], className: str) -> str:
     """
     Get the appropriate mangled type prefix for a class name.
     For class "X" this would be ".?AVX@@"

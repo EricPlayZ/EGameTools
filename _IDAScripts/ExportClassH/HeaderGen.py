@@ -1,6 +1,6 @@
 import os
 
-from ExportClassH import Utils, Config, ClassParser
+from ExportClassH import ClassGen, Utils, Config
 from ExportClassH.ClassDefs import ClassName, ParsedFunction, ParsedClassVar
 
 processedClasses: set[str] = set()
@@ -73,7 +73,7 @@ def GenerateClassFuncCode(func: ParsedFunction, vtFuncIndex: int = 0) -> list[st
 
     targetParams: str = ""
     if func.type == "basic_vfunc":
-        targetParams = ClassParser.ExtractParamNames(params)
+        targetParams = ClassGen.ExtractParamNames(params)
         targetParams = ", " + targetParams if targetParams else ""
 
     funcSig: str = f"{returnType}{func.funcName}({params}){const}{stripped_vfunc}" if func.type != "basic_vfunc" else f"VIRTUAL_CALL({vtFuncIndex}, {returnType}, {func.funcName}, ({params}){targetParams})"
@@ -156,7 +156,7 @@ def GenerateHeaderCode(targetClass: ClassName) -> list[str]:
     processedClasses.add(targetClass.namespacedClassedName)
     
     # Get all parsed elements for the target class
-    allParsedElements = ClassParser.GetAllParsedClassVarsAndFuncs(targetClass)
+    allParsedElements = ClassGen.GetAllParsedClassVarsAndFuncs(targetClass)
     
     # Generate the target class definition
     classContent = GenerateClassContent(allParsedElements)
@@ -177,7 +177,7 @@ def GenerateHeaderCode(targetClass: ClassName) -> list[str]:
             indentLevel += "\t"
         
         for cls in targetClass.classes:
-            clsType: str = ClassParser.GetClassTypeFromParsedSigs(ClassName(targetClass.namespacedClassedName), allParsedElements)
+            clsType: str = ClassGen.GetClassTypeFromParsedSigs(ClassName(targetClass.namespacedClassedName), allParsedElements)
             namespaceCode.append(f"{indentLevel}{clsType if clsType else 'class'} {cls} {{")
             indentLevel += "\t"
 

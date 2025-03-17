@@ -21,7 +21,7 @@ def GetVTablePtr(targetClass: ParsedClass, targetClassRTTIName: str = "") -> int
     # Use provided RTTI name if available (for templates), otherwise generate it
     if not targetClassRTTIName:
         # Check if this is a templated class
-        typeDescriptorName: str = Utils.GetMangledTypePrefix(targetClass.parentNamespaces + targetClass.parentClasses, targetClass.name)
+        typeDescriptorName: str = Utils.GetMangledTypePrefix(tuple(targetClass.parentNamespaces + targetClass.parentClasses), targetClass.name)
     else:
         # Use the provided RTTI name directly
         typeDescriptorName: str = targetClassRTTIName
@@ -43,7 +43,6 @@ def GetVTablePtr(targetClass: ParsedClass, targetClassRTTIName: str = "") -> int
         
     typeDescriptorPatternAddr: int = ida_bytes.bin_search(rdataStartAddr, ida_ida.cvar.inf.max_ea, compiledIDAPattern, ida_bytes.BIN_SEARCH_FORWARD)
     if typeDescriptorPatternAddr == idc.BADADDR:
-        print(f"Type descriptor pattern '{typeDescriptorName}' not found for {targetClass.fullClassStr}.")
         return 0
         
     # Adjust to get RTTI type descriptor
@@ -89,7 +88,6 @@ def GetVTablePtr(targetClass: ParsedClass, targetClassRTTIName: str = "") -> int
             
         return vtableAddr
         
-    print(f"Failed to locate vtable pointer for {targetClass.fullClassStr}.")
     return 0
 
 def GetDemangledVTableFuncSigs(targetClass: ParsedClass, targetClassRTTIName: str = "") -> list[tuple[str, str]]:
@@ -99,7 +97,6 @@ def GetDemangledVTableFuncSigs(targetClass: ParsedClass, targetClassRTTIName: st
     """
     vtablePtr: int = GetVTablePtr(targetClass, targetClassRTTIName)
     if not vtablePtr:
-        print(f"Vtable pointer not found for {targetClass.fullClassStr}.")
         return []
         
     demangledVTableFuncSigsList: list[tuple[str, str]] = []
@@ -114,7 +111,6 @@ def GetDemangledVTableFuncSigs(targetClass: ParsedClass, targetClassRTTIName: st
         if seg is None or seg.type != idaapi.SEG_CODE:
             break
         
-        # Force function decompilation to generate the full function type signature
         funcSig: str = idc.get_func_name(ptr)
         demangledFuncSig: str = Utils.DemangleSig(funcSig)
         demangledFuncSig = demangledFuncSig if demangledFuncSig else funcSig
@@ -126,8 +122,12 @@ def GetDemangledVTableFuncSigs(targetClass: ParsedClass, targetClassRTTIName: st
         
         if demangledFuncSig != "_purecall":
             if " " not in demangledFuncSig:
-                ida_hexrays.decompile(ptr)
-                rawType = "IDA_GEN_TYPE " + idc.get_type(ptr)
+                cfunc = ida_hexrays.decompile(ptr)
+                tinfo = idaapi.tinfo_t()
+                cfunc.get_func_type(tinfo)
+                
+                funcType: str = idaapi.print_tinfo('', 0, 0, idaapi.PRTYPE_NOARGS, tinfo, '', '')
+                rawType = "IDA_GEN_TYPE " + funcType
             if (demangledFuncSig, rawType) in demangledVTableFuncSigsList:
                 demangledFuncSig = "DUPLICATE_FUNC " + demangledFuncSig
         

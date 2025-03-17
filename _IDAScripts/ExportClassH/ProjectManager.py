@@ -1,7 +1,7 @@
 import os
 import re
 
-from ExportClassH import Config, HeaderGen, ClassParser
+from ExportClassH import ClassGen, Config, HeaderGen
 from ExportClassH.ClassDefs import ClassName
 
 def FindClassDefInFile(className: str, filePath: str) -> tuple[bool, str, int, int, str]:
@@ -186,7 +186,7 @@ def ProcessExistingHeaders():
         targetClass = ClassName(className)
         
         # Check if this class has any functions or variables to export
-        allParsedClassVarsAndFuncs = ClassParser.GetAllParsedClassVarsAndFuncs(targetClass)
+        allParsedClassVarsAndFuncs = ClassGen.GetAllParsedClassVarsAndFuncs(targetClass)
         hasContent = (
             len(allParsedClassVarsAndFuncs[0]) > 0 or 
             len(allParsedClassVarsAndFuncs[1]) > 0 or 

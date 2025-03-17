@@ -39,7 +39,7 @@ class ParsedFunction(Prodict):
     parentNamespaces: List[str]
     parentClasses: List[str]
     funcName: str
-    params: List
+    params: List[ParsedParam]
     const: bool
     fullFuncSig: str
 
