@@ -1,5 +1,5 @@
 import re
-from functools import lru_cache
+from functools import cache
 from typing import Tuple
 import ida_nalt
 import ida_bytes
@@ -9,6 +9,7 @@ import idc
 
 IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)
 
+@cache
 def FixTypeSpacing(type: str) -> str:
     """Fix spacing for pointers/references, commas, and angle brackets."""
     type = re.sub(r'\s+([*&])', r'\1', type)             # Remove space before '*' or '&'
@@ -20,9 +21,11 @@ def FixTypeSpacing(type: str) -> str:
     type = re.sub(r'\s+', ' ', type)                     # Collapse multiple spaces
     return type.strip()
 
+@cache
 def CleanDoubleSpaces(str: str) -> str:
     return " ".join(str.split())
 
+@cache
 def CleanEndOfClassStr(clsStr: str) -> str:
     clsStr = clsStr.removesuffix("const")
     while clsStr and clsStr[-1] in {')', ',', '&', '*'}:
@@ -30,16 +33,18 @@ def CleanEndOfClassStr(clsStr: str) -> str:
     clsStr = clsStr.removesuffix("const")
     return clsStr
 
+@cache
 def CleanType(type: str) -> str:
     """Remove unwanted tokens from a type string, then fix spacing."""
     type = re.sub(r'\b(__cdecl|__fastcall|__ptr64)\b', '', type)
     return FixTypeSpacing(type)
 
+@cache
 def ReplaceIDATypes(type: str) -> str:
     """Replace IDA types with normal ones"""
     return type.replace("unsigned __int64", "uint64_t").replace("_QWORD", "uint64_t").replace("__int64", "int64_t").replace("unsigned int", "uint32_t")
 
-@lru_cache(maxsize=None)
+@cache
 def ExtractTypeTokensFromString(types: str) -> list[str]:
     """Extract potential type names from a string, properly handling template types."""
     if not types:
@@ -73,7 +78,7 @@ def ExtractTypeTokensFromString(types: str) -> list[str]:
     # Filter out empty strings
     return [word.strip() for word in result if word]
 
-@lru_cache(maxsize=None)
+@cache
 def SplitByCommaOutsideTemplates(params: str) -> list[str]:
     parts = []
     current = []
@@ -102,7 +107,7 @@ def SplitByCommaOutsideTemplates(params: str) -> list[str]:
         parts.append(''.join(current).strip())
     return parts
 
-@lru_cache(maxsize=None)
+@cache
 def SplitByClassSeparatorOutsideTemplates(params: str) -> list[str]:
     parts = []
     current = []
@@ -131,7 +136,7 @@ def SplitByClassSeparatorOutsideTemplates(params: str) -> list[str]:
         parts.append(''.join(current).strip())
     return parts
 
-@lru_cache(maxsize=None)
+@cache
 def FindLastSpaceOutsideTemplates(s: str) -> int:
     """Return the index of the last space in s that is not inside '<' and '>'."""
     depth = 0
@@ -146,7 +151,7 @@ def FindLastSpaceOutsideTemplates(s: str) -> int:
             return i
     return -1
 
-@lru_cache(maxsize=None)
+@cache
 def FindLastClassSeparatorOutsideTemplates(s: str) -> int:
     """Return the index of the last occurrence of "::" in s that is not inside '<' and '>'."""
     depth = 0
@@ -166,9 +171,11 @@ def FindLastClassSeparatorOutsideTemplates(s: str) -> int:
 # IDA util functions
 # -----------------------------------------------------------------------------
 
+@cache
 def DemangleSig(sig: str) -> str:
     return idaapi.demangle_name(sig, idaapi.MNG_LONG_FORM)
 
+@cache
 def GetMangledTypePrefix(namespaces: tuple[str, ...], className: str) -> str:
     """
     Get the appropriate mangled type prefix for a class name.
@@ -188,7 +195,7 @@ def GetMangledTypePrefix(namespaces: tuple[str, ...], className: str) -> str:
 # IDA pattern search utilities
 # -----------------------------------------------------------------------------
 
-@lru_cache(maxsize=None)
+@cache
 def BytesToIDAPattern(data: bytes) -> str:
     """Convert bytes to IDA-friendly hex pattern string."""
     return " ".join("{:02X}".format(b) for b in data)

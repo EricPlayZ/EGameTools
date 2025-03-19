@@ -1,3 +1,4 @@
+from functools import cache
 import idc
 
 from ExportClassH import Utils
@@ -28,7 +29,7 @@ def GetDemangledExportedSigs() -> list[str]:
     entry_qty = idc.get_entry_qty()
     for i in range(entry_qty):
         ea: int = idc.get_entry(i)
-        exportedSig: str = idc.get_func_name(ea) or idc.get_name(ea)
+        #exportedSig: str = idc.get_func_name(ea) or idc.get_name(ea)
         exportedSig = idc.get_entry_name(i)
         if not exportedSig:
             continue

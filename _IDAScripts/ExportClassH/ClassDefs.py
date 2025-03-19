@@ -1,4 +1,4 @@
-from typing import Optional, List, get_type_hints
+from typing import Optional, List, Dict, get_type_hints
 from prodict import Prodict
     
 class ParsedParam(Prodict):
@@ -18,7 +18,7 @@ class ParsedClass(Prodict):
     name: str
     templateParams: List["ParsedParam"]
     fullClassName: str
-    childClasses: List["ParsedClass"]
+    childClasses: Prodict
     functions: List["ParsedFunction"]
 
     def init(self):
@@ -28,7 +28,7 @@ class ParsedClass(Prodict):
         self.name = ""
         self.templateParams = []
         self.fullClassName = ""
-        self.childClasses = []
+        self.childClasses = Prodict()
         self.functions = []
 
 class ParsedFunction(Prodict):
@@ -38,6 +38,7 @@ class ParsedFunction(Prodict):
     returnTypes: List[ParsedParam]
     parentNamespaces: List[str]
     parentClasses: List[str]
+    fullClassName: str
     funcName: str
     params: List[ParsedParam]
     const: bool
@@ -50,6 +51,7 @@ class ParsedFunction(Prodict):
         self.returnTypes = []
         self.parentNamespaces = []
         self.parentClasses = []
+        self.fullClassName = ""
         self.funcName = ""
         self.params = []
         self.const = False

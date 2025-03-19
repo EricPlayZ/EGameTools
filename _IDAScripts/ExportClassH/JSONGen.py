@@ -1,7 +1,7 @@
 import json
 from typing import Optional
 
-from ExportClassH import Utils, IDAUtils, RTTIAnalyzer
+from ExportClassH import Utils, IDAUtils, RTTIAnalyzer, Config
 from ExportClassH.ClassDefs import ParsedClass, ParsedFunction, ParsedParam
 
 CLASS_TYPES = ["namespace", "class", "struct", "enum", "union"]
@@ -9,6 +9,7 @@ FUNC_TYPES = ["function", "strippedVirtual", "basicVirtual", "virtual"]
 TYPES_OF_RETURN_TYPES = ["returnType", "classReturnType"]
 STD_CLASSES = ["std", "rapidjson"]
 
+parsedClassesLookupDict: dict[str, ParsedClass] = {}
 parsedClassesDict: dict[str, ParsedClass] = {}
 
 def GetTypeAndNameStr(fullName: str, returnFullName: bool = False) -> str:
@@ -121,7 +122,7 @@ def ParseClassStr(clsStr: str) -> Optional[ParsedClass]:
 
 virtualFuncDuplicateCounter: dict[tuple[str, str], int] = {}
 virtualFuncPlaceholderCounter: dict[tuple[str, str], int] = {}
-def ParseFuncStr(parsedClass: ParsedClass, funcStr: str, onlyVirtualFuncs: bool = False) -> Optional[ParsedFunction]:
+def ParseFuncStr(funcStr: str, parsedClass: Optional[ParsedClass] = None, onlyVirtualFuncs: bool = False) -> Optional[ParsedFunction]:
     global virtualFuncDuplicateCounter
     global virtualFuncPlaceholderCounter
 
@@ -130,7 +131,8 @@ def ParseFuncStr(parsedClass: ParsedClass, funcStr: str, onlyVirtualFuncs: bool 
     if not funcStr:
         return None
     
-    parsedFunc = ParsedFunction(fullFuncSig=funcStr.strip())
+    parsedFunc = ParsedFunction()
+    parsedFunc.fullFuncSig = funcStr
     
     # Handle special cases
     isDuplicateFunc = False
@@ -206,6 +208,7 @@ def ParseFuncStr(parsedClass: ParsedClass, funcStr: str, onlyVirtualFuncs: bool 
         else:
             returnType = remainingInputBeforeParamsParen
 
+        parsedFunc.fullClassName = namespacesAndClasses
         parentNamespacesAndClasses = Utils.SplitByClassSeparatorOutsideTemplates(namespacesAndClasses)
         parentNamespaces, parentClasses = ExtractParentNamespacesAndClasses(parentNamespacesAndClasses)
         parsedFunc.parentNamespaces = parentNamespaces
@@ -213,7 +216,9 @@ def ParseFuncStr(parsedClass: ParsedClass, funcStr: str, onlyVirtualFuncs: bool 
         
         # Handle duplicate function naming
         if isDuplicateFunc:
-            key = (parsedClass.fullClassName, funcStr)
+            if not parsedClass and not namespacesAndClasses:
+                raise Exception("parsedClass variable not provided and namespacesAndClasses is empty for ParseFuncStr when func is duplicate")
+            key = (parsedClass.fullClassName if parsedClass else namespacesAndClasses, funcStr)
             if key not in virtualFuncDuplicateCounter:
                     virtualFuncDuplicateCounter[key] = 0
             virtualFuncDuplicateCounter[key] += 1
@@ -236,10 +241,13 @@ def ParseFuncStr(parsedClass: ParsedClass, funcStr: str, onlyVirtualFuncs: bool 
         
         returnType = Utils.ReplaceIDATypes(returnType)
         returnType = Utils.CleanType(returnType)
-        returnTypes = GetParsedParamsFromList(Utils.ExtractTypeTokensFromString(returnType), "param")
+        returnTypes = GetParsedParamsFromList(Utils.ExtractTypeTokensFromString(returnType), "returnType")
         parsedFunc.returnTypes = returnTypes
         parsedFunc.funcName = funcName
     elif onlyVirtualFuncs and funcStr == "_purecall":
+        if not parsedClass:
+            raise Exception("parsedClass variable not provided for ParseFuncStr when func is _purecall")
+        
         key = (parsedClass.fullClassName, funcStr)
         if key not in virtualFuncPlaceholderCounter:
             virtualFuncPlaceholderCounter[key] = 0
@@ -315,8 +323,19 @@ def ExtractMainClassSigFromFuncSig(funcSig: str) -> str:
 
     return f"{'class' if namespacesAndClasses.endswith(funcName) else 'namespace'} {namespacesAndClasses}" if namespacesAndClasses else ""
 
+def BuildParsedClassesLookup(rootClasses: list[ParsedClass], lookupDict: dict[str, ParsedClass]):
+    lookupDict = {}
+    def build(parsedClasses: list[ParsedClass]):
+        for parsedClass in parsedClasses:
+            lookupDict[parsedClass.fullClassName] = parsedClass
+            if parsedClass.childClasses:
+                build(list(parsedClass.childClasses.values()))
+    build(rootClasses)
+
 def ParseAllClasses():
+    global parsedClassesLookupDict
     global parsedClassesDict
+    parsedClassesLookupDict = {}
     parsedClassesDict = {}
 
     # Get and parse all classes that are mentioned in a func sig, such as "class cbs::CPointer" in the params here: 'bool cbs::IsInDynamicRoot(class cbs::CPointer<class cbs::CEntity>, bool)'
@@ -402,8 +421,11 @@ def ParseAllClasses():
         if not parentClass:
             continue
 
-        parentClass.childClasses.append(parsedClass)
+        parentClass.childClasses[parsedClass.fullClassName] = parsedClass
         del parsedClassesDict[parsedClass.fullClassName]
+    
+    # Build the lookup for parsed classes, so we can have faster and more efficient lookup times
+    BuildParsedClassesLookup(list(parsedClassesDict.values()), parsedClassesLookupDict)
 
 def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) -> str:
     paramsList: list[str] = [param.name for param in parsedFunc.params if param.name]
@@ -418,38 +440,62 @@ def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) 
     newParams: str = ", ".join(f"{paramType} {paramName}" for paramType, paramName in zip(paramsList, paramNames))
     return newParams
 
-def ParseAllClassVTFuncs():
-    global parsedClassesDict
-    for parsedClass in parsedClassesDict.values():
-        for (demangledFuncSig, rawType) in RTTIAnalyzer.GetDemangledVTableFuncSigs(parsedClass):
-            if rawType:
-                parsedFunc = ParseFuncStr(parsedClass, rawType, True)
-                if not parsedFunc:
-                    continue
+def ParseClassVTFuncs(parsedClass: ParsedClass):
+    # Parse child classes first
+    for parsedChildClass in parsedClass.childClasses.values():
+        ParseClassVTFuncs(parsedChildClass)
 
-                if parsedFunc.returnTypes:
-                    newParamTypes = CreateParamNamesForVTFunc(parsedFunc, True) if parsedFunc.params else ""
-                    returnTypes = [returnType.name for returnType in parsedFunc.returnTypes if returnType.name]
-                    returnTypesStr = ' '.join(returnTypes)
-                    demangledFuncSig = f"{'DUPLICATE_FUNC ' if demangledFuncSig.startswith('DUPLICATE_FUNC') else ''}IDA_GEN_PARSED virtual {returnTypesStr}  {demangledFuncSig.removeprefix('DUPLICATE_FUNC').strip()}({newParamTypes})"
-            elif demangledFuncSig.startswith("DUPLICATE_FUNC"):
-                parsedFunc = ParseFuncStr(parsedClass, demangledFuncSig.removeprefix("DUPLICATE_FUNC").strip(), True)
-                if not parsedFunc:
-                    continue
-
-                if parsedFunc.returnTypes:
-                    newParamTypes: str = CreateParamNamesForVTFunc(parsedFunc, False) if parsedFunc.params else ""
-                    returnTypes = [returnType.name for returnType in parsedFunc.returnTypes if returnType.name]
-                    returnTypesStr = ' '.join(returnTypes)
-                    demangledFuncSig = f"DUPLICATE_FUNC {returnTypesStr} {parsedFunc.funcName}({newParamTypes})"
-
-            parsedFunc = ParseFuncStr(parsedClass, demangledFuncSig, True)
+    # Parse root class
+    for (demangledFuncSig, rawType) in RTTIAnalyzer.GetDemangledVTableFuncSigs(parsedClass):
+        if rawType:
+            parsedFunc = ParseFuncStr(rawType, parsedClass, True)
             if not parsedFunc:
                 continue
 
-            parsedClass.functions.append(parsedFunc)
+            if parsedFunc.returnTypes:
+                newParamTypes = CreateParamNamesForVTFunc(parsedFunc, True) if parsedFunc.params else ""
+                returnTypes = [returnType.name for returnType in parsedFunc.returnTypes if returnType.name]
+                returnTypesStr = ' '.join(returnTypes)
+                demangledFuncSig = f"{'DUPLICATE_FUNC ' if demangledFuncSig.startswith('DUPLICATE_FUNC') else ''}IDA_GEN_PARSED virtual {returnTypesStr}  {demangledFuncSig.removeprefix('DUPLICATE_FUNC').strip()}({newParamTypes})"
+        elif demangledFuncSig.startswith("DUPLICATE_FUNC"):
+            parsedFunc = ParseFuncStr(demangledFuncSig.removeprefix("DUPLICATE_FUNC").strip(), parsedClass, True)
+            if not parsedFunc:
+                continue
+
+            if parsedFunc.returnTypes:
+                newParamTypes: str = CreateParamNamesForVTFunc(parsedFunc, False) if parsedFunc.params else ""
+                returnTypes = [returnType.name for returnType in parsedFunc.returnTypes if returnType.name]
+                returnTypesStr = ' '.join(returnTypes)
+                demangledFuncSig = f"DUPLICATE_FUNC {returnTypesStr} {parsedFunc.funcName}({newParamTypes})"
+
+        parsedFunc = ParseFuncStr(demangledFuncSig, parsedClass, True)
+        if not parsedFunc:
+            continue
+
+        if parsedClass.type == "namespace":
+            parsedClass.type = "class"
+        parsedClass.functions.append(parsedFunc)
+
+def ParseAllClassVTFuncs():
+    for parsedClass in parsedClassesDict.values():
+        ParseClassVTFuncs(parsedClass)
+
+def ParseAllClassFuncs():
+    global parsedClassesLookupDict
+    for demangledExportedSig in IDAUtils.GetDemangledExportedSigs():
+        parsedFunc = ParseFuncStr(demangledExportedSig, None, False)
+        if not parsedFunc or not parsedFunc.fullClassName:
+            continue
+
+        parsedClass = parsedClassesLookupDict.get(parsedFunc.fullClassName)
+        if not parsedClass:
+            continue
+
+        parsedClass.functions.append(parsedFunc)
 
 def GetAllParsedClasses():
     ParseAllClasses()
     ParseAllClassVTFuncs()
-    print(json.dumps(parsedClassesDict, indent=4))
+    ParseAllClassFuncs()
+    with open(Config.PARSED_CLASSES_OUTPUT_FILE, 'w') as fileStream:
+        json.dump(parsedClassesDict, fileStream, indent=4)

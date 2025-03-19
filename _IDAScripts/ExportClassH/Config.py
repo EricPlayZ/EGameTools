@@ -16,3 +16,4 @@ DEFAULT_CONFIG = {
     "LAST_CLICKED_RADIO": LAST_CLICKED_RADIO,
 }
 CONFIG_FILE = os.path.join(os.path.join(os.path.dirname(__file__), os.pardir), "ExportClassH.json")
+PARSED_CLASSES_OUTPUT_FILE = os.path.join(HEADER_OUTPUT_PATH, "parsed-classes.json")
