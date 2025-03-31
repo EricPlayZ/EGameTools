@@ -1,63 +1,54 @@
-from typing import Optional, List, Dict, get_type_hints
-from prodict import Prodict
-    
-class ParsedParam(Prodict):
-    type: str
-    name: str
-    parsedClassParam: Optional["ParsedClass"]
+from __future__ import annotations
+from typing import Optional, List
+from pydantic import BaseModel, SkipValidation
 
-    def init(self):
-        self.type = ""
-        self.name = ""
-        self.parsedClassParam = None
+def DefaultPydanticSerializer(obj):
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump(exclude_none=True)
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
-class ParsedClass(Prodict):
-    type: str
-    parentNamespaces: List[str]
-    parentClasses: List[str]
-    name: str
-    templateParams: List["ParsedParam"]
-    fullClassName: str
-    childClasses: Prodict
-    functions: List["ParsedFunction"]
+class ParsedParam(BaseModel):
+    type: str = ""
+    name: str = ""
+    parsedClassParam: Optional[SkipValidation[ParsedClass]] = None
 
-    def init(self):
-        self.type = ""
-        self.parentNamespaces = []
-        self.parentClasses = []
-        self.name = ""
-        self.templateParams = []
-        self.fullClassName = ""
-        self.childClasses = Prodict()
-        self.functions = []
+class ParsedClass(BaseModel):
+    type: str = ""
+    parentNamespaces: List[str] = []
+    parentClasses: List[str] = []
+    classDependencies: List[str] = []
+    name: str = ""
+    templateParams: List[ParsedParam] = []
+    fullClassName: str = ""
+    childClasses: dict = {}
+    classVars: List[ParsedClassVar] = []
+    virtualFunctions: List[ParsedFunction] = []
+    functions: List[ParsedFunction] = []
 
-class ParsedFunction(Prodict):
-    type: str
-    funcType: str
-    access: str
-    returnTypes: List[ParsedParam]
-    parentNamespaces: List[str]
-    parentClasses: List[str]
-    fullClassName: str
-    funcName: str
-    params: List[ParsedParam]
-    const: bool
-    fullFuncSig: str
+class ParsedFunction(BaseModel):
+    type: str = "function"
+    funcType: str = "function"
+    access: str = "public"
+    returnTypes: List[ParsedParam] = []
+    parentNamespaces: List[str] = []
+    parentClasses: List[str] = []
+    fullClassName: str = ""
+    funcName: str = ""
+    params: List[ParsedParam] = []
+    const: bool = False
+    fullFuncSig: str = ""
 
-    def init(self):
-        self.type = "function"
-        self.funcType = "function"
-        self.access = "public"
-        self.returnTypes = []
-        self.parentNamespaces = []
-        self.parentClasses = []
-        self.fullClassName = ""
-        self.funcName = ""
-        self.params = []
-        self.const = False
-        self.fullFuncSig = ""
-    
-ParsedParam.__annotations__ = get_type_hints(ParsedParam)
-ParsedParam.__annotations__["parsedClassParam"] = ParsedClass
-ParsedClass.__annotations__ = get_type_hints(ParsedClass)
-ParsedFunction.__annotations__ = get_type_hints(ParsedFunction)
+class ParsedClassVar(BaseModel):
+    type: str = "classVar"
+    access: str = "public"
+    varTypes: List[ParsedParam] = []
+    parentNamespaces: List[str] = []
+    parentClasses: List[str] = []
+    fullClassName: str = ""
+    varName: str = ""
+    fullClassVarSig: str = ""
+
+ParsedParam.model_rebuild()
+ParsedClass.model_rebuild()
+ParsedFunction.model_rebuild()
+ParsedClassVar.model_rebuild()

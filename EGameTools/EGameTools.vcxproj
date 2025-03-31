@@ -157,7 +157,7 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;..\EGameSDK\deps\game_libs;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;..\EGameSDK\deps\game_libs;$(SolutionDir)$(Platform)\$(Configuration)\;</AdditionalLibraryDirectories>
       <AssemblyDebug>true</AssemblyDebug>
       <ImportLibrary />
       <FixedBaseAddress>
@@ -192,7 +192,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;..\EGameSDK\deps\game_libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;..\EGameSDK\deps\game_libs;$(SolutionDir)$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;freetype-md.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary />
       <AdditionalOptions>/NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>

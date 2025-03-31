@@ -1,5 +1,5 @@
 ﻿_IDAScripts/.env
-_IDAScripts/_generated/
+_IDAScripts/generated/*.json
 
 # Ultimate-ASI-Loader
 data/
@@ -408,3 +408,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/_IDAScripts/generated/parsed-classes.json

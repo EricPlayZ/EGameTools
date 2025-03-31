@@ -1,17 +1,20 @@
+import os
 import json
 from typing import Optional
+from functools import cache
 
 from ExportClassH import Utils, IDAUtils, RTTIAnalyzer, Config
-from ExportClassH.ClassDefs import ParsedClass, ParsedFunction, ParsedParam
+from ExportClassH.ClassDefs import ParsedParam, ParsedClass, ParsedFunction, ParsedClassVar, DefaultPydanticSerializer
 
 CLASS_TYPES = ["namespace", "class", "struct", "enum", "union"]
 FUNC_TYPES = ["function", "strippedVirtual", "basicVirtual", "virtual"]
 TYPES_OF_RETURN_TYPES = ["returnType", "classReturnType"]
 STD_CLASSES = ["std", "rapidjson"]
 
-parsedClassesLookupDict: dict[str, ParsedClass] = {}
 parsedClassesDict: dict[str, ParsedClass] = {}
+unparsedDemangledExportedSigs: list[str]= []
 
+@cache
 def GetTypeAndNameStr(fullName: str, returnFullName: bool = False) -> str:
     parts = Utils.ExtractTypeTokensFromString(fullName)
     if not parts:
@@ -24,6 +27,7 @@ def GetTypeAndNameStr(fullName: str, returnFullName: bool = False) -> str:
             return f"{parts[i]} {parts[i + 1] if not returnFullName else ' '.join(parts[i + 1:])}"
     return ""
 
+@cache
 def SplitTypeFromName(fullName: str, returnFullName: bool = False) -> tuple[str, str]:
     typeAndNameStr = GetTypeAndNameStr(fullName, returnFullName)
     if not typeAndNameStr:
@@ -32,10 +36,10 @@ def SplitTypeFromName(fullName: str, returnFullName: bool = False) -> tuple[str,
     typeAndName = typeAndNameStr.split(maxsplit=1)
     return typeAndName[0], typeAndName[1]
 
-def GetParsedParamsFromList(paramsList: list[str], type: str) -> list[ParsedParam]:
+def GetParsedParamsFromList(paramsList: list[str], paramType: str) -> list[ParsedParam]:
     params: list[ParsedParam] = []
     for i in range(len(paramsList)):
-        typeOfParam: str = type
+        typeOfParam: str = paramType
         classType, className = SplitTypeFromName(paramsList[i], True)
         nameOfParam: str = className
         parsedClassOfParam: Optional[ParsedClass] = None
@@ -43,9 +47,14 @@ def GetParsedParamsFromList(paramsList: list[str], type: str) -> list[ParsedPara
         if classType:
             typeOfParam = f"class{typeOfParam[0].upper()}{typeOfParam[1:]}"
             parsedClassOfParam = ParseClassStr(f"{classType} {className}")
+            if parsedClassOfParam and parsedClassOfParam.parentNamespaces:
+                parentNamespaces, parentClasses = ExtractParentNamespacesAndClasses(parsedClassOfParam.parentNamespaces)
+                parsedClassOfParam.parentNamespaces = parentNamespaces
+                parsedClassOfParam.parentClasses = parentClasses
         params.append(ParsedParam(type=typeOfParam, name=nameOfParam, parsedClassParam=parsedClassOfParam))
     return params
 
+@cache
 def ExtractClassNameAndTemplateParams(templatedClassName: str) -> tuple[str, list[ParsedParam]]:
     className = templatedClassName
     templateParams: list[ParsedParam] = []
@@ -122,7 +131,8 @@ def ParseClassStr(clsStr: str) -> Optional[ParsedClass]:
 
 virtualFuncDuplicateCounter: dict[tuple[str, str], int] = {}
 virtualFuncPlaceholderCounter: dict[tuple[str, str], int] = {}
-def ParseFuncStr(funcStr: str, parsedClass: Optional[ParsedClass] = None, onlyVirtualFuncs: bool = False) -> Optional[ParsedFunction]:
+
+def ParseFuncStr(funcStr: str, parsedClassFullName: str = "", onlyVirtualFuncs: bool = False) -> Optional[ParsedFunction]:
     global virtualFuncDuplicateCounter
     global virtualFuncPlaceholderCounter
 
@@ -164,7 +174,8 @@ def ParseFuncStr(funcStr: str, parsedClass: Optional[ParsedClass] = None, onlyVi
         # Extract parameters
         paramsStr = funcStr[paramsOpenParenIndex + 1:paramsCloseParenIndex]
         params = GetParsedParamsFromList(Utils.SplitByCommaOutsideTemplates(paramsStr), "param")
-        parsedFunc.params = params
+        if params and params[0] != "void":
+            parsedFunc.params = params
         
         # Check for const qualifier
         remainingInputAfterParamsParen = funcStr[paramsCloseParenIndex + 1:].strip()
@@ -212,13 +223,13 @@ def ParseFuncStr(funcStr: str, parsedClass: Optional[ParsedClass] = None, onlyVi
         parentNamespacesAndClasses = Utils.SplitByClassSeparatorOutsideTemplates(namespacesAndClasses)
         parentNamespaces, parentClasses = ExtractParentNamespacesAndClasses(parentNamespacesAndClasses)
         parsedFunc.parentNamespaces = parentNamespaces
-        parsedFunc.parentNamespaces = parentClasses
+        parsedFunc.parentClasses = parentClasses
         
         # Handle duplicate function naming
         if isDuplicateFunc:
-            if not parsedClass and not namespacesAndClasses:
+            if not parsedClassFullName and not namespacesAndClasses:
                 raise Exception("parsedClass variable not provided and namespacesAndClasses is empty for ParseFuncStr when func is duplicate")
-            key = (parsedClass.fullClassName if parsedClass else namespacesAndClasses, funcStr)
+            key = (parsedClassFullName if parsedClassFullName else namespacesAndClasses, funcStr)
             if key not in virtualFuncDuplicateCounter:
                     virtualFuncDuplicateCounter[key] = 0
             virtualFuncDuplicateCounter[key] += 1
@@ -245,10 +256,10 @@ def ParseFuncStr(funcStr: str, parsedClass: Optional[ParsedClass] = None, onlyVi
         parsedFunc.returnTypes = returnTypes
         parsedFunc.funcName = funcName
     elif onlyVirtualFuncs and funcStr == "_purecall":
-        if not parsedClass:
+        if not parsedClassFullName:
             raise Exception("parsedClass variable not provided for ParseFuncStr when func is _purecall")
         
-        key = (parsedClass.fullClassName, funcStr)
+        key = (parsedClassFullName, funcStr)
         if key not in virtualFuncPlaceholderCounter:
             virtualFuncPlaceholderCounter[key] = 0
         virtualFuncPlaceholderCounter[key] += 1
@@ -258,6 +269,69 @@ def ParseFuncStr(funcStr: str, parsedClass: Optional[ParsedClass] = None, onlyVi
     
     return parsedFunc
 
+def ParseClassVarStr(classVarStr: str) -> Optional[ParsedClassVar]:
+    # Strip whitespace
+    classVarStr = classVarStr.strip()
+    if not classVarStr:
+        return None
+    
+    parsedClassVar = ParsedClassVar()
+    parsedClassVar.fullClassVarSig = classVarStr
+    
+    # Extract access modifier
+    for keyword in ("public:", "protected:", "private:"):
+        if classVarStr.startswith(keyword):
+            parsedClassVar.access = keyword[:-1]  # remove the colon
+            classVarStr = classVarStr[len(keyword):].strip()
+            break
+    # Find parameters and const qualifier
+    paramsOpenParenIndex = classVarStr.find('(')
+    paramsCloseParenIndex = classVarStr.rfind(')')
+    
+    # For class variables, we expect no parameters (i.e. no parentheses).
+    if paramsOpenParenIndex == -1 and paramsCloseParenIndex == -1:
+        varType = ""
+        namespacesAndClasses = ""
+        varName = ""
+
+        # Find the last space outside of angle brackets
+        lastSpaceIndex = Utils.FindLastSpaceOutsideTemplates(classVarStr)
+        
+        if lastSpaceIndex != -1:
+            # Split at the last space outside angle brackets
+            varType = classVarStr[:lastSpaceIndex].strip()
+            classAndVarName = classVarStr[lastSpaceIndex+1:].strip()
+            
+            # Find the last class separator outside of angle brackets
+            lastClassSeparatorIndex = Utils.FindLastClassSeparatorOutsideTemplates(classAndVarName)
+            
+            if lastClassSeparatorIndex != -1:
+                namespacesAndClasses = classAndVarName[:lastClassSeparatorIndex]
+                varName = classAndVarName[lastClassSeparatorIndex+2:]
+            else:
+                classParts = Utils.SplitByClassSeparatorOutsideTemplates(classAndVarName)
+                namespacesAndClasses = "::".join(classParts[:-1]) if len(classParts) > 1 else ""
+                varName = classParts[-1]
+        else:
+            return None
+
+        parsedClassVar.fullClassName = namespacesAndClasses
+        parentNamespacesAndClasses = Utils.SplitByClassSeparatorOutsideTemplates(namespacesAndClasses)
+        parentNamespaces, parentClasses = ExtractParentNamespacesAndClasses(parentNamespacesAndClasses)
+        parsedClassVar.parentNamespaces = parentNamespaces
+        parsedClassVar.parentClasses = parentClasses
+        
+        varType = Utils.ReplaceIDATypes(varType)
+        varType = Utils.CleanType(varType)
+        varTypes = GetParsedParamsFromList(Utils.ExtractTypeTokensFromString(varType), "classVarType")
+        parsedClassVar.varTypes = varTypes
+        parsedClassVar.varName = varName
+    else:
+        return None
+    
+    return parsedClassVar
+
+@cache
 def ExtractAllClassSigsFromFuncSig(funcSig: str) -> list[str]:
     parts = Utils.ExtractTypeTokensFromString(funcSig)
     if not len(parts) > 1:
@@ -270,6 +344,7 @@ def ExtractAllClassSigsFromFuncSig(funcSig: str) -> list[str]:
             listOfClassSigs.append(f"{classType} {className}")
     return listOfClassSigs
 
+@cache
 def ExtractMainClassSigFromFuncSig(funcSig: str) -> str:
     for keyword in ("public:", "protected:", "private:"):
         if funcSig.startswith(keyword):
@@ -323,24 +398,40 @@ def ExtractMainClassSigFromFuncSig(funcSig: str) -> str:
 
     return f"{'class' if namespacesAndClasses.endswith(funcName) else 'namespace'} {namespacesAndClasses}" if namespacesAndClasses else ""
 
-def BuildParsedClassesLookup(rootClasses: list[ParsedClass], lookupDict: dict[str, ParsedClass]):
-    lookupDict = {}
-    def build(parsedClasses: list[ParsedClass]):
-        for parsedClass in parsedClasses:
-            lookupDict[parsedClass.fullClassName] = parsedClass
-            if parsedClass.childClasses:
-                build(list(parsedClass.childClasses.values()))
-    build(rootClasses)
+def FindParentClassRecursive(fullClassName: str, parsedClassesDict: dict[str, ParsedClass]) -> Optional[ParsedClass]:
+    if fullClassName in parsedClassesDict:
+        return parsedClassesDict[fullClassName]
+    for parsedClass in parsedClassesDict.values():
+        result = FindParentClassRecursive(fullClassName, parsedClass.childClasses)
+        if result is not None:
+            return result
+    return None
 
-def ParseAllClasses():
-    global parsedClassesLookupDict
-    global parsedClassesDict
-    parsedClassesLookupDict = {}
-    parsedClassesDict = {}
+def MoveChildClasses(parsedClassesDict: dict[str, ParsedClass]):
+    # Find and move child classes to parent classes
+    parsedClassesDictCopy = parsedClassesDict.copy()
+    for childClass in parsedClassesDictCopy.values():
+        if not childClass.parentNamespaces and not childClass.parentClasses:
+            continue
+        
+        parentFullName = childClass.fullClassName
+        lastClassSeparator = Utils.FindLastClassSeparatorOutsideTemplates(parentFullName)
+        if lastClassSeparator:
+            parentFullName = parentFullName[:lastClassSeparator]
 
+        parentClass = FindParentClassRecursive(parentFullName, parsedClassesDict)
+        if not parentClass:
+            continue
+
+        parentClass.childClasses[childClass.fullClassName] = childClass
+        del parsedClassesDict[childClass.fullClassName]
+
+def ParseAllClasses(parsedClassesDict: dict[str, ParsedClass]):
     # Get and parse all classes that are mentioned in a func sig, such as "class cbs::CPointer" in the params here: 'bool cbs::IsInDynamicRoot(class cbs::CPointer<class cbs::CEntity>, bool)'
-    demangledExportedSigs = IDAUtils.GetDemangledExportedSigs()
-    for demangledFuncSig in demangledExportedSigs:
+    global unparsedDemangledExportedSigs
+    unparsedDemangledExportedSigs = IDAUtils.GetDemangledExportedSigs(Config.INPUT_MD5)
+
+    for demangledFuncSig in unparsedDemangledExportedSigs:
         listOfExtractedClassSigs = ExtractAllClassSigsFromFuncSig(demangledFuncSig)
         for clsSig in listOfExtractedClassSigs:
             parsedClass = ParseClassStr(clsSig)
@@ -354,7 +445,7 @@ def ParseAllClasses():
                 alreadyParsedClass.templateParams.extend(parsedClass.templateParams)
     
     # Get and parse the main class that is mentioned in a func sig, such as "cbs" from "cbs::IsInDynamicRoot" in the name of the function here: 'bool cbs::IsInDynamicRoot(class cbs::CPointer<class cbs::CEntity>, bool)'
-    for demangledFuncSig in demangledExportedSigs:
+    for demangledFuncSig in unparsedDemangledExportedSigs:
         extractedMainClassSig = ExtractMainClassSigFromFuncSig(demangledFuncSig)
         parsedClass = ParseClassStr(extractedMainClassSig)
         if not parsedClass:
@@ -399,34 +490,6 @@ def ParseAllClasses():
         if (parentClasses or parsedClass.templateParams) and parsedClass.type == "namespace":
             parsedClass.type = "class"
 
-    # Find and move child classes to parent classes
-    parsedClassesCopy = list(parsedClassesDict.values())
-    for parsedClass in parsedClassesCopy:
-        if not parsedClass.parentNamespaces and not parsedClass.parentClasses:
-            continue
-        
-        parentName = ""
-        if parsedClass.parentClasses:
-            parentName = parsedClass.parentClasses[-1]
-        elif parsedClass.parentNamespaces:
-            parentName = parsedClass.parentNamespaces[-1]
-        if not parentName:
-            continue
-
-        parentClass = None
-        if parsedClass.parentClasses:
-            parentClass = next((parentClass for parentClass in parsedClassesCopy if parentClass.name == parentName and parentClass.parentClasses == parsedClass.parentClasses[:-1]), None)
-        elif parsedClass.parentNamespaces:
-            parentClass = next((parentClass for parentClass in parsedClassesCopy if parentClass.name == parentName and parentClass.parentNamespaces == parsedClass.parentNamespaces[:-1]), None)
-        if not parentClass:
-            continue
-
-        parentClass.childClasses[parsedClass.fullClassName] = parsedClass
-        del parsedClassesDict[parsedClass.fullClassName]
-    
-    # Build the lookup for parsed classes, so we can have faster and more efficient lookup times
-    BuildParsedClassesLookup(list(parsedClassesDict.values()), parsedClassesLookupDict)
-
 def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) -> str:
     paramsList: list[str] = [param.name for param in parsedFunc.params if param.name]
     if len(paramsList) == 1 and paramsList[0] == "void":
@@ -441,14 +504,9 @@ def CreateParamNamesForVTFunc(parsedFunc: ParsedFunction, skipFirstParam: bool) 
     return newParams
 
 def ParseClassVTFuncs(parsedClass: ParsedClass):
-    # Parse child classes first
-    for parsedChildClass in parsedClass.childClasses.values():
-        ParseClassVTFuncs(parsedChildClass)
-
-    # Parse root class
-    for (demangledFuncSig, rawType) in RTTIAnalyzer.GetDemangledVTableFuncSigs(parsedClass):
+    for (demangledFuncSig, rawType) in RTTIAnalyzer.GetDemangledVTableFuncSigs(Config.INPUT_MD5, tuple(parsedClass.parentNamespaces + parsedClass.parentClasses), parsedClass.name):
         if rawType:
-            parsedFunc = ParseFuncStr(rawType, parsedClass, True)
+            parsedFunc = ParseFuncStr(rawType, parsedClass.fullClassName, True)
             if not parsedFunc:
                 continue
 
@@ -458,7 +516,7 @@ def ParseClassVTFuncs(parsedClass: ParsedClass):
                 returnTypesStr = ' '.join(returnTypes)
                 demangledFuncSig = f"{'DUPLICATE_FUNC ' if demangledFuncSig.startswith('DUPLICATE_FUNC') else ''}IDA_GEN_PARSED virtual {returnTypesStr}  {demangledFuncSig.removeprefix('DUPLICATE_FUNC').strip()}({newParamTypes})"
         elif demangledFuncSig.startswith("DUPLICATE_FUNC"):
-            parsedFunc = ParseFuncStr(demangledFuncSig.removeprefix("DUPLICATE_FUNC").strip(), parsedClass, True)
+            parsedFunc = ParseFuncStr(demangledFuncSig.removeprefix("DUPLICATE_FUNC").strip(), parsedClass.fullClassName, True)
             if not parsedFunc:
                 continue
 
@@ -468,34 +526,90 @@ def ParseClassVTFuncs(parsedClass: ParsedClass):
                 returnTypesStr = ' '.join(returnTypes)
                 demangledFuncSig = f"DUPLICATE_FUNC {returnTypesStr} {parsedFunc.funcName}({newParamTypes})"
 
-        parsedFunc = ParseFuncStr(demangledFuncSig, parsedClass, True)
+        parsedFunc = ParseFuncStr(demangledFuncSig, parsedClass.fullClassName, True)
         if not parsedFunc:
             continue
 
         if parsedClass.type == "namespace":
             parsedClass.type = "class"
-        parsedClass.functions.append(parsedFunc)
 
-def ParseAllClassVTFuncs():
+        # Add dependency classes by going through the func class name, return types and params
+        if parsedFunc.fullClassName and parsedFunc.fullClassName not in parsedClass.classDependencies:
+            parsedClass.classDependencies.append(parsedFunc.fullClassName)
+        for param in parsedFunc.params:
+            if param.parsedClassParam and param.parsedClassParam.fullClassName and param.parsedClassParam.fullClassName not in parsedClass.classDependencies:
+                parsedClass.classDependencies.append(param.parsedClassParam.fullClassName)
+        for returnType in parsedFunc.returnTypes:
+            if returnType.parsedClassParam and returnType.parsedClassParam.fullClassName and returnType.parsedClassParam.fullClassName not in parsedClass.classDependencies:
+                parsedClass.classDependencies.append(returnType.parsedClassParam.fullClassName)
+
+        # Append parsed func to class
+        parsedClass.virtualFunctions.append(parsedFunc)
+
+def ParseAllClassVTFuncs(parsedClassesDict: dict[str, ParsedClass]):
     for parsedClass in parsedClassesDict.values():
         ParseClassVTFuncs(parsedClass)
 
-def ParseAllClassFuncs():
-    global parsedClassesLookupDict
-    for demangledExportedSig in IDAUtils.GetDemangledExportedSigs():
-        parsedFunc = ParseFuncStr(demangledExportedSig, None, False)
+def ParseAllClassFuncs(parsedClassesDict: dict[str, ParsedClass]):
+    global unparsedDemangledExportedSigs
+
+    for demangledExportedSig in unparsedDemangledExportedSigs.copy():
+        parsedFunc = ParseFuncStr(demangledExportedSig, "", False)
         if not parsedFunc or not parsedFunc.fullClassName:
             continue
 
-        parsedClass = parsedClassesLookupDict.get(parsedFunc.fullClassName)
+        parsedClass = parsedClassesDict.get(parsedFunc.fullClassName)
+        if not parsedClass:
+            continue
+        
+        # Add dependency classes by going through the return types and params
+        for param in parsedFunc.params:
+            if param.parsedClassParam and param.parsedClassParam.fullClassName and param.parsedClassParam.fullClassName not in parsedClass.classDependencies:
+                parsedClass.classDependencies.append(param.parsedClassParam.fullClassName)
+        for returnType in parsedFunc.returnTypes:
+            if returnType.parsedClassParam and returnType.parsedClassParam.fullClassName and returnType.parsedClassParam.fullClassName not in parsedClass.classDependencies:
+                parsedClass.classDependencies.append(returnType.parsedClassParam.fullClassName)
+
+        # Append parsed func to class
+        parsedClass.functions.append(parsedFunc)
+        unparsedDemangledExportedSigs.remove(demangledExportedSig)
+
+def ParseAllClassVars(parsedClassesDict: dict[str, ParsedClass]):
+    global unparsedDemangledExportedSigs
+
+    for demangledExportedSig in unparsedDemangledExportedSigs.copy():
+        parsedClassVar = ParseClassVarStr(demangledExportedSig)
+        if not parsedClassVar or not parsedClassVar.fullClassName:
+            continue
+
+        parsedClass = parsedClassesDict.get(parsedClassVar.fullClassName)
         if not parsedClass:
             continue
 
-        parsedClass.functions.append(parsedFunc)
+        # Add dependency classes by going through the var types
+        for varType in parsedClassVar.varTypes:
+            if varType.parsedClassParam and varType.parsedClassParam.fullClassName and varType.parsedClassParam.fullClassName not in parsedClass.classDependencies:
+                parsedClass.classDependencies.append(varType.parsedClassParam.fullClassName)
 
-def GetAllParsedClasses():
-    ParseAllClasses()
-    ParseAllClassVTFuncs()
-    ParseAllClassFuncs()
-    with open(Config.PARSED_CLASSES_OUTPUT_FILE, 'w') as fileStream:
-        json.dump(parsedClassesDict, fileStream, indent=4)
+        # Append parsed func to class
+        parsedClass.classVars.append(parsedClassVar)
+        unparsedDemangledExportedSigs.remove(demangledExportedSig)
+
+def GetAllParsedClasses() -> dict[str, ParsedClass]:
+    global parsedClassesDict
+
+    if os.path.exists(Config.PARSED_CLASSES_OUTPUT_FILE) and not parsedClassesDict:
+        with open(Config.PARSED_CLASSES_OUTPUT_FILE, 'r') as fileStream:
+            data = json.load(fileStream)
+        parsedClassesDict = { key: ParsedClass.model_validate(value) for key, value in data.items() }
+    elif not parsedClassesDict:
+        parsedClassesDict.clear()
+        ParseAllClasses(parsedClassesDict)
+        ParseAllClassVTFuncs(parsedClassesDict)
+        ParseAllClassFuncs(parsedClassesDict)
+        ParseAllClassVars(parsedClassesDict)
+        #MoveChildClasses(parsedClassesDict)
+        with open(Config.PARSED_CLASSES_OUTPUT_FILE, 'w') as fileStream:
+            fileStream.write(json.dumps(parsedClassesDict, indent=4, default=DefaultPydanticSerializer))
+    
+    return parsedClassesDict

@@ -1,8 +1,10 @@
 import os
 import json
 import ida_kernwin
+import idc
+import cProfile
 
-from ExportClassH import Config, JSONGen
+from ExportClassH import Config, HeaderGen
 
 def SetConfigVars(settings):
     Config.PROJECT_INCLUDES_PATH = settings["PROJECT_INCLUDES_PATH"]
@@ -10,12 +12,12 @@ def SetConfigVars(settings):
     Config.LAST_CLICKED_RADIO = settings["LAST_CLICKED_RADIO"]
 
     Config.HEADER_OUTPUT_PATH = os.path.join(Config.OUTPUT_PATH, "generated")
-    Config.CACHE_OUTPUT_PATH = os.path.join(Config.OUTPUT_PATH, "cache")
-    Config.PARSED_VARS_CACHE_FILENAME = os.path.join(Config.CACHE_OUTPUT_PATH, "parsedClassVarsByClass.cache")
-    Config.PARSED_FUNCS_CACHE_FILENAME = os.path.join(Config.CACHE_OUTPUT_PATH, "parsedFuncsByClass.cache")
 
 # Load settings from file
-def LoadConfig():
+def LoadConfig() -> dict:
+    Config.INPUT_MD5 = idc.retrieve_input_file_md5()
+    if not Config.INPUT_MD5:
+        raise Exception("Failed retreiving input file MD5")
     if os.path.exists(Config.CONFIG_FILE):
         with open(Config.CONFIG_FILE, "r") as f:
             loadedJson = json.load(f)
@@ -73,11 +75,12 @@ Export Class to C++ Header
 
 {FormChangeCb}
 
-<##Update Project Code:{r_update}>
-<##Generate Class Code:{r_generate}>
+<##Update Project:{r_update}>
+<##Generate Classes:{r_classesGenerate}>
+<##Generate Class:{r_classGenerate}>
 <##Settings:{r_settings}>{radioGroup}>
 """, {
-            'radioGroup': ida_kernwin.Form.RadGroupControl(("r_update", "r_generate", "r_settings")),
+            'radioGroup': ida_kernwin.Form.RadGroupControl(("r_update", "r_classesGenerate", "r_classGenerate", "r_settings")),
             'FormChangeCb': ida_kernwin.Form.FormChangeCb(self.OnFormChange),
         })
 
@@ -116,17 +119,19 @@ def OpenMainDlg():
         SaveConfig()
 
         if selectedOption == 0:
-            print("[INFO] Update Project Code selected!")
+            print("[INFO] Update Project selected!")
             #ProjectManager.ProcessExistingHeaders()
         elif selectedOption == 1:
-            print("[INFO] Generate Class Code selected!")
-            # targetClassName = ida_kernwin.ask_str("", 0, "Enter target class name:")
-            # if not targetClassName:
-            #     print("No target class specified. Aborting.")
-            #     return
-            #HeaderGen.ExportClassHeader(ClassName(targetClassName))
-            JSONGen.GetAllParsedClasses()
+            print("[INFO] Generate Classes selected!")
+            cProfile.runctx('HeaderGen.ExportClassHeaders()', globals(), locals(), 'cProfiler-data.dat')
         elif selectedOption == 2:
+            print("[INFO] Generate Class selected!")
+            targetClass = ida_kernwin.ask_str("", 0, "Enter target class name:")
+            if not targetClass:
+                print("No target class specified. Aborting.")
+                return
+            cProfile.runctx('HeaderGen.ExportClassHeader(targetClass)', globals(), locals(), 'cProfiler-data.dat')
+        elif selectedOption == 3:
             print("[INFO] Settings selected!")
             OpenSettingsDlg()  # Open settings when selected
     else:
