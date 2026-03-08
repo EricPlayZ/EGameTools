@@ -534,8 +534,19 @@ def ParseClassVTFuncs(parsedClass: ParsedClass):
             parsedClass.type = "class"
 
         # Add dependency classes by going through the func class name, return types and params
-        if parsedFunc.fullClassName and parsedFunc.fullClassName not in parsedClass.classDependencies:
-            parsedClass.classDependencies.append(parsedFunc.fullClassName)
+        parentClass = None
+        parsedFuncClassList: list[str] = []
+        parsedFuncClassList.append(parsedFunc.fullClassName)
+        for param in parsedFunc.params:
+            if param.parsedClassParam and param.parsedClassParam.fullClassName
+
+        parsedFuncClassList.append(parsedFunc.fullClassName)
+        Utils.SplitByClassSeparatorOutsideTemplates(parsedFunc.fullClassName)
+        for cls in parsedFuncClassList:
+            if not parentClass:
+                parentClass = parsedClass.classDependencies[cls]
+            else:
+                parentClass[cls]
         for param in parsedFunc.params:
             if param.parsedClassParam and param.parsedClassParam.fullClassName and param.parsedClassParam.fullClassName not in parsedClass.classDependencies:
                 parsedClass.classDependencies.append(param.parsedClassParam.fullClassName)

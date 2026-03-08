@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel, SkipValidation
 
 def DefaultPydanticSerializer(obj):
@@ -12,11 +12,14 @@ class ParsedParam(BaseModel):
     name: str = ""
     parsedClassParam: Optional[SkipValidation[ParsedClass]] = None
 
+class ClassDependency(BaseModel):
+    name: str = ""
+
 class ParsedClass(BaseModel):
     type: str = ""
     parentNamespaces: List[str] = []
     parentClasses: List[str] = []
-    classDependencies: List[str] = []
+    classDependencies: dict = {}
     name: str = ""
     templateParams: List[ParsedParam] = []
     fullClassName: str = ""
