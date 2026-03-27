@@ -178,6 +178,9 @@
     <ClCompile Include="src\Engine\VarManagerBase.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\RTTIManager.cpp">
+      <Filter>src\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">
@@ -424,6 +427,12 @@
     </ClInclude>
     <ClInclude Include="include\EGSDK\Imports.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGSDK\Engine\CRTTI.h">
+      <Filter>include\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGSDK\Engine\RTTIManager.h">
+      <Filter>include\Engine</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

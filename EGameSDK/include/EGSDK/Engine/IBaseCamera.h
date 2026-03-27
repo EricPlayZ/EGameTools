@@ -2,8 +2,10 @@
 #include <stdint.h>
 #include <EGSDK\mtx34.h>
 
+#include <EGSDK\Engine\CRTTI.h>
+
 namespace EGSDK::Engine {
-	class EGameSDK_API IBaseCamera {
+	class EGameSDK_API IBaseCamera : public CRTTIObject {
 	public:
 		float GetFOV();
 		vec3* GetForwardVector(vec3* outForwardVec);

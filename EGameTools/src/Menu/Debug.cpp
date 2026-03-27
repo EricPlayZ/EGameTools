@@ -30,6 +30,8 @@
 #include <EGSDK\Engine\CLobbySteam.h>
 #include <EGSDK\Engine\CVideoSettings.h>
 #include <EGSDK\Engine\CoPhysicsProperty.h>
+#include <EGSDK\Engine\RTTIManager.h>
+#include <EGSDK\Engine\CRTTI.h>
 
 namespace EGT::Menu {
 	namespace Debug {
@@ -118,6 +120,62 @@ namespace EGT::Menu {
 					RenderClassAddrPair(&pair);
 				ImGui::Unindent();
 			}
+
+			ImGui::SeparatorText("Dynamic RTTI Test##Debug");
+			if (ImGui::Button("Dump Global RTTI")) {
+				EGSDK::Engine::RTTIManager::Dump("RTTIDump.txt");
+				SPDLOG_INFO("[RTTI Test] Global RTTI dumped to RTTIDump.txt");
+			}
+
+			if (ImGui::Button("Run Instance Discovery Test")) {
+				auto rttiClass = EGSDK::Engine::RTTIManager::GetClass("CGame");
+				if (rttiClass) {
+					void* rttiInstance = EGSDK::Engine::RTTIManager::GetFirstInstance(rttiClass);
+					void* manualInstance = EGSDK::Engine::CGame::Get();
+					
+					SPDLOG_INFO("[RTTI Test] Class: {}", rttiClass->GetName());
+					SPDLOG_INFO("[RTTI Test] RTTI Discovery: {}", rttiInstance);
+					SPDLOG_INFO("[RTTI Test] Manual Discovery: {}", manualInstance);
+					
+					if (rttiInstance == manualInstance && manualInstance != nullptr) {
+						SPDLOG_INFO("[RTTI Test] SUCCESS: Instances match!");
+					} else if (manualInstance != nullptr) {
+						SPDLOG_WARN("[RTTI Test] WARNING: Instances do NOT match or RTTI failed.");
+					} else {
+						SPDLOG_ERROR("[RTTI Test] FAILED: Both instances are NULL.");
+					}
+				}
+			}
+
+			if (ImGui::Button("Run Player RTTI Test")) {
+				auto rttiClass = EGSDK::Engine::RTTIManager::GetClass("PlayerDI");
+				if (rttiClass) {
+					SPDLOG_INFO("[RTTI Test] Found PlayerDI class: {}", rttiClass->GetName());
+					
+					auto player = EGSDK::GamePH::PlayerDI_PH::Get();
+					if (player) {
+						// PlayerDI_PH inherits from PlayerDI
+						auto dynObj = EGSDK::Engine::DynamicObject(player, rttiClass);
+						
+						// Test m_DefaultFOV (float)
+						float fov = dynObj.GetProperty<float>("m_DefaultFOV");
+						SPDLOG_INFO("[RTTI Test] Initial DefaultFOV: {}", fov);
+						
+						// Modify it
+						dynObj.SetProperty<float>("m_DefaultFOV", fov + 5.0f);
+						SPDLOG_INFO("[RTTI Test] Modified DefaultFOV: {}", dynObj.GetProperty<float>("m_DefaultFOV"));
+						
+						// Revert
+						dynObj.SetProperty<float>("m_DefaultFOV", fov);
+						SPDLOG_INFO("[RTTI Test] RTTI verification completed successfully!");
+					} else {
+						SPDLOG_ERROR("[RTTI Test] Failed to find Player instance!");
+					}
+				} else {
+					SPDLOG_ERROR("[RTTI Test] Failed to find PlayerDI class!");
+				}
+			}
+
 			ImGui::Separator();
 			ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "* Option requires game restart to apply");
 		}

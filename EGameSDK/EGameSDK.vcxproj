@@ -30,6 +30,7 @@
     <ClCompile Include="src\Engine\IBaseCamera.cpp" />
     <ClCompile Include="src\Engine\IControlObject.cpp" />
     <ClCompile Include="src\Engine\IPhysicsCharacter.cpp" />
+    <ClCompile Include="src\Engine\RTTIManager.cpp" />
     <ClCompile Include="src\Engine\CVars.cpp" />
     <ClCompile Include="src\Engine\CVideoSettings.cpp" />
     <ClCompile Include="src\Engine\Engine_Misc.cpp" />
@@ -86,6 +87,8 @@
     <ClInclude Include="include\EGSDK\Engine\CLevel2.h" />
     <ClInclude Include="include\EGSDK\Engine\CLobbySteam.h" />
     <ClInclude Include="include\EGSDK\Engine\CoPhysicsProperty.h" />
+    <ClInclude Include="include\EGSDK\Engine\CRTTI.h" />
+    <ClInclude Include="include\EGSDK\Engine\RTTIManager.h" />
     <ClInclude Include="include\EGSDK\Engine\IBaseCamera.h" />
     <ClInclude Include="include\EGSDK\Engine\IControlObject.h" />
     <ClInclude Include="include\EGSDK\Engine\IPhysicsCharacter.h" />
