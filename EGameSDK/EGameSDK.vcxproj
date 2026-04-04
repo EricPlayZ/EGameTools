@@ -50,6 +50,7 @@
     <ClCompile Include="src\GamePH\LocalClientDI.cpp" />
     <ClCompile Include="src\GamePH\LogicalPlayer.cpp" />
     <ClCompile Include="src\GamePH\PlayerDI_PH.cpp" />
+    <ClCompile Include="src\GamePH\PlayerControllerQuery.cpp" />
     <ClCompile Include="src\GamePH\PlayerHealthModule.cpp" />
     <ClCompile Include="src\GamePH\PlayerInfectionModule.cpp" />
     <ClCompile Include="src\GamePH\PlayerState.cpp" />
@@ -97,7 +98,6 @@
     <ClInclude Include="include\EGSDK\Engine\VarMapBase.h" />
     <ClInclude Include="include\EGSDK\Engine\VarRef.h" />
     <ClInclude Include="include\EGSDK\Exports.h" />
-    <ClInclude Include="include\EGSDK\GamePH\CameraFPPDI.h" />
     <ClInclude Include="include\EGSDK\GamePH\CoBaseCameraProxy.h" />
     <ClInclude Include="include\EGSDK\GamePH\CoPlayerRestrictions.h" />
     <ClInclude Include="include\EGSDK\GamePH\DayNightCycle.h" />
@@ -114,7 +114,7 @@
     <ClInclude Include="include\EGSDK\GamePH\LocalClientDI.h" />
     <ClInclude Include="include\EGSDK\GamePH\LogicalPlayer.h" />
     <ClInclude Include="include\EGSDK\GamePH\PlayerDI_PH.h" />
-    <ClInclude Include="include\EGSDK\GamePH\PlayerFppVis_PH.h" />
+    <ClInclude Include="include\EGSDK\GamePH\PlayerControllerQuery.h" />
     <ClInclude Include="include\EGSDK\GamePH\PlayerHealthModule.h" />
     <ClInclude Include="include\EGSDK\GamePH\PlayerInfectionModule.h" />
     <ClInclude Include="include\EGSDK\GamePH\PlayerState.h" />

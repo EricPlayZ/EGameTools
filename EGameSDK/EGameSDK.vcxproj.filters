@@ -79,6 +79,9 @@
     <ClCompile Include="src\GamePH\PlayerDI_PH.cpp">
       <Filter>src\GamePH</Filter>
     </ClCompile>
+    <ClCompile Include="src\GamePH\PlayerControllerQuery.cpp">
+      <Filter>src\GamePH</Filter>
+    </ClCompile>
     <ClCompile Include="src\GamePH\PlayerHealthModule.cpp">
       <Filter>src\GamePH</Filter>
     </ClCompile>
@@ -302,6 +305,9 @@
     <ClInclude Include="include\EGSDK\GamePH\PlayerDI_PH.h">
       <Filter>include\GamePH</Filter>
     </ClInclude>
+    <ClInclude Include="include\EGSDK\GamePH\PlayerControllerQuery.h">
+      <Filter>include\GamePH</Filter>
+    </ClInclude>
     <ClInclude Include="include\EGSDK\GamePH\PlayerHealthModule.h">
       <Filter>include\GamePH</Filter>
     </ClInclude>
@@ -400,12 +406,6 @@
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\IControlObject.h">
       <Filter>include\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="include\EGSDK\GamePH\CameraFPPDI.h">
-      <Filter>include\GamePH</Filter>
-    </ClInclude>
-    <ClInclude Include="include\EGSDK\GamePH\PlayerFppVis_PH.h">
-      <Filter>include\GamePH</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\vec2.h">
       <Filter>include</Filter>

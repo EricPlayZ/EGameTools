@@ -4,38 +4,86 @@
 #include <EGSDK\Utils\RTTI.h>
 #include <EGSDK\Utils\Sigscan.h>
 #include <EGSDK\Exports.h>
+#include <string>
 
 namespace EGSDK {
 	#define AddPattern(name, moduleName, pattern, type, retType)\
 	static retType Get_## name () {\
 		static retType name = NULL;\
 		static int i = 0;\
-		if (!Utils::Memory::IsBadReadPtr(name) || !GetModuleHandleA(moduleName) || i >= 50) return name;\
+		if (!Utils::Memory::IsBadReadPtr(reinterpret_cast<void*>(name)))\
+			return name;\
+		if (!GetModuleHandleA(moduleName)) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "module not loaded (GetModuleHandleA returned null)");\
+			return name;\
+		}\
+		if (i >= 50) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "gave up after 50 pattern scan attempts (still null or unreadable)");\
+			return name;\
+		}\
 		i++;\
-		return name=reinterpret_cast<retType>(Utils::SigScan::PatternScanner::FindPattern(moduleName, {pattern, type}));\
-	} 
+		void* _patHit = Utils::SigScan::PatternScanner::FindPattern(moduleName, {pattern, type});\
+		if (!_patHit) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "pattern not found (FindPattern returned null; module is loaded)");\
+			return name;\
+		}\
+		if (Utils::Memory::IsBadReadPtr(_patHit)) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "pattern match points to unreadable memory (IsBadReadPtr)");\
+			return name;\
+		}\
+		return name = reinterpret_cast<retType>(_patHit);\
+	}
 	#define AddDynamicPattern(name, moduleName, retType)\
 	static retType Get_## name () {\
 		static retType name = NULL;\
 		static int i = 0;\
 		static Utils::SigScan::Pattern pattern = OffsetManager::GetPattern(#name);\
 		if (!pattern.pattern) pattern = OffsetManager::GetPattern(#name);\
-		if (!Utils::Memory::IsBadReadPtr(name) || !GetModuleHandleA(moduleName) || !pattern.pattern || i >= 50) return name;\
+		if (!Utils::Memory::IsBadReadPtr(reinterpret_cast<void*>(name)))\
+			return name;\
+		if (!pattern.pattern) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "no dynamic pattern string for this game version (OffsetManager::GetPattern empty)");\
+			return name;\
+		}\
+		if (!GetModuleHandleA(moduleName)) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "module not loaded (GetModuleHandleA returned null)");\
+			return name;\
+		}\
+		if (i >= 50) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "gave up after 50 pattern scan attempts (still null or unreadable)");\
+			return name;\
+		}\
 		i++;\
-		return name=reinterpret_cast<retType>(Utils::SigScan::PatternScanner::FindPattern(moduleName, pattern));\
-	} 
+		void* _dynHit = Utils::SigScan::PatternScanner::FindPattern(moduleName, pattern);\
+		if (!_dynHit) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "pattern not found (FindPattern returned null; module is loaded)");\
+			return name;\
+		}\
+		if (Utils::Memory::IsBadReadPtr(_dynHit)) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "pattern match points to unreadable memory (IsBadReadPtr)");\
+			return name;\
+		}\
+		return name = reinterpret_cast<retType>(_dynHit);\
+	}
 
 	#define AddStaticOffset(name, off)\
 	static uint64_t Get_## name () {\
 		static uint64_t name = 0;\
 		if (name) return name; \
 		return name=static_cast<uint64_t>(off);\
-	} 
+	}
 	#define AddStaticOffset2(name, moduleName, off) \
 	static uint64_t Get_## name () {\
 		static uint64_t name = 0;\
-		if (!Utils::Memory::IsBadReadPtr(name)) return name;\
-		return name=reinterpret_cast<uint64_t>(GetModuleHandleA(moduleName)) + static_cast<uint64_t>(off);\
+		if (!Utils::Memory::IsBadReadPtr(reinterpret_cast<void*>(static_cast<uintptr_t>(name)))) return name;\
+		if (!GetModuleHandleA(moduleName)) {\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "module not loaded (GetModuleHandleA returned null; cannot apply image-relative offset)");\
+			return name;\
+		}\
+		name = reinterpret_cast<uint64_t>(GetModuleHandleA(moduleName)) + static_cast<uint64_t>(off);\
+		if (Utils::Memory::IsBadReadPtr(reinterpret_cast<void*>(static_cast<uintptr_t>(name))))\
+			OffsetManager::LogPatternGetterFailure(#name, moduleName, "base+offset is unreadable (IsBadReadPtr on computed address)");\
+		return name;\
 	}
 
 	class EGameSDK_API OffsetManager {
@@ -45,6 +93,8 @@ namespace EGSDK {
 		static void InitializeOffsetsAndPatterns();
 		static DWORD GetOffset(const std::string& offsetName);
 		static Utils::SigScan::Pattern GetPattern(const std::string& patternName);
+
+		static void LogPatternGetterFailure(const char* getterSymbol, const char* moduleName, const char* reason);
 
 		// Input related
 		AddPattern(CInput, "engine_x64_rwdi.dll", "48 8B 0D [?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 84 D2", Utils::SigScan::PatternType::RelativePointer, uint64_t**) // g_CInput
@@ -77,8 +127,6 @@ namespace EGSDK {
 		AddPattern(MoveCameraFromForwardUpPos, "engine_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 49 8B C1 48 8B F9", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(CalculateFreeCamCollision, "gamedll_ph_x64_rwdi.dll", "48 8B C4 55 53 56 57 48 8D A8 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 83 B9", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(AllowCameraMovement, "gamedll_ph_x64_rwdi.dll", "89 91 ?? ?? ?? ?? C3 CC CC CC CC CC CC CC CC CC 48 8B C4 55 56", Utils::SigScan::PatternType::Address, void*)
-		AddPattern(CreatePlayerHealthModule, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 4C 8B F1 E8 ?? ?? ?? ?? 48 8D 05", Utils::SigScan::PatternType::Address, void*)
-		AddPattern(CreatePlayerInfectionModule, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 33 FF 66 C7 44 24 ?? ?? ?? 48 8D 05 ?? ?? ?? ?? 48 89 03", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(LifeSetHealth, "gamedll_ph_x64_rwdi.dll", "F3 0F 11 49 ?? F3 0F 11 49 ?? F3 0F 11 49 ?? C3", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(TogglePhotoMode1, "gamedll_ph_x64_rwdi.dll", "48 83 EC ?? 38 91 ?? ?? ?? ?? 0F 84", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(TogglePhotoMode2, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 41 0F B6 F8 48 8B 0D", Utils::SigScan::PatternType::Address, void*)
@@ -92,6 +140,7 @@ namespace EGSDK {
 		AddPattern(ReadPlayerJumpParams, "gamedll_ph_x64_rwdi.dll", "40 55 56 57 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 4C 8B B5", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(PlayerGetCurrentWeapon, "gamedll_ph_x64_rwdi.dll", "8B C2 48 8D 14 80 48 83 BC D1 ?? ?? ?? ?? ?? 74 ?? 48 8B 84 D1 ?? ?? ?? ?? C3 33 C0 C3 CC CC CC 8B C2", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(PlayerGetInventoryMoney, "gamedll_ph_x64_rwdi.dll", "8B C2 48 8B 44 C1", Utils::SigScan::PatternType::Address, void*)
+		AddPattern(GetPlayerController, "gamedll_ph_x64_rwdi.dll", "48 8B 81 ?? ?? ?? ?? 48 B9 ?? ?? ?? ?? ?? ?? ?? ?? 48 23 C1 4C 63 C2", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(HandleInventoryItemsAmount, "gamedll_ph_x64_rwdi.dll", "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 8B 29", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(SetNewWaypointLocation, "gamedll_ph_x64_rwdi.dll", "85 D2 78 ?? 48 89 74 24 ?? 57 48 83 EC ?? 49 8B F8", Utils::SigScan::PatternType::Address, void*)
 		AddPattern(SetNewWaypointLocationWaypointIsSetBoolInstr, "gamedll_ph_x64_rwdi.dll", "C6 84 33 [?? ?? ?? ?? 01 48 8B 5C 24", Utils::SigScan::PatternType::Address, DWORD*)

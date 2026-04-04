@@ -1,5 +1,8 @@
 ﻿#include <EGSDK\Offsets.h>
 #include <EGSDK\Engine\CBulletPhysicsCharacter.h>
+#include <mutex>
+#include <sstream>
+#include <unordered_set>
 #include <EGSDK\Engine\CGame.h>
 #include <EGSDK\Engine\CVideoSettings.h>
 #include <EGSDK\GamePH\CoPlayerRestrictions.h>
@@ -12,6 +15,11 @@
 #include <EGSDK\ClassHelpers.h>
 
 namespace EGSDK {
+	namespace {
+		std::mutex patternGetterDiagMutex;
+		std::unordered_set<std::string> patternGetterFailuresLogged;
+	}
+
 	bool OffsetManager::initialized = false;
 
 	void OffsetManager::InitializeOffsetsAndPatterns() {
@@ -20,7 +28,6 @@ namespace EGSDK {
 
 		AddOffsets(11200, {
 			{ "OnPostUpdate", 0x378 },
-			{ GetOffsetNameFromClassMember(&Engine::CBulletPhysicsCharacter::playerPos2), 0x880 },
 			{ GetOffsetNameFromClassMember(&Engine::CBulletPhysicsCharacter::playerPos), 0x898 },
 			{ GetOffsetNameFromClassMember(&Engine::CBulletPhysicsCharacter::playerDownwardVelocity), 0xC18 },
 			{ GetOffsetNameFromClassMember(&Engine::CGame::pCLevel), 0x380 },
@@ -45,7 +52,6 @@ namespace EGSDK {
 			});
 		AddOffsets(12001, {
 			{ "OnPostUpdate", 0x3A8 },
-			{ GetOffsetNameFromClassMember(&Engine::CBulletPhysicsCharacter::playerPos2), 0xCB8 },
 			{ GetOffsetNameFromClassMember(&Engine::CBulletPhysicsCharacter::playerPos), 0xCD0 },
 			{ GetOffsetNameFromClassMember(&Engine::CBulletPhysicsCharacter::playerDownwardVelocity), 0x1050 },
 			{ GetOffsetNameFromClassMember(&Engine::CGame::pCLevel), 0x390 },
@@ -133,5 +139,19 @@ namespace EGSDK {
 	std::unordered_map<DWORD, std::unordered_map<std::string, Utils::SigScan::Pattern>>& OffsetManager::GetPatternsMap() {
 		static std::unordered_map<DWORD, std::unordered_map<std::string, Utils::SigScan::Pattern>> patternsMap;
 		return patternsMap;
+	}
+
+	void OffsetManager::LogPatternGetterFailure(const char* getterSymbol, const char* moduleName, const char* reason) {
+		std::ostringstream oss;
+		oss << "Get_" << getterSymbol << ": " << reason << " [module=\"" << moduleName << "\"]";
+		const std::string full = oss.str();
+
+		{
+			std::lock_guard<std::mutex> lock(patternGetterDiagMutex);
+			const std::string dedupKey = std::string(getterSymbol) + '\x1f' + reason;
+			if (!patternGetterFailuresLogged.insert(dedupKey).second)
+				return;
+		}
+		SPDLOG_WARN("[OffsetManager] {}", full);
 	}
 }

@@ -1,16 +1,25 @@
-#include <vector>
+#include <cstddef>
 #include <EGSDK\GamePH\PlayerDI_PH.h>
+#include <EGSDK\GamePH\PlayerControllerQuery.h>
 #include <EGSDK\GamePH\PlayerHealthModule.h>
 #include <EGSDK\ClassHelpers.h>
+#include <EGSDK\Utils\Memory.h>
 
 namespace EGSDK::GamePH {
 	static PlayerHealthModule* pPlayerHealthModule = nullptr;
-	std::vector<PlayerHealthModule*>* PlayerHealthModule::playerHealthModulePtrList = nullptr;
+	static const void* cachedPlayerHealthModuleVtable = nullptr;
 
-	PlayerHealthModule::~PlayerHealthModule() {
-		delete playerHealthModulePtrList;
-		playerHealthModulePtrList = nullptr;
+	static PlayerDI_PH* ReadModuleOwner(PlayerHealthModule* healthModule) {
+		if (!healthModule || Utils::Memory::IsBadReadPtr(healthModule))
+			return nullptr;
+		const size_t off = offsetof(PlayerHealthModule, pPlayerDI_PH) + 0x8;
+		PlayerDI_PH** slot = reinterpret_cast<PlayerDI_PH**>(reinterpret_cast<uint8_t*>(healthModule) + off);
+		if (Utils::Memory::IsBadReadPtr(slot))
+			return nullptr;
+		return *slot;
 	}
+
+	PlayerHealthModule::~PlayerHealthModule() = default;
 
 	static PlayerHealthModule* GetOffset_PlayerHealthModule() {
 		if (!pPlayerHealthModule)
@@ -19,36 +28,32 @@ namespace EGSDK::GamePH {
 			return nullptr;
 		return pPlayerHealthModule;
 	}
+
 	PlayerHealthModule* PlayerHealthModule::Get() {
+		PlayerDI_PH* player = PlayerDI_PH::Get();
+		if (!player)
+			return nullptr;
+
+		if (pPlayerHealthModule) {
+			if (ReadModuleOwner(pPlayerHealthModule) == player) {
+				if (ClassHelpers::SafeGetter<PlayerHealthModule>(GetOffset_PlayerHealthModule, false, false))
+					return pPlayerHealthModule;
+			}
+			pPlayerHealthModule = nullptr;
+		}
+
+		void* found = PlayerControllerQuery::TryFindControllerByRtti(player, "PlayerHealthModule", &cachedPlayerHealthModuleVtable);
+		if (!found)
+			return nullptr;
+		pPlayerHealthModule = reinterpret_cast<PlayerHealthModule*>(found);
 		return ClassHelpers::SafeGetter<PlayerHealthModule>(GetOffset_PlayerHealthModule, false, false);
 	}
 
-	void PlayerHealthModule::EmplaceBack(PlayerHealthModule* ptr) {
-		if (!playerHealthModulePtrList)
-			playerHealthModulePtrList = new std::vector<PlayerHealthModule*>();
-
-		playerHealthModulePtrList->emplace_back(ptr);
-	}
 	void PlayerHealthModule::UpdateClassAddr() {
-		if (!playerHealthModulePtrList)
-			playerHealthModulePtrList = new std::vector<PlayerHealthModule*>();
-
-		PlayerDI_PH* pPlayerDI_PH = PlayerDI_PH::Get();
-		if (!pPlayerDI_PH)
+		PlayerDI_PH* player = PlayerDI_PH::Get();
+		if (!player || !pPlayerHealthModule)
 			return;
-		if (Get() && Get()->pPlayerDI_PH == pPlayerDI_PH)
-			return;
-
-		for (auto& pPlayerHealthModule : *playerHealthModulePtrList) {
-			if (pPlayerHealthModule->pPlayerDI_PH == pPlayerDI_PH) {
-				SetInstance(pPlayerHealthModule);
-				playerHealthModulePtrList->clear();
-				playerHealthModulePtrList->emplace_back(pPlayerHealthModule);
-			}
-		}
-	}
-
-	void PlayerHealthModule::SetInstance(void* instance) {
-		pPlayerHealthModule = reinterpret_cast<PlayerHealthModule*>(instance);
+		if (ReadModuleOwner(pPlayerHealthModule) != player)
+			pPlayerHealthModule = nullptr;
 	}
 }

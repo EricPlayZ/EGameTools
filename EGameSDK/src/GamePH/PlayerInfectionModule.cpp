@@ -1,16 +1,25 @@
-#include <vector>
+#include <cstddef>
 #include <EGSDK\GamePH\PlayerDI_PH.h>
+#include <EGSDK\GamePH\PlayerControllerQuery.h>
 #include <EGSDK\GamePH\PlayerInfectionModule.h>
 #include <EGSDK\ClassHelpers.h>
+#include <EGSDK\Utils\Memory.h>
 
 namespace EGSDK::GamePH {
 	static PlayerInfectionModule* pPlayerInfectionModule = nullptr;
-	std::vector<PlayerInfectionModule*>* PlayerInfectionModule::playerInfectionModulePtrList = nullptr;
+	static const void* cachedPlayerInfectionModuleVtable = nullptr;
 
-	PlayerInfectionModule::~PlayerInfectionModule() {
-		delete playerInfectionModulePtrList;
-		playerInfectionModulePtrList = nullptr;
+	static PlayerDI_PH* ReadModuleOwner(PlayerInfectionModule* infectionModule) {
+		if (!infectionModule || Utils::Memory::IsBadReadPtr(infectionModule))
+			return nullptr;
+		const size_t off = offsetof(PlayerInfectionModule, pPlayerDI_PH) + 0x8;
+		PlayerDI_PH** slot = reinterpret_cast<PlayerDI_PH**>(reinterpret_cast<uint8_t*>(infectionModule) + off);
+		if (Utils::Memory::IsBadReadPtr(slot))
+			return nullptr;
+		return *slot;
 	}
+
+	PlayerInfectionModule::~PlayerInfectionModule() = default;
 
 	static PlayerInfectionModule* GetOffset_PlayerInfectionModule() {
 		if (!pPlayerInfectionModule)
@@ -19,36 +28,32 @@ namespace EGSDK::GamePH {
 			return nullptr;
 		return pPlayerInfectionModule;
 	}
+
 	PlayerInfectionModule* PlayerInfectionModule::Get() {
+		PlayerDI_PH* player = PlayerDI_PH::Get();
+		if (!player)
+			return nullptr;
+
+		if (pPlayerInfectionModule) {
+			if (ReadModuleOwner(pPlayerInfectionModule) == player) {
+				if (ClassHelpers::SafeGetter<PlayerInfectionModule>(GetOffset_PlayerInfectionModule, false, false))
+					return pPlayerInfectionModule;
+			}
+			pPlayerInfectionModule = nullptr;
+		}
+
+		void* found = PlayerControllerQuery::TryFindControllerByRtti(player, "PlayerInfectionModule", &cachedPlayerInfectionModuleVtable);
+		if (!found)
+			return nullptr;
+		pPlayerInfectionModule = reinterpret_cast<PlayerInfectionModule*>(found);
 		return ClassHelpers::SafeGetter<PlayerInfectionModule>(GetOffset_PlayerInfectionModule, false, false);
 	}
 
-	void PlayerInfectionModule::EmplaceBack(PlayerInfectionModule* ptr) {
-		if (!playerInfectionModulePtrList)
-			playerInfectionModulePtrList = new std::vector<PlayerInfectionModule*>();
-
-		playerInfectionModulePtrList->emplace_back(ptr);
-	}
 	void PlayerInfectionModule::UpdateClassAddr() {
-		if (!playerInfectionModulePtrList)
-			playerInfectionModulePtrList = new std::vector<PlayerInfectionModule*>();
-
-		PlayerDI_PH* pPlayerDI_PH = PlayerDI_PH::Get();
-		if (!pPlayerDI_PH)
+		PlayerDI_PH* player = PlayerDI_PH::Get();
+		if (!player || !pPlayerInfectionModule)
 			return;
-		if (PlayerInfectionModule::Get() && PlayerInfectionModule::Get()->pPlayerDI_PH == pPlayerDI_PH)
-			return;
-
-		for (auto& pPlayerInfectionModule : *playerInfectionModulePtrList) {
-			if (pPlayerInfectionModule->pPlayerDI_PH == pPlayerDI_PH) {
-				SetInstance(pPlayerInfectionModule);
-				playerInfectionModulePtrList->clear();
-				playerInfectionModulePtrList->emplace_back(pPlayerInfectionModule);
-			}
-		}
-	}
-
-	void PlayerInfectionModule::SetInstance(void* instance) {
-		pPlayerInfectionModule = reinterpret_cast<PlayerInfectionModule*>(instance);
+		if (ReadModuleOwner(pPlayerInfectionModule) != player)
+			pPlayerInfectionModule = nullptr;
 	}
 }

@@ -1,5 +1,4 @@
 #pragma once
-#include <vector>
 #include <EGSDK\ClassHelpers.h>
 
 namespace EGSDK::GamePH {
@@ -12,15 +11,10 @@ namespace EGSDK::GamePH {
 			ClassHelpers::StaticBuffer<0x2C, float> health;
 			ClassHelpers::StaticBuffer<0x3C, float> maxHealth;
 		};
-		
+
 		~PlayerHealthModule();
 		static PlayerHealthModule* Get();
-		
-		static void EmplaceBack(PlayerHealthModule* ptr);
-		static void UpdateClassAddr();
-	private:
-		static std::vector<PlayerHealthModule*>* playerHealthModulePtrList;
 
-		static void SetInstance(void* instance);
+		static void UpdateClassAddr();
 	};
 }
