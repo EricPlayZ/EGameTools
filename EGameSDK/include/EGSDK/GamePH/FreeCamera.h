@@ -13,7 +13,7 @@ namespace EGSDK::GamePH {
 			DynamicField(FreeCamera, bool, enableSpeedMultiplier1);
 			DynamicField(FreeCamera, bool, enableSpeedMultiplier2);
 			DynamicField(FreeCamera, float, speedMultiplier);
-			DynamicField(FreeCamera, float, mouseSensitivityMultiplier);
+			//DynamicField(FreeCamera, float, mouseSensitivityMultiplier);
 		};
 
 		void AllowCameraMovement(int mode = 2);
