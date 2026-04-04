@@ -1,6 +1,6 @@
-#include <EGSDK\Offsets.h>
 #include <EGSDK\Engine\CBulletPhysicsCharacter.h>
-#include <EGSDK\Engine\CoPhysicsProperty.h>
+#include <EGSDK\Engine\CoPhysics.h>
+#include <EGSDK\GamePH\PlayerDI_PH.h>
 #include <EGSDK\ClassHelpers.h>
 
 namespace EGSDK::Engine {
@@ -15,8 +15,13 @@ namespace EGSDK::Engine {
 	}
 
 	static CBulletPhysicsCharacter* GetOffset_CBulletPhysicsCharacter() {
-		CoPhysicsProperty* pCoPhysicsProperty = CoPhysicsProperty::Get();
-		return pCoPhysicsProperty ? pCoPhysicsProperty->pCBulletPhysicsCharacter : nullptr;
+		GamePH::PlayerDI_PH* pPlayer = GamePH::PlayerDI_PH::Get();
+		if (!pPlayer)
+			return nullptr;
+		CoPhysics* pCoPhysics = pPlayer->GetCoPhysics();
+		if (!pCoPhysics)
+			return nullptr;
+		return pCoPhysics->pCBulletPhysicsCharacter;
 	}
 	CBulletPhysicsCharacter* CBulletPhysicsCharacter::Get() {
 		return ClassHelpers::SafeGetter<CBulletPhysicsCharacter>(GetOffset_CBulletPhysicsCharacter, false);

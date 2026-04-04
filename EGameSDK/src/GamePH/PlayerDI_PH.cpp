@@ -1,4 +1,5 @@
 #include <EGSDK\Offsets.h>
+#include <EGSDK\Engine\CoPhysics.h>
 #include <EGSDK\GamePH\InventoryContainerDI.h>
 #include <EGSDK\GamePH\InventoryItem.h>
 #include <EGSDK\GamePH\LocalClientDI.h>
@@ -9,11 +10,15 @@
 namespace EGSDK::GamePH {
 	bool PlayerDI_PH::areRestrictionsEnabledByGame = false;
 
+	Engine::CoPhysics* PlayerDI_PH::GetCoPhysics() const {
+		return Utils::Memory::SafeCallFunctionOffset<Engine::CoPhysics*>(OffsetManager::Get_GetCoPhysics, nullptr, this);
+	}
+
 	static InventoryItem* GetOffset_CurrentWeapon(PlayerDI_PH* pPlayerDI_PH, uint32_t indexMaybe) {
 		return Utils::Memory::SafeCallFunctionOffset<InventoryItem*>(OffsetManager::Get_PlayerGetCurrentWeapon, nullptr, pPlayerDI_PH, indexMaybe);
 	}
 	InventoryItem* PlayerDI_PH::GetCurrentWeapon(uint32_t indexMaybe) {
-		return ClassHelpers::SafeGetter<InventoryItem>(GetOffset_CurrentWeapon, false, {}, this, indexMaybe);
+		return ClassHelpers::SafeGetter<InventoryItem>(GetOffset_CurrentWeapon, false, true, this, indexMaybe);
 	}
 
 	static InventoryContainerDI* GetOffset_InventoryContainerDI(PlayerDI_PH* pPlayerDI_PH) {

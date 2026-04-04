@@ -1,5 +1,6 @@
 #pragma once
 #include <typeinfo>
+#include <type_traits>
 #include <EGSDK\Utils\Memory.h>
 #include <EGSDK\Utils\Values.h>
 #include <EGSDK\Exports.h>
@@ -87,7 +88,13 @@ namespace EGSDK {
             operator T() const {
                 return *getPointer();
             }
-            T* operator->() const {
+            // When T is U*, getPointer() is the address of the stored pointer (type U* in memory); return U* for -> chaining.
+            template<typename U = T, typename = std::enable_if_t<std::is_pointer_v<U>>>
+            std::remove_pointer_t<U>* operator->() const {
+                return *getPointer();
+            }
+            template<typename U = T, typename = std::enable_if_t<!std::is_pointer_v<U>>, typename = void>
+            U* operator->() const {
                 return getPointer();
             }
 

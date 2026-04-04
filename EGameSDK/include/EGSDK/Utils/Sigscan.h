@@ -18,6 +18,9 @@ namespace EGSDK::Utils {
 			RelativePointerWORD,
 			RelativePointerDWORD,
 			RelativePointerQWORD,
+			// Match at '['; read SIB displacement as struct member byte offset (encoded in result pointer bits for GetOffset pipeline).
+			MemberDisplacement32,
+			MemberDisplacement8,
 		};
 
 		struct EGameSDK_API Pattern {

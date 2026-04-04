@@ -13,8 +13,8 @@ namespace EGSDK::GamePH {
 		void CSystem::ClearForcedWeather() {
 			Utils::Memory::SafeCallFunctionVoid("engine_x64_rwdi.dll", "?ClearForcedWeather@CSystem@TimeWeather@@QEAAXVApiDebugAccess@2@@Z", this);
 		}
-		int CSystem::GetCurrentWeather() {
-			return Utils::Memory::SafeCallFunction<int>("engine_x64_rwdi.dll", "?GetCurrentWeather@CSystem@TimeWeather@@QEBA?AW4TYPE@EWeather@@XZ", EWeather::Default, this);
+		EWeather CSystem::GetCurrentWeather() const {
+			return Utils::Memory::SafeCallFunction<EWeather>("engine_x64_rwdi.dll", "?GetCurrentWeather@CSystem@TimeWeather@@QEBA?AW4TYPE@EWeather@@XZ", EWeather::Default, this);
 		}
 
 		void CSystem::ReloadSubsystems() {

@@ -1,5 +1,6 @@
 #pragma once
 #include <EGSDK\GamePH\TimeWeather\ISubsystem.h>
+#include <EGSDK\GamePH\TimeWeather\EWeather.h>
 #include <EGSDK\Exports.h>
 #include <EGSDK\ClassHelpers.h>
 
@@ -8,16 +9,17 @@ namespace EGSDK::GamePH {
 		class EGameSDK_API CSystem {
 		public:
 			union {
-				ClassHelpers::StaticBuffer<0x10, float> blendTime;
-				ClassHelpers::StaticBuffer<0x14, float> blendTime2;
-				ClassHelpers::StaticBuffer<0x70, ISubsystem*> currentSubSystem;
-				ClassHelpers::StaticBuffer<0x78, ISubsystem*> nextSubSystem;
-				ClassHelpers::StaticBuffer<0x80, ISubsystem*> lastSubSystem;
+				DynamicField(CSystem, float, blendTime);
+				DynamicField(CSystem, float, blendTime2);
+				DynamicField(CSystem, ISubsystem*, currentSubSystem);
+				DynamicField(CSystem, ISubsystem*, nextSubSystem);
+				DynamicField(CSystem, ISubsystem*, lastSubSystem);
 			};
 
 			void SetForcedWeather(int weather);
 			void ClearForcedWeather();
-			int GetCurrentWeather();
+			// ?GetCurrentWeather@CSystem@TimeWeather@@QEBA?AW4TYPE@EWeather@@XZ
+			EWeather GetCurrentWeather() const;
 
 			void ReloadSubsystems();
 			void RequestTimeWeatherInterpolation(int weather, float a3, float a4);

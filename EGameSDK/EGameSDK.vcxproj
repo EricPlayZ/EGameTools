@@ -20,13 +20,10 @@
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\Engine\CBulletPhysicsCharacter.cpp" />
     <ClCompile Include="src\Engine\CGame.cpp" />
-    <ClCompile Include="src\Engine\CGSObject.cpp" />
-    <ClCompile Include="src\Engine\CGSObject2.cpp" />
     <ClCompile Include="src\Engine\CInput.cpp" />
     <ClCompile Include="src\Engine\CLevel.cpp" />
-    <ClCompile Include="src\Engine\CLevel2.cpp" />
     <ClCompile Include="src\Engine\CLobbySteam.cpp" />
-    <ClCompile Include="src\Engine\CoPhysicsProperty.cpp" />
+    <ClCompile Include="src\Engine\CoPhysics.cpp" />
     <ClCompile Include="src\Engine\IBaseCamera.cpp" />
     <ClCompile Include="src\Engine\IControlObject.cpp" />
     <ClCompile Include="src\Engine\IPhysicsCharacter.cpp" />
@@ -48,6 +45,7 @@
     <ClCompile Include="src\GamePH\InventoryItem.cpp" />
     <ClCompile Include="src\GamePH\LevelDI.cpp" />
     <ClCompile Include="src\GamePH\LocalClientDI.cpp" />
+    <ClCompile Include="src\GamePH\LogicalLevel.cpp" />
     <ClCompile Include="src\GamePH\LogicalPlayer.cpp" />
     <ClCompile Include="src\GamePH\PlayerDI_PH.cpp" />
     <ClCompile Include="src\GamePH\PlayerControllerQuery.cpp" />
@@ -80,13 +78,11 @@
     <ClInclude Include="include\EGSDK\Engine\CBaseCamera.h" />
     <ClInclude Include="include\EGSDK\Engine\CBulletPhysicsCharacter.h" />
     <ClInclude Include="include\EGSDK\Engine\CGame.h" />
-    <ClInclude Include="include\EGSDK\Engine\CGSObject.h" />
-    <ClInclude Include="include\EGSDK\Engine\CGSObject2.h" />
     <ClInclude Include="include\EGSDK\Engine\CInput.h" />
     <ClInclude Include="include\EGSDK\Engine\CLevel.h" />
-    <ClInclude Include="include\EGSDK\Engine\CLevel2.h" />
     <ClInclude Include="include\EGSDK\Engine\CLobbySteam.h" />
-    <ClInclude Include="include\EGSDK\Engine\CoPhysicsProperty.h" />
+    <ClInclude Include="include\EGSDK\Engine\CoPhysics.h" />
+    <ClInclude Include="include\EGSDK\Engine\IPhysics.h" />
     <ClInclude Include="include\EGSDK\Engine\IBaseCamera.h" />
     <ClInclude Include="include\EGSDK\Engine\IControlObject.h" />
     <ClInclude Include="include\EGSDK\Engine\IPhysicsCharacter.h" />
@@ -112,6 +108,7 @@
     <ClInclude Include="include\EGSDK\GamePH\ItemDescWithContext.h" />
     <ClInclude Include="include\EGSDK\GamePH\LevelDI.h" />
     <ClInclude Include="include\EGSDK\GamePH\LocalClientDI.h" />
+    <ClInclude Include="include\EGSDK\GamePH\LogicalLevel.h" />
     <ClInclude Include="include\EGSDK\GamePH\LogicalPlayer.h" />
     <ClInclude Include="include\EGSDK\GamePH\PlayerDI_PH.h" />
     <ClInclude Include="include\EGSDK\GamePH\PlayerControllerQuery.h" />

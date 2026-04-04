@@ -7,14 +7,9 @@ namespace EGSDK {
 	}
 
 	namespace Engine {
-		class CGSObject;
-
 		class EGameSDK_API CLevel {
 		public:
-			union {
-				ClassHelpers::StaticBuffer<0x20, GamePH::LevelDI*> pLevelDI;
-				ClassHelpers::StaticBuffer<0x30, CGSObject*> pCGSObject;
-			};
+			ClassHelpers::StaticBuffer<0x20, GamePH::LevelDI*> pLevelDI;
 
 			static CLevel* Get();
 		};

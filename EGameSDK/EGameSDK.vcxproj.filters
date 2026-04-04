@@ -10,25 +10,16 @@
     <ClCompile Include="src\Core\Core.cpp">
       <Filter>src\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\CGSObject.cpp">
-      <Filter>src\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\CGSObject2.cpp">
-      <Filter>src\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine\CInput.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\CLevel.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\CLevel2.cpp">
-      <Filter>src\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine\CLobbySteam.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\CoPhysicsProperty.cpp">
+    <ClCompile Include="src\Engine\CoPhysics.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\CVideoSettings.cpp">
@@ -71,6 +62,9 @@
       <Filter>src\GamePH</Filter>
     </ClCompile>
     <ClCompile Include="src\GamePH\LocalClientDI.cpp">
+      <Filter>src\GamePH</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\LogicalLevel.cpp">
       <Filter>src\GamePH</Filter>
     </ClCompile>
     <ClCompile Include="src\GamePH\LogicalPlayer.cpp">
@@ -299,6 +293,9 @@
     <ClInclude Include="include\EGSDK\GamePH\LocalClientDI.h">
       <Filter>include\GamePH</Filter>
     </ClInclude>
+    <ClInclude Include="include\EGSDK\GamePH\LogicalLevel.h">
+      <Filter>include\GamePH</Filter>
+    </ClInclude>
     <ClInclude Include="include\EGSDK\GamePH\LogicalPlayer.h">
       <Filter>include\GamePH</Filter>
     </ClInclude>
@@ -332,25 +329,19 @@
     <ClInclude Include="include\EGSDK\GamePH\TimeWeather\CSystem.h">
       <Filter>include\GamePH\TimeWeather</Filter>
     </ClInclude>
-    <ClInclude Include="include\EGSDK\Engine\CGSObject.h">
-      <Filter>include\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="include\EGSDK\Engine\CGSObject2.h">
-      <Filter>include\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\CInput.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\CLevel.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="include\EGSDK\Engine\CLevel2.h">
-      <Filter>include\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\CLobbySteam.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="include\EGSDK\Engine\CoPhysicsProperty.h">
+    <ClInclude Include="include\EGSDK\Engine\CoPhysics.h">
+      <Filter>include\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGSDK\Engine\IPhysics.h">
       <Filter>include\Engine</Filter>
     </ClInclude>
     <ClInclude Include="include\EGSDK\Engine\CVideoSettings.h">

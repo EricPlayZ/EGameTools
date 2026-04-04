@@ -87,6 +87,23 @@ namespace EGSDK::Utils {
 			case PatternType::RelativePointerQWORD:
 				ret = PatternScanner::ResolveRelativePtr<uint64_t>(ret);
 				break;
+
+			case PatternType::MemberDisplacement32:
+				if (!ret || Utils::Memory::IsBadReadPtr(ret, sizeof(int32_t)))
+					ret = nullptr;
+				else {
+					const int32_t displacement = *reinterpret_cast<const int32_t*>(ret);
+					ret = reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<uint32_t>(displacement)));
+				}
+				break;
+
+			case PatternType::MemberDisplacement8:
+				if (!ret || Utils::Memory::IsBadReadPtr(ret, sizeof(uint8_t)))
+					ret = nullptr;
+				else
+					ret = reinterpret_cast<void*>(static_cast<uintptr_t>(*reinterpret_cast<const uint8_t*>(ret)));
+				break;
+
 			default:
 				break;
 			}

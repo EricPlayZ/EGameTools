@@ -7,14 +7,13 @@
 #include <EGSDK\GamePH\InventoryContainerDI.h>
 
 namespace EGSDK::Engine {
-	class CoPhysicsProperty;
+	class CoPhysics;
 }
 
 namespace EGSDK::GamePH {
 	class EGameSDK_API PlayerDI_PH : public Engine::IControlObject {
 	public:
 		union {
-			DynamicField(PlayerDI_PH, Engine::CoPhysicsProperty*, pCoPhysicsProperty);
 			DynamicField(PlayerDI_PH, InventoryContainerDI*, pInventoryContainerDI);
 			DynamicField(PlayerDI_PH, vec2, nextPlayerOrientation);
 			DynamicField(PlayerDI_PH, bool, restrictionsEnabled);
@@ -23,6 +22,8 @@ namespace EGSDK::GamePH {
 		};
 
 		static bool areRestrictionsEnabledByGame;
+
+		Engine::CoPhysics* GetCoPhysics() const;
 
 		InventoryItem* GetCurrentWeapon(uint32_t indexMaybe);
 		InventoryContainerDI* GetInventoryContainer();

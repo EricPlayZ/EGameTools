@@ -18,6 +18,7 @@
 #include <EGSDK\GamePH\ItemDescWithContext.h>
 #include <EGSDK\GamePH\LevelDI.h>
 #include <EGSDK\GamePH\LocalClientDI.h>
+#include <EGSDK\GamePH\LogicalLevel.h>
 #include <EGSDK\GamePH\LogicalPlayer.h>
 #include <EGSDK\GamePH\PlayerDI_PH.h>
 #include <EGSDK\GamePH\PlayerHealthModule.h>
@@ -29,16 +30,11 @@
 #include <EGSDK\GamePH\TimeWeather\CSystem.h>
 
 #include <EGSDK\Engine\CBulletPhysicsCharacter.h>
-#include <EGSDK\Engine\CGSObject.h>
-#include <EGSDK\Engine\CGSObject2.h>
 #include <EGSDK\Engine\CGame.h>
 #include <EGSDK\Engine\CInput.h>
 #include <EGSDK\Engine\CLevel.h>
-#include <EGSDK\Engine\CLevel2.h>
 #include <EGSDK\Engine\CLobbySteam.h>
 #include <EGSDK\Engine\CVideoSettings.h>
-#include <EGSDK\Engine\CoPhysicsProperty.h>
-
 namespace EGT::Menu {
 	namespace Debug {
 		static const std::vector<std::pair<std::string_view, void*(*)()>> GamePHClassAddrMap = {
@@ -50,6 +46,7 @@ namespace EGT::Menu {
 			{ "GameDI_PH2", reinterpret_cast<void*(*)()>(&EGSDK::GamePH::GameDI_PH2::Get) },
 			{ "LevelDI", reinterpret_cast<void*(*)()>(&EGSDK::GamePH::LevelDI::Get) },
 			{ "LocalClientDI", reinterpret_cast<void*(*)()>(&EGSDK::GamePH::LocalClientDI::Get) },
+			{ "LogicalLevel", reinterpret_cast<void*(*)()>(&EGSDK::GamePH::LogicalLevel::Get) },
 			{ "LogicalPlayer", reinterpret_cast<void*(*)()>(&EGSDK::GamePH::LogicalPlayer::Get) },
 			{ "PlayerDI_PH", reinterpret_cast<void*(*)()>(&EGSDK::GamePH::PlayerDI_PH::Get) },
 			{ "PlayerHealthModule", reinterpret_cast<void*(*)()>(&EGSDK::GamePH::PlayerHealthModule::Get) },
@@ -61,15 +58,11 @@ namespace EGT::Menu {
 		};
 		static const std::vector<std::pair<std::string_view, void*(*)()>> EngineClassAddrMap = {
 			{ "CBulletPhysicsCharacter", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CBulletPhysicsCharacter::Get) },
-			{ "CGSObject", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CGSObject::Get) },
-			{ "CGSObject2", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CGSObject2::Get) },
 			{ "CGame", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CGame::Get) },
 			{ "CInput", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CInput::Get) },
 			{ "CLevel", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CLevel::Get) },
-			{ "CLevel2", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CLevel2::Get) },
 			{ "CLobbySteam", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CLobbySteam::Get) },
-			{ "CVideoSettings", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CVideoSettings::Get) },
-			{ "CoPhysicsProperty", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CoPhysicsProperty::Get) }
+			{ "CVideoSettings", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CVideoSettings::Get) }
 		};
 
 		ImGui::Option disableVftableScanning { false };
@@ -106,8 +99,6 @@ namespace EGT::Menu {
 		}
 
 		namespace {
-#define STATIC_BUF_OFF(Class, Field, N) (static_cast<uint64_t>(offsetof(Class, Field)) + (static_cast<uint64_t>(N)))
-
 			template<typename ParentT, typename FieldT>
 			uint64_t DynOff(FieldT ParentT::* member) {
 				return EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(member));
@@ -122,30 +113,30 @@ namespace EGT::Menu {
 
 			static const std::vector<UnionFieldEntry> kGamePHUnionFields = {
 				{ "TimeWeather\\CSystem::blendTime", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::TimeWeather::CSystem, blendTime, 0x10); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::blendTime); } },
 				{ "TimeWeather\\CSystem::blendTime2", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::TimeWeather::CSystem, blendTime2, 0x14); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::blendTime2); } },
 				{ "TimeWeather\\CSystem::currentSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::TimeWeather::CSystem, currentSubSystem, 0x70); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::currentSubSystem); } },
 				{ "TimeWeather\\CSystem::nextSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::TimeWeather::CSystem, nextSubSystem, 0x78); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::nextSubSystem); } },
 				{ "TimeWeather\\CSystem::lastSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::TimeWeather::CSystem, lastSubSystem, 0x80); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::lastSubSystem); } },
 
 				{ "CoPlayerRestrictions::flags", "CoPlayerRestrictions", []() -> void* { return EGSDK::GamePH::CoPlayerRestrictions::Get(); },
 				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::CoPlayerRestrictions::flags); } },
 
 				{ "DayNightCycle::time1", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::DayNightCycle, time1, 0x10); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time1); } },
 				{ "DayNightCycle::time2", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::DayNightCycle, time2, 0x20); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time2); } },
 				{ "DayNightCycle::time3", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::DayNightCycle, time3, 0x5C); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time3); } },
 
 				{ "FreeCamera::pCoBaseCameraProxy", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::FreeCamera, pCoBaseCameraProxy, 0x18); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::pCoBaseCameraProxy); } },
 				{ "FreeCamera::pCBaseCamera", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::FreeCamera, pCBaseCamera, 0x38); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::pCBaseCamera); } },
 				{ "FreeCamera::enableSpeedMultiplier1", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
 				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::enableSpeedMultiplier1); } },
 				{ "FreeCamera::enableSpeedMultiplier2", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
@@ -161,8 +152,6 @@ namespace EGT::Menu {
 				{ "LocalClientDI::pPlayerDI_PH", "LocalClientDI", []() -> void* { return EGSDK::GamePH::LocalClientDI::Get(); },
 				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::LocalClientDI::pPlayerDI_PH); } },
 
-				{ "PlayerDI_PH::pCoPhysicsProperty", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::pCoPhysicsProperty); } },
 				{ "PlayerDI_PH::pInventoryContainerDI", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
 				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::pInventoryContainerDI); } },
 				{ "PlayerDI_PH::nextPlayerOrientation", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
@@ -175,26 +164,30 @@ namespace EGT::Menu {
 				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::enableTPPModel2); } },
 
 				{ "PlayerHealthModule::pPlayerDI_PH", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::PlayerHealthModule, pPlayerDI_PH, 0x8); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::pPlayerDI_PH); } },
 				{ "PlayerHealthModule::health", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::PlayerHealthModule, health, 0x2C); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::health); } },
 				{ "PlayerHealthModule::maxHealth", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::PlayerHealthModule, maxHealth, 0x3C); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::maxHealth); } },
 
 				{ "PlayerInfectionModule::pPlayerDI_PH", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::PlayerInfectionModule, pPlayerDI_PH, 0x8); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::pPlayerDI_PH); } },
 				{ "PlayerInfectionModule::maxImmunity", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::PlayerInfectionModule, maxImmunity, 0x20); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::maxImmunity); } },
 				{ "PlayerInfectionModule::immunity", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::PlayerInfectionModule, immunity, 0x2C); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::immunity); } },
 				{ "PlayerInfectionModule::nightrunnerTimer", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::PlayerInfectionModule, nightrunnerTimer, 0x98); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::nightrunnerTimer); } },
 
 				{ "PlayerState::playerVariables", "PlayerState", []() -> void* { return EGSDK::GamePH::PlayerState::Get(); },
 				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerState::playerVariables); } },
 
 				{ "SessionCooperativeDI::pLocalClientDI", "SessionCooperativeDI", []() -> void* { return EGSDK::GamePH::SessionCooperativeDI::Get(); },
 				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::SessionCooperativeDI::pLocalClientDI); } },
+				{ "SessionCooperativeDI::pLogicalLevel", "SessionCooperativeDI", []() -> void* { return EGSDK::GamePH::SessionCooperativeDI::Get(); },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::SessionCooperativeDI::pLogicalLevel); } },
+				{ "LogicalLevel::pLogicalPlayer", "LogicalLevel", []() -> void* { return EGSDK::GamePH::LogicalLevel::Get(); },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::LogicalLevel::pLogicalPlayer); } },
 
 				{ "InventoryMoney::oldWorldMoney", "InventoryMoney", []() -> void* {
 					auto* player = EGSDK::GamePH::PlayerDI_PH::Get();
@@ -203,7 +196,7 @@ namespace EGT::Menu {
 					auto* container = player->GetInventoryContainer();
 					return container ? reinterpret_cast<void*>(container->GetInventoryMoney(0)) : nullptr;
 				  },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::InventoryMoney, oldWorldMoney, 0x38); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::InventoryMoney::oldWorldMoney); } },
 				{ "ItemDescWithContext::weaponDurability", "ItemDescWithContext", []() -> void* {
 					auto* player = EGSDK::GamePH::PlayerDI_PH::Get();
 					if (!player)
@@ -211,17 +204,18 @@ namespace EGT::Menu {
 					auto* item = player->GetCurrentWeapon(0);
 					return item ? reinterpret_cast<void*>(item->GetItemDescCtx()) : nullptr;
 				  },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::GamePH::ItemDescWithContext, weaponDurability, 0xA8); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::ItemDescWithContext::weaponDurability); } },
 			};
 
+			// Engine types still on StaticBuffer (no member patterns in OffsetManager): offset = offsetof(field) + inner layout to .data.
 			static const std::vector<UnionFieldEntry> kEngineUnionFields = {
 				{ "CLobbySteam::pCGame", "CLobbySteam", []() -> void* { return EGSDK::Engine::CLobbySteam::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CLobbySteam, pCGame, 0xF8); } },
+				  []() -> uint64_t { return static_cast<uint64_t>(offsetof(EGSDK::Engine::CLobbySteam, pCGame)) + 0xF8; } },
 
 				{ "CGame::pGameDI_PH", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CGame, pGameDI_PH, 0x8); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pGameDI_PH); } },
 				{ "CGame::pCVideoSettings", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CGame, pCVideoSettings, 0x28); } },
+				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pCVideoSettings); } },
 				{ "CGame::pCLevel", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
 				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pCLevel); } },
 
@@ -234,24 +228,8 @@ namespace EGT::Menu {
 				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CBulletPhysicsCharacter::playerDownwardVelocity); } },
 
 				{ "CLevel::pLevelDI", "CLevel", []() -> void* { return EGSDK::Engine::CLevel::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CLevel, pLevelDI, 0x20); } },
-				{ "CLevel::pCGSObject", "CLevel", []() -> void* { return EGSDK::Engine::CLevel::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CLevel, pCGSObject, 0x30); } },
-
-				{ "CGSObject::pCLevel2", "CGSObject", []() -> void* { return EGSDK::Engine::CGSObject::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CGSObject, pCLevel2, 0x48); } },
-
-				{ "CLevel2::pCGSObject2", "CLevel2", []() -> void* { return EGSDK::Engine::CLevel2::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CLevel2, pCGSObject2, 0x28); } },
-
-				{ "CGSObject2::pLogicalPlayer", "CGSObject2", []() -> void* { return EGSDK::Engine::CGSObject2::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CGSObject2, pLogicalPlayer, 0x20); } },
-
-				{ "CoPhysicsProperty::pCBulletPhysicsCharacter", "CoPhysicsProperty", []() -> void* { return EGSDK::Engine::CoPhysicsProperty::Get(); },
-				  []() -> uint64_t { return STATIC_BUF_OFF(EGSDK::Engine::CoPhysicsProperty, pCBulletPhysicsCharacter, 0x20); } },
+				  []() -> uint64_t { return static_cast<uint64_t>(offsetof(EGSDK::Engine::CLevel, pLevelDI)) + 0x20; } },
 			};
-
-#undef STATIC_BUF_OFF
 
 			static void RenderHexPtrRow(const char* label, const void* ptr) {
 				const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
@@ -336,12 +314,12 @@ namespace EGT::Menu {
 					ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(0, 200, 100, 255)), "+0x40 matches GetItemDescCtx.");
 				}
 
-				ImGui::SeparatorText("Union fields (StaticBuffer)##InvDbg");
+				ImGui::SeparatorText("Union fields (DynamicField)##InvDbg");
 				ImGui::PushID("InvDbgUnionRows");
 				RenderUnionFieldRow("InventoryMoney::oldWorldMoney", "InventoryMoney", invMoney,
-					static_cast<uint64_t>(offsetof(EGSDK::GamePH::InventoryMoney, oldWorldMoney)) + 0x38);
+					EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(&EGSDK::GamePH::InventoryMoney::oldWorldMoney)));
 				RenderUnionFieldRow("ItemDescWithContext::weaponDurability", "ItemDescWithContext", itemCtx,
-					static_cast<uint64_t>(offsetof(EGSDK::GamePH::ItemDescWithContext, weaponDurability)) + 0xA8);
+					EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(&EGSDK::GamePH::ItemDescWithContext::weaponDurability)));
 				ImGui::PopID();
 			}
 		}
@@ -368,7 +346,7 @@ namespace EGT::Menu {
 				ImGui::Unindent();
 			}
 			ImGui::SeparatorText("Union field addresses (Class+offset)##Debug");
-			ImGui::TextUnformatted("Read-only: ClassName+field offset from OffsetManager / StaticBuffer; when the instance exists, resolved address is appended.");
+			ImGui::TextUnformatted("Read-only: ClassName+field offset from OffsetManager (patterns) or compile-time StaticBuffer layout; when the instance exists, resolved address is appended.");
 			if (ImGui::CollapsingHeader("GamePH##UnionFields", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				RenderUnionFieldList(kGamePHUnionFields);

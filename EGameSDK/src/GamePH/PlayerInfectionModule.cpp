@@ -1,4 +1,3 @@
-#include <cstddef>
 #include <EGSDK\GamePH\PlayerDI_PH.h>
 #include <EGSDK\GamePH\PlayerControllerQuery.h>
 #include <EGSDK\GamePH\PlayerInfectionModule.h>
@@ -12,9 +11,8 @@ namespace EGSDK::GamePH {
 	static PlayerDI_PH* ReadModuleOwner(PlayerInfectionModule* infectionModule) {
 		if (!infectionModule || Utils::Memory::IsBadReadPtr(infectionModule))
 			return nullptr;
-		const size_t off = offsetof(PlayerInfectionModule, pPlayerDI_PH) + 0x8;
-		PlayerDI_PH** slot = reinterpret_cast<PlayerDI_PH**>(reinterpret_cast<uint8_t*>(infectionModule) + off);
-		if (Utils::Memory::IsBadReadPtr(slot))
+		PlayerDI_PH** slot = infectionModule->pPlayerDI_PH.getPointer();
+		if (!slot || Utils::Memory::IsBadReadPtr(slot))
 			return nullptr;
 		return *slot;
 	}

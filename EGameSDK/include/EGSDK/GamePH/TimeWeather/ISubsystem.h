@@ -8,8 +8,8 @@ namespace EGSDK::GamePH {
 			union {
 				float currentTime;
 				ClassHelpers::StaticBuffer<0x4, int> currentWeather;
-				ClassHelpers::StaticBuffer<0x10, float> nextTime;
-				ClassHelpers::StaticBuffer<0x14, int> nextWeather;
+				DynamicField(ISubsystem, float, nextTime);
+				// Use CSystem::Get()->GetCurrentWeather() instead of a subsystem field (engine export).
 				ClassHelpers::StaticBuffer<0x20, float> deltaBlend;
 				ClassHelpers::StaticBuffer<0x24, char> hasFinishedFlag;
 				ClassHelpers::StaticBuffer<0x28, float> blendTime;

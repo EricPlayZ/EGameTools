@@ -7,10 +7,10 @@ namespace EGSDK::GamePH {
 	class EGameSDK_API PlayerInfectionModule {
 	public:
 		union {
-			ClassHelpers::StaticBuffer<0x8, PlayerDI_PH*> pPlayerDI_PH;
-			ClassHelpers::StaticBuffer<0x20, float> maxImmunity;
-			ClassHelpers::StaticBuffer<0x2C, float> immunity;
-			ClassHelpers::StaticBuffer<0x98, float> nightrunnerTimer;
+			DynamicField(PlayerInfectionModule, PlayerDI_PH*, pPlayerDI_PH);
+			DynamicField(PlayerInfectionModule, float, maxImmunity);
+			DynamicField(PlayerInfectionModule, float, immunity);
+			DynamicField(PlayerInfectionModule, float, nightrunnerTimer);
 		};
 
 		~PlayerInfectionModule();

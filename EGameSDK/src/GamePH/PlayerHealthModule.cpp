@@ -1,4 +1,3 @@
-#include <cstddef>
 #include <EGSDK\GamePH\PlayerDI_PH.h>
 #include <EGSDK\GamePH\PlayerControllerQuery.h>
 #include <EGSDK\GamePH\PlayerHealthModule.h>
@@ -12,9 +11,8 @@ namespace EGSDK::GamePH {
 	static PlayerDI_PH* ReadModuleOwner(PlayerHealthModule* healthModule) {
 		if (!healthModule || Utils::Memory::IsBadReadPtr(healthModule))
 			return nullptr;
-		const size_t off = offsetof(PlayerHealthModule, pPlayerDI_PH) + 0x8;
-		PlayerDI_PH** slot = reinterpret_cast<PlayerDI_PH**>(reinterpret_cast<uint8_t*>(healthModule) + off);
-		if (Utils::Memory::IsBadReadPtr(slot))
+		PlayerDI_PH** slot = healthModule->pPlayerDI_PH.getPointer();
+		if (!slot || Utils::Memory::IsBadReadPtr(slot))
 			return nullptr;
 		return *slot;
 	}
