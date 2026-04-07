@@ -20,7 +20,6 @@
 #include <EGT\GamePH\GamePH_Hooks.h>
 #include <EGT\Config\Config.h>
 #include <EGT\Menu\Camera.h>
-#include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Player.h>
 #include <EGT\Menu\VarList.h>
 
@@ -146,7 +145,7 @@ namespace EGT::Menu {
 				return;
 			}
 
-			std::string tempvarsSCR = g_PlayerVariablesSCRFile;
+			std::string tempvarsSCR = defaultPlayerVariablesScr;
 
 			std::istringstream iss(tempvarsSCR);
 			std::string line{};
@@ -426,10 +425,10 @@ namespace EGT::Menu {
 			HandleToggles();
 		}
 		void Tab::Render() {
-			ImGui::SeparatorText("Misc");
+			ImGui::SeparatorTextSection("Misc", false);
 			auto playerHealthModule = EGSDK::GamePH::PlayerHealthModule::Get();
 			ImGui::BeginDisabled(!playerHealthModule);
-			if (ImGui::SliderFloat("Player Health", &playerHealth, 0.0f, playerMaxHealth, "%.2f") && playerHealthModule)
+			if (ImGui::SliderFloatStacked("Player Health", &playerHealth, 0.0f, playerMaxHealth, "%.2f") && playerHealthModule)
 				playerHealthModule->health = playerHealth;
 			else if (playerHealthModule)
 				playerHealth = playerHealthModule->health;
@@ -437,18 +436,17 @@ namespace EGT::Menu {
 
 			auto playerInfectionModule = EGSDK::GamePH::PlayerInfectionModule::Get();
 			ImGui::BeginDisabled(!playerInfectionModule);
-			if (ImGui::SliderFloat("Player Immunity", &playerImmunity, 0.0f, playerMaxImmunity, "%.2f") && playerInfectionModule)
+			if (ImGui::SliderFloatStacked("Player Immunity", &playerImmunity, 0.0f, playerMaxImmunity, "%.2f") && playerInfectionModule)
 				playerInfectionModule->immunity = playerImmunity / 100.0f;
 			else if (playerInfectionModule)
 				playerImmunity = playerInfectionModule->immunity * 100.0f;
 			ImGui::EndDisabled();
 
 			ImGui::BeginDisabled(isMoneyInteractionDisabled());
-			UpdateMoney(!ImGui::DragInt("Old World Money", &oldWorldMoney, 2.0f, 0, 999999999));
+			UpdateMoney(!ImGui::DragIntStacked("Old World Money", &oldWorldMoney, 2.0f, 0, 999999999));
 			ImGui::EndDisabled();
 
 			ImGui::CheckboxHotkey("God Mode", &godMode, "Makes the player invincible");
-			ImGui::SameLine();
 			ImGui::BeginDisabled(freezePlayer.GetChangesAreDisabled());
 			ImGui::CheckboxHotkey("Freeze Player", &freezePlayer, "Freezes player position");
 			ImGui::EndDisabled();
@@ -475,22 +473,16 @@ namespace EGT::Menu {
 			}
 
 			ImGui::CheckboxHotkey("Unlimited Immunity", &unlimitedImmunity, "Stops immunity from draining");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Unlimited Stamina", &unlimitedStamina, "Stops stamina from draining");
 			ImGui::CheckboxHotkey("Unlimited Items", &unlimitedItems, "Stops the game from lowering the amount of items such as consumables / throwables when using them, alongside other inventory items such as ammo, lockpicks and other items;\nWARNING: This will not stop the item from getting removed from your inventory if you drop the entire amount\nCurrently, if the amount of item is 1, it will still drop from your inventory unfortunately");
-			ImGui::SameLine();
-
 			ImGui::CheckboxHotkey("One-Hit Kill", &oneHitKill, "Makes the player one-hit kill EVERYTHING and EVERYONE RAWRRR");
-
 			ImGui::CheckboxHotkey("Invisible to Enemies", &invisibleToEnemies, "Makes the player invisible to the enemies");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Out of Bounds Timer", &disableOutOfBoundsTimer, "Disables the timer that runs when out of map bounds or mission bounds");
 			ImGui::CheckboxHotkey("Nightrunner Mode", &nightrunnerMode, "Makes Aiden super-human/infected");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("One-handed Mode", &oneHandedMode, "Removes Aiden's left hand");
 			ImGui::CheckboxHotkey("Disable Safezone Restrictions", &disableSafezoneRestrictions, "Disables all player restrictions inside a safezone, such as no jumping, climbing, weapons, etc; credits to @Synsteric on Discord for finding how to add this feature!");
 
-			ImGui::SeparatorText("Player Jump Parameters");
+			ImGui::SeparatorTextSection("Player Jump Parameters");
 			ImGui::CheckboxHotkey("Disable Air Control", &disableAirControl, "Disables the ability to change the player's direction of momentum while jumping (in-air)");
 			if (ImGui::Button("Reload Jump Params", "Reloads jump_parameters.scr from any mod located inside EGameTools\\UserModFiles")) {
 				if (EGSDK::Utils::Files::FileExistsInDir("jump_parameters.scr", "EGameTools\\UserModFiles")) {
@@ -500,7 +492,7 @@ namespace EGT::Menu {
 					ImGui::OpenPopup("Failed reloading player jump parameters.");
 			}
 
-			ImGui::SeparatorText("Player Variables");
+			ImGui::SeparatorTextSection("Player Variables");
 			ImGui::Checkbox("Enabled##vars", &playerVariables, "Shows the list of player variables");
 			HandlePlayerVariablesList();
 			HandlePlayerVariablesDialogs();

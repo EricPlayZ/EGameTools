@@ -1,3 +1,4 @@
+#include <cmath>
 #include <spdlog\spdlog.h>
 #include <ImGui\imgui_hotkey.h>
 #include <ImGui\imguiex.h>
@@ -7,6 +8,7 @@
 #include <EGSDK\GamePH\PlayerDI_PH.h>
 #include <EGSDK\GamePH\LevelDI.h>
 #include <EGT\Menu\Camera.h>
+#include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Player.h>
 #include <EGT\Menu\Teleport.h>
 
@@ -341,37 +343,66 @@ namespace EGT::Menu {
 			HotkeysUpdate();
 		}
 		void Tab::Render() {
-			ImGui::SeparatorText("Saved Locations##Teleport");
-			ImGui::SetNextItemWidth(672.0f * Menu::scale);
-			ImGui::ListBox("##SavedTPLocationsListBox", &selectedTPLocation, savedTeleportLocationNamesPtrs.data(), static_cast<int>(savedTeleportLocationNamesPtrs.size()), 5);
-
-			ImGui::BeginDisabled(isTeleportationDisabled() || selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size());
-			if (ImGui::ButtonHotkey("Teleport to Selected Location", &teleportToSelectedLocation, "Teleports player to selected location from the saved locations list"))
-				TeleportPlayerTo(savedTeleportLocations[selectedTPLocation].pos, savedTeleportLocations[selectedTPLocation].orientation);
-			ImGui::EndDisabled();
-
-			ImGui::SameLine();
-			ImGui::BeginDisabled(isTeleportationDisabled());
-			ImGui::SameLine();
-			if (ImGui::Button("Save Current Location"))
-				ImGui::OpenPopup("Give the location a name");
-			ImGui::EndDisabled();
-
-			ImGui::SameLine();
-			ImGui::BeginDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size() || isTeleportationDisabled());
-			if (ImGui::Button("Overwrite Selected Location"))
-				SaveTeleportLocation(savedTeleportLocations[selectedTPLocation].name.c_str(), true);
-			ImGui::EndDisabled();
-
-			ImGui::BeginDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size());
-			if (ImGui::Button("Remove Selected Location")) {
-				savedTeleportLocations.erase(savedTeleportLocations.begin() + selectedTPLocation);
-				UpdateTeleportLocationVisualNames();
-				selectedTPLocation = -1;
+			ImGui::SeparatorTextSection("Saved Locations##Teleport", false);
+			{
+				const ImGuiStyle& tpSt = ImGui::GetStyle();
+				const float lh = ImGui::GetTextLineHeightWithSpacing();
+				const float listH = lh * 5.5f + tpSt.FramePadding.y * 2.0f + 6.0f;
+				const float listW = std::fmax(80.0f, ImGui::GetContentRegionAvail().x - 8.0f);
+				ImGui::PushItemWidth(listW);
+				if (ImGui::BeginListBox("##SavedTPLocationsListBox", ImVec2(0.0f, listH))) {
+					ImGuiListClipper clipper;
+					const int n = static_cast<int>(savedTeleportLocationNamesPtrs.size());
+					clipper.Begin(n, lh);
+					while (clipper.Step()) {
+						for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+							ImGui::PushID(i);
+							const bool sel = (i == selectedTPLocation);
+							if (ImGui::Selectable(savedTeleportLocationNamesPtrs[static_cast<size_t>(i)], sel))
+								selectedTPLocation = i;
+							if (sel)
+								ImGui::SetItemDefaultFocus();
+							ImGui::PopID();
+						}
+					}
+					ImGui::EndListBox();
+				}
+				ImGui::PopItemWidth();
 			}
-			ImGui::EndDisabled();
 
-			ImGui::SeparatorText("Custom##Teleport");
+			{
+				const float btnW = ImGui::GetContentRegionAvail().x;
+				ImGui::BeginDisabled(isTeleportationDisabled() || selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size());
+				if (ImGui::ButtonHotkey("Teleport to Selected Location", &teleportToSelectedLocation, "Teleports player to selected location from the saved locations list", ImVec2(btnW, 0.0f)))
+					TeleportPlayerTo(savedTeleportLocations[selectedTPLocation].pos, savedTeleportLocations[selectedTPLocation].orientation);
+				ImGui::EndDisabled();
+			}
+			{
+				const float btnW = ImGui::GetContentRegionAvail().x;
+				ImGui::BeginDisabled(isTeleportationDisabled());
+				if (ImGui::Button("Save Current Location", nullptr, ImVec2(btnW, 0.0f)))
+					ImGui::OpenPopup("Give the location a name");
+				ImGui::EndDisabled();
+			}
+			{
+				const float btnW = ImGui::GetContentRegionAvail().x;
+				ImGui::BeginDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size() || isTeleportationDisabled());
+				if (ImGui::Button("Overwrite Selected Location", nullptr, ImVec2(btnW, 0.0f)))
+					SaveTeleportLocation(savedTeleportLocations[selectedTPLocation].name.c_str(), true);
+				ImGui::EndDisabled();
+			}
+			{
+				const float btnW = ImGui::GetContentRegionAvail().x;
+				ImGui::BeginDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size());
+				if (ImGui::Button("Remove Selected Location", nullptr, ImVec2(btnW, 0.0f))) {
+					savedTeleportLocations.erase(savedTeleportLocations.begin() + selectedTPLocation);
+					UpdateTeleportLocationVisualNames();
+					selectedTPLocation = -1;
+				}
+				ImGui::EndDisabled();
+			}
+
+			ImGui::SeparatorTextSection("Custom##Teleport");
 			ImGui::BeginDisabled(isTeleportationDisabled());
 			auto playerCharacter = EGSDK::Engine::CBulletPhysicsCharacter::Get();
 			auto freeCam = EGSDK::GamePH::FreeCamera::Get();
@@ -381,22 +412,27 @@ namespace EGT::Menu {
 			ImGui::Text("Free Camera Position: %s", GetFormattedPosition(freeCam && Camera::freeCam.GetValue() ? freeCam->GetPosition(&camPos) : nullptr).data());
 			ImGui::Text("Waypoint Position: %s", GetFormattedPosition(waypointIsSet && *waypointIsSet && !waypointCoords.isDefault() ? &waypointCoords : nullptr).data());
 
-			ImGui::SetNextItemWidth(500.0f * Menu::scale);
-			ImGui::InputFloat3("Teleport Coords (XYZ)", reinterpret_cast<float*>(&teleportCoords), "%.2fm");
+			ImGui::InputFloat3Stacked("Teleport Coords (XYZ)", reinterpret_cast<float*>(&teleportCoords), "%.2fm");
 			ImGui::EndDisabled();
 
-			ImGui::BeginDisabled(isTeleportationDisabled() || !waypointIsSet || !*waypointIsSet);
-			if (ImGui::ButtonHotkey("Teleport to Waypoint", &teleportToWaypoint, "Teleports player to waypoint.\nWARNING: If the waypoint is selected to track an object/item on the map, Teleport to Waypoint will not work, if so just set the waypoint nearby instead.\nWARNING: Your player height won't change when teleporting, so make sure you catch yourself if you fall under the map because of the teleportation"))
-				justTeleportedToWaypoint = TeleportPlayerTo(waypointCoords);
-			ImGui::EndDisabled();
-
+			{
+				const float btnW = ImGui::GetContentRegionAvail().x;
+				ImGui::BeginDisabled(isTeleportationDisabled() || !waypointIsSet || !*waypointIsSet);
+				if (ImGui::ButtonHotkey("Teleport to Waypoint", &teleportToWaypoint, "Teleports player to waypoint.\nWARNING: If the waypoint is selected to track an object/item on the map, Teleport to Waypoint will not work, if so just set the waypoint nearby instead.\nWARNING: Your player height won't change when teleporting, so make sure you catch yourself if you fall under the map because of the teleportation", ImVec2(btnW, 0.0f)))
+					justTeleportedToWaypoint = TeleportPlayerTo(waypointCoords);
+				ImGui::EndDisabled();
+			}
 			ImGui::BeginDisabled(isTeleportationDisabled());
-			ImGui::SameLine();
-			if (ImGui::ButtonHotkey("Teleport to Coords", &teleportToCoords, "Teleports player to the coords specified in the input boxes above"))
-				TeleportPlayerTo(teleportCoords);
-			ImGui::SameLine();
-			if (ImGui::Button("Get Player Coords"))
-				SyncPlayerCoordsToTPCoords();
+			{
+				const float btnW = ImGui::GetContentRegionAvail().x;
+				if (ImGui::ButtonHotkey("Teleport to Coords", &teleportToCoords, "Teleports player to the coords specified in the input boxes above", ImVec2(btnW, 0.0f)))
+					TeleportPlayerTo(teleportCoords);
+			}
+			{
+				const float btnW = ImGui::GetContentRegionAvail().x;
+				if (ImGui::Button("Get Player Coords", nullptr, ImVec2(btnW, 0.0f)))
+					SyncPlayerCoordsToTPCoords();
+			}
 			ImGui::EndDisabled();
 
 			HandleDialogs();

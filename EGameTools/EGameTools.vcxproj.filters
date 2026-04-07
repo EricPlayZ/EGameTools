@@ -120,6 +120,9 @@
     <ClCompile Include="src\ImGui_impl\D3D12_impl.cpp">
       <Filter>src\ImGui_impl</Filter>
     </ClCompile>
+    <ClCompile Include="src\ImGui_impl\D3D12_MicaBlur.cpp">
+      <Filter>src\ImGui_impl</Filter>
+    </ClCompile>
     <ClCompile Include="src\ImGui_impl\Win32_impl.cpp">
       <Filter>src\ImGui_impl</Filter>
     </ClCompile>
@@ -182,6 +185,9 @@
     <ClInclude Include="include\EGT\ImGui_impl\D3D12_impl.h">
       <Filter>include\ImGui_impl</Filter>
     </ClInclude>
+    <ClInclude Include="include\EGT\ImGui_impl\D3D12_MicaBlur.h">
+      <Filter>include\ImGui_impl</Filter>
+    </ClInclude>
     <ClInclude Include="include\EGT\ImGui_impl\Win32_impl.h">
       <Filter>include\ImGui_impl</Filter>
     </ClInclude>
@@ -192,6 +198,9 @@
       <Filter>include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\Menu\Menu.h">
+      <Filter>include\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\Menu\MenuIcons.h">
       <Filter>include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\Menu\Misc.h">

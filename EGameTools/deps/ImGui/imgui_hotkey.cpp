@@ -2,6 +2,7 @@
 #include <ranges>
 #include <ImGui\imgui_hotkey.h>
 #include <ImGui\imgui_internal.h>
+#include <ImGui\imguiex.h>
 #include <EGSDK\Utils\Time.h>
 #include <EGSDK\Utils\Values.h>
 #include <EGSDK\Core\Core.h>
@@ -496,9 +497,18 @@ namespace ImGui {
         }
         SameLine(0.0f);
 
+        const auto hotkeyBtnWidth = [&](const char* txt) -> float {
+            if (window->SkipItems)
+                return 0.0f;
+            const float avail = GetContentRegionAvail().x;
+            const ImVec2 ts = CalcTextSize(txt, nullptr, true);
+            const float want = ts.x + g.Style.FramePadding.x * 2.0f;
+            return (avail > 1.0f) ? ImMin(want, avail) : want;
+        };
+
         if (GetActiveID() == id) {
             PushStyleColor(ImGuiCol_Button, GetColorU32(ImGuiCol_ButtonActive));
-            Button("...", ImVec2(0.0f, 0.0f));
+            Button("...", ImVec2(hotkeyBtnWidth("..."), 0.0f));
             PopStyleColor();
 
             GetCurrentContext()->ActiveIdAllowOverlap = true;
@@ -508,7 +518,7 @@ namespace ImGui {
                 ClearActiveID();
             } else
                 SetActiveID(id, GetCurrentWindow());
-        } else if (Button(key->ToStringKeyMap().data(), ImVec2(0.0f, 0.0f))) {
+        } else if (ButtonSmooth(key->ToStringKeyMap().data(), ImVec2(hotkeyBtnWidth(key->ToStringKeyMap().data()), 0.0f))) {
             isAnyHotkeyBtnClicked = true;
             SetActiveID(id, GetCurrentWindow());
         }

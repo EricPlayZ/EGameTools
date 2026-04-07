@@ -4,6 +4,7 @@
 #include <dxgi1_4.h>
 #include <d3d12.h>
 #include <spdlog\spdlog.h>
+#include <ImGui\imgui.h>
 #include <ImGui\backends\imgui_impl_dx12.h>
 #include <ImGui\backends\imgui_impl_win32.h>
 #include <EGSDK\Utils\Memory.h>
@@ -13,6 +14,7 @@
 #include <EGT\ImGui_impl\NextFrameTask.h>
 #include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Init.h>
+#include <EGT\ImGui_impl\D3D12_MicaBlur.h>
 
 namespace EGT::ImGui_impl {
 	namespace D3D12 {
@@ -47,6 +49,7 @@ namespace EGT::ImGui_impl {
 			}
 		}
 		static void CleanupRenderTarget() {
+			D3D12_MicaBlur::ReleaseGpuResources();
 			if (!frameContext)
 				return;
 
@@ -123,6 +126,8 @@ namespace EGT::ImGui_impl {
 				Menu::InitImGui();
 				ImGui_ImplDX12_InvalidateDeviceObjects();
 
+				D3D12_MicaBlur::EnsureInitialized(d3d12Device);
+
 				init = true;
 			}
 		}
@@ -134,12 +139,14 @@ namespace EGT::ImGui_impl {
 			if (!d3d12CommandQueue || !frameContext[0].main_render_target_resource)
 				return;
 
+			Menu::SyncMenuFontsBeforeImGuiNewFrame();
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
+			Menu::UpdateMenuVisibilityAnimFromPoll();
 			ImGui::NewFrame();
 
 			Menu::FirstTimeRunning();
-			if (Menu::menuToggle.GetValue())
+			if (Menu::MenuAnimNeedsFrame())
 				Menu::Render();
 
 			ImGui::Render();
@@ -162,6 +169,28 @@ namespace EGT::ImGui_impl {
 			d3d12CommandList->ResourceBarrier(1, &barrier);
 
 			d3d12CommandList->OMSetRenderTargets(1, &frameContext[backBufferIdx].main_render_target_descriptor, FALSE, NULL);
+
+			{
+				float mx0 = 0.0f, my0 = 0.0f, mx1 = 0.0f, my1 = 0.0f;
+				if (Menu::GetMenuBackdropRectPx(&mx0, &my0, &mx1, &my1)) {
+					D3D12_MicaBlur::EnsureInitialized(d3d12Device);
+					DXGI_SWAP_CHAIN_DESC scd{};
+					pSwapChain->GetDesc(&scd);
+					const UINT bbW = scd.BufferDesc.Width;
+					const UINT bbH = scd.BufferDesc.Height;
+					const ImGuiIO& io = ImGui::GetIO();
+					const float dsx = io.DisplaySize.x > 1.0f ? io.DisplaySize.x : 1.0f;
+					const float dsy = io.DisplaySize.y > 1.0f ? io.DisplaySize.y : 1.0f;
+					const float sx = static_cast<float>(bbW) / dsx;
+					const float sy = static_cast<float>(bbH) / dsy;
+					mx0 *= sx;
+					mx1 *= sx;
+					my0 *= sy;
+					my1 *= sy;
+					D3D12_MicaBlur::RenderBackdrop(d3d12CommandList, frameContext[backBufferIdx].main_render_target_resource, frameContext[backBufferIdx].main_render_target_descriptor, bbW, bbH, mx0, my0, mx1, my1, Menu::GetMicaBackdropFade());
+				}
+			}
+
 			d3d12CommandList->SetDescriptorHeaps(1, &d3d12DescriptorHeapImGuiRender);
 
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3d12CommandList);

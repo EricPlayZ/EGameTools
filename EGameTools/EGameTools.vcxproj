@@ -30,6 +30,7 @@
     <ClCompile Include="src\GamePH\GamePH_Hooks.cpp" />
     <ClCompile Include="src\ImGui_impl\D3D11_impl.cpp" />
     <ClCompile Include="src\ImGui_impl\D3D12_impl.cpp" />
+    <ClCompile Include="src\ImGui_impl\D3D12_MicaBlur.cpp" />
     <ClCompile Include="src\ImGui_impl\DeferredActions.cpp" />
     <ClCompile Include="src\ImGui_impl\NextFrameTask.cpp" />
     <ClCompile Include="src\ImGui_impl\Win32_impl.cpp" />
@@ -63,6 +64,7 @@
     <ClInclude Include="include\EGT\Menu\Debug.h" />
     <ClInclude Include="include\EGT\Menu\Init.h" />
     <ClInclude Include="include\EGT\Menu\Menu.h" />
+    <ClInclude Include="include\EGT\Menu\MenuIcons.h" />
     <ClInclude Include="include\EGT\Menu\Misc.h" />
     <ClInclude Include="include\EGT\Menu\Player.h" />
     <ClInclude Include="include\EGT\Menu\Teleport.h" />
@@ -152,7 +154,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;freetype-mdd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;freetype-mdd.lib;d3d12.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>
       </OptimizeReferences>
       <EnableCOMDATFolding>
@@ -193,7 +195,7 @@
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>..\EGameSDK\deps\MinHook\lib;deps\freetype\lib;..\EGameSDK\deps\game_libs;$(SolutionDir)$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;freetype-md.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DbgHelp.lib;Version.lib;EGameSDK.lib;libMinHook-x64-v141-mdd.lib;engine_x64_rwdi.lib;freetype-md.lib;d3d12.lib;d3dcompiler.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary />
       <AdditionalOptions>/NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
       <AssemblyDebug>true</AssemblyDebug>

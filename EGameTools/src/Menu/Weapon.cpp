@@ -98,17 +98,15 @@ namespace EGT::Menu {
 			PlayerVarsUpdate();
 		}
 		void Tab::Render() {
-			ImGui::SeparatorText("Current Weapon##Weapon");
+			ImGui::SeparatorTextSection("Current Weapon##Weapon", false);
 			ImGui::BeginDisabled(isWeaponInteractionDisabled() || currentWeaponDurability <= 0.0f);
 			UpdateWeaponDurability(!ImGui::SliderFloat("Weapon Durability", "Currently only works while your weapon is physically equipped in your hand", &currentWeaponDurability, 0.1f, 999.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp));
 			ImGui::EndDisabled();
 
-			ImGui::SeparatorText("Misc##Weapon");
+			ImGui::SeparatorTextSection("Misc##Weapon");
 			ImGui::CheckboxHotkey("Unlimited Durability", &unlimitedDurability, "Enables unlimited durability for all weapons");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Unlimited Ammo", &unlimitedAmmo, "Enables unlimited ammo for all firearms and bows");
 			ImGui::CheckboxHotkey("No Spread", &noSpread, "Disables random bullet spread for all firearms and bows (doesn't completely remove spread for bows)");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("No Recoil", &noRecoil, "Disables weapon recoil for all firearms");
 			ImGui::CheckboxHotkey("Instant Reload", &instantReload, "Makes reloading firearms and bows (almost) instant");
 		}

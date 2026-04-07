@@ -1,0 +1,16 @@
+--- a/imgui_widgets.cpp
++++ b/imgui_widgets.cpp
+@@ -6641,10 +6641,11 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
+     if (hovered || selected)
+     {
+         const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_HeaderActive : hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
+-        RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
++        const float rounding = ImMin(style.FrameRounding, bb.GetHeight() * 0.5f);
++        RenderFrame(bb.Min, bb.Max, col, false, rounding);
+     }
+     if (g.NavId == id)
+-        RenderNavHighlight(bb, id, ImGuiNavHighlightFlags_Compact | ImGuiNavHighlightFlags_NoRounding);
++        RenderNavHighlight(bb, id, ImGuiNavHighlightFlags_Compact);
+ 
+     if (span_all_columns)
+     {

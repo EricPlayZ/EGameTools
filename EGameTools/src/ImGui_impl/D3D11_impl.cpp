@@ -9,8 +9,8 @@
 #include <EGT\ImGui_impl\Win32_impl.h>
 #include <EGT\ImGui_impl\DeferredActions.h>
 #include <EGT\ImGui_impl\NextFrameTask.h>
-#include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Init.h>
+#include <EGT\Menu\Menu.h>
 
 namespace EGT::ImGui_impl {
 	namespace D3D11 {
@@ -82,12 +82,14 @@ namespace EGT::ImGui_impl {
 		static void RenderImGui(IDXGISwapChain* pSwapChain) {
 			InitImGuiRendering(pSwapChain);
 
+			Menu::SyncMenuFontsBeforeImGuiNewFrame();
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
+			Menu::UpdateMenuVisibilityAnimFromPoll();
 			ImGui::NewFrame();
 
 			Menu::FirstTimeRunning();
-			if (Menu::menuToggle.GetValue())
+			if (Menu::MenuAnimNeedsFrame())
 				Menu::Render();
 
 			ImGui::EndFrame();

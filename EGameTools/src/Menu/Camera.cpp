@@ -10,7 +10,6 @@
 #include <EGSDK\GamePH\GamePH_Misc.h>
 #include <EGSDK\Offsets.h>
 #include <EGT\Menu\Camera.h>
-#include <EGT\Menu\Menu.h>
 
 namespace EGT::Menu {
 	namespace Camera {
@@ -315,7 +314,7 @@ namespace EGT::Menu {
 			HandleToggles();
 		}
 		void Tab::Render() {
-			ImGui::SeparatorText("First Person Camera");
+			ImGui::SeparatorTextSection("First Person Camera", false);
 			auto pCVideoSettings = EGSDK::Engine::CVideoSettings::Get();
 			ImGui::BeginDisabled(!pCVideoSettings || EGSDK::Utils::Values::are_samef(baseFOV, 0.0f) || goProMode.GetValue() || isZoomingIn);
 			if (ImGui::SliderFloat("FOV##FirstPerson", "First person camera field of view", &firstPersonFOV, 20.0f, 160.0f, "%.0f") && pCVideoSettings)
@@ -324,18 +323,14 @@ namespace EGT::Menu {
 				firstPersonFOV = pCVideoSettings->extraFOV + baseFOV;
 			ImGui::EndDisabled();
 			ImGui::BeginDisabled(freeCam.GetChangesAreDisabled());
-			ImGui::SetNextItemWidth(400.0f * Menu::scale);
-			ImGui::SliderFloat3("Camera Offset (XYZ)", reinterpret_cast<float*>(&cameraOffset), -0.5f, 0.5f, "%.2fm");
+			ImGui::SliderFloat3Stacked("Camera Offset (XYZ)", reinterpret_cast<float*>(&cameraOffset), -0.5f, 0.5f, "%.2fm");
 			ImGui::EndDisabled();
 			ImGui::CheckboxHotkey("Zoom In", &firstPersonZoomIn, "Allows zooming in with the specified hotkey and changing zoom level with the mouse wheel");
 
-			ImGui::SeparatorText("Third Person Camera");
+			ImGui::SeparatorTextSection("Third Person Camera");
 			ImGui::BeginDisabled(thirdPersonCamera.GetChangesAreDisabled());
 			ImGui::CheckboxHotkey("Enabled##ThirdPerson", &thirdPersonCamera, "Enables the third person camera");
 			ImGui::EndDisabled();
-
-			ImGui::SameLine();
-
 			ImGui::BeginDisabled(tpUseTPPModel.GetChangesAreDisabled());
 			ImGui::CheckboxHotkey("Use Third Person Player (TPP) Model", &tpUseTPPModel, "Uses Aiden's TPP (Third Person Player) model while the third person camera is enabled");
 			ImGui::EndDisabled();
@@ -343,17 +338,14 @@ namespace EGT::Menu {
 			ImGui::BeginDisabled(EGSDK::Utils::Values::are_samef(baseFOV, 0.0f));
 			ImGui::SliderFloat("FOV##ThirdPerson", "Third person camera field of view", &thirdPersonFOV, 20.0f, 160.0f, "%.0f");
 			ImGui::EndDisabled();
-			ImGui::SliderFloat("Distance behind player", &thirdPersonDistanceBehindPlayer, 1.0f, 10.0f, "%.2fm");
-			ImGui::SliderFloat("Height above player", &thirdPersonHeightAbovePlayer, 1.0f, 3.0f, "%.2fm");
-			ImGui::SliderFloat("Horizontal distance from player", &thirdPersonHorizontalDistanceFromPlayer, -2.0f, 2.0f, "%.2fm");
+			ImGui::SliderFloatStacked("Distance behind player", &thirdPersonDistanceBehindPlayer, 1.0f, 10.0f, "%.2fm");
+			ImGui::SliderFloatStacked("Height above player", &thirdPersonHeightAbovePlayer, 1.0f, 3.0f, "%.2fm");
+			ImGui::SliderFloatStacked("Horizontal distance from player", &thirdPersonHorizontalDistanceFromPlayer, -2.0f, 2.0f, "%.2fm");
 
-			ImGui::SeparatorText("Free Camera");
+			ImGui::SeparatorTextSection("Free Camera");
 			ImGui::BeginDisabled(freeCam.GetChangesAreDisabled() || photoMode.GetValue());
 			ImGui::CheckboxHotkey("Enabled##FreeCam", &freeCam, "Enables free camera which allows you to travel anywhere with the camera");
 			ImGui::EndDisabled();
-
-			ImGui::SameLine();
-
 			ImGui::BeginDisabled(teleportPlayerToCamera.GetChangesAreDisabled());
 			ImGui::CheckboxHotkey("Teleport Player to Camera", &teleportPlayerToCamera, "Teleports the player to the camera while Free Camera is activated");
 			ImGui::EndDisabled();
@@ -361,18 +353,16 @@ namespace EGT::Menu {
 			ImGui::BeginDisabled(EGSDK::Utils::Values::are_samef(baseFOV, 0.0f));
 			ImGui::SliderFloat("FOV##FreeCam", "Free camera field of view", &freeCamFOV, 20.0f, 160.0f, "%.0f");
 			ImGui::EndDisabled();
-			ImGui::SliderFloat("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SliderFloatStacked("Speed##FreeCam", &freeCamSpeed, 0.1f, 200.0f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
 
-			ImGui::SeparatorText("Misc");
+			ImGui::SeparatorTextSection("Misc");
 			ImGui::BeginDisabled(goProMode.GetValue());
 			ImGui::SliderFloat("Lens Distortion", "Default game value is 20%", goProMode.GetValue() ? &altLensDistortion : &lensDistortion, 0.0f, 100.0f, "%.1f%%");
 			ImGui::EndDisabled();
 
 			ImGui::CheckboxHotkey("GoPro Mode *", &goProMode, "Makes the camera behave similar to a GoPro mounted on the forehead");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Safezone FOV Reduction", &disableSafezoneFOVReduction, "Disables the FOV reduction that happens while you're in a safezone");
 			ImGui::CheckboxHotkey("Disable Photo Mode Limits", &disablePhotoModeLimits, "Disables the invisible box while in Photo Mode");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Disable Head Correction", &disableHeadCorrection, "Disables centering of the player's hands to the center of the camera");
 
 			ImGui::Separator();

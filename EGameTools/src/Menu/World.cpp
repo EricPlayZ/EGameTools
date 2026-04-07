@@ -156,9 +156,9 @@ namespace EGT::Menu {
 			auto dayNightCycle = EGSDK::GamePH::DayNightCycle::Get();
 			auto timeWeatherSystem = EGSDK::GamePH::TimeWeather::CSystem::Get();
 			auto iLevel = EGSDK::GamePH::LevelDI::Get();
-			ImGui::SeparatorText("Time##World");
+			ImGui::SeparatorTextSection("Time##World", false);
 			ImGui::BeginDisabled(!iLevel || !iLevel->IsLoaded() || !dayNightCycle || !timeWeatherSystem);
-			bool timeSlider = ImGui::SliderFloat("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			bool timeSlider = ImGui::SliderFloatStacked("Time", &time, 0.01f, 24.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 			EGSDK::GamePH::PlayerVariables::ManageVarByBool("AntizinDrainBlocked", true, false, timeSlider);
 			if (timeSlider) {
 				requestedTimeWeatherInterpolation = true;
@@ -167,24 +167,23 @@ namespace EGT::Menu {
 			}
 
 			ImGui::BeginDisabled(slowMotion.GetValue()); {
-				isModifyingGameSpeed = ImGui::SliderFloat("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx");
+				isModifyingGameSpeed = ImGui::SliderFloatStacked("Game Speed", &gameSpeed, 0.0f, 2.0f, "%.2fx");
 				if (isModifyingGameSpeed)
 					iLevel->TimerSetSpeedUp(gameSpeed);
 				ImGui::EndDisabled();
 			}
 
 			ImGui::CheckboxHotkey("Freeze Time", &freezeTime, "Freezes time");
-			ImGui::SameLine();
 			ImGui::CheckboxHotkey("Slow Motion", &slowMotion, "Slows the game down to the speed specified on the \"Slow Motion Speed\" slider");
 			ImGui::EndDisabled();
 
-			ImGui::SliderFloat("Slow Motion Speed", &slowMotionSpeed, 0.01f, 0.99f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
-			ImGui::SliderFloat("Slow Motion Transition Time", &slowMotionTransitionTime, 0.00f, 5.00f, "%.2fs", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SliderFloatStacked("Slow Motion Speed", &slowMotionSpeed, 0.01f, 0.99f, "%.2fx", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::SliderFloatStacked("Slow Motion Transition Time", &slowMotionTransitionTime, 0.00f, 5.00f, "%.2fs", ImGuiSliderFlags_AlwaysClamp);
 
 			bool weatherDisabledFlag = !iLevel || !iLevel->IsLoaded() || !timeWeatherSystem;
-			ImGui::SeparatorText("Weather##World");
+			ImGui::SeparatorTextSection("Weather##World");
 			ImGui::BeginDisabled(weatherDisabledFlag);
-			if (ImGui::Combo("Weather", reinterpret_cast<int*>(&weather), weatherItems, IM_ARRAYSIZE(weatherItems))) {
+			if (ImGui::ComboStacked("Weather", reinterpret_cast<int*>(&weather), weatherItems, IM_ARRAYSIZE(weatherItems))) {
 				requestedTimeWeatherInterpolation = true;
 				timeWeatherSystem->SetForcedWeather(static_cast<EGSDK::GamePH::TimeWeather::EWeather>(weather - 1));
 			}

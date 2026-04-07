@@ -1,4 +1,7 @@
-﻿_IDAScripts/.env
+﻿# Full Font Awesome TTF (optional local download for regenerating subset; embed is in repo)
+EGameTools/deps/fonts/fa-solid-900.ttf
+
+_IDAScripts/.env
 _IDAScripts/generated/*.json
 
 # Ultimate-ASI-Loader

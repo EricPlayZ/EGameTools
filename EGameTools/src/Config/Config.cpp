@@ -42,6 +42,11 @@ namespace EGT::Config {
 	static void InitializeConfigVariables() {
 		configVariablesDefault = std::vector<ConfigEntry>({
 			{ "Menu", "Opacity", Menu::opacity, &Menu::opacity, Float },
+			{ "Menu", "ChildPanelAlpha", Menu::childPanelAlpha, &Menu::childPanelAlpha, Float },
+			{ "Menu", "FrameAlpha", Menu::frameAlpha, &Menu::frameAlpha, Float },
+			{ "Menu", "PopupAlpha", Menu::popupAlpha, &Menu::popupAlpha, Float },
+			{ "Menu", "MicaWashStrength", Menu::micaWashStrength, &Menu::micaWashStrength, Float },
+			{ "Menu", "MicaBlurStrength", Menu::micaBlurStrength, &Menu::micaBlurStrength, Float },
 			{ "Menu", "Scale", Menu::scale, &Menu::scale, Float },
 			{ "Menu", "FirstTimeRunning", Menu::firstTimeRunning.GetValue(), &Menu::firstTimeRunning, OPTION },
 			{ "Menu", "HasSeenChangelog", Menu::hasSeenChangelog.GetValue(), &Menu::hasSeenChangelog, OPTION },

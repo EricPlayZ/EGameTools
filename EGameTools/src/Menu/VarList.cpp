@@ -24,13 +24,18 @@ namespace EGT {
                 ImGui::Checkbox("Restore variables to saved variables", &restoreVarsToSavedVarsEnabled, "Sets whether or not \"Restore variables to default\" should restore variables to the ones saved by \"Save current variables as default\"");
                 //ImGui::Checkbox("Debug Mode", &debugEnabled, "Shows text boxes alongside player variables, which will show the address in memory of each variable");
 
-                ImGui::BeginDisabled(!VarManagerT::AreAnyCustomVarsPresent() || VarManagerT::AreAllCustomVarsManagedByBool());
-                if (ImGui::Button("Restore variables to default"))
-                    RestoreVarsToDefault();
-                ImGui::EndDisabled();
-                ImGui::SameLine();
-                if (ImGui::Button("Save current variables as default", "Saves the current variables as default for whenever you use \"Restore variables to default\""))
-                    SaveVarsAsDefault();
+                {
+                    const float btnW = ImGui::GetContentRegionAvail().x;
+                    ImGui::BeginDisabled(!VarManagerT::AreAnyCustomVarsPresent() || VarManagerT::AreAllCustomVarsManagedByBool());
+                    if (ImGui::Button("Restore variables to default", nullptr, ImVec2(btnW, 0.0f)))
+                        RestoreVarsToDefault();
+                    ImGui::EndDisabled();
+                }
+                {
+                    const float btnW = ImGui::GetContentRegionAvail().x;
+                    if (ImGui::Button("Save current variables as default", "Saves the current variables as default for whenever you use \"Restore variables to default\"", ImVec2(btnW, 0.0f)))
+                        SaveVarsAsDefault();
+                }
 
                 ImGui::Separator();
                 ImGui::InputTextWithHint("##SearchFilter", "Search variables...", searchFilter, sizeof(searchFilter));
@@ -155,16 +160,42 @@ namespace EGT {
             if (!var)
                 return;
 
+            ImGui::PushID(varPtr);
+
+            const ImGuiStyle& style = ImGui::GetStyle();
+            const float restoreWidth = ImGui::CalcTextSize("Restore").x + style.FramePadding.x * 2.0f + style.CellPadding.x * 2.0f;
+
+            constexpr ImGuiTableFlags rowFlags = ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoBordersInBody;
+
+            if (!ImGui::BeginTable("##varRow", 3, rowFlags)) {
+                ImGui::PopID();
+                return;
+            }
+            ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthStretch, 0.34f);
+            ImGui::TableSetupColumn("value", ImGuiTableColumnFlags_WidthStretch, 0.56f);
+            ImGui::TableSetupColumn("restore", ImGuiTableColumnFlags_WidthFixed, restoreWidth);
+            ImGui::TableNextRow();
+
+            ImGui::TableNextColumn();
+            {
+                const float wrapX = ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x;
+                ImGui::PushTextWrapPos(wrapX);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted(var->GetName());
+                ImGui::PopTextWrapPos();
+            }
+
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-1.0f);
             ImGui::BeginDisabled(var->IsManagedByBool());
+
+            bool valuePresent = true;
             switch (var->GetType()) {
                 case EGSDK::Engine::VarType::String:
                 {
                     static char buffer[256];
-                    //std::strncpy(buffer, value->c_str(), sizeof(buffer) - 1);
-                    //buffer[sizeof(buffer) - 1] = '\0';
-
                     ImGui::BeginDisabled();
-                    if (ImGui::InputText(var->GetName(), buffer, sizeof(buffer)))
+                    if (ImGui::InputText("##str", buffer, sizeof(buffer)))
                         var->SetValueFromList(std::string(buffer));
                     ImGui::EndDisabled();
                     ImGui::SetItemTooltip("STRING VARIABLES NOT IMPLEMENTED");
@@ -174,11 +205,11 @@ namespace EGT {
                 {
                     auto value = var->GetValue<float>();
                     if (!value) {
-                        ImGui::EndDisabled();
-                        return;
+                        valuePresent = false;
+                        break;
                     }
                     float newValue = *value;
-                    if (ImGui::InputFloat(var->GetName(), &newValue))
+                    if (ImGui::InputFloat("##f", &newValue))
                         var->SetValueFromList(newValue);
                     break;
                 }
@@ -186,11 +217,11 @@ namespace EGT {
                 {
                     auto value = var->GetValue<int>();
                     if (!value) {
-                        ImGui::EndDisabled();
-                        return;
+                        valuePresent = false;
+                        break;
                     }
                     auto newValue = *value;
-                    if (ImGui::InputInt(var->GetName(), &newValue))
+                    if (ImGui::InputInt("##i", &newValue))
                         var->SetValueFromList(newValue);
                     break;
                 }
@@ -198,11 +229,11 @@ namespace EGT {
                 {
                     auto value = var->GetValue<vec3>();
                     if (!value) {
-                        ImGui::EndDisabled();
-                        return;
+                        valuePresent = false;
+                        break;
                     }
                     auto newValue = *value;
-                    if (ImGui::InputFloat3(var->GetName(), reinterpret_cast<float*>(&newValue)))
+                    if (ImGui::InputFloat3("##v3", reinterpret_cast<float*>(&newValue)))
                         var->SetValueFromList(newValue);
                     break;
                 }
@@ -210,11 +241,11 @@ namespace EGT {
                 {
                     auto value = var->GetValue<vec4>();
                     if (!value) {
-                        ImGui::EndDisabled();
-                        return;
+                        valuePresent = false;
+                        break;
                     }
                     auto newValue = *value;
-                    if (ImGui::InputFloat4(var->GetName(), reinterpret_cast<float*>(&newValue)))
+                    if (ImGui::InputFloat4("##v4", reinterpret_cast<float*>(&newValue)))
                         var->SetValueFromList(newValue);
                     break;
                 }
@@ -222,29 +253,32 @@ namespace EGT {
                 {
                     auto value = var->GetValue<bool>();
                     if (!value) {
-                        ImGui::EndDisabled();
-                        return;
+                        valuePresent = false;
+                        break;
                     }
                     bool newValue = *value;
-                    if (ImGui::Checkbox(var->GetName(), &newValue))
+                    if (ImGui::Checkbox("##b", &newValue))
                         var->SetValueFromList(newValue);
                     break;
                 }
                 default:
+                    valuePresent = false;
                     break;
             }
+            if (!valuePresent)
+                ImGui::TextUnformatted("—");
             ImGui::EndDisabled();
 
-            ImGui::SameLine();
-            std::string restoreBtnName = "Restore##" + std::string(var->GetName());
-
-            ImGui::BeginDisabled(!var->HasCustomValue() || var->IsManagedByBool());
-            if (ImGui::Button(restoreBtnName.c_str(), "Restores variable to default"))
+            ImGui::TableNextColumn();
+            ImGui::BeginDisabled(!valuePresent || !var->HasCustomValue() || var->IsManagedByBool());
+            if (ImGui::Button("Restore", "Restores variable to default", ImVec2(-1.0f, 0.0f)))
                 RestoreVarToDefault(varPtr);
             ImGui::EndDisabled();
 
             //if (debugEnabled)
             //    RenderDebugInfo(playerVarPtr);
+            ImGui::EndTable();
+            ImGui::PopID();
         }
 
         template class VarList<EGSDK::GamePH::PlayerVariables>;

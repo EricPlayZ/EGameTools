@@ -1,8 +1,12 @@
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <spdlog\spdlog.h>
+#include <ImGui\backends\imgui_impl_dx11.h>
+#include <ImGui\backends\imgui_impl_dx12.h>
 #include <ImGui\imguiex.h>
 #include <ImGui\misc\fonts\Ruda-Bold.embed>
+#include <fonts\fa-solid-900-subset.embed>
 #include <EGSDK\Core\Core.h>
 #include <EGSDK\GamePH\GamePH_Misc.h>
 #include <EGSDK\Utils\Files.h>
@@ -13,6 +17,51 @@
 #include <EGT\Textures\EGTWhiteLogo.embed>
 
 namespace EGT::Menu {
+    static ImFont* menuVersionFont = nullptr;
+    static float lastFontAtlasScale = -1.0f;
+
+    static void LoadMenuFontAtlas(float menuScale) {
+        ImGuiIO& io = ImGui::GetIO();
+        const float menuFontSize = (12.0f + 6.0f) * menuScale;
+
+        io.Fonts->Clear();
+        menuVersionFont = nullptr;
+
+        ImFontConfig fontConfig{};
+        fontConfig.FontDataOwnedByAtlas = false;
+        io.FontDefault = io.Fonts->AddFontFromMemoryTTF((void*)fontRudaBold, sizeof(fontRudaBold), menuFontSize, &fontConfig);
+
+        ImFontConfig iconsConfig{};
+        iconsConfig.MergeMode = true;
+        iconsConfig.FontDataOwnedByAtlas = false;
+        iconsConfig.PixelSnapH = true;
+        iconsConfig.GlyphMinAdvanceX = menuFontSize * 0.92f;
+        iconsConfig.GlyphOffset = ImVec2(0.0f, 2.0f);
+        static const ImWchar iconRanges[] = { 0xE19B, 0xE19B, 0xF007, 0xF188, 0 };
+        io.Fonts->AddFontFromMemoryTTF((void*)fontAwesomeSolidSubset, sizeof(fontAwesomeSolidSubset), menuFontSize, &iconsConfig, iconRanges);
+
+        ImFontConfig verCfg{};
+        verCfg.FontDataOwnedByAtlas = false;
+        menuVersionFont = io.Fonts->AddFontFromMemoryTTF((void*)fontRudaBold, sizeof(fontRudaBold), menuFontSize * 1.25f, &verCfg);
+
+        io.Fonts->Build();
+    }
+
+    void SyncMenuFontsBeforeImGuiNewFrame() {
+        if (std::fabs(static_cast<double>(scale - lastFontAtlasScale)) < 1.0e-4)
+            return;
+        lastFontAtlasScale = scale;
+        LoadMenuFontAtlas(scale);
+        if (EGSDK::Core::rendererAPI == 11)
+            ImGui_ImplDX11_InvalidateDeviceObjects();
+        else if (EGSDK::Core::rendererAPI == 12)
+            ImGui_ImplDX12_InvalidateDeviceObjects();
+    }
+
+    ImFont* MenuVersionFont() {
+        return menuVersionFont ? menuVersionFont : ImGui::GetFont();
+    }
+
     static std::string welcomeTitle{};
     static std::string changelogTitle{};
 
@@ -70,23 +119,19 @@ namespace EGT::Menu {
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
             ImGui::TextCentered("I will not bore you with what this mod is about, so let's get right to teaching you how to use it!");
 
-            ImGui::SeparatorTextColored("Menu Toggle", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Menu Toggle", false);
             ImGui::TextCentered("The default key for opening/closing the menu is F5. You can use your mouse to navigate the menu.");
             ImGui::TextCentered("To change it, you can open up the menu and change the hotkey by clicking the hotkey button for \"Menu Toggle Key\" and then pressing a key on your keyboard.");
 
-            ImGui::SeparatorTextColored("FreeCam", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("FreeCam");
             ImGui::TextCentered("While using FreeCam, you can press Shift or Alt to boost your speed or slow you down respectively.");
             ImGui::TextCentered("You can also use the scroll wheel to change FreeCam speed while FreeCam is enabled.");
 
-            ImGui::SeparatorTextColored("Menu Sliders", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Menu Sliders");
             ImGui::TextCentered("To manually change the value of a slider option, hold \"CTRL\" while clicking the slider.");
             ImGui::TextCentered("This will let you input a value manually into the slider, which can also go beyond the option's slider limit, given I allow the option to do so.");
 
-            ImGui::SeparatorTextColored("Custom File Loading", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Custom File Loading");
             ImGui::TextCentered("The mod always creates a folder \"EGameTools\\UserModFiles\" inside the same folder as the game executable (exe) or in the same folder as the mod file.");
             ImGui::TextCentered("This folder is used for custom file loading. It can load .PAKs and it can also load files extracted from these .PAKs. The latter has only been tested with a few mods that change some .scr files, .gpufx files, and other files included inside .PAK game archives, or files such as .rpack files.");
             ImGui::TextCentered("If you put .PAKs inside this folder, they can be named whatever. If you put any other kind of files, they must have the same names as the ones from the game files, otherwise the game won't know it should load those files. Files in subfolders of the \"EGameTools\\UserModFiles\" folder will automatically be detected, so you can sort all your mods in different folders!");
@@ -106,17 +151,14 @@ namespace EGT::Menu {
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
             ImGui::TextCentered("If you want to officially include one of your mods as part of EGameTools, please contact me on NexusMods or on Discord (@EricPlayZ).");
 
-            ImGui::SeparatorTextColored("Game Variables Reloading", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Game Variables Reloading");
             ImGui::TextCentered("You can also reload Player Variables from a file specified by you, or reload Jump Parameters from \"EGameTools\\UserModFiles\".");
 
-            ImGui::SeparatorTextColored("Hotkeys", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Hotkeys");
             ImGui::TextCentered("Most mod menu options are toggleable by a hotkey that you can change by clicking the hotkey button for the respective option and then pressing a key on your keyboard.");
             ImGui::TextCentered("To change those hotkeys through the config file, visit the \"Virtual-Key Codes\" page from Microsoft which contains a list of all virtual key codes. Simply write the name of the keycode you want to use for each hotkey and save the config file.");
 
-            ImGui::SeparatorTextColored("Config", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Config");
             ImGui::TextCentered("A config file \"EGameTools.ini\" is stored in the same folder as the game executable (exe) or in the same folder as the mod file.");
             ImGui::TextCentered("The config file stores the mod menu's options and hotkeys.");
 
@@ -126,12 +168,10 @@ namespace EGT::Menu {
             ImGui::TextCentered("You DO NOT NEED to restart the game for the changes in the config to be applied!");
             ImGui::TextCentered("If you want to regenerate the config file, delete it and it will automatically be regenerated.");
 
-            ImGui::SeparatorTextColored("Logging", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Logging");
             ImGui::TextCentered("Log files will be stored in the EGameTools folder as \"log.x.txt\", x being the number of the previous log file. The most recent log file will be called \"log.txt\".");
 
-            ImGui::SeparatorTextColored("Multiplayer", IM_COL32(200, 0, 0, 255));
-            ImGui::NewLine();
+            ImGui::SeparatorTextSection("Multiplayer");
             ImGui::TextCentered("Currently, this mod has been designed with singleplayer in mind. That means certain features might glitch out or completely stop working in multiplayer.");
             ImGui::TextCentered("If that happens, please open a bug report!");
 
@@ -191,8 +231,7 @@ namespace EGT::Menu {
             return;
         }
 
-        ImGui::StyleScaleAllSizes(&ImGui::GetStyle(), scale, &defStyle);
-        ImGui::GetIO().FontGlobalScale = scale;
+        PushScaledMenuStyles();
         minWndSize = defMinWndSize * scale;
         maxWndSize = defMaxWndSize * scale;
 
@@ -223,69 +262,77 @@ namespace EGT::Menu {
         ImGuiStyle* style = &ImGui::GetStyle();
 
         style->WindowTitleAlign = ImVec2(0.5f, 0.5f);
-        style->WindowPadding = ImVec2(13, 13);
-        style->WindowRounding = 5.0f;
-        style->ChildRounding = 4.0f;
-        style->FramePadding = ImVec2(4, 4);
-        style->FrameRounding = 4.0f;
-        style->ItemSpacing = ImVec2(10, 6);
+        style->WindowPadding = ImVec2(16, 14);
+        style->WindowRounding = 12.0f;
+        style->ChildRounding = 10.0f;
+        style->ChildBorderSize = 1.0f;
+        style->FramePadding = ImVec2(8, 5);
+        style->FrameRounding = 8.0f;
+        style->TabRounding = 8.0f;
+        style->ItemSpacing = ImVec2(10, 8);
         style->ItemInnerSpacing = ImVec2(8, 6);
         style->IndentSpacing = 25.0f;
-        style->ScrollbarSize = 15.0f;
-        style->ScrollbarRounding = 9.0f;
-        style->GrabMinSize = 5.0f;
-        style->GrabRounding = 3.0f;
+        style->ScrollbarSize = 14.0f;
+        style->ScrollbarRounding = 11.0f;
+        style->GrabMinSize = 6.0f;
+        style->GrabRounding = 5.0f;
 
-        style->Colors[ImGuiCol_Text] = ImVec4(0.80f, 0.80f, 0.83f, 1.00f);
-        style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
-        style->Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-        style->Colors[ImGuiCol_ChildBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
-        style->Colors[ImGuiCol_PopupBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
-        style->Colors[ImGuiCol_Border] = ImVec4(0.80f, 0.80f, 0.83f, 0.88f);
+        // Cool gray chrome; accents = orange-red / blood red (blue kept below green so nothing reads magenta).
+        style->Colors[ImGuiCol_Text] = ImVec4(0.94f, 0.95f, 0.98f, 1.00f);
+        style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.48f, 0.50f, 0.58f, 1.00f);
+        style->Colors[ImGuiCol_WindowBg] = ImVec4(0.060f, 0.065f, 0.100f, 1.00f);
+        style->Colors[ImGuiCol_ChildBg] = ImVec4(0.078f, 0.082f, 0.118f, 0.50f);
+        style->Colors[ImGuiCol_PopupBg] = ImVec4(0.078f, 0.082f, 0.118f, 0.72f);
+        style->Colors[ImGuiCol_Border] = ImVec4(0.30f, 0.31f, 0.38f, 0.40f);
         style->Colors[ImGuiCol_BorderShadow] = ImVec4(0.92f, 0.91f, 0.88f, 0.00f);
-        style->Colors[ImGuiCol_FrameBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-        style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
-        style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-        style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 0.98f, 0.95f, 0.75f);
-        style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
-        style->Colors[ImGuiCol_MenuBarBg] = ImVec4(0.13f, 0.12f, 0.15f, 1.00f);
-        style->Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-        style->Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_Button] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-        style->Colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_ButtonActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_Header] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_HeaderActive] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_Tab] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_TabHovered] = ImVec4(0.4705f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_TabActive] = ImVec4(1.0f, 0.0784f, 0.1176f, 1.00f);
+        style->Colors[ImGuiCol_FrameBg] = ImVec4(0.11f, 0.10f, 0.145f, 0.70f);
+        style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.22f, 0.17f, 0.16f, 0.85f);
+        style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.34f, 0.10f, 0.07f, 1.00f);
+        style->Colors[ImGuiCol_TitleBg] = ImVec4(0.078f, 0.082f, 0.118f, 1.00f);
+        style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.060f, 0.065f, 0.100f, 0.92f);
+        style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.050f, 0.055f, 0.090f, 1.00f);
+        style->Colors[ImGuiCol_MenuBarBg] = ImVec4(0.085f, 0.080f, 0.120f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.060f, 0.058f, 0.090f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.72f, 0.12f, 0.06f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(1.00f, 0.30f, 0.08f, 1.00f);
+        style->Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.48f, 0.08f, 0.03f, 1.00f);
+        style->Colors[ImGuiCol_CheckMark] = ImVec4(0.98f, 0.28f, 0.06f, 1.00f);
+        style->Colors[ImGuiCol_SliderGrab] = ImVec4(0.98f, 0.26f, 0.05f, 1.00f);
+        style->Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.62f, 0.12f, 0.03f, 1.00f);
+        style->Colors[ImGuiCol_Button] = ImVec4(0.11f, 0.10f, 0.145f, 1.00f);
+        style->Colors[ImGuiCol_ButtonHovered] = ImVec4(0.92f, 0.26f, 0.08f, 1.00f);
+        style->Colors[ImGuiCol_ButtonActive] = ImVec4(0.26f, 0.09f, 0.06f, 1.00f);
+        style->Colors[ImGuiCol_Header] = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
+        style->Colors[ImGuiCol_HeaderHovered] = ImVec4(0.16f, 0.12f, 0.17f, 1.00f);
+        style->Colors[ImGuiCol_HeaderActive] = ImVec4(0.13f, 0.10f, 0.14f, 1.00f);
+        style->Colors[ImGuiCol_Tab] = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
+        style->Colors[ImGuiCol_TabHovered] = ImVec4(0.48f, 0.14f, 0.08f, 1.00f);
+        style->Colors[ImGuiCol_TabActive] = ImVec4(0.14f, 0.13f, 0.19f, 1.00f);
+        style->Colors[ImGuiCol_TabUnfocused] = ImVec4(0.08f, 0.08f, 0.12f, 1.00f);
+        style->Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.18f, 0.13f, 0.16f, 1.00f);
+        style->Colors[ImGuiCol_Separator] = ImVec4(0.28f, 0.28f, 0.32f, 0.50f);
+        style->Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.78f, 0.20f, 0.08f, 0.55f);
+        style->Colors[ImGuiCol_SeparatorActive] = ImVec4(0.95f, 0.28f, 0.10f, 0.72f);
         style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-        style->Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
-        style->Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-        style->Colors[ImGuiCol_PlotLines] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
-        style->Colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
-        style->Colors[ImGuiCol_PlotHistogram] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
-        style->Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
-        style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.5882f, 0.0784f, 0.1176f, 1.00f);
-        style->Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
+        style->Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.52f, 0.50f, 0.58f, 1.00f);
+        style->Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.35f, 0.33f, 0.40f, 1.00f);
+        style->Colors[ImGuiCol_PlotLines] = ImVec4(0.55f, 0.45f, 0.55f, 0.70f);
+        style->Colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.98f, 0.30f, 0.08f, 1.00f);
+        style->Colors[ImGuiCol_PlotHistogram] = ImVec4(0.52f, 0.42f, 0.52f, 0.68f);
+        style->Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.95f, 0.26f, 0.07f, 1.00f);
+        style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.42f, 0.09f, 0.04f, 0.55f);
+        style->Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.02f, 0.025f, 0.05f, 0.72f);
 
         defStyle = *style;
 
+        LoadMenuFontAtlas(scale);
+        lastFontAtlasScale = scale;
+        InitMenuScaleDraftToCommitted();
         ImGuiIO& io = ImGui::GetIO();
-        ImFontConfig fontConfig{};
-        fontConfig.FontDataOwnedByAtlas = false;
-        io.FontDefault = io.Fonts->AddFontFromMemoryTTF((void*)g_FontRudaBold, sizeof(g_FontRudaBold), 12.0f + 6.0f, &fontConfig);
-        io.Fonts->Build();
+        io.FontGlobalScale = 1.0f;
 
         SPDLOG_INFO("Loading EGameTools logo texture");
-        EGTLogoTexture = EGT::Utils::Texture::LoadImGuiTexture(g_EGTWhiteLogo, sizeof(g_EGTWhiteLogo));
+        EGTLogoTexture = EGT::Utils::Texture::LoadImGuiTexture(egtWhiteLogoPng, sizeof(egtWhiteLogoPng));
         SPDLOG_INFO("Loaded EGameTools logo");
     }
 }

@@ -56,22 +56,20 @@ namespace EGT::Menu {
 				gameDI_PH->blockPauseGameOnPlayerAfk = disableGamePauseWhileAFK.GetValue();
 		}
 		void Tab::Render() {
-			ImGui::SeparatorText("Misc##Misc");
+			ImGui::SeparatorTextSection("Misc##Misc", false);
 			ImGui::CheckboxHotkey("Disable Game Pause While AFK", &disableGamePauseWhileAFK, "Prevents the game from pausing while you're afk");
-			ImGui::SameLine();
 			ImGui::BeginDisabled(disableHUD.GetChangesAreDisabled());
 			ImGui::CheckboxHotkey("Disable HUD", &disableHUD, "Disables the entire HUD, including any sort of menus like the pause menu");
 			ImGui::EndDisabled();
 
 			ImGui::CheckboxHotkey("Disable TAA", &disableTAA, "Disables the TAA/anti-aliasing (only works if you have upscaling disabled)");
 
-			ImGui::SeparatorText("Scripting##Misc");
+			ImGui::SeparatorTextSection("Scripting##Misc");
 			cVarsList.Render();
 
-			ImGui::SeparatorText("Game Checks##Misc");
+			ImGui::SeparatorTextSection("Game Checks##Misc");
 			if (ImGui::Checkbox("Disable Savegame CRC Check *", &disableSavegameCRCCheck, "Stops the game from falsely saying your savegame is corrupt whenever you modify it outside of the game using a save editor"))
 				disableSavegameCRCCheck.GetValue() ? EGT::GamePH::Hooks::SaveGameCRCBoolCheckHook.Enable() : EGT::GamePH::Hooks::SaveGameCRCBoolCheckHook.Disable();
-			ImGui::SameLine();
 			ImGui::Checkbox("Disable Data PAKs CRC Check *", &disableDataPAKsCRCCheck, "Stops the game from scanning data PAKs, which allows you to use data PAK mods in multiplayer as well");
 			ImGui::Checkbox("Increase Data PAKs Limit *", &increaseDataPAKsLimit, "Allows you to add more than 8 data PAKs, e.g. data8.pak, data9.pak, data10.pak, etc, up to 200 PAKs in total");
 			ImGui::Separator();

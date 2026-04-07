@@ -73,7 +73,6 @@ namespace EGT::Menu {
 #endif
 
 		static void RenderClassAddrPair(const std::pair<std::string_view, void*(*)()>* pair) {
-			const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
 			static std::string labelID{};
 			labelID = "##DebugAddrInputText" + std::string(pair->first);
 
@@ -86,15 +85,10 @@ namespace EGT::Menu {
 			static std::string addrString{};
 			addrString = ss.str();
 
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
-			ImGui::Text(pair->first.data());
-
-			ImGui::SameLine();
-
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
-			ImGui::SetNextItemWidth(maxInputTextWidth);
+			ImGui::TextUnformatted(pair->first.data(), pair->first.data() + pair->first.size());
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 			ImGui::PushStyleColor(ImGuiCol_Text, pair->second() ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
-			ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), strlen(addrString.c_str()), ImGuiInputTextFlags_ReadOnly);
+			ImGui::InputText(labelID.c_str(), addrString.data(), addrString.size() + 1, ImGuiInputTextFlags_ReadOnly);
 			ImGui::PopStyleColor();
 		}
 
@@ -232,7 +226,6 @@ namespace EGT::Menu {
 			};
 
 			static void RenderHexPtrRow(const char* label, const void* ptr) {
-				const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000").x;
 				const std::string labelID = std::string("##InvDbgHex") + label;
 
 				std::stringstream ss{};
@@ -244,18 +237,14 @@ namespace EGT::Menu {
 				static std::string addrString{};
 				addrString = ss.str();
 
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
-				ImGui::Text("%s", label);
-				ImGui::SameLine();
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
-				ImGui::SetNextItemWidth(maxInputTextWidth);
+				ImGui::TextUnformatted(label);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				ImGui::PushStyleColor(ImGuiCol_Text, ptr ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
-				ImGui::InputText(labelID.c_str(), const_cast<char*>(addrString.c_str()), addrString.size() + 1, ImGuiInputTextFlags_ReadOnly);
+				ImGui::InputText(labelID.c_str(), addrString.data(), addrString.size() + 1, ImGuiInputTextFlags_ReadOnly);
 				ImGui::PopStyleColor();
 			}
 
 			static void RenderUnionFieldRow(const char* label, const char* classShortName, void* basePtr, uint64_t fieldOffset) {
-				const float maxInputTextWidth = ImGui::CalcTextSize("0x0000000000000000  ->  TimeWeather\\CSystem+0xFFFFFFFF").x;
 				static std::string labelID{};
 				labelID = "##UnionFld" + std::string(label);
 
@@ -270,13 +259,10 @@ namespace EGT::Menu {
 				const ImU32 col = !basePtr ? IM_COL32(255, 0, 0, 255)
 					: (fieldOffset == 0 ? IM_COL32(255, 200, 0, 255) : IM_COL32(0, 255, 0, 255));
 
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
-				ImGui::Text("%s", label);
-				ImGui::SameLine();
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ((ImGui::GetFrameHeight() - ImGui::GetTextLineHeight()) / 2.0f));
-				ImGui::SetNextItemWidth(maxInputTextWidth);
+				ImGui::TextUnformatted(label);
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				ImGui::PushStyleColor(ImGuiCol_Text, col);
-				ImGui::InputText(labelID.c_str(), const_cast<char*>(line.c_str()), line.size() + 1, ImGuiInputTextFlags_ReadOnly);
+				ImGui::InputText(labelID.c_str(), line.data(), line.size() + 1, ImGuiInputTextFlags_ReadOnly);
 				ImGui::PopStyleColor();
 			}
 
@@ -304,7 +290,7 @@ namespace EGT::Menu {
 				RenderHexPtrRow("InventoryItem (GetCurrentWeapon(0))", invItem);
 				RenderHexPtrRow("ItemDescWithContext (GetItemDescCtx)", itemCtx);
 
-				ImGui::SeparatorText("ItemDescWithContext base offset##InvDbg");
+				ImGui::SeparatorTextSection("ItemDescWithContext base offset##InvDbg");
 				ImGui::TextUnformatted("SDK hardcodes InventoryItem+0x40 in InventoryItem.cpp; compare with GetItemDescCtx() after vtable checks.");
 				RenderHexPtrRow("InventoryItem + 0x40 (no vtable check)", itemCtxByFixedOffset);
 				if (invItem && itemCtx && itemCtxByFixedOffset != itemCtx) {
@@ -314,7 +300,7 @@ namespace EGT::Menu {
 					ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(0, 200, 100, 255)), "+0x40 matches GetItemDescCtx.");
 				}
 
-				ImGui::SeparatorText("Union fields (DynamicField)##InvDbg");
+				ImGui::SeparatorTextSection("Union fields (DynamicField)##InvDbg");
 				ImGui::PushID("InvDbgUnionRows");
 				RenderUnionFieldRow("InventoryMoney::oldWorldMoney", "InventoryMoney", invMoney,
 					EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(&EGSDK::GamePH::InventoryMoney::oldWorldMoney)));
@@ -328,11 +314,11 @@ namespace EGT::Menu {
 		void Tab::Init() {}
 		void Tab::Update() {}
 		void Tab::Render() {
-			ImGui::SeparatorText("Misc##Debug");
+			ImGui::SeparatorTextSection("Misc##Debug", false);
 			if (ImGui::Checkbox("Disable Vftable Scanning", &disableVftableScanning, "Disables the vftable scanning for classes that are used in the game and used to validate a class in memory; this option is used for debugging purposes"))
 				EGSDK::ClassHelpers::SetIsVftableScanningDisabled(disableVftableScanning.GetValue());
 			ImGui::Checkbox("Enable Debugging Console *", &enableDebuggingConsole, "Enables EGameTools' debugging console that shows up when starting up the game; this option is used for debugging purposes");
-			ImGui::SeparatorText("Class addresses##Debug");
+			ImGui::SeparatorTextSection("Class addresses##Debug");
 			if (ImGui::CollapsingHeader("GamePH", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				for (auto& pair : GamePHClassAddrMap)
@@ -345,7 +331,7 @@ namespace EGT::Menu {
 					RenderClassAddrPair(&pair);
 				ImGui::Unindent();
 			}
-			ImGui::SeparatorText("Union field addresses (Class+offset)##Debug");
+			ImGui::SeparatorTextSection("Union field addresses (Class+offset)##Debug");
 			ImGui::TextUnformatted("Read-only: ClassName+field offset from OffsetManager (patterns) or compile-time StaticBuffer layout; when the instance exists, resolved address is appended.");
 			if (ImGui::CollapsingHeader("GamePH##UnionFields", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
@@ -357,7 +343,7 @@ namespace EGT::Menu {
 				RenderUnionFieldList(kEngineUnionFields);
 				ImGui::Unindent();
 			}
-			ImGui::SeparatorText("InventoryMoney / ItemDescWithContext (live)##Debug");
+			ImGui::SeparatorTextSection("InventoryMoney / ItemDescWithContext (live)##Debug");
 			if (ImGui::CollapsingHeader("Pointer chain & offset probe##InvDbg", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				RenderInventoryItemContextOffsetProbe();
