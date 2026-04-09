@@ -10,7 +10,7 @@ namespace EGT {
         template <typename VarManagerT>
         void VarList<VarManagerT>::Render() {
             ImGui::BeginDisabled(!VarManagerT::AreAnyVarsPresent());
-            if (ImGui::CollapsingHeader(listTitle.c_str(), ImGuiTreeNodeFlags_None)) {
+            if (ImGui::CollapsingHeaderSmooth(listTitle.c_str(), ImGuiTreeNodeFlags_None)) {
                 ImGui::Indent();
 
                 //if (ImGui::Button("Save variables to file", "Saves current player variables to chosen file inside the file dialog"))
@@ -257,7 +257,7 @@ namespace EGT {
                         break;
                     }
                     bool newValue = *value;
-                    if (ImGui::Checkbox("##b", &newValue))
+                    if (ImGui::CheckboxAnimated("##b", &newValue))
                         var->SetValueFromList(newValue);
                     break;
                 }

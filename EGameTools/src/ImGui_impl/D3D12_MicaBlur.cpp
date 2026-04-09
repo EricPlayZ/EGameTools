@@ -37,11 +37,14 @@ float2 invSz = blurPassParams.xy;
 float2 dir = blurPassParams.zw;
 float2 uv = (inp.pos.xy + float2(0.5f, 0.5f)) * invSz;
 float2 off = float2(dir.x * invSz.x, dir.y * invSz.y);
+// Wider tap spacing reads more like Win11 Mica / acrylic than a tight 5-tap (still separable Gaussian weights).
+static const float blurRadiusScale = 2.45f;
+float2 s = off * blurRadiusScale;
 float4 c = blurSourceTexture.SampleLevel(linearSampler, uv, 0) * 0.227027f;
-c += blurSourceTexture.SampleLevel(linearSampler, uv + off, 0) * 0.316216f;
-c += blurSourceTexture.SampleLevel(linearSampler, uv - off, 0) * 0.316216f;
-c += blurSourceTexture.SampleLevel(linearSampler, uv + off * 2.0f, 0) * 0.070270f;
-c += blurSourceTexture.SampleLevel(linearSampler, uv - off * 2.0f, 0) * 0.070270f;
+c += blurSourceTexture.SampleLevel(linearSampler, uv + s, 0) * 0.316216f;
+c += blurSourceTexture.SampleLevel(linearSampler, uv - s, 0) * 0.316216f;
+c += blurSourceTexture.SampleLevel(linearSampler, uv + s * 2.0f, 0) * 0.070270f;
+c += blurSourceTexture.SampleLevel(linearSampler, uv - s * 2.0f, 0) * 0.070270f;
 return c;
 }
 
@@ -54,7 +57,13 @@ float2 uv = inp.pos.xy / backbufferSize;
 float3 sharp = sharpBackbufferTexture.SampleLevel(linearSampler, uv, 0).rgb;
 float3 blur = blurredTexture.SampleLevel(linearSampler, uv, 0).rgb;
 float t = saturate(blurMix * menuFade);
-return float4(lerp(sharp, blur, t), 1.0f);
+// Gentle cool tint; keep chroma boost small so warm game pixels do not read as a pink/orange wash through the menu.
+float lum = dot(blur, float3(0.299, 0.587, 0.114));
+float3 chroma = blur - lum;
+float3 vivid = blur + chroma * (0.04f + 0.06f * menuFade);
+vivid = saturate(vivid);
+float3 cool = lerp(vivid, vivid * float3(0.90f, 0.95f, 1.06f), (0.18f + 0.12f * menuFade) * t);
+return float4(lerp(sharp, cool, t), 1.0f);
 }
     )";
 
@@ -527,10 +536,12 @@ return float4(lerp(sharp, blur, t), 1.0f);
             dstState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
         };
 
-        blurPass(gpuSrvBlurA, cpuRtvB, blurTextureB, blurTextureBResourceState, 1.0f, 0.0f);
-        blurPass(gpuSrvBlurB, cpuRtvA, blurTextureA, blurTextureAResourceState, 0.0f, 1.0f);
-        blurPass(gpuSrvBlurA, cpuRtvB, blurTextureB, blurTextureBResourceState, 1.0f, 0.0f);
-        blurPass(gpuSrvBlurB, cpuRtvA, blurTextureA, blurTextureAResourceState, 0.0f, 1.0f);
+        for (int blurRound = 0; blurRound < 2; ++blurRound) {
+            blurPass(gpuSrvBlurA, cpuRtvB, blurTextureB, blurTextureBResourceState, 1.0f, 0.0f);
+            blurPass(gpuSrvBlurB, cpuRtvA, blurTextureA, blurTextureAResourceState, 0.0f, 1.0f);
+            blurPass(gpuSrvBlurA, cpuRtvB, blurTextureB, blurTextureBResourceState, 1.0f, 0.0f);
+            blurPass(gpuSrvBlurB, cpuRtvA, blurTextureA, blurTextureAResourceState, 0.0f, 1.0f);
+        }
 
         D3D12_VIEWPORT vpFull{};
         vpFull.Width = static_cast<float>(fullWidth);
@@ -546,7 +557,8 @@ return float4(lerp(sharp, blur, t), 1.0f);
         cmdList->SetDescriptorHeaps(1, heaps);
         cmdList->SetGraphicsRootSignature(rootSignatureComposite);
         cmdList->SetPipelineState(pipelineStateComposite);
-        float compC[4] = { static_cast<float>(fullWidth), static_cast<float>(fullHeight), 0.92f, backdropStrength };
+        // blurMix 1.0: user intensity is fully expressed via `backdropStrength` (menu fade × slider); was 0.92 and dulled the effect.
+        float compC[4] = { static_cast<float>(fullWidth), static_cast<float>(fullHeight), 1.0f, backdropStrength };
         cmdList->SetGraphicsRoot32BitConstants(0, 4, compC, 0);
         cmdList->SetGraphicsRootDescriptorTable(1, gpuSrvScene);
         cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

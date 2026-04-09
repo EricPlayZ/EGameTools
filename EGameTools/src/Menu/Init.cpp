@@ -263,6 +263,7 @@ namespace EGT::Menu {
 
         style->WindowTitleAlign = ImVec2(0.5f, 0.5f);
         style->WindowPadding = ImVec2(16, 14);
+        style->WindowBorderSize = 0.0f;
         style->WindowRounding = 12.0f;
         style->ChildRounding = 10.0f;
         style->ChildBorderSize = 1.0f;
@@ -274,20 +275,23 @@ namespace EGT::Menu {
         style->IndentSpacing = 25.0f;
         style->ScrollbarSize = 14.0f;
         style->ScrollbarRounding = 11.0f;
-        style->GrabMinSize = 6.0f;
+        style->GrabMinSize = 10.0f;
         style->GrabRounding = 5.0f;
+        style->FrameBorderSize = 1.0f;
+        style->SeparatorTextBorderSize = 2.0f;
 
-        // Cool gray chrome; accents = orange-red / blood red (blue kept below green so nothing reads magenta).
-        style->Colors[ImGuiCol_Text] = ImVec4(0.94f, 0.95f, 0.98f, 1.00f);
-        style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.48f, 0.50f, 0.58f, 1.00f);
+        // Design: neutral cool chrome on surfaces (window/child/frames). Orange-red accent only on sliders,
+        // scrollbar, checkmarks, and primary button hover — not on panel fills or decorative glows.
+        style->Colors[ImGuiCol_Text] = ImVec4(0.96f, 0.97f, 0.99f, 1.00f);
+        style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.62f, 0.64f, 0.72f, 1.00f);
         style->Colors[ImGuiCol_WindowBg] = ImVec4(0.060f, 0.065f, 0.100f, 1.00f);
-        style->Colors[ImGuiCol_ChildBg] = ImVec4(0.078f, 0.082f, 0.118f, 0.50f);
-        style->Colors[ImGuiCol_PopupBg] = ImVec4(0.078f, 0.082f, 0.118f, 0.72f);
-        style->Colors[ImGuiCol_Border] = ImVec4(0.30f, 0.31f, 0.38f, 0.40f);
+        style->Colors[ImGuiCol_ChildBg] = ImVec4(0.092f, 0.096f, 0.138f, 0.50f);
+        style->Colors[ImGuiCol_PopupBg] = ImVec4(0.088f, 0.092f, 0.132f, 0.72f);
+        style->Colors[ImGuiCol_Border] = ImVec4(0.38f, 0.40f, 0.50f, 0.58f);
         style->Colors[ImGuiCol_BorderShadow] = ImVec4(0.92f, 0.91f, 0.88f, 0.00f);
-        style->Colors[ImGuiCol_FrameBg] = ImVec4(0.11f, 0.10f, 0.145f, 0.70f);
-        style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.22f, 0.17f, 0.16f, 0.85f);
-        style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.34f, 0.10f, 0.07f, 1.00f);
+        style->Colors[ImGuiCol_FrameBg] = ImVec4(0.175f, 0.168f, 0.228f, 0.70f);
+        style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.22f, 0.24f, 0.34f, 0.88f);
+        style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.28f, 0.30f, 0.42f, 1.00f);
         style->Colors[ImGuiCol_TitleBg] = ImVec4(0.078f, 0.082f, 0.118f, 1.00f);
         style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.060f, 0.065f, 0.100f, 0.92f);
         style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.050f, 0.055f, 0.090f, 1.00f);
@@ -297,20 +301,21 @@ namespace EGT::Menu {
         style->Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(1.00f, 0.30f, 0.08f, 1.00f);
         style->Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.48f, 0.08f, 0.03f, 1.00f);
         style->Colors[ImGuiCol_CheckMark] = ImVec4(0.98f, 0.28f, 0.06f, 1.00f);
-        style->Colors[ImGuiCol_SliderGrab] = ImVec4(0.98f, 0.26f, 0.05f, 1.00f);
-        style->Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.62f, 0.12f, 0.03f, 1.00f);
-        style->Colors[ImGuiCol_Button] = ImVec4(0.11f, 0.10f, 0.145f, 1.00f);
+        style->Colors[ImGuiCol_SliderGrab] = ImVec4(1.00f, 0.38f, 0.12f, 1.00f);
+        style->Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.00f, 0.52f, 0.22f, 1.00f);
+        style->Colors[ImGuiCol_Button] = ImVec4(0.16f, 0.15f, 0.21f, 1.00f);
         style->Colors[ImGuiCol_ButtonHovered] = ImVec4(0.92f, 0.26f, 0.08f, 1.00f);
         style->Colors[ImGuiCol_ButtonActive] = ImVec4(0.26f, 0.09f, 0.06f, 1.00f);
+        // Cool neutrals (match FrameBg*): selectables / tree headers / list rows — no warm R>G tint.
         style->Colors[ImGuiCol_Header] = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
-        style->Colors[ImGuiCol_HeaderHovered] = ImVec4(0.16f, 0.12f, 0.17f, 1.00f);
-        style->Colors[ImGuiCol_HeaderActive] = ImVec4(0.13f, 0.10f, 0.14f, 1.00f);
+        style->Colors[ImGuiCol_HeaderHovered] = ImVec4(0.20f, 0.22f, 0.30f, 1.00f);
+        style->Colors[ImGuiCol_HeaderActive] = ImVec4(0.24f, 0.26f, 0.36f, 1.00f);
         style->Colors[ImGuiCol_Tab] = ImVec4(0.10f, 0.11f, 0.15f, 1.00f);
         style->Colors[ImGuiCol_TabHovered] = ImVec4(0.48f, 0.14f, 0.08f, 1.00f);
         style->Colors[ImGuiCol_TabActive] = ImVec4(0.14f, 0.13f, 0.19f, 1.00f);
         style->Colors[ImGuiCol_TabUnfocused] = ImVec4(0.08f, 0.08f, 0.12f, 1.00f);
         style->Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.18f, 0.13f, 0.16f, 1.00f);
-        style->Colors[ImGuiCol_Separator] = ImVec4(0.28f, 0.28f, 0.32f, 0.50f);
+        style->Colors[ImGuiCol_Separator] = ImVec4(0.42f, 0.44f, 0.52f, 0.78f);
         style->Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.78f, 0.20f, 0.08f, 0.55f);
         style->Colors[ImGuiCol_SeparatorActive] = ImVec4(0.95f, 0.28f, 0.10f, 0.72f);
         style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);

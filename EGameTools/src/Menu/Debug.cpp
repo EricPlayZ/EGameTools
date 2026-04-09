@@ -319,13 +319,13 @@ namespace EGT::Menu {
 				EGSDK::ClassHelpers::SetIsVftableScanningDisabled(disableVftableScanning.GetValue());
 			ImGui::Checkbox("Enable Debugging Console *", &enableDebuggingConsole, "Enables EGameTools' debugging console that shows up when starting up the game; this option is used for debugging purposes");
 			ImGui::SeparatorTextSection("Class addresses##Debug");
-			if (ImGui::CollapsingHeader("GamePH", ImGuiTreeNodeFlags_None)) {
+			if (ImGui::CollapsingHeaderSmooth("GamePH", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				for (auto& pair : GamePHClassAddrMap)
 					RenderClassAddrPair(&pair);
 				ImGui::Unindent();
 			}
-			if (ImGui::CollapsingHeader("Engine", ImGuiTreeNodeFlags_None)) {
+			if (ImGui::CollapsingHeaderSmooth("Engine", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				for (auto& pair : EngineClassAddrMap)
 					RenderClassAddrPair(&pair);
@@ -333,18 +333,18 @@ namespace EGT::Menu {
 			}
 			ImGui::SeparatorTextSection("Union field addresses (Class+offset)##Debug");
 			ImGui::TextUnformatted("Read-only: ClassName+field offset from OffsetManager (patterns) or compile-time StaticBuffer layout; when the instance exists, resolved address is appended.");
-			if (ImGui::CollapsingHeader("GamePH##UnionFields", ImGuiTreeNodeFlags_None)) {
+			if (ImGui::CollapsingHeaderSmooth("GamePH##UnionFields", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				RenderUnionFieldList(kGamePHUnionFields);
 				ImGui::Unindent();
 			}
-			if (ImGui::CollapsingHeader("Engine##UnionFields", ImGuiTreeNodeFlags_None)) {
+			if (ImGui::CollapsingHeaderSmooth("Engine##UnionFields", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				RenderUnionFieldList(kEngineUnionFields);
 				ImGui::Unindent();
 			}
 			ImGui::SeparatorTextSection("InventoryMoney / ItemDescWithContext (live)##Debug");
-			if (ImGui::CollapsingHeader("Pointer chain & offset probe##InvDbg", ImGuiTreeNodeFlags_None)) {
+			if (ImGui::CollapsingHeaderSmooth("Pointer chain & offset probe##InvDbg", ImGuiTreeNodeFlags_None)) {
 				ImGui::Indent();
 				RenderInventoryItemContextOffsetProbe();
 				ImGui::Unindent();

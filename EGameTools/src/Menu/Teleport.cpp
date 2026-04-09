@@ -358,7 +358,7 @@ namespace EGT::Menu {
 						for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
 							ImGui::PushID(i);
 							const bool sel = (i == selectedTPLocation);
-							if (ImGui::Selectable(savedTeleportLocationNamesPtrs[static_cast<size_t>(i)], sel))
+							if (ImGui::SelectableSmooth(savedTeleportLocationNamesPtrs[static_cast<size_t>(i)], sel))
 								selectedTPLocation = i;
 							if (sel)
 								ImGui::SetItemDefaultFocus();

@@ -8,7 +8,89 @@ namespace ImGui {
     static ImGuiStyle defImGuiStyle{};
     static size_t tabIndex = 1;
 
-    /// Defined below; used by helpers in the anonymous namespace before this TU's definition line.
+    struct HoverActiveSmoothState {
+        float hover = 0.0f;
+        float active = 0.0f;
+        unsigned int lastFrame = 0;
+        /// Previous frame's raw hover (see `NavRowSelectable` in Menu.cpp). Smoothing targets this so
+        /// single-frame hit-test flicker on stacked selectables does not pump the fill.
+        bool hoverPrev = false;
+    };
+    static std::unordered_map<ImGuiID, HoverActiveSmoothState> g_hoverActiveSmoothById;
+
+    enum class HoverCommitMode : unsigned char {
+        Default,       // hoverPrev + smooth (headers, sliders)
+        ListSelectable // current-frame target; slow in / very fast out (teleport list rows)
+    };
+
+    static void SmoothHoverActiveRead(ImGuiID id, float& hoverOut, float& activeOut) {
+        const auto it = g_hoverActiveSmoothById.find(id);
+        if (it == g_hoverActiveSmoothById.end()) {
+            hoverOut = 0.0f;
+            activeOut = 0.0f;
+            return;
+        }
+        hoverOut = it->second.hover;
+        activeOut = it->second.active;
+    }
+
+    static void SmoothHoverActiveCommit(ImGuiID id, bool hovered, bool activeHeld, HoverCommitMode mode = HoverCommitMode::Default) {
+        ImGuiContext& g = *GImGui;
+        const unsigned int frameCount = static_cast<unsigned int>(g.FrameCount);
+        HoverActiveSmoothState& st = g_hoverActiveSmoothById[id];
+        const bool continuous = (st.lastFrame + 1u == frameCount);
+        st.lastFrame = frameCount;
+        const float deltaSeconds = ImMin(g.IO.DeltaTime, 0.08f);
+        const float targetActive = activeHeld ? 1.0f : 0.0f;
+        if (!continuous) {
+            st.hoverPrev = hovered;
+            st.hover = hovered ? 1.0f : 0.0f;
+            st.active = targetActive;
+            return;
+        }
+        if (mode == HoverCommitMode::ListSelectable) {
+            const float targetHover = hovered ? 1.0f : 0.0f;
+            // Ease in so hover is visible; ease out much faster than Default so two rows are not both
+            // stuck in a dark mid-lerp when moving down the list.
+            const float stepHover =
+                (targetHover > st.hover) ? (1.0f - std::exp(-14.5f * deltaSeconds)) : (1.0f - std::exp(-95.0f * deltaSeconds));
+            st.hover += (targetHover - st.hover) * stepHover;
+        } else {
+            const float targetHover = st.hoverPrev ? 1.0f : 0.0f;
+            // Ease in slowly, ease out fast — avoids header/slider "ghost" when moving between items.
+            const float stepHover =
+                (targetHover > st.hover) ? (1.0f - std::exp(-22.0f * deltaSeconds)) : (1.0f - std::exp(-56.0f * deltaSeconds));
+            st.hover += (targetHover - st.hover) * stepHover;
+        }
+        st.hoverPrev = hovered;
+        const float stepActive =
+            (targetActive > st.active) ? (1.0f - std::exp(-24.0f * deltaSeconds)) : (1.0f - std::exp(-58.0f * deltaSeconds));
+        st.active += (targetActive - st.active) * stepActive;
+    }
+
+    static ImVec4 LerpVec4(const ImVec4& a, const ImVec4& b, float t) {
+        return ImVec4(ImLerp(a.x, b.x, t), ImLerp(a.y, b.y, t), ImLerp(a.z, b.z, t), ImLerp(a.w, b.w, t));
+    }
+
+    static void PushSliderSmoothStyleColors(ImGuiID sliderId) {
+        float hb = 0.0f;
+        float ab = 0.0f;
+        SmoothHoverActiveRead(sliderId, hb, ab);
+        const ImVec4 f0 = GetStyleColorVec4(ImGuiCol_FrameBg);
+        const ImVec4 f1 = GetStyleColorVec4(ImGuiCol_FrameBgHovered);
+        const ImVec4 f2 = GetStyleColorVec4(ImGuiCol_FrameBgActive);
+        ImVec4 frame = LerpVec4(LerpVec4(f0, f1, hb), f2, ab);
+        PushStyleColor(ImGuiCol_FrameBg, frame);
+        PushStyleColor(ImGuiCol_FrameBgHovered, frame);
+        PushStyleColor(ImGuiCol_FrameBgActive, frame);
+        const ImVec4 g0 = GetStyleColorVec4(ImGuiCol_SliderGrab);
+        const ImVec4 g1 = GetStyleColorVec4(ImGuiCol_SliderGrabActive);
+        const ImVec4 grab = LerpVec4(g0, g1, ab);
+        PushStyleColor(ImGuiCol_SliderGrab, grab);
+        PushStyleColor(ImGuiCol_SliderGrabActive, grab);
+    }
+
+    /// Defined below; used by helpers above.
     void SetItemTooltipAnimated(const char* fmt, ...);
 
     /// Check path matches `RenderCheckMark`; `t` in [0,1] is distance along the stroke (draw + uncheck retract).
@@ -57,7 +139,11 @@ namespace ImGui {
         if (label_end <= label)
             return;
         AlignTextToFramePadding();
+        const ImVec4& textBase = GetStyle().Colors[ImGuiCol_Text];
+        const ImVec4 labelEmphasis(ImMin(1.0f, textBase.x * 1.02f), ImMin(1.0f, textBase.y * 1.02f), ImMin(1.0f, textBase.z * 1.01f), textBase.w);
+        PushStyleColor(ImGuiCol_Text, labelEmphasis);
         TextUnformatted(label, label_end);
+        PopStyleColor();
         if (tooltip && *tooltip)
             SetItemTooltipAnimated("%s", tooltip);
         SameLine(0.0f, GetStyle().ItemInnerSpacing.x);
@@ -72,7 +158,11 @@ namespace ImGui {
         PushID(label);
         InlineFormLabel(label, tooltip);
         SetNextItemWidthRemainder();
+        const ImGuiID sliderId = GetID("##stk");
+        PushSliderSmoothStyleColors(sliderId);
         const bool ch = SliderFloat("##stk", v, v_min, v_max, format, flags);
+        PopStyleColor(5);
+        SmoothHoverActiveCommit(sliderId, IsItemHovered(), IsItemActive());
         if (FindRenderedTextEnd(label) <= label && tooltip && *tooltip)
             SetItemTooltipAnimated("%s", tooltip);
         PopID();
@@ -83,7 +173,11 @@ namespace ImGui {
         PushID(label);
         InlineFormLabel(label, nullptr);
         SetNextItemWidthRemainder();
+        const ImGuiID sliderId = GetID("##sf3");
+        PushSliderSmoothStyleColors(sliderId);
         const bool ch = SliderFloat3("##sf3", v, v_min, v_max, format, flags);
+        PopStyleColor(5);
+        SmoothHoverActiveCommit(sliderId, IsItemHovered(), IsItemActive());
         PopID();
         return ch;
     }
@@ -92,7 +186,11 @@ namespace ImGui {
         PushID(label);
         InlineFormLabel(label, tooltip);
         SetNextItemWidthRemainder();
+        const ImGuiID sliderId = GetID("##stk");
+        PushSliderSmoothStyleColors(sliderId);
         const bool ch = SliderInt("##stk", v, v_min, v_max, format, flags);
+        PopStyleColor(5);
+        SmoothHoverActiveCommit(sliderId, IsItemHovered(), IsItemActive());
         if (FindRenderedTextEnd(label) <= label && tooltip && *tooltip)
             SetItemTooltipAnimated("%s", tooltip);
         PopID();
@@ -195,19 +293,31 @@ namespace ImGui {
         ImGuiContext& imguiContext = *GImGui;
         PushID(label);
         const ImGuiID smoothId = GetID("##smb");
-        const int slot = static_cast<int>(smoothId & 127);
-        static float buttonBlendBySlot[128]{};
-        static bool buttonWasHoveredBySlot[128]{};
-        static bool buttonWasHeldBySlot[128]{};
+        struct ButtonSmoothState {
+            float blend = 0.0f;
+            bool wasHovered = false;
+            bool wasHeld = false;
+            unsigned int lastFrame = 0;
+        };
+        static std::unordered_map<ImGuiID, ButtonSmoothState> buttonSmoothById;
+        const unsigned int frameCount = static_cast<unsigned int>(imguiContext.FrameCount);
+        ButtonSmoothState& st = buttonSmoothById[smoothId];
+        const bool continuous = (st.lastFrame + 1u == frameCount);
+        st.lastFrame = frameCount;
+        if (!continuous) {
+            st.wasHovered = false;
+            st.wasHeld = false;
+            st.blend = 0.0f;
+        }
         const float dt = ImMin(imguiContext.IO.DeltaTime, 0.08f);
         const float smoothingStep = 1.0f - std::exp(-22.0f * dt);
-        const bool wasHot = buttonWasHoveredBySlot[slot] || buttonWasHeldBySlot[slot];
+        const bool wasHot = st.wasHovered || st.wasHeld;
         const float target = wasHot ? 1.0f : 0.0f;
-        float& buttonBlend = buttonBlendBySlot[slot];
-        buttonBlend += (target - buttonBlend) * smoothingStep;
+        st.blend += (target - st.blend) * smoothingStep;
         const ImVec4 b = GetStyleColorVec4(ImGuiCol_Button);
         const ImVec4 h = GetStyleColorVec4(ImGuiCol_ButtonHovered);
         const ImVec4 a = GetStyleColorVec4(ImGuiCol_ButtonActive);
+        const float buttonBlend = st.blend;
         const ImVec4 mid(ImLerp(b.x, h.x, buttonBlend), ImLerp(b.y, h.y, buttonBlend), ImLerp(b.z, h.z, buttonBlend), ImLerp(b.w, h.w, buttonBlend));
         PushStyleColor(ImGuiCol_Button, mid);
         PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(ImLerp(mid.x, a.x, buttonBlend * 0.4f), ImLerp(mid.y, a.y, buttonBlend * 0.4f), ImLerp(mid.z, a.z, buttonBlend * 0.4f), ImLerp(mid.w, a.w, buttonBlend * 0.4f)));
@@ -215,8 +325,8 @@ namespace ImGui {
         const bool pressed = Button(label, size_arg);
         PopStyleColor(3);
         PopID();
-        buttonWasHoveredBySlot[slot] = IsItemHovered();
-        buttonWasHeldBySlot[slot] = IsItemActive();
+        st.wasHovered = IsItemHovered();
+        st.wasHeld = IsItemActive();
         return pressed;
     }
 
@@ -232,12 +342,6 @@ namespace ImGui {
             SetItemTooltipAnimated("%s", tooltip);
         Hotkey(std::string(label + std::string("##ToggleKey")), v);
         return btn;
-    }
-    bool Checkbox(const char* label, bool* v, const char* tooltip) {
-        bool checkbox = Checkbox(label, v);
-        if (tooltip && *tooltip)
-            SetItemTooltipAnimated("%s", tooltip);
-        return checkbox;
     }
 
     static ImVec4 BuildCheckboxFrameColor(ImGuiID id, bool hovered, bool held, ImGuiContext& imguiContext) {
@@ -302,6 +406,61 @@ namespace ImGui {
         }
     }
 
+    bool CheckboxAnimated(const char* label, bool* v, const char* tooltip) {
+        ImGuiWindow* window = GetCurrentWindow();
+        if (!window || window->SkipItems)
+            return false;
+
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(label);
+        const ImVec2 label_size = CalcTextSize(label, NULL, true);
+
+        const float square_sz = GetFrameHeight();
+        const ImVec2 pos = window->DC.CursorPos;
+        const ImRect total_bb(pos, pos + ImVec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2.0f));
+        ItemSize(total_bb, style.FramePadding.y);
+        if (!ItemAdd(total_bb, id)) {
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (*v ? ImGuiItemStatusFlags_Checked : 0));
+            return false;
+        }
+
+        bool hovered, held;
+        bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
+        if (pressed) {
+            *v = !(*v);
+            MarkItemEdited(id);
+        }
+
+        const ImRect check_bb(pos, pos + ImVec2(square_sz, square_sz));
+        RenderNavHighlight(total_bb, id);
+        const ImVec4 cFrame = BuildCheckboxFrameColor(id, hovered, held, g);
+        RenderFrame(check_bb.Min, check_bb.Max, ColorConvertFloat4ToU32(cFrame), true, style.FrameRounding);
+
+        const ImU32 check_col_base = GetColorU32(ImGuiCol_CheckMark);
+        bool mixed_value = (g.LastItemData.InFlags & ImGuiItemFlags_MixedValue) != 0;
+        if (mixed_value) {
+            ImVec2 pad(ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)), ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)));
+            window->DrawList->AddRectFilled(check_bb.Min + pad, check_bb.Max - pad, check_col_base, style.FrameRounding);
+        } else
+            DrawCheckboxMarkAnimated(window, check_bb, id, *v, g);
+
+        ImVec2 label_pos = ImVec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y);
+        if (g.LogEnabled)
+            LogRenderedText(&label_pos, mixed_value ? "[~]" : *v ? "[x]" : "[ ]");
+        if (label_size.x > 0.0f)
+            RenderText(label_pos, label);
+
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (*v ? ImGuiItemStatusFlags_Checked : 0));
+        if (tooltip && *tooltip)
+            SetItemTooltipAnimated("%s", tooltip);
+        return pressed;
+    }
+
+    bool Checkbox(const char* label, bool* v, const char* tooltip) {
+        return CheckboxAnimated(label, v, tooltip);
+    }
+
 	bool Checkbox(const char* label, Option* v) {
         ImGui::BeginDisabled(v->IsUnsupportedGameVer());
 
@@ -311,8 +470,8 @@ namespace ImGui {
             return false;
         }
 
-        ImGuiContext& imguiContext = *GImGui;
-        const ImGuiStyle& style = imguiContext.Style;
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
         const ImGuiID id = window->GetID(label);
         const ImVec2 label_size = CalcTextSize(label, NULL, true);
 
@@ -321,7 +480,7 @@ namespace ImGui {
         const ImRect total_bb(pos, pos + ImVec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2.0f));
         ItemSize(total_bb, style.FramePadding.y);
         if (!ItemAdd(total_bb, id)) {
-            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, imguiContext.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (v->GetValue() ? ImGuiItemStatusFlags_Checked : 0));
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (v->GetValue() ? ImGuiItemStatusFlags_Checked : 0));
             ImGui::EndDisabled();
             return false;
         }
@@ -335,26 +494,26 @@ namespace ImGui {
 
         const ImRect check_bb(pos, pos + ImVec2(square_sz, square_sz));
         RenderNavHighlight(total_bb, id);
-        const ImVec4 cFrame = BuildCheckboxFrameColor(id, hovered, held, imguiContext);
+        const ImVec4 cFrame = BuildCheckboxFrameColor(id, hovered, held, g);
         RenderFrame(check_bb.Min, check_bb.Max, ColorConvertFloat4ToU32(cFrame), true, style.FrameRounding);
 
         const ImU32 check_col_base = GetColorU32(ImGuiCol_CheckMark);
-        bool mixed_value = (imguiContext.LastItemData.InFlags & ImGuiItemFlags_MixedValue) != 0;
+        bool mixed_value = (g.LastItemData.InFlags & ImGuiItemFlags_MixedValue) != 0;
         if (mixed_value) {
             // Undocumented tristate/mixed/indeterminate checkbox (#2644)
             // This may seem awkwardly designed because the aim is to make ImGuiItemFlags_MixedValue supported by all widgets (not just checkbox)
             ImVec2 pad(ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)), ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)));
             window->DrawList->AddRectFilled(check_bb.Min + pad, check_bb.Max - pad, check_col_base, style.FrameRounding);
         } else
-            DrawCheckboxMarkAnimated(window, check_bb, id, v->GetValue(), imguiContext);
+            DrawCheckboxMarkAnimated(window, check_bb, id, v->GetValue(), g);
 
         ImVec2 label_pos = ImVec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y);
-        if (imguiContext.LogEnabled)
+        if (g.LogEnabled)
             LogRenderedText(&label_pos, mixed_value ? "[~]" : v->GetValue() ? "[x]" : "[ ]");
         if (label_size.x > 0.0f)
             RenderText(label_pos, label);
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, imguiContext.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (v->GetValue() ? ImGuiItemStatusFlags_Checked : 0));
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (v->GetValue() ? ImGuiItemStatusFlags_Checked : 0));
         ImGui::EndDisabled();
         return pressed;
 	}
@@ -372,6 +531,164 @@ namespace ImGui {
         Hotkey(std::string(label + std::string("##ToggleKey")), v);
         return checkbox;
     }
+
+    bool CollapsingHeaderSmooth(const char* label, ImGuiTreeNodeFlags flags) {
+        ImGuiWindow* window = GetCurrentWindow();
+        if (!window || window->SkipItems)
+            return CollapsingHeader(label, flags);
+        const ImGuiID headerId = window->GetID(label);
+        float hb = 0.0f;
+        float ab = 0.0f;
+        SmoothHoverActiveRead(headerId, hb, ab);
+        const ImVec4 h0 = GetStyleColorVec4(ImGuiCol_Header);
+        const ImVec4 h1 = GetStyleColorVec4(ImGuiCol_HeaderHovered);
+        const ImVec4 h2 = GetStyleColorVec4(ImGuiCol_HeaderActive);
+        const ImVec4 mix = LerpVec4(LerpVec4(h0, h1, hb), h2, ab);
+        PushStyleColor(ImGuiCol_Header, mix);
+        PushStyleColor(ImGuiCol_HeaderHovered, mix);
+        PushStyleColor(ImGuiCol_HeaderActive, mix);
+        const bool open = CollapsingHeader(label, flags);
+        PopStyleColor(3);
+        SmoothHoverActiveCommit(headerId, IsItemHovered(), IsItemActive());
+        return open;
+    }
+
+    bool SelectableSmooth(const char* label, bool selected, ImGuiSelectableFlags flags, const ImVec2& size_arg) {
+        ImGuiWindow* window = GetCurrentWindow();
+        if (window->SkipItems)
+            return false;
+
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+
+        const ImGuiID id = window->GetID(label);
+        ImVec2 label_size = CalcTextSize(label, NULL, true);
+        ImVec2 size(size_arg.x != 0.0f ? size_arg.x : label_size.x, size_arg.y != 0.0f ? size_arg.y : label_size.y);
+        ImVec2 pos = window->DC.CursorPos;
+        pos.y += window->DC.CurrLineTextBaseOffset;
+        ItemSize(size, 0.0f);
+
+        const bool span_all_columns = (flags & ImGuiSelectableFlags_SpanAllColumns) != 0;
+        const float min_x = span_all_columns ? window->ParentWorkRect.Min.x : pos.x;
+        const float max_x = span_all_columns ? window->ParentWorkRect.Max.x : window->WorkRect.Max.x;
+        if (size_arg.x == 0.0f || (flags & ImGuiSelectableFlags_SpanAvailWidth))
+            size.x = ImMax(label_size.x, max_x - min_x);
+
+        const ImVec2 text_min = pos;
+        const ImVec2 text_max(min_x + size.x, pos.y + size.y);
+
+        ImRect bb(min_x, pos.y, text_max.x, text_max.y);
+        if ((flags & ImGuiSelectableFlags_NoPadWithHalfSpacing) == 0) {
+            const float spacing_x = span_all_columns ? 0.0f : style.ItemSpacing.x;
+            const float spacing_y = style.ItemSpacing.y;
+            const float spacing_L = IM_TRUNC(spacing_x * 0.50f);
+            const float spacing_U = IM_TRUNC(spacing_y * 0.50f);
+            bb.Min.x -= spacing_L;
+            bb.Min.y -= spacing_U;
+            bb.Max.x += (spacing_x - spacing_L);
+            bb.Max.y += (spacing_y - spacing_U);
+        }
+
+        const float backup_clip_rect_min_x = window->ClipRect.Min.x;
+        const float backup_clip_rect_max_x = window->ClipRect.Max.x;
+        if (span_all_columns) {
+            window->ClipRect.Min.x = window->ParentWorkRect.Min.x;
+            window->ClipRect.Max.x = window->ParentWorkRect.Max.x;
+        }
+
+        const bool disabled_item = (flags & ImGuiSelectableFlags_Disabled) != 0;
+        const bool item_add = ItemAdd(bb, id, NULL, disabled_item ? ImGuiItemFlags_Disabled : ImGuiItemFlags_None);
+        if (span_all_columns) {
+            window->ClipRect.Min.x = backup_clip_rect_min_x;
+            window->ClipRect.Max.x = backup_clip_rect_max_x;
+        }
+
+        if (!item_add)
+            return false;
+
+        const bool disabled_global = (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
+        if (disabled_item && !disabled_global)
+            BeginDisabled();
+
+        if (span_all_columns) {
+            if (g.CurrentTable)
+                TablePushBackgroundChannel();
+            else if (window->DC.CurrentColumns)
+                PushColumnsBackground();
+            g.LastItemData.StatusFlags |= ImGuiItemStatusFlags_HasClipRect;
+            g.LastItemData.ClipRect = window->ClipRect;
+        }
+
+        ImGuiButtonFlags button_flags = 0;
+        if (flags & ImGuiSelectableFlags_NoHoldingActiveID) { button_flags |= ImGuiButtonFlags_NoHoldingActiveId; }
+        if (flags & ImGuiSelectableFlags_NoSetKeyOwner) { button_flags |= ImGuiButtonFlags_NoSetKeyOwner; }
+        if (flags & ImGuiSelectableFlags_SelectOnClick) { button_flags |= ImGuiButtonFlags_PressedOnClick; }
+        if (flags & ImGuiSelectableFlags_SelectOnRelease) { button_flags |= ImGuiButtonFlags_PressedOnRelease; }
+        if (flags & ImGuiSelectableFlags_AllowDoubleClick) { button_flags |= ImGuiButtonFlags_PressedOnClickRelease | ImGuiButtonFlags_PressedOnDoubleClick; }
+        if ((flags & ImGuiSelectableFlags_AllowOverlap) || (g.LastItemData.InFlags & ImGuiItemFlags_AllowOverlap)) { button_flags |= ImGuiButtonFlags_AllowOverlap; }
+
+        const bool was_selected = selected;
+        bool hovered, held;
+        bool pressed = ButtonBehavior(bb, id, &hovered, &held, button_flags);
+
+        if ((flags & ImGuiSelectableFlags_SelectOnNav) && g.NavJustMovedToId != 0 && g.NavJustMovedToFocusScopeId == g.CurrentFocusScopeId)
+            if (g.NavJustMovedToId == id)
+                selected = pressed = true;
+
+        if (pressed || (hovered && (flags & ImGuiSelectableFlags_SetNavIdOnHover))) {
+            if (!g.NavDisableMouseHover && g.NavWindow == window && g.NavLayer == window->DC.NavLayerCurrent) {
+                SetNavID(id, window->DC.NavLayerCurrent, g.CurrentFocusScopeId, WindowRectAbsToRel(window, bb));
+                g.NavDisableHighlight = true;
+            }
+        }
+        if (pressed)
+            MarkItemEdited(id);
+
+        if (selected != was_selected)
+            g.LastItemData.StatusFlags |= ImGuiItemStatusFlags_ToggledSelection;
+
+        float hb = 0.0f;
+        float ab = 0.0f;
+        SmoothHoverActiveRead(id, hb, ab);
+        const ImVec4 rowUnselectedIdle = GetStyleColorVec4(ImGuiCol_FrameBg);
+        const ImVec4 fh = GetStyleColorVec4(ImGuiCol_FrameBgHovered);
+        const ImVec4 fa = GetStyleColorVec4(ImGuiCol_FrameBgActive);
+        ImVec4 rowHoverHi = LerpVec4(fh, fa, 0.72f);
+        rowHoverHi.w = ImMax(rowHoverHi.w, 0.94f);
+        const ImVec4 rowActiveHi = fa;
+        // Selected-at-rest: same family as hover (not Header blend) so it reads on a light list bg.
+        ImVec4 rowSelectedIdle = LerpVec4(rowUnselectedIdle, rowHoverHi, 0.66f);
+        rowSelectedIdle.w = ImMax(rowSelectedIdle.w, 0.90f);
+        const ImVec4 kb = selected ? rowSelectedIdle : rowUnselectedIdle;
+        ImVec4 fill = LerpVec4(kb, rowHoverHi, hb);
+        fill = LerpVec4(fill, rowActiveHi, ab);
+        const float rounding = ImMin(style.FrameRounding, bb.GetHeight() * 0.5f);
+        if (selected || hb > 0.02f || ab > 0.02f)
+            RenderFrame(bb.Min, bb.Max, ColorConvertFloat4ToU32(fill), false, rounding);
+        SmoothHoverActiveCommit(id, hovered, held && hovered, HoverCommitMode::ListSelectable);
+
+        if (g.NavId == id)
+            RenderNavHighlight(bb, id, ImGuiNavHighlightFlags_Compact);
+
+        if (span_all_columns) {
+            if (g.CurrentTable)
+                TablePopBackgroundChannel();
+            else if (window->DC.CurrentColumns)
+                PopColumnsBackground();
+        }
+
+        RenderTextClipped(text_min, text_max, label, NULL, &label_size, style.SelectableTextAlign, &bb);
+
+        if (pressed && (window->Flags & ImGuiWindowFlags_Popup) && !(flags & ImGuiSelectableFlags_DontClosePopups) && !(g.LastItemData.InFlags & ImGuiItemFlags_SelectableDontClosePopup))
+            CloseCurrentPopup();
+
+        if (disabled_item && !disabled_global)
+            EndDisabled();
+
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
+        return pressed;
+    }
+
     bool SliderInt(const char* label, const char* tooltip, int* v, int v_min, int v_max, const char* format, ImGuiSliderFlags flags) {
         return SliderIntStacked(label, v, v_min, v_max, format, flags, tooltip);
     }
@@ -456,9 +773,12 @@ namespace ImGui {
         const ImGuiStyle& st = GetStyle();
         const ImVec4& base = st.Colors[ImGuiCol_Text];
         const ImVec4& pop = st.Colors[ImGuiCol_SliderGrab];
-        // Strong lean on accent: default Text is cool (high B); a shallow lerp reads magenta with rose accents.
-        constexpr float accentStrength = 0.82f;
-        const ImVec4 mix(ImLerp(base.x, pop.x, accentStrength), ImLerp(base.y, pop.y, accentStrength), ImLerp(base.z, pop.z, accentStrength), 1.0f);
+        // Accent hint without crushing luminance (heavy orange mix made headings look muddy on dark glass).
+        constexpr float accentStrength = 0.48f;
+        ImVec4 mix(ImLerp(base.x, pop.x, accentStrength), ImLerp(base.y, pop.y, accentStrength), ImLerp(base.z, pop.z, accentStrength), 1.0f);
+        mix.x = ImMin(1.0f, mix.x * 1.04f);
+        mix.y = ImMin(1.0f, mix.y * 1.03f);
+        mix.z = ImMin(1.0f, mix.z * 1.02f);
         PushStyleColor(ImGuiCol_Text, ColorConvertFloat4ToU32(mix));
         SeparatorText(label);
         PopStyleColor();

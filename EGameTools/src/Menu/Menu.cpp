@@ -31,12 +31,12 @@ namespace EGT::Menu {
     static constexpr float defSidebarWidth = 220.0f;
 
     ImGui::KeyBindOption menuToggle{ false, VK_F5 };
-    float opacity = 99.0f;
-    float childPanelAlpha = 50.0f;
-    float frameAlpha = 70.0f;
-    float popupAlpha = 72.0f;
-    float micaWashStrength = 100.0f;
-    float micaBlurStrength = 92.0f;
+    float opacity = 86.0f;
+    float childPanelAlpha = 72.0f;
+    float frameAlpha = 90.0f;
+    float popupAlpha = 88.0f;
+    float micaWashStrength = 55.0f;
+    float micaBlurStrength = 90.0f;
     float scale = 1.0f;
 
     static float lastScaleForMainWindow = -1.0f;
@@ -177,12 +177,12 @@ namespace EGT::Menu {
         ImGui::GetIO().FontGlobalScale = 1.0f;
     }
 
-    /// Win11-ish Mica approximation: cool vertical depth + light top wash (no OS blur in ImGui).
+    /// In-window depth wash (cool neutral). Backdrop blur comes from the D3D12 Mica pass, not from these rects.
     static void DrawMenuMicaBase(ImDrawList* dl, const ImRect& work, const ImGuiStyle& style, float menuOpenFade) {
         if (!dl || work.GetWidth() < 2.0f || work.GetHeight() < 2.0f)
             return;
         const ImVec4& wb = style.Colors[ImGuiCol_WindowBg];
-        const float a = 0.092f * menuOpenFade;
+        const float a = 0.070f * menuOpenFade;
         // Neutral cool-gray depth only (red stays on accents in the style sheet).
         const ImVec4 tl(ImLerp(wb.x, 0.12f, 0.52f), ImLerp(wb.y, 0.11f, 0.48f), ImLerp(wb.z, 0.168f, 0.62f), a);
         const ImVec4 tr(ImLerp(wb.x, 0.088f, 0.42f), ImLerp(wb.y, 0.09f, 0.45f), ImLerp(wb.z, 0.14f, 0.55f), a * 0.94f);
@@ -192,37 +192,91 @@ namespace EGT::Menu {
             ImGui::ColorConvertFloat4ToU32(bl));
     }
 
-    /// Extra depth on child panels (nav rail / tab area) — thin vertical light bias like layered acrylic.
+    /// Outer frame + soft lift drawn on the viewport foreground list so left/right edges are not clipped by the window draw list (ImGui clips vertical strokes at WorkRect).
+    static void DrawMenuOuterChrome(ImGuiWindow* window, float menuOpenFade, const ImGuiStyle& style, float scaleUi) {
+        if (!window || menuOpenFade < 0.02f)
+            return;
+        ImGuiViewport* viewport = window->Viewport;
+        if (!viewport)
+            viewport = ImGui::GetMainViewport();
+        ImDrawList* foregroundDrawList = ImGui::GetForegroundDrawList(viewport);
+        if (!foregroundDrawList)
+            return;
+
+        const ImVec2 cornerMin = window->Pos;
+        const ImVec2 cornerMax(window->Pos.x + window->Size.x, window->Pos.y + window->Size.y);
+        const ImRect outer(cornerMin, cornerMax);
+        if (outer.GetWidth() < 8.0f || outer.GetHeight() < 8.0f)
+            return;
+
+        const float rounding = window->WindowRounding;
+        // Structural chrome only: cool neutral lift (accent orange is for sliders / CTAs in the style sheet).
+        ImVec4 glowRgb = LerpColor4(style.Colors[ImGuiCol_Border], ImVec4(0.52f, 0.56f, 0.68f, 1.0f), 0.40f);
+        constexpr int glowRingCount = 5;
+        const float glowReach = ImMax(5.0f * scaleUi, 3.5f);
+        const float peakGlowAlpha = 0.038f * menuOpenFade;
+        for (int ringIndex = 0; ringIndex < glowRingCount; ++ringIndex) {
+            // Keep expansion > 0 so we never full-screen fill the menu (was 0 on last ring with / (n-1)).
+            const float expansion = glowReach * (float)(glowRingCount - ringIndex) / (float)glowRingCount;
+            const float normalized = glowReach > 1e-4f ? expansion / glowReach : 0.0f;
+            const float envelope = std::exp(-3.4f * normalized * normalized);
+            const float ringAlpha = peakGlowAlpha * envelope;
+            if (ringAlpha < 0.002f)
+                continue;
+            const ImRect expanded(outer.Min.x - expansion, outer.Min.y - expansion, outer.Max.x + expansion, outer.Max.y + expansion);
+            const float expandedRounding = ImMin(rounding + expansion * 0.40f, expanded.GetHeight() * 0.5f);
+            foregroundDrawList->AddRectFilled(expanded.Min, expanded.Max, ImGui::ColorConvertFloat4ToU32(ImVec4(glowRgb.x, glowRgb.y, glowRgb.z, ringAlpha)), expandedRounding);
+        }
+
+        const float hairlineInset = 0.5f;
+        const ImRect hairlineRect(ImVec2(cornerMin.x + hairlineInset, cornerMin.y + hairlineInset), ImVec2(cornerMax.x - hairlineInset, cornerMax.y - hairlineInset));
+        ImVec4 edge = LerpColor4(style.Colors[ImGuiCol_Border], ImVec4(0.86f, 0.88f, 0.96f, 1.0f), 0.52f);
+        edge.w = 0.48f * menuOpenFade;
+        const float hairlineRounding = ImMax(0.0f, rounding - hairlineInset);
+        foregroundDrawList->AddRect(hairlineRect.Min, hairlineRect.Max, ImGui::ColorConvertFloat4ToU32(edge), hairlineRounding, 0, 1.5f);
+    }
+
+    /// Separates the brand block from nav + content so the logo does not sit inside the same “frame” as the interactive chrome.
+    static void DrawMenuBrandDivider(ImDrawList* dl, float contentLeftX, float contentRightX, float dividerY, float menuOpenFade, const ImGuiStyle& style) {
+        if (!dl || menuOpenFade < 0.02f || contentRightX <= contentLeftX + 4.0f)
+            return;
+        ImVec4 line = LerpColor4(style.Colors[ImGuiCol_Separator], style.Colors[ImGuiCol_Border], 0.35f);
+        line.w = 0.55f * menuOpenFade;
+        const ImU32 col = ImGui::ColorConvertFloat4ToU32(line);
+        dl->AddLine(ImVec2(contentLeftX, dividerY), ImVec2(contentRightX, dividerY), col, 1.0f);
+    }
+
+    /// Extra depth on child panels — same hue as ChildBg, luminance-only gradient (no accent tint).
     static void DrawMicaChildWash(ImDrawList* dl, const ImRect& inner, const ImGuiStyle& style, float menuOpenFade) {
         if (!dl || inner.GetWidth() < 2.0f || inner.GetHeight() < 2.0f)
             return;
         const ImVec4& cb = style.Colors[ImGuiCol_ChildBg];
-        const float a = 0.088f * menuOpenFade;
-        const ImVec4 top(ImMin(1.0f, cb.x * 1.08f), ImMin(1.0f, cb.y * 1.06f), ImMin(1.0f, cb.z * 1.11f), a);
-        const ImVec4 bot(cb.x * 0.91f, cb.y * 0.92f, ImMin(1.0f, cb.z * 0.96f), a * 0.86f);
+        const float a = 0.055f * menuOpenFade;
+        const ImVec4 top(ImMin(1.0f, cb.x * 1.04f), ImMin(1.0f, cb.y * 1.04f), ImMin(1.0f, cb.z * 1.06f), a);
+        const ImVec4 bot(cb.x * 0.97f, cb.y * 0.97f, cb.z * 0.99f, a * 0.88f);
         dl->AddRectFilledMultiColor(inner.Min, inner.Max, ImGui::ColorConvertFloat4ToU32(top), ImGui::ColorConvertFloat4ToU32(top),
             ImGui::ColorConvertFloat4ToU32(bot), ImGui::ColorConvertFloat4ToU32(bot));
     }
 
-    /// Soft outer aura for elevated cards (tab panel, nav rail) — W11-style ambient glow, not a hard border.
+    /// Soft outer shadow outside card bounds only. Never use ex==0 here — that used to full-fill the panel with tint.
     static void DrawElevatedPanelAura(ImDrawList* dl, const ImRect& bb, float rounding, float scaleUi, const ImGuiStyle& style, float fade) {
         if (!dl || fade < 0.02f || bb.GetWidth() < 2.0f)
             return;
-        ImVec4 c = LerpColor4(style.Colors[ImGuiCol_Border], style.Colors[ImGuiCol_SliderGrab], 0.10f);
-        c = LerpColor4(c, style.Colors[ImGuiCol_WindowBg], 0.62f);
-        const float maxEx = ImMax(7.0f * scaleUi, 4.2f);
-        const int rings = 18;
+        ImVec4 c = LerpColor4(style.Colors[ImGuiCol_Border], ImVec4(0.72f, 0.76f, 0.90f, 1.0f), 0.22f);
+        c = LerpColor4(c, style.Colors[ImGuiCol_WindowBg], 0.55f);
+        const float maxEx = ImMax(5.5f * scaleUi, 3.5f);
+        constexpr int rings = 7;
         const float peakA = 0.022f * fade;
         for (int i = 0; i < rings; ++i) {
-            const float ex = maxEx * (float)(rings - 1 - i) / (float)(rings - 1);
+            const float ex = maxEx * (float)(rings - i) / (float)rings;
             const float u = maxEx > 1e-4f ? ex / maxEx : 0.0f;
-            const float env = std::exp(-2.85f * u * u);
-            const float a = peakA * env;
-            if (a < 0.0009f)
+            const float env = std::exp(-2.9f * u * u);
+            const float alpha = peakA * env;
+            if (alpha < 0.001f)
                 continue;
             const ImRect r(bb.Min.x - ex, bb.Min.y - ex, bb.Max.x + ex, bb.Max.y + ex);
-            const float rnd = ImMin(rounding + ex * 0.46f, r.GetHeight() * 0.5f);
-            dl->AddRectFilled(r.Min, r.Max, ImGui::ColorConvertFloat4ToU32(ImVec4(c.x, c.y, c.z, a)), rnd);
+            const float rnd = ImMin(rounding + ex * 0.42f, r.GetHeight() * 0.5f);
+            dl->AddRectFilled(r.Min, r.Max, ImGui::ColorConvertFloat4ToU32(ImVec4(c.x, c.y, c.z, alpha)), rnd);
         }
     }
 
@@ -240,30 +294,30 @@ namespace EGT::Menu {
         dl->AddRectFilledMultiColor(ImVec2(xCenter, y0), ImVec2(xCenter + half, y1), mid, edge, edge, mid);
     }
 
-    /// Backlight behind the nav row: visible but smooth (stacked shells + envelope); theme accent.
+    /// Backlight behind nav rows — neutral only (ex>0 always; ex==0 used to paint the whole row orange).
     static void DrawNavPillGlow(ImDrawList* dl, const ImRect& bb, float blend, bool selected, float scaleUi, const ImGuiStyle& style) {
         if (blend < 0.02f || !dl)
             return;
         const ImVec4& bgRail = style.Colors[ImGuiCol_ChildBg];
-        ImVec4 accent = LerpColor4(style.Colors[ImGuiCol_FrameBgActive], style.Colors[ImGuiCol_SliderGrab], selected ? 0.42f : 0.16f);
-        accent = LerpColor4(accent, bgRail, 0.26f);
+        ImVec4 halo = LerpColor4(style.Colors[ImGuiCol_Border], ImVec4(0.80f, 0.84f, 0.96f, 1.0f), selected ? 0.28f : 0.14f);
+        halo = LerpColor4(halo, bgRail, 0.50f);
 
-        const float strength = blend * (selected ? 1.0f : 0.40f);
+        const float strength = blend * (selected ? 0.55f : 0.38f);
         const float rounding = ImMin(style.FrameRounding, bb.GetHeight() * 0.5f);
-        const float maxEx = ImMax(6.5f * scaleUi, 4.0f);
-        const int rings = selected ? 22 : 14;
-        const float peakA = selected ? 0.038f : 0.016f;
+        const float maxEx = ImMax(5.0f * scaleUi, 3.2f);
+        constexpr int rings = 8;
+        const float peakA = selected ? 0.014f : 0.011f;
 
         for (int i = 0; i < rings; ++i) {
-            const float ex = maxEx * (float)(rings - 1 - i) / (float)(rings - 1);
+            const float ex = maxEx * (float)(rings - i) / (float)rings;
             const float u = maxEx > 1e-4f ? ex / maxEx : 0.0f;
-            const float env = std::exp(-2.75f * u * u);
+            const float env = std::exp(-2.85f * u * u);
             const float a = ImClamp(peakA * strength * env, 0.0f, 1.0f);
             if (a < 0.001f)
                 continue;
             const ImRect r(bb.Min.x - ex, bb.Min.y - ex, bb.Max.x + ex, bb.Max.y + ex);
-            const float rnd = ImMin(rounding + ex * 0.50f, r.GetHeight() * 0.5f);
-            dl->AddRectFilled(r.Min, r.Max, ImGui::ColorConvertFloat4ToU32(ImVec4(accent.x, accent.y, accent.z, a)), rnd);
+            const float rnd = ImMin(rounding + ex * 0.48f, r.GetHeight() * 0.5f);
+            dl->AddRectFilled(r.Min, r.Max, ImGui::ColorConvertFloat4ToU32(ImVec4(halo.x, halo.y, halo.z, a)), rnd);
         }
     }
 
@@ -329,10 +383,17 @@ namespace EGT::Menu {
         if (blend > 0.001f) {
             DrawNavPillGlow(window->DrawList, bb, blend, selected, scale, style);
             const ImVec4& bg = style.Colors[ImGuiCol_ChildBg];
-            const ImVec4 cEnd = LerpColor4(style.Colors[ImGuiCol_FrameBgHovered], style.Colors[ImGuiCol_FrameBgActive], selected ? 1.0f : 0.0f);
+            const ImVec4 hoverFill = LerpColor4(bg, style.Colors[ImGuiCol_FrameBgHovered], 0.82f);
+            const ImVec4 selectedFill = LerpColor4(hoverFill, ImVec4(0.20f, 0.22f, 0.32f, 1.0f), 0.55f);
+            const ImVec4 cEnd = selected ? selectedFill : hoverFill;
             const ImVec4 cMix = LerpColor4(bg, cEnd, blend);
             const float rounding = ImMin(style.FrameRounding, bb.GetHeight() * 0.5f);
             window->DrawList->AddRectFilled(bb.Min, bb.Max, ImGui::ColorConvertFloat4ToU32(cMix), rounding);
+            if (selected && blend > 0.45f) {
+                ImVec4 outline = style.Colors[ImGuiCol_Border];
+                outline.w = 0.58f * blend;
+                window->DrawList->AddRect(bb.Min, bb.Max, ImGui::ColorConvertFloat4ToU32(outline), rounding, 0, 1.0f);
+            }
         }
 
         // `min_x` / `max_x` use `DC.CursorPos` + `WorkRect` (absolute). `SetCursorPosX` expects window-local X
@@ -399,6 +460,7 @@ namespace EGT::Menu {
             ImGui::EndDisabled();
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("Backdrop blur is only available when the game uses DirectX 12.");
+            ImGui::TextDisabled("This session is not DirectX 12 — the slider has no effect; only window opacity tints the game behind the menu.");
         }
         ImGui::SliderFloatStacked("Inset / child alpha", &childPanelAlpha, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
@@ -539,7 +601,7 @@ namespace EGT::Menu {
 
     static void RenderNavRail(ImGuiWindow* menuWindow, const ImGuiStyle& style, float deltaSeconds, float micaWashFade, float menuShow, float navWidth, float navRailY, float bodyHeight, float navRowHeight, float navRowSideGutter, int settingsNavIdValue) {
         ImGui::SetCursorScreenPos(ImVec2(menuWindow->WorkRect.Min.x, navRailY));
-        ImGui::BeginChild("##NavRail", ImVec2(navWidth, bodyHeight), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+        ImGui::BeginChild("##NavRail", ImVec2(navWidth, bodyHeight), ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         if (ImGuiWindow* navWindow = ImGui::GetCurrentWindow())
             DrawMicaChildWash(navWindow->DrawList, ImRect(navWindow->InnerRect.Min, navWindow->InnerRect.Max), style, micaWashFade);
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 12.0f * scale));
@@ -669,6 +731,9 @@ namespace EGT::Menu {
             const float tabFullH = workBottom - workMin.y;
 
             DrawMicaColumnSheen(menuWnd->DrawList, tabX - menuGutter * 0.48f, navRailY, workBottom, menuShow, menuStyle);
+
+            //DrawMenuBrandDivider(menuWnd->DrawList, workMin.x + 1.0f, workRight - 1.0f, navRailY - menuGutter * 0.42f, menuShow, menuStyle);
+            DrawMenuOuterChrome(menuWnd, menuShow, menuStyle, scale);
 
             const float logoY = workMin.y + padY;
             const float logoX = innerLeft + (innerW - EGTLogoSize.x) * 0.5f;

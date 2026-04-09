@@ -13,8 +13,12 @@ namespace ImGui {
 	extern bool Button(const char* label, const char* tooltip, const ImVec2& size = ImVec2(0, 0));
 	extern bool ButtonHotkey(const char* label, KeyBindOption* v, const char* tooltip = nullptr, const ImVec2& size = ImVec2(0, 0));
 	extern bool Checkbox(const char* label, bool* v, const char* tooltip);
+	/// Bool checkbox with the same animated frame + checkmark path as `Option*` checkboxes (stock `Checkbox(label,bool*)` is instant).
+	extern bool CheckboxAnimated(const char* label, bool* v, const char* tooltip = nullptr);
 	extern bool Checkbox(const char* label, Option* v);
 	extern bool Checkbox(const char* label, Option* v, const char* tooltip);
+	extern bool CollapsingHeaderSmooth(const char* label, ImGuiTreeNodeFlags flags = 0);
+	extern bool SelectableSmooth(const char* label, bool selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0, 0));
 	extern bool CheckboxHotkey(const char* label, KeyBindOption* v, const char* tooltip = nullptr);
 	extern bool SliderInt(const char* label, const char* tooltip, int* v, int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0);
 	extern bool SliderFloat(const char* label, const char* tooltip, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);

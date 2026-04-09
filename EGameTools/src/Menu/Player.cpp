@@ -451,7 +451,7 @@ namespace EGT::Menu {
 			ImGui::CheckboxHotkey("Freeze Player", &freezePlayer, "Freezes player position");
 			ImGui::EndDisabled();
 			
-			if (ImGui::Checkbox("Enable Player Shadows", &enablePlayerShadows)) {
+			if (ImGui::CheckboxAnimated("Enable Player Shadows", &enablePlayerShadows)) {
 				auto player = EGSDK::GamePH::PlayerDI_PH::Get();
 				if (player) {
 					//int LOD = player->GetCurrentLOD();
