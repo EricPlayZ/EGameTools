@@ -205,6 +205,14 @@ namespace ImGui {
         PopID();
         return ch;
     }
+    bool DragFloatStacked(const char* label, float* v, float v_speed, float v_min, float v_max, const char* format, ImGuiSliderFlags flags) {
+        PushID(label);
+        InlineFormLabel(label, nullptr);
+        SetNextItemWidthRemainder();
+        const bool ch = DragFloat("##dfstk", v, v_speed, v_min, v_max, format, flags);
+        PopID();
+        return ch;
+    }
 
     bool ComboStacked(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items) {
         PushID(label);

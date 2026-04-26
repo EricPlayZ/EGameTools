@@ -12,6 +12,7 @@
 #include <EGT\ImGui_impl\D3D11_impl.h>
 #include <EGT\ImGui_impl\D3D12_impl.h>
 #include <EGT\Config\Config.h>
+#include <EGT\Config\ConfigPaths.h>
 #include <EGT\Engine\Engine_Hooks.h>
 #include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Misc.h>
@@ -149,46 +150,68 @@ namespace EGT::Core {
 	static void CreateSymlinkForLoadingFiles() {
 		SPDLOG_DEBUG("Entering CreateSymlinkForLoadingFiles");
 		try {
-			const char* userModFilesPath = "..\\..\\..\\source\\data\\EGameTools\\UserModFiles";
-			const char* eGameToolsPath = "..\\..\\..\\source\\data\\EGameTools";
+			const std::filesystem::path userModFilesPath = Config::Paths::GetUserModFilesDir();
+			const std::filesystem::path eGameToolsSourcePath = Config::Paths::GetSourceDataDir();
+			const std::filesystem::path runtimeDir = EGSDK::Utils::Files::GetCurrentProcDirectory();
+			const std::filesystem::path sourceShortcutPath = runtimeDir / "EGameToolsSource";
+			const std::filesystem::path legacyShortcutPath = runtimeDir / "EGameTools";
 
-			SPDLOG_DEBUG("UserModFilesPath: {}", userModFilesPath);
-			SPDLOG_DEBUG("EGameToolsPath: {}", eGameToolsPath);
+			SPDLOG_DEBUG("UserModFilesPath: {}", userModFilesPath.string());
+			SPDLOG_DEBUG("EGameToolsSourcePath: {}", eGameToolsSourcePath.string());
 
 			if (!std::filesystem::exists(userModFilesPath)) {
 				SPDLOG_DEBUG("UserModFilesPath does not exist, creating directories");
 				std::filesystem::create_directories(userModFilesPath);
-				SPDLOG_INFO("Created directories: {}", userModFilesPath);
-			} else
+				SPDLOG_INFO("Created directories: {}", userModFilesPath.string());
+			} else {
 				SPDLOG_DEBUG("UserModFilesPath already exists");
+			}
 
-			for (const auto& entry : std::filesystem::directory_iterator(".")) {
-				SPDLOG_DEBUG("Iterating directory entry: {}", entry.path().filename().string());
-
-				if (entry.path().filename().string() == "EGameTools") {
-					SPDLOG_DEBUG("Found EGameTools directory");
-
-					if (is_symlink(entry.symlink_status()) && std::filesystem::equivalent("EGameTools", eGameToolsPath)) {
-						SPDLOG_DEBUG("EGameTools is already a symlink, returning");
-						return;
+			// Migrate old shortcut name to the new one.
+			if (std::filesystem::exists(legacyShortcutPath) && !std::filesystem::exists(sourceShortcutPath)) {
+				try {
+					if (std::filesystem::is_symlink(legacyShortcutPath) && std::filesystem::equivalent(legacyShortcutPath, eGameToolsSourcePath)) {
+						std::filesystem::rename(legacyShortcutPath, sourceShortcutPath);
+						SPDLOG_INFO("Migrated legacy source-data shortcut from {} to {}", legacyShortcutPath.string(), sourceShortcutPath.string());
 					}
-
-					SPDLOG_DEBUG("Removing existing EGameTools directory");
-					std::filesystem::remove(entry.path());
-					SPDLOG_INFO("Removed directory: {}", entry.path().filename().string());
+				} catch (const std::exception& e) {
+					SPDLOG_WARN("Failed migrating legacy source-data shortcut {}: {}", legacyShortcutPath.string(), e.what());
 				}
 			}
 
-			SPDLOG_INFO("Creating symlink \"EGameTools\" for \"Dying Light 2\\ph\\source\\data\\EGameTools\" folder");
+			// Remove legacy shortcut if the new one already exists.
+			if (std::filesystem::exists(legacyShortcutPath) && std::filesystem::exists(sourceShortcutPath)) {
+				try {
+					if (std::filesystem::is_symlink(legacyShortcutPath))
+						std::filesystem::remove(legacyShortcutPath);
+				} catch (const std::exception& e) {
+					SPDLOG_WARN("Failed removing legacy source-data shortcut {}: {}", legacyShortcutPath.string(), e.what());
+				}
+			}
 
-			std::string symlinkPath = EGSDK::Utils::Files::GetCurrentProcDirectory() + "\\EGameTools";
-			SPDLOG_DEBUG("SymlinkPath: {}", symlinkPath);
+			for (const auto& entry : std::filesystem::directory_iterator(runtimeDir)) {
+				SPDLOG_DEBUG("Iterating directory entry: {}", entry.path().filename().string());
 
-			std::filesystem::create_directory_symlink(eGameToolsPath, symlinkPath);
-			SPDLOG_INFO("Game shortcut created: {}", symlinkPath);
+				if (entry.path().filename().string() == sourceShortcutPath.filename().string()) {
+					SPDLOG_DEBUG("Found existing source shortcut path");
+
+					if (is_symlink(entry.symlink_status()) && std::filesystem::equivalent(sourceShortcutPath, eGameToolsSourcePath)) {
+						SPDLOG_DEBUG("EGameToolsSource is already a valid symlink, returning");
+						return;
+					}
+
+					SPDLOG_DEBUG("Removing stale source shortcut path");
+					std::filesystem::remove(entry.path());
+					SPDLOG_INFO("Removed path: {}", entry.path().filename().string());
+				}
+			}
+
+			SPDLOG_INFO("Creating optional source-data shortcut \"EGameToolsSource\" for source\\data\\EGameTools");
+			std::filesystem::create_directory_symlink(eGameToolsSourcePath, sourceShortcutPath);
+			SPDLOG_INFO("Game source-data shortcut created: {}", sourceShortcutPath.string());
 		} catch (const std::exception& e) {
 			SPDLOG_ERROR("Exception thrown while trying to create folder shortcut: {}", e.what());
-			SPDLOG_WARN("This error should NOT affect any features of my mod. The shortcut is only a way for the user to easily access the folder \"Dying Light 2\\ph\\source\\data\\EGameTools\".");
+			SPDLOG_WARN("This error should NOT affect any features. The shortcut is only a convenience for opening \"Dying Light 2\\ph\\source\\data\\EGameTools\".");
 
 			if (WarnMsgSeenFileExists()) {
 				SPDLOG_DEBUG("WarnMsgSeenFile already exists, returning");
@@ -196,7 +219,7 @@ namespace EGT::Core {
 			}
 
 			std::thread([]() {
-				int msgBoxResult = MessageBoxA(nullptr, "EGameTools has failed creating a folder shortcut \"EGameTools\" inside \"Dying Light 2\\ph\\work\\bin\\x64\".\n\nTo fix this, please open Windows Settings and, for Windows 11, go to System -> For developers and enable \"Developer Mode\", or for Windows 10, go to Update & Security -> For developers and enable \"Developer Mode\".\nAfter doing this, restart the game and there should be no issues with shortcut creation anymore.\n\nIf the above solution doesn't work, then in order to install mods inside the \"UserModFiles\" folder, please manually navigate to \"Dying Light 2\\ph\\source\\data\\EGameTools\\UserModFiles\".\n\nAlternatively, run the game once as administrator from the exe and once a shortcut has been created, close the game and open up the game from Steam or whatever platform you're using.\n\nDo you want to continue seeing this warning message every game launch?", "Error creating EGameTools folder shortcut", MB_ICONWARNING | MB_YESNO | MB_SETFOREGROUND);
+				int msgBoxResult = MessageBoxA(nullptr, "EGameTools failed creating the optional folder shortcut \"EGameToolsSource\" inside \"Dying Light 2\\ph\\work\\bin\\x64\".\n\nTo fix this, please open Windows Settings and, for Windows 11, go to System -> For developers and enable \"Developer Mode\", or for Windows 10, go to Update & Security -> For developers and enable \"Developer Mode\".\nAfter doing this, restart the game and there should be no issues with shortcut creation anymore.\n\nEven if this fails, all features will still work. For manually installing mods, use \"Dying Light 2\\ph\\source\\data\\EGameTools\\UserModFiles\".\n\nDo you want to continue seeing this warning message every game launch?", "Error creating EGameTools source shortcut", MB_ICONWARNING | MB_YESNO | MB_SETFOREGROUND);
 
 				switch (msgBoxResult) {
 				case IDNO:
@@ -245,7 +268,8 @@ namespace EGT::Core {
 	}
 #ifndef EXCP_HANDLER_DISABLE_DEBUG
 	static bool WriteMiniDump(PEXCEPTION_POINTERS pExceptionPointers) {
-		HANDLE hFile = CreateFileA("EGameTools-dump.dmp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+		const auto dumpPath = Config::Paths::GetCrashDumpPath().string();
+		HANDLE hFile = CreateFileA(dumpPath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
 			return false;
 
@@ -264,8 +288,8 @@ namespace EGT::Core {
 		std::string errorMsg = "";
 
 		if (WriteMiniDump(exceptionInfo)) {
-			SPDLOG_INFO("Mini-dump written to \"EGameTools-dump.dmp\". Please send this to mod author for further help!");
-			errorMsg = "EGameTools encountered a fatal error that caused the game to crash.\n\nA file \"" + EGSDK::Utils::Files::GetCurrentProcDirectory() + "\\EGameTools-dump.dmp\" has been generated. Please send this file to the author of the mod!\n\nThe game will now close once you press OK.";
+			SPDLOG_INFO("Mini-dump written to \"{}\". Please send this to mod author for further help!", Config::Paths::GetCrashDumpPath().string());
+			errorMsg = "EGameTools encountered a fatal error that caused the game to crash.\n\nA file \"" + Config::Paths::GetCrashDumpPath().string() + "\" has been generated. Please send this file to the author of the mod!\n\nThe game will now close once you press OK.";
 		} else {
 			SPDLOG_ERROR("Failed to write mini-dump.");
 			errorMsg = "EGameTools encountered a fatal error that caused the game to crash.\n\nEGameTools failed to generate a crash dump file unfortunately, which means it is harder to find the cause of the crash.\n\nThe game will now close once you press OK.";
@@ -295,7 +319,7 @@ namespace EGT::Core {
 		SPDLOG_INFO("Setting vftable scanning to: {}", Menu::Debug::disableVftableScanning.GetValue());
 		EGSDK::ClassHelpers::SetIsVftableScanningDisabled(Menu::Debug::disableVftableScanning.GetValue());
 
-		SPDLOG_INFO("Creating symlink for loading files");
+		SPDLOG_INFO("Creating optional source-data shortcut for loading files");
 		CreateSymlinkForLoadingFiles();
 
 		SPDLOG_INFO("Initializing hooks");

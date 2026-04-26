@@ -9,8 +9,11 @@
 #include <EGSDK\Engine\Engine_Misc.h>
 #include <EGSDK\GamePH\FreeCamera.h>
 #include <EGSDK\Offsets.h>
+#include <EGT\Config\ConfigPaths.h>
 #include <EGT\Engine\Engine_Hooks.h>
+#include <EGT\GamePH\Camera\CameraDollyRuntime.h>
 #include <EGT\Menu\Camera.h>
+#include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Misc.h>
 
 namespace EGT::Engine {
@@ -87,6 +90,17 @@ namespace EGT::Engine {
 			auto iLevel = EGSDK::GamePH::LevelDI::Get();
 			if (!iLevel || !iLevel->IsLoaded())
 				return SetFOVHook.ExecuteCallbacksWithOriginal(pCBaseCamera, fov);
+			const auto* freeCam = EGSDK::GamePH::FreeCamera::Get();
+			const bool isFreeCamObject = freeCam && pCBaseCamera == freeCam;
+			if (Menu::Camera::dollyCamEnabled.GetValue() && Menu::Camera::freeCam.GetValue() && !Menu::Camera::dollyKeyframes.empty()) {
+				const bool shouldForceDollyFov = Menu::Camera::dollyPlaying.GetValue() || (!Menu::Camera::dollyRecording.GetValue() && Menu::menuToggle.GetValue());
+				if (shouldForceDollyFov) {
+					EGT::Menu::Camera::DollyKeyframe evaluated{};
+					if (EGT::GamePH::Camera::EvaluateDollyKeyframeAtTime(Menu::Camera::dollyTimelineTime, evaluated))
+						fov = evaluated.fov;
+				}
+			} else if (Menu::Camera::freeCam.GetValue() && isFreeCamObject)
+				fov = Menu::Camera::freeCamFOV;
 			if (Menu::Camera::thirdPersonCamera.GetValue())
 				fov = static_cast<float>(Menu::Camera::thirdPersonFOV);
 			else if (!Menu::Camera::firstPersonZoomIn.IsKeyDown() && !EGSDK::Engine::IBaseCamera::isSetFOVCalledByEGSDK)
@@ -97,7 +111,7 @@ namespace EGT::Engine {
 #pragma endregion
 
 #pragma region fs::open
-		static const std::string userModFilesFullPath = "\\\\?\\" + std::filesystem::absolute("..\\..\\..\\source\\data\\EGameTools\\UserModFiles").string();
+		static const std::string userModFilesFullPath = "\\\\?\\" + Config::Paths::GetUserModFilesDir().string();
 		static std::vector<std::string> cachedUserModDirs{};
 		static EGSDK::Utils::Time::Timer cacheUpdateTimer{ 0 };
 
@@ -226,8 +240,7 @@ namespace EGT::Engine {
 			return EGSDK::Utils::Memory::GetProcAddr("engine_x64_rwdi.dll", "?Create@CResourceLoadingRuntime@@SAPEAV1@_N@Z");
 		}
 		static EGSDK::Utils::Hook::MHook<void*, void* (*)(bool), bool> CResourceLoadingRuntimeCreateHook{ "CResourceLoadingRuntimeCreate", &GetCResourceLoadingRuntimeCreate, [](bool noTexStreaming) -> void* {
-			std::string gamePath = userModFilesFullPath;
-			EGSDK::Utils::Values::str_replace(gamePath, "\\ph\\source\\data\\EGameTools\\UserModFiles", "");
+			std::string gamePath = "\\\\?\\" + Config::Paths::GetGameRootDir().string();
 
 			IterateAndMountUserPakFiles(userModFilesFullPath, gamePath);
 

@@ -26,16 +26,17 @@ namespace EGSDK::Utils {
 			}
 		}
 		template <typename... Args>
-		__forceinline void SafeCallFunctionVoid(const char* moduleName, const char* functionName, Args... args) {
+		__forceinline bool SafeCallFunctionVoid(const char* moduleName, const char* functionName, Args... args) {
 			using FunctionType = void(__stdcall*)(Args...);
 			FunctionType function = reinterpret_cast<FunctionType>(GetProcAddr(moduleName, functionName));
 			if (!function)
-				return;
+				return false;
 
 			__try {
 				function(args...);
+				return true;
 			} __except (SafeExecution::fail(GetExceptionCode(), GetExceptionInformation())) {
-				return;
+				return false;
 			}
 		}
 #pragma endregion

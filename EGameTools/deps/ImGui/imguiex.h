@@ -27,6 +27,7 @@ namespace ImGui {
 	extern bool SliderFloatStacked(const char* label, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0, const char* tooltip = nullptr);
 	extern bool SliderFloat3Stacked(const char* label, float v[3], float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	extern bool SliderIntStacked(const char* label, int* v, int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0, const char* tooltip = nullptr);
+	extern bool DragFloatStacked(const char* label, float* v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	extern bool DragIntStacked(const char* label, int* v, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0);
 	extern bool ComboStacked(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items = -1);
 	extern bool InputFloat3Stacked(const char* label, float v[3], const char* format = "%.3f", ImGuiInputTextFlags flags = 0);

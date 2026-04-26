@@ -6,7 +6,6 @@
 namespace EGSDK::Engine {
 	class CBulletPhysicsCharacter;
 
-	// Mirrors engine: IPhysics* CoPhysics::GetPhysics() const  (mangled UEBA = const).
 	class EGameSDK_API CoPhysics {
 	public:
 		DynamicField(CoPhysics, CBulletPhysicsCharacter*, pCBulletPhysicsCharacter);

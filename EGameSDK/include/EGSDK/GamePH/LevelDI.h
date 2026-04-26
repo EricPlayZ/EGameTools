@@ -1,14 +1,21 @@
 #pragma once
 #include <EGSDK\Engine\IBaseCamera.h>
 #include <EGSDK\GamePH\TimeWeather\CSystem.h>
+#include <EGSDK\GamePH\AIManager.h>
 #include <EGSDK\ClassHelpers.h>
 #include <EGSDK\Utils\Time.h>
 
 namespace EGSDK::GamePH {
 	class EGameSDK_API LevelDI {
 	public:
+		union {
+			DynamicField(LevelDI, AIManager*, pBaseAIManager);
+		};
+
 		bool IsLoading();
 		bool IsLoaded();
+		void* GetCurrentRegionName();
+		const char* GetLevelName();
 		Engine::IBaseCamera* GetViewCamera();
 		float GetTimeDelta();
 		void SetViewCamera(void* viewCam);

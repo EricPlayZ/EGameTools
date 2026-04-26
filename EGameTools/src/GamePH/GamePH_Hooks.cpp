@@ -9,6 +9,7 @@
 #include <EGSDK\GamePH\PlayerHealthModule.h>
 #include <EGSDK\GamePH\PlayerInfectionModule.h>
 #include <EGSDK\GamePH\PlayerDI_PH.h>
+#include <EGSDK\GamePH\ai\BaseAI.h>
 #include <EGT\Menu\Camera.h>
 #include <EGT\Menu\Misc.h>
 #include <EGT\Menu\Player.h>
@@ -32,6 +33,8 @@ namespace EGT::GamePH {
 			constexpr size_t addressThreshold = 0x100;
 			if (std::abs(reinterpret_cast<LONG64>(playerHealthModule) - reinterpret_cast<LONG64>(pLifeHealth)) < addressThreshold && playerHealthModule->health > 0.0f)
 				return;
+
+			health = 5.0f;
 
 			LifeSetHealthHook.ExecuteCallbacksWithOriginal(pLifeHealth, health);
 		} };
@@ -252,6 +255,29 @@ namespace EGT::GamePH {
 
 			return SetIsInCoSafeZoneHook.ExecuteCallbacksWithOriginal(pCoSafeZone, a2, a3, a4, a5, a6);
 		} };
+#pragma endregion
+
+#pragma region TryGetBaseAIManager
+		static EGSDK::Utils::Hook::MHook<void*, EGSDK::GamePH::AIManager*(*)(EGSDK::GamePH::ai::BaseAI*), EGSDK::GamePH::ai::BaseAI*> tryGetBaseAIManagerHook{ "TryGetBaseAIManager", &EGSDK::OffsetManager::Get_TryGetBaseAIManager, [](EGSDK::GamePH::ai::BaseAI* pBaseAI) -> EGSDK::GamePH::AIManager* {
+				if (!pBaseAI)
+					return tryGetBaseAIManagerHook.ExecuteCallbacksWithOriginal(pBaseAI);
+
+				void* aiManagerSlot = pBaseAI->pBaseAIManager;
+				if (aiManagerSlot)
+					return tryGetBaseAIManagerHook.ExecuteCallbacksWithOriginal(pBaseAI);
+
+				EGSDK::GamePH::LevelDI* level = EGSDK::GamePH::LevelDI::Get();
+				if (!level)
+					return tryGetBaseAIManagerHook.ExecuteCallbacksWithOriginal(pBaseAI);
+
+				EGSDK::GamePH::AIManager* aiManager = level->pBaseAIManager;
+				if (!aiManager)
+					return tryGetBaseAIManagerHook.ExecuteCallbacksWithOriginal(pBaseAI);
+
+				aiManager->BindManagerToBaseAI(pBaseAI);
+				return tryGetBaseAIManagerHook.ExecuteCallbacksWithOriginal(pBaseAI);
+			}
+		};
 #pragma endregion
 
 #pragma region ByteHooks

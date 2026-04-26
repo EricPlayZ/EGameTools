@@ -65,11 +65,11 @@ namespace EGT::Menu {
 			{ "CVideoSettings", reinterpret_cast<void*(*)()>(&EGSDK::Engine::CVideoSettings::Get) }
 		};
 
-		ImGui::Option disableVftableScanning { false };
+		ImGui::Option disableVftableScanning { false, ImGui::ConfigBindingInfo{ "Debug:Misc", "DisableVftableScanning" } };
 #ifdef _DEBUG
-		ImGui::Option enableDebuggingConsole { true };
+		ImGui::Option enableDebuggingConsole { true, ImGui::ConfigBindingInfo{ "Debug:Misc", "EnableDebuggingConsole" } };
 #else
-		ImGui::Option enableDebuggingConsole { false };
+		ImGui::Option enableDebuggingConsole { false, ImGui::ConfigBindingInfo{ "Debug:Misc", "EnableDebuggingConsole" } };
 #endif
 
 		static void RenderClassAddrPair(const std::pair<std::string_view, void*(*)()>* pair) {
@@ -92,222 +92,220 @@ namespace EGT::Menu {
 			ImGui::PopStyleColor();
 		}
 
-		namespace {
-			template<typename ParentT, typename FieldT>
-			uint64_t DynOff(FieldT ParentT::* member) {
-				return EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(member));
-			}
+		template<typename ParentT, typename FieldT>
+		uint64_t DynOff(FieldT ParentT::* member) {
+			return EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(member));
+		}
 
-			struct UnionFieldEntry {
-				const char* label;
-				const char* classShortName;
-				void* (*getBase)();
-				uint64_t (*getFieldOffset)();
-			};
+		struct UnionFieldEntry {
+			const char* label;
+			const char* classShortName;
+			void* (*getBase)();
+			uint64_t (*getFieldOffset)();
+		};
 
-			static const std::vector<UnionFieldEntry> kGamePHUnionFields = {
-				{ "TimeWeather\\CSystem::blendTime", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::blendTime); } },
-				{ "TimeWeather\\CSystem::blendTime2", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::blendTime2); } },
-				{ "TimeWeather\\CSystem::currentSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::currentSubSystem); } },
-				{ "TimeWeather\\CSystem::nextSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::nextSubSystem); } },
-				{ "TimeWeather\\CSystem::lastSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::lastSubSystem); } },
+		static const std::vector<UnionFieldEntry> kGamePHUnionFields = {
+			{ "TimeWeather\\CSystem::blendTime", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::blendTime); } },
+			{ "TimeWeather\\CSystem::blendTime2", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::blendTime2); } },
+			{ "TimeWeather\\CSystem::currentSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::currentSubSystem); } },
+			{ "TimeWeather\\CSystem::nextSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::nextSubSystem); } },
+			{ "TimeWeather\\CSystem::lastSubSystem", "TimeWeather\\CSystem", []() -> void* { return EGSDK::GamePH::TimeWeather::CSystem::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::TimeWeather::CSystem::lastSubSystem); } },
 
-				{ "CoPlayerRestrictions::flags", "CoPlayerRestrictions", []() -> void* { return EGSDK::GamePH::CoPlayerRestrictions::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::CoPlayerRestrictions::flags); } },
+			{ "CoPlayerRestrictions::flags", "CoPlayerRestrictions", []() -> void* { return EGSDK::GamePH::CoPlayerRestrictions::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::CoPlayerRestrictions::flags); } },
 
-				{ "DayNightCycle::time1", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time1); } },
-				{ "DayNightCycle::time2", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time2); } },
-				{ "DayNightCycle::time3", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time3); } },
+			{ "DayNightCycle::time1", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time1); } },
+			{ "DayNightCycle::time2", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time2); } },
+			{ "DayNightCycle::time3", "DayNightCycle", []() -> void* { return EGSDK::GamePH::DayNightCycle::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::DayNightCycle::time3); } },
 
-				{ "FreeCamera::pCoBaseCameraProxy", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::pCoBaseCameraProxy); } },
-				{ "FreeCamera::pCBaseCamera", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::pCBaseCamera); } },
-				{ "FreeCamera::enableSpeedMultiplier1", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::enableSpeedMultiplier1); } },
-				{ "FreeCamera::enableSpeedMultiplier2", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::enableSpeedMultiplier2); } },
-				{ "FreeCamera::speedMultiplier", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::speedMultiplier); } },
+			{ "FreeCamera::pCoBaseCameraProxy", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::pCoBaseCameraProxy); } },
+			{ "FreeCamera::pCBaseCamera", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::pCBaseCamera); } },
+			{ "FreeCamera::enableSpeedMultiplier1", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::enableSpeedMultiplier1); } },
+			{ "FreeCamera::enableSpeedMultiplier2", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::enableSpeedMultiplier2); } },
+			{ "FreeCamera::speedMultiplier", "FreeCamera", []() -> void* { return EGSDK::GamePH::FreeCamera::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::FreeCamera::speedMultiplier); } },
 
-				{ "GameDI_PH::blockPauseGameOnPlayerAfk", "GameDI_PH", []() -> void* { return EGSDK::GamePH::GameDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::GameDI_PH::blockPauseGameOnPlayerAfk); } },
-				{ "GameDI_PH::pSessionCooperativeDI", "GameDI_PH", []() -> void* { return EGSDK::GamePH::GameDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::GameDI_PH::pSessionCooperativeDI); } },
+			{ "GameDI_PH::blockPauseGameOnPlayerAfk", "GameDI_PH", []() -> void* { return EGSDK::GamePH::GameDI_PH::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::GameDI_PH::blockPauseGameOnPlayerAfk); } },
+			{ "GameDI_PH::pSessionCooperativeDI", "GameDI_PH", []() -> void* { return EGSDK::GamePH::GameDI_PH::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::GameDI_PH::pSessionCooperativeDI); } },
 
-				{ "LocalClientDI::pPlayerDI_PH", "LocalClientDI", []() -> void* { return EGSDK::GamePH::LocalClientDI::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::LocalClientDI::pPlayerDI_PH); } },
+			{ "LocalClientDI::pPlayerDI_PH", "LocalClientDI", []() -> void* { return EGSDK::GamePH::LocalClientDI::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::LocalClientDI::pPlayerDI_PH); } },
 
-				{ "PlayerDI_PH::pInventoryContainerDI", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::pInventoryContainerDI); } },
-				{ "PlayerDI_PH::nextPlayerOrientation", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::nextPlayerOrientation); } },
-				{ "PlayerDI_PH::restrictionsEnabled", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::restrictionsEnabled); } },
-				{ "PlayerDI_PH::enableTPPModel1", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::enableTPPModel1); } },
-				{ "PlayerDI_PH::enableTPPModel2", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::enableTPPModel2); } },
+			{ "PlayerDI_PH::pInventoryContainerDI", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::pInventoryContainerDI); } },
+			{ "PlayerDI_PH::nextPlayerOrientation", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::nextPlayerOrientation); } },
+			{ "PlayerDI_PH::restrictionsEnabled", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::restrictionsEnabled); } },
+			{ "PlayerDI_PH::enableTPPModel1", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::enableTPPModel1); } },
+			{ "PlayerDI_PH::enableTPPModel2", "PlayerDI_PH", []() -> void* { return EGSDK::GamePH::PlayerDI_PH::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerDI_PH::enableTPPModel2); } },
 
-				{ "PlayerHealthModule::pPlayerDI_PH", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::pPlayerDI_PH); } },
-				{ "PlayerHealthModule::health", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::health); } },
-				{ "PlayerHealthModule::maxHealth", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::maxHealth); } },
+			{ "PlayerHealthModule::pPlayerDI_PH", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::pPlayerDI_PH); } },
+			{ "PlayerHealthModule::health", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::health); } },
+			{ "PlayerHealthModule::maxHealth", "PlayerHealthModule", []() -> void* { return EGSDK::GamePH::PlayerHealthModule::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerHealthModule::maxHealth); } },
 
-				{ "PlayerInfectionModule::pPlayerDI_PH", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::pPlayerDI_PH); } },
-				{ "PlayerInfectionModule::maxImmunity", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::maxImmunity); } },
-				{ "PlayerInfectionModule::immunity", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::immunity); } },
-				{ "PlayerInfectionModule::nightrunnerTimer", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::nightrunnerTimer); } },
+			{ "PlayerInfectionModule::pPlayerDI_PH", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::pPlayerDI_PH); } },
+			{ "PlayerInfectionModule::maxImmunity", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::maxImmunity); } },
+			{ "PlayerInfectionModule::immunity", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::immunity); } },
+			{ "PlayerInfectionModule::nightrunnerTimer", "PlayerInfectionModule", []() -> void* { return EGSDK::GamePH::PlayerInfectionModule::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerInfectionModule::nightrunnerTimer); } },
 
-				{ "PlayerState::playerVariables", "PlayerState", []() -> void* { return EGSDK::GamePH::PlayerState::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerState::playerVariables); } },
+			{ "PlayerState::playerVariables", "PlayerState", []() -> void* { return EGSDK::GamePH::PlayerState::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::PlayerState::playerVariables); } },
 
-				{ "SessionCooperativeDI::pLocalClientDI", "SessionCooperativeDI", []() -> void* { return EGSDK::GamePH::SessionCooperativeDI::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::SessionCooperativeDI::pLocalClientDI); } },
-				{ "SessionCooperativeDI::pLogicalLevel", "SessionCooperativeDI", []() -> void* { return EGSDK::GamePH::SessionCooperativeDI::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::SessionCooperativeDI::pLogicalLevel); } },
-				{ "LogicalLevel::pLogicalPlayer", "LogicalLevel", []() -> void* { return EGSDK::GamePH::LogicalLevel::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::LogicalLevel::pLogicalPlayer); } },
+			{ "SessionCooperativeDI::pLocalClientDI", "SessionCooperativeDI", []() -> void* { return EGSDK::GamePH::SessionCooperativeDI::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::SessionCooperativeDI::pLocalClientDI); } },
+			{ "SessionCooperativeDI::pLogicalLevel", "SessionCooperativeDI", []() -> void* { return EGSDK::GamePH::SessionCooperativeDI::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::SessionCooperativeDI::pLogicalLevel); } },
+			{ "LogicalLevel::pLogicalPlayer", "LogicalLevel", []() -> void* { return EGSDK::GamePH::LogicalLevel::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::LogicalLevel::pLogicalPlayer); } },
 
-				{ "InventoryMoney::oldWorldMoney", "InventoryMoney", []() -> void* {
-					auto* player = EGSDK::GamePH::PlayerDI_PH::Get();
-					if (!player)
-						return nullptr;
-					auto* container = player->GetInventoryContainer();
-					return container ? reinterpret_cast<void*>(container->GetInventoryMoney(0)) : nullptr;
-				  },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::InventoryMoney::oldWorldMoney); } },
-				{ "ItemDescWithContext::weaponDurability", "ItemDescWithContext", []() -> void* {
-					auto* player = EGSDK::GamePH::PlayerDI_PH::Get();
-					if (!player)
-						return nullptr;
-					auto* item = player->GetCurrentWeapon(0);
-					return item ? reinterpret_cast<void*>(item->GetItemDescCtx()) : nullptr;
-				  },
-				  []() -> uint64_t { return DynOff(&EGSDK::GamePH::ItemDescWithContext::weaponDurability); } },
-			};
-
-			// Engine types still on StaticBuffer (no member patterns in OffsetManager): offset = offsetof(field) + inner layout to .data.
-			static const std::vector<UnionFieldEntry> kEngineUnionFields = {
-				{ "CLobbySteam::pCGame", "CLobbySteam", []() -> void* { return EGSDK::Engine::CLobbySteam::Get(); },
-				  []() -> uint64_t { return static_cast<uint64_t>(offsetof(EGSDK::Engine::CLobbySteam, pCGame)) + 0xF8; } },
-
-				{ "CGame::pGameDI_PH", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pGameDI_PH); } },
-				{ "CGame::pCVideoSettings", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pCVideoSettings); } },
-				{ "CGame::pCLevel", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pCLevel); } },
-
-				{ "CVideoSettings::extraFOV", "CVideoSettings", []() -> void* { return EGSDK::Engine::CVideoSettings::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CVideoSettings::extraFOV); } },
-
-				{ "CBulletPhysicsCharacter::playerPos", "CBulletPhysicsCharacter", []() -> void* { return EGSDK::Engine::CBulletPhysicsCharacter::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CBulletPhysicsCharacter::playerPos); } },
-				{ "CBulletPhysicsCharacter::playerDownwardVelocity", "CBulletPhysicsCharacter", []() -> void* { return EGSDK::Engine::CBulletPhysicsCharacter::Get(); },
-				  []() -> uint64_t { return DynOff(&EGSDK::Engine::CBulletPhysicsCharacter::playerDownwardVelocity); } },
-
-				{ "CLevel::pLevelDI", "CLevel", []() -> void* { return EGSDK::Engine::CLevel::Get(); },
-				  []() -> uint64_t { return static_cast<uint64_t>(offsetof(EGSDK::Engine::CLevel, pLevelDI)) + 0x20; } },
-			};
-
-			static void RenderHexPtrRow(const char* label, const void* ptr) {
-				const std::string labelID = std::string("##InvDbgHex") + label;
-
-				std::stringstream ss{};
-				if (ptr)
-					ss << "0x" << std::uppercase << std::hex << reinterpret_cast<uint64_t>(ptr);
-				else
-					ss << "NULL";
-
-				static std::string addrString{};
-				addrString = ss.str();
-
-				ImGui::TextUnformatted(label);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::PushStyleColor(ImGuiCol_Text, ptr ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
-				ImGui::InputText(labelID.c_str(), addrString.data(), addrString.size() + 1, ImGuiInputTextFlags_ReadOnly);
-				ImGui::PopStyleColor();
-			}
-
-			static void RenderUnionFieldRow(const char* label, const char* classShortName, void* basePtr, uint64_t fieldOffset) {
-				static std::string labelID{};
-				labelID = "##UnionFld" + std::string(label);
-
-				std::stringstream ss{};
-				ss << classShortName << "+0x" << std::uppercase << std::hex << fieldOffset;
-				if (basePtr)
-					ss << "  ->  0x" << std::uppercase << std::hex << (reinterpret_cast<uint64_t>(basePtr) + fieldOffset);
-
-				static std::string line{};
-				line = ss.str();
-
-				const ImU32 col = !basePtr ? IM_COL32(255, 0, 0, 255)
-					: (fieldOffset == 0 ? IM_COL32(255, 200, 0, 255) : IM_COL32(0, 255, 0, 255));
-
-				ImGui::TextUnformatted(label);
-				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::PushStyleColor(ImGuiCol_Text, col);
-				ImGui::InputText(labelID.c_str(), line.data(), line.size() + 1, ImGuiInputTextFlags_ReadOnly);
-				ImGui::PopStyleColor();
-			}
-
-			static void RenderUnionFieldList(const std::vector<UnionFieldEntry>& entries) {
-				for (const auto& e : entries) {
-					void* b = e.getBase();
-					uint64_t off = e.getFieldOffset();
-					RenderUnionFieldRow(e.label, e.classShortName, b, off);
-				}
-			}
-
-			static void RenderInventoryItemContextOffsetProbe() {
+			{ "InventoryMoney::oldWorldMoney", "InventoryMoney", []() -> void* {
 				auto* player = EGSDK::GamePH::PlayerDI_PH::Get();
-				auto* invContainer = player ? player->GetInventoryContainer() : nullptr;
-				auto* invMoney = invContainer ? invContainer->GetInventoryMoney(0) : nullptr;
-				auto* invItem = player ? player->GetCurrentWeapon(0) : nullptr;
-				void* itemCtx = invItem ? invItem->GetItemDescCtx() : nullptr;
-				constexpr uint64_t kItemToDescCtxSdkOffset = 0x40;
-				void* itemCtxByFixedOffset = invItem ? reinterpret_cast<void*>(reinterpret_cast<uint64_t>(invItem) + kItemToDescCtxSdkOffset) : nullptr;
+				if (!player)
+					return nullptr;
+				auto* container = player->GetInventoryContainer();
+				return container ? reinterpret_cast<void*>(container->GetInventoryMoney(0)) : nullptr;
+				},
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::InventoryMoney::oldWorldMoney); } },
+			{ "ItemDescWithContext::weaponDurability", "ItemDescWithContext", []() -> void* {
+				auto* player = EGSDK::GamePH::PlayerDI_PH::Get();
+				if (!player)
+					return nullptr;
+				auto* item = player->GetCurrentWeapon(0);
+				return item ? reinterpret_cast<void*>(item->GetItemDescCtx()) : nullptr;
+				},
+				[]() -> uint64_t { return DynOff(&EGSDK::GamePH::ItemDescWithContext::weaponDurability); } },
+		};
 
-				ImGui::TextUnformatted("Pointer chain (PlayerDI_PH -> container / weapon). Equip a weapon to populate item context.");
-				RenderHexPtrRow("PlayerDI_PH", player);
-				RenderHexPtrRow("InventoryContainerDI", invContainer);
-				RenderHexPtrRow("InventoryMoney (GetInventoryMoney(0))", invMoney);
-				RenderHexPtrRow("InventoryItem (GetCurrentWeapon(0))", invItem);
-				RenderHexPtrRow("ItemDescWithContext (GetItemDescCtx)", itemCtx);
+		// Engine types still on StaticBuffer (no member patterns in OffsetManager): offset = offsetof(field) + inner layout to .data.
+		static const std::vector<UnionFieldEntry> kEngineUnionFields = {
+			{ "CLobbySteam::pCGame", "CLobbySteam", []() -> void* { return EGSDK::Engine::CLobbySteam::Get(); },
+				[]() -> uint64_t { return static_cast<uint64_t>(offsetof(EGSDK::Engine::CLobbySteam, pCGame)) + 0xF8; } },
 
-				ImGui::SeparatorTextSection("ItemDescWithContext base offset##InvDbg");
-				ImGui::TextUnformatted("SDK hardcodes InventoryItem+0x40 in InventoryItem.cpp; compare with GetItemDescCtx() after vtable checks.");
-				RenderHexPtrRow("InventoryItem + 0x40 (no vtable check)", itemCtxByFixedOffset);
-				if (invItem && itemCtx && itemCtxByFixedOffset != itemCtx) {
-					ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(255, 180, 0, 255)),
-						"Raw +0x40 differs from GetItemDescCtx — SafeGetter may have rejected the pointer, or offset changed.");
-				} else if (invItem && itemCtx && itemCtxByFixedOffset == itemCtx) {
-					ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(0, 200, 100, 255)), "+0x40 matches GetItemDescCtx.");
-				}
+			{ "CGame::pGameDI_PH", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pGameDI_PH); } },
+			{ "CGame::pCVideoSettings", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pCVideoSettings); } },
+			{ "CGame::pCLevel", "CGame", []() -> void* { return EGSDK::Engine::CGame::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::Engine::CGame::pCLevel); } },
 
-				ImGui::SeparatorTextSection("Union fields (DynamicField)##InvDbg");
-				ImGui::PushID("InvDbgUnionRows");
-				RenderUnionFieldRow("InventoryMoney::oldWorldMoney", "InventoryMoney", invMoney,
-					EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(&EGSDK::GamePH::InventoryMoney::oldWorldMoney)));
-				RenderUnionFieldRow("ItemDescWithContext::weaponDurability", "ItemDescWithContext", itemCtx,
-					EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(&EGSDK::GamePH::ItemDescWithContext::weaponDurability)));
-				ImGui::PopID();
+			{ "CVideoSettings::extraFOV", "CVideoSettings", []() -> void* { return EGSDK::Engine::CVideoSettings::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::Engine::CVideoSettings::extraFOV); } },
+
+			{ "CBulletPhysicsCharacter::playerPos", "CBulletPhysicsCharacter", []() -> void* { return EGSDK::Engine::CBulletPhysicsCharacter::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::Engine::CBulletPhysicsCharacter::playerPos); } },
+			{ "CBulletPhysicsCharacter::playerDownwardVelocity", "CBulletPhysicsCharacter", []() -> void* { return EGSDK::Engine::CBulletPhysicsCharacter::Get(); },
+				[]() -> uint64_t { return DynOff(&EGSDK::Engine::CBulletPhysicsCharacter::playerDownwardVelocity); } },
+
+			{ "CLevel::pLevelDI", "CLevel", []() -> void* { return EGSDK::Engine::CLevel::Get(); },
+				[]() -> uint64_t { return static_cast<uint64_t>(offsetof(EGSDK::Engine::CLevel, pLevelDI)) + 0x20; } },
+		};
+
+		static void RenderHexPtrRow(const char* label, const void* ptr) {
+			const std::string labelID = std::string("##InvDbgHex") + label;
+
+			std::stringstream ss{};
+			if (ptr)
+				ss << "0x" << std::uppercase << std::hex << reinterpret_cast<uint64_t>(ptr);
+			else
+				ss << "NULL";
+
+			static std::string addrString{};
+			addrString = ss.str();
+
+			ImGui::TextUnformatted(label);
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			ImGui::PushStyleColor(ImGuiCol_Text, ptr ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+			ImGui::InputText(labelID.c_str(), addrString.data(), addrString.size() + 1, ImGuiInputTextFlags_ReadOnly);
+			ImGui::PopStyleColor();
+		}
+
+		static void RenderUnionFieldRow(const char* label, const char* classShortName, void* basePtr, uint64_t fieldOffset) {
+			static std::string labelID{};
+			labelID = "##UnionFld" + std::string(label);
+
+			std::stringstream ss{};
+			ss << classShortName << "+0x" << std::uppercase << std::hex << fieldOffset;
+			if (basePtr)
+				ss << "  ->  0x" << std::uppercase << std::hex << (reinterpret_cast<uint64_t>(basePtr) + fieldOffset);
+
+			static std::string line{};
+			line = ss.str();
+
+			const ImU32 col = !basePtr ? IM_COL32(255, 0, 0, 255)
+				: (fieldOffset == 0 ? IM_COL32(255, 200, 0, 255) : IM_COL32(0, 255, 0, 255));
+
+			ImGui::TextUnformatted(label);
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			ImGui::PushStyleColor(ImGuiCol_Text, col);
+			ImGui::InputText(labelID.c_str(), line.data(), line.size() + 1, ImGuiInputTextFlags_ReadOnly);
+			ImGui::PopStyleColor();
+		}
+
+		static void RenderUnionFieldList(const std::vector<UnionFieldEntry>& entries) {
+			for (const auto& e : entries) {
+				void* b = e.getBase();
+				uint64_t off = e.getFieldOffset();
+				RenderUnionFieldRow(e.label, e.classShortName, b, off);
 			}
+		}
+
+		static void RenderInventoryItemContextOffsetProbe() {
+			auto* player = EGSDK::GamePH::PlayerDI_PH::Get();
+			auto* invContainer = player ? player->GetInventoryContainer() : nullptr;
+			auto* invMoney = invContainer ? invContainer->GetInventoryMoney(0) : nullptr;
+			auto* invItem = player ? player->GetCurrentWeapon(0) : nullptr;
+			void* itemCtx = invItem ? invItem->GetItemDescCtx() : nullptr;
+			constexpr uint64_t kItemToDescCtxSdkOffset = 0x40;
+			void* itemCtxByFixedOffset = invItem ? reinterpret_cast<void*>(reinterpret_cast<uint64_t>(invItem) + kItemToDescCtxSdkOffset) : nullptr;
+
+			ImGui::TextUnformatted("Pointer chain (PlayerDI_PH -> container / weapon). Equip a weapon to populate item context.");
+			RenderHexPtrRow("PlayerDI_PH", player);
+			RenderHexPtrRow("InventoryContainerDI", invContainer);
+			RenderHexPtrRow("InventoryMoney (GetInventoryMoney(0))", invMoney);
+			RenderHexPtrRow("InventoryItem (GetCurrentWeapon(0))", invItem);
+			RenderHexPtrRow("ItemDescWithContext (GetItemDescCtx)", itemCtx);
+
+			ImGui::SeparatorTextSection("ItemDescWithContext base offset##InvDbg");
+			ImGui::TextUnformatted("SDK hardcodes InventoryItem+0x40 in InventoryItem.cpp; compare with GetItemDescCtx() after vtable checks.");
+			RenderHexPtrRow("InventoryItem + 0x40 (no vtable check)", itemCtxByFixedOffset);
+			if (invItem && itemCtx && itemCtxByFixedOffset != itemCtx) {
+				ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(255, 180, 0, 255)),
+					"Raw +0x40 differs from GetItemDescCtx — SafeGetter may have rejected the pointer, or offset changed.");
+			} else if (invItem && itemCtx && itemCtxByFixedOffset == itemCtx) {
+				ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(0, 200, 100, 255)), "+0x40 matches GetItemDescCtx.");
+			}
+
+			ImGui::SeparatorTextSection("Union fields (DynamicField)##InvDbg");
+			ImGui::PushID("InvDbgUnionRows");
+			RenderUnionFieldRow("InventoryMoney::oldWorldMoney", "InventoryMoney", invMoney,
+				EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(&EGSDK::GamePH::InventoryMoney::oldWorldMoney)));
+			RenderUnionFieldRow("ItemDescWithContext::weaponDurability", "ItemDescWithContext", itemCtx,
+				EGSDK::OffsetManager::GetOffset(EGSDK::ClassHelpers::GetOffsetNameFromClassMember(&EGSDK::GamePH::ItemDescWithContext::weaponDurability)));
+			ImGui::PopID();
 		}
 
 		Tab Tab::instance{};
@@ -348,6 +346,15 @@ namespace EGT::Menu {
 				ImGui::Indent();
 				RenderInventoryItemContextOffsetProbe();
 				ImGui::Unindent();
+			}
+			ImGui::SeparatorTextSection("Other Dev Stuff##Debug");
+			if (ImGui::ButtonSmooth("Dump current level name to console")) {
+				if (auto iLevel = EGSDK::GamePH::LevelDI::Get(); iLevel && iLevel->IsLoaded()) {
+					auto currentRegion = iLevel->GetCurrentRegionName();
+					auto levelName = iLevel->GetLevelName();
+					SPDLOG_INFO("Current level region name: {}", currentRegion ? currentRegion : "NULL");
+					SPDLOG_INFO("Current level name: {}", levelName ? levelName : "NULL");
+				}
 			}
 			ImGui::Separator();
 			ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(IM_COL32(200, 0, 0, 255)), "* Option requires game restart to apply");

@@ -38,6 +38,12 @@ namespace EGSDK::GamePH {
 		relyOnTimer = false;
 		hasLoaded = false;
 	}
+	void* LevelDI::GetCurrentRegionName() {
+		return Utils::Memory::SafeCallFunction<void*>("engine_x64_rwdi.dll", "?GetCurrentRegionName@ILevel@@UEBAAEBV?$string_base@D@ttl@@XZ", nullptr, this);
+	}
+	const char* LevelDI::GetLevelName() {
+		return Utils::Memory::SafeCallFunction<const char*>("engine_x64_rwdi.dll", "?GetLevelName@ILevel@@UEBAPEBDXZ", nullptr, this);
+	}
 	Engine::IBaseCamera* LevelDI::GetViewCamera() {
 		return Utils::Memory::SafeCallFunction<Engine::IBaseCamera*>("engine_x64_rwdi.dll", "?GetViewCamera@ILevel@@QEBAPEAVIBaseCamera@@XZ", nullptr, this);
 	}

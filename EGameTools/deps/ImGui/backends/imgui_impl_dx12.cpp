@@ -287,6 +287,92 @@ void ImGui_ImplDX12_RenderDrawData(ImDrawData* draw_data, ID3D12GraphicsCommandL
     }
 }
 
+// Font atlas upload: stock backend creates a new command queue each rebuild; that can fail or crash when injected into some D3D12 titles.
+static ID3D12CommandQueue* g_ImGui_ImplDX12_FontUploadQueue = nullptr;
+static ID3D12CommandAllocator* g_ImGui_ImplDX12_FontUploadAllocator = nullptr;
+static ID3D12GraphicsCommandList* g_ImGui_ImplDX12_FontUploadCommandList = nullptr;
+static ID3D12Fence* g_ImGui_ImplDX12_FontUploadFence = nullptr;
+static UINT64 g_ImGui_ImplDX12_FontUploadFenceValue = 0;
+
+void ImGui_ImplDX12_SetFontUploadCommandQueue(ID3D12CommandQueue* queue)
+{
+    g_ImGui_ImplDX12_FontUploadQueue = queue;
+}
+
+static void ImGui_ImplDX12_ReleaseSharedFontUploadObjects()
+{
+    SafeRelease(g_ImGui_ImplDX12_FontUploadCommandList);
+    SafeRelease(g_ImGui_ImplDX12_FontUploadAllocator);
+    SafeRelease(g_ImGui_ImplDX12_FontUploadFence);
+    g_ImGui_ImplDX12_FontUploadFenceValue = 0;
+}
+
+static bool ImGui_ImplDX12_EnsureSharedFontUploadObjects(ID3D12Device* device)
+{
+    HRESULT hr = S_OK;
+    if (!g_ImGui_ImplDX12_FontUploadAllocator)
+    {
+        hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&g_ImGui_ImplDX12_FontUploadAllocator));
+        if (FAILED(hr))
+            return false;
+    }
+    if (!g_ImGui_ImplDX12_FontUploadCommandList)
+    {
+        hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, g_ImGui_ImplDX12_FontUploadAllocator, nullptr, IID_PPV_ARGS(&g_ImGui_ImplDX12_FontUploadCommandList));
+        if (FAILED(hr))
+            return false;
+        hr = g_ImGui_ImplDX12_FontUploadCommandList->Close();
+        if (FAILED(hr))
+            return false;
+    }
+    if (!g_ImGui_ImplDX12_FontUploadFence)
+    {
+        hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&g_ImGui_ImplDX12_FontUploadFence));
+        if (FAILED(hr))
+            return false;
+    }
+    return true;
+}
+
+static bool ImGui_ImplDX12_UploadFontTextureWithQueue(ID3D12CommandQueue* queue, const D3D12_TEXTURE_COPY_LOCATION* srcLocation,
+    const D3D12_TEXTURE_COPY_LOCATION* dstLocation, const D3D12_RESOURCE_BARRIER* barrier, ID3D12Device* device)
+{
+    if (!ImGui_ImplDX12_EnsureSharedFontUploadObjects(device))
+        return false;
+    HRESULT hr = g_ImGui_ImplDX12_FontUploadAllocator->Reset();
+    if (FAILED(hr))
+        return false;
+    hr = g_ImGui_ImplDX12_FontUploadCommandList->Reset(g_ImGui_ImplDX12_FontUploadAllocator, nullptr);
+    if (FAILED(hr))
+        return false;
+    g_ImGui_ImplDX12_FontUploadCommandList->CopyTextureRegion(dstLocation, 0, 0, 0, srcLocation, nullptr);
+    g_ImGui_ImplDX12_FontUploadCommandList->ResourceBarrier(1, barrier);
+    hr = g_ImGui_ImplDX12_FontUploadCommandList->Close();
+    if (FAILED(hr))
+        return false;
+    ID3D12CommandList* const submit[] = { g_ImGui_ImplDX12_FontUploadCommandList };
+    queue->ExecuteCommandLists(1, submit);
+    g_ImGui_ImplDX12_FontUploadFenceValue++;
+    hr = queue->Signal(g_ImGui_ImplDX12_FontUploadFence, g_ImGui_ImplDX12_FontUploadFenceValue);
+    if (FAILED(hr))
+        return false;
+    if (g_ImGui_ImplDX12_FontUploadFence->GetCompletedValue() < g_ImGui_ImplDX12_FontUploadFenceValue)
+    {
+        HANDLE event_handle = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+        if (!event_handle)
+            return false;
+        hr = g_ImGui_ImplDX12_FontUploadFence->SetEventOnCompletion(g_ImGui_ImplDX12_FontUploadFenceValue, event_handle);
+        if (FAILED(hr))
+        {
+            CloseHandle(event_handle);
+            return false;
+        }
+        WaitForSingleObject(event_handle, INFINITE);
+        CloseHandle(event_handle);
+    }
+    return true;
+}
+
 static void ImGui_ImplDX12_CreateFontsTexture()
 {
     // Build texture atlas
@@ -295,6 +381,7 @@ static void ImGui_ImplDX12_CreateFontsTexture()
     unsigned char* pixels;
     int width, height;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+    IM_ASSERT(width > 0 && height > 0);
 
     // Upload texture to graphics system
     {
@@ -308,8 +395,8 @@ static void ImGui_ImplDX12_CreateFontsTexture()
         ZeroMemory(&desc, sizeof(desc));
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         desc.Alignment = 0;
-        desc.Width = width;
-        desc.Height = height;
+        desc.Width = (UINT)width;
+        desc.Height = (UINT)height;
         desc.DepthOrArraySize = 1;
         desc.MipLevels = 1;
         desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -319,8 +406,9 @@ static void ImGui_ImplDX12_CreateFontsTexture()
         desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
         ID3D12Resource* pTexture = nullptr;
-        bd->pd3dDevice->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+        HRESULT hr_tex = bd->pd3dDevice->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
             D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&pTexture));
+        IM_ASSERT(SUCCEEDED(hr_tex) && pTexture != nullptr);
 
         UINT uploadPitch = (width * 4 + D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
         UINT uploadSize = height * uploadPitch;
@@ -375,48 +463,56 @@ static void ImGui_ImplDX12_CreateFontsTexture()
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
         barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-        ID3D12Fence* fence = nullptr;
-        hr = bd->pd3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
-        IM_ASSERT(SUCCEEDED(hr));
+        bool upload_ok = false;
+        if (g_ImGui_ImplDX12_FontUploadQueue)
+            upload_ok = ImGui_ImplDX12_UploadFontTextureWithQueue(g_ImGui_ImplDX12_FontUploadQueue, &srcLocation, &dstLocation, &barrier, bd->pd3dDevice);
 
-        HANDLE event = CreateEvent(0, 0, 0, 0);
-        IM_ASSERT(event != nullptr);
+        if (!upload_ok)
+        {
+            ID3D12Fence* fence = nullptr;
+            HRESULT hr = bd->pd3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+            IM_ASSERT(SUCCEEDED(hr));
 
-        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-        queueDesc.Type     = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        queueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        queueDesc.NodeMask = 1;
+            HANDLE event = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+            IM_ASSERT(event != nullptr);
 
-        ID3D12CommandQueue* cmdQueue = nullptr;
-        hr = bd->pd3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue));
-        IM_ASSERT(SUCCEEDED(hr));
+            D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+            queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+            queueDesc.NodeMask = 1;
 
-        ID3D12CommandAllocator* cmdAlloc = nullptr;
-        hr = bd->pd3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc));
-        IM_ASSERT(SUCCEEDED(hr));
+            ID3D12CommandQueue* cmdQueue = nullptr;
+            hr = bd->pd3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue));
+            IM_ASSERT(SUCCEEDED(hr));
 
-        ID3D12GraphicsCommandList* cmdList = nullptr;
-        hr = bd->pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc, nullptr, IID_PPV_ARGS(&cmdList));
-        IM_ASSERT(SUCCEEDED(hr));
+            ID3D12CommandAllocator* cmdAlloc = nullptr;
+            hr = bd->pd3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc));
+            IM_ASSERT(SUCCEEDED(hr));
 
-        cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
-        cmdList->ResourceBarrier(1, &barrier);
+            ID3D12GraphicsCommandList* cmdList = nullptr;
+            hr = bd->pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc, nullptr, IID_PPV_ARGS(&cmdList));
+            IM_ASSERT(SUCCEEDED(hr));
 
-        hr = cmdList->Close();
-        IM_ASSERT(SUCCEEDED(hr));
+            cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
+            cmdList->ResourceBarrier(1, &barrier);
 
-        cmdQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&cmdList);
-        hr = cmdQueue->Signal(fence, 1);
-        IM_ASSERT(SUCCEEDED(hr));
+            hr = cmdList->Close();
+            IM_ASSERT(SUCCEEDED(hr));
 
-        fence->SetEventOnCompletion(1, event);
-        WaitForSingleObject(event, INFINITE);
+            cmdQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&cmdList);
+            hr = cmdQueue->Signal(fence, 1);
+            IM_ASSERT(SUCCEEDED(hr));
 
-        cmdList->Release();
-        cmdAlloc->Release();
-        cmdQueue->Release();
-        CloseHandle(event);
-        fence->Release();
+            fence->SetEventOnCompletion(1, event);
+            WaitForSingleObject(event, INFINITE);
+
+            cmdList->Release();
+            cmdAlloc->Release();
+            cmdQueue->Release();
+            CloseHandle(event);
+            fence->Release();
+        }
+
         uploadBuffer->Release();
 
         // Create texture view
@@ -424,7 +520,7 @@ static void ImGui_ImplDX12_CreateFontsTexture()
         ZeroMemory(&srvDesc, sizeof(srvDesc));
         srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MipLevels = desc.MipLevels;
+        srvDesc.Texture2D.MipLevels = 1;
         srvDesc.Texture2D.MostDetailedMip = 0;
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         bd->pd3dDevice->CreateShaderResourceView(pTexture, &srvDesc, bd->hFontSrvCpuDescHandle);
@@ -740,6 +836,8 @@ void ImGui_ImplDX12_Shutdown()
 
     // Clean up windows and device objects
     ImGui_ImplDX12_InvalidateDeviceObjects();
+    ImGui_ImplDX12_ReleaseSharedFontUploadObjects();
+    g_ImGui_ImplDX12_FontUploadQueue = nullptr;
     delete[] bd->pFrameResources;
     io.BackendRendererName = nullptr;
     io.BackendRendererUserData = nullptr;

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -34,6 +34,7 @@
     <ClCompile Include="src\Engine\VarManagerBase.cpp" />
     <ClCompile Include="src\Engine\VarMapBase.cpp" />
     <ClCompile Include="src\Engine\VarRef.cpp" />
+    <ClCompile Include="src\GamePH\AIManager.cpp" />
     <ClCompile Include="src\GamePH\CoPlayerRestrictions.cpp" />
     <ClCompile Include="src\GamePH\DayNightCycle.cpp" />
     <ClCompile Include="src\GamePH\FreeCamera.cpp" />
@@ -44,6 +45,7 @@
     <ClCompile Include="src\GamePH\InventoryContainerDI.cpp" />
     <ClCompile Include="src\GamePH\InventoryItem.cpp" />
     <ClCompile Include="src\GamePH\LevelDI.cpp" />
+    <ClCompile Include="src\GamePH\cbs.cpp" />
     <ClCompile Include="src\GamePH\LocalClientDI.cpp" />
     <ClCompile Include="src\GamePH\LogicalLevel.cpp" />
     <ClCompile Include="src\GamePH\LogicalPlayer.cpp" />
@@ -94,6 +96,8 @@
     <ClInclude Include="include\EGSDK\Engine\VarMapBase.h" />
     <ClInclude Include="include\EGSDK\Engine\VarRef.h" />
     <ClInclude Include="include\EGSDK\Exports.h" />
+    <ClInclude Include="include\EGSDK\GamePH\AIManager.h" />
+    <ClInclude Include="include\EGSDK\GamePH\ai\BaseAI.h" />
     <ClInclude Include="include\EGSDK\GamePH\CoBaseCameraProxy.h" />
     <ClInclude Include="include\EGSDK\GamePH\CoPlayerRestrictions.h" />
     <ClInclude Include="include\EGSDK\GamePH\DayNightCycle.h" />
@@ -107,6 +111,7 @@
     <ClInclude Include="include\EGSDK\GamePH\InventoryMoney.h" />
     <ClInclude Include="include\EGSDK\GamePH\ItemDescWithContext.h" />
     <ClInclude Include="include\EGSDK\GamePH\LevelDI.h" />
+    <ClInclude Include="include\EGSDK\GamePH\cbs.h" />
     <ClInclude Include="include\EGSDK\GamePH\LocalClientDI.h" />
     <ClInclude Include="include\EGSDK\GamePH\LogicalLevel.h" />
     <ClInclude Include="include\EGSDK\GamePH\LogicalPlayer.h" />

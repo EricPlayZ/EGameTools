@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Start Game (Debug|x64, VS-style)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${input:gameExePath}",
+            "args": [],
+            "cwd": "${input:gameWorkingDir}",
+            "stopAtEntry": false,
+            "preLaunchTask": "Build Solution (Debug|x64)",
+            "console": "externalTerminal",
+            "symbolSearchPath": "${workspaceFolder}\\x64\\Debug;${workspaceFolder}\\EGameTools\\x64\\Debug;${workspaceFolder}\\EGameSDK\\x64\\Debug"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "gameExePath",
+            "type": "promptString",
+            "description": "Full path to the game EXE (VS Local Debugger Command equivalent)",
+            "default": "D:\\Program Files (x86)\\Steam\\steamapps\\common\\Dying Light 2\\ph\\work\\bin\\x64\\DyingLightGame_x64_rwdi.exe"
+        },
+        {
+            "id": "gameWorkingDir",
+            "type": "promptString",
+            "description": "Game working directory (VS Local Debugger Working Directory equivalent)",
+            "default": "D:\\Program Files (x86)\\Steam\\steamapps\\common\\Dying Light 2\\ph\\work\\bin\\x64"
+        }
+    ]
+}

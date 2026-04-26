@@ -132,35 +132,35 @@ namespace EGT::Menu {
             ImGui::TextCentered("This will let you input a value manually into the slider, which can also go beyond the option's slider limit, given I allow the option to do so.");
 
             ImGui::SeparatorTextSection("Custom File Loading");
-            ImGui::TextCentered("The mod always creates a folder \"EGameTools\\UserModFiles\" inside the same folder as the game executable (exe) or in the same folder as the mod file.");
+            ImGui::TextCentered("The mod always creates/uses \"Dying Light 2\\ph\\source\\data\\EGameTools\\UserModFiles\" for custom mod files.");
             ImGui::TextCentered("This folder is used for custom file loading. It can load .PAKs and it can also load files extracted from these .PAKs. The latter has only been tested with a few mods that change some .scr files, .gpufx files, and other files included inside .PAK game archives, or files such as .rpack files.");
-            ImGui::TextCentered("If you put .PAKs inside this folder, they can be named whatever. If you put any other kind of files, they must have the same names as the ones from the game files, otherwise the game won't know it should load those files. Files in subfolders of the \"EGameTools\\UserModFiles\" folder will automatically be detected, so you can sort all your mods in different folders!");
+            ImGui::TextCentered("If you put .PAKs inside this folder, they can be named whatever. If you put any other kind of files, they must have the same names as the ones from the game files, otherwise the game won't know it should load those files. Files in subfolders of the \"source\\data\\EGameTools\\UserModFiles\" folder will automatically be detected, so you can sort all your mods in different folders!");
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
             ImGui::TextCentered("The game will reload a lot of the files upon a load of your savegame, so if you want to edit those files and reload them without having to restart the game, just reload your savegame and the game should automatically reload most of those files!");
             ImGui::TextCentered("Just make sure that if you add new, additional files while you're in-game, please wait AT LEAST 5 seconds before reloading your savegame, otherwise additional files will not get detected.");
             ImGui::TextCentered("Also, if there are multiple files of the same exact name, the game will pick the first instance of that file it finds in the folder.");
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
-            ImGui::TextCentered("The gist of it is, you now don't have to use dataX.PAK mods anymore! Or if you do, you can now name them whatever you want! You can also open the PAK files, extract their files in the \"EGameTools\\UserModFiles\" folder and start the game.");
+            ImGui::TextCentered("The gist of it is, you now don't have to use dataX.PAK mods anymore! Or if you do, you can now name them whatever you want! You can also open the PAK files, extract their files in the \"source\\data\\EGameTools\\UserModFiles\" folder and start the game.");
             ImGui::TextCentered("Any files put inside this folder will also bypass any of the game file checks, so you can use these mods in co-op too!");
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
-            ImGui::TextCentered("NOTE: Any mods that are put inside \"EGameTools\\UserModFiles\" as a regular file (.scr or any other file that is usually present in .PAK mods) and NOT a .PAK file, will make the game ignore the same files that are present in any of the .PAK mods inside \"EGameTools\\UserModFiles\". I recommend using .PAK for most mods. If you run into issues, try extracting the files inside the PAK into the folder directly.");
+            ImGui::TextCentered("NOTE: Any mods that are put inside \"source\\data\\EGameTools\\UserModFiles\" as a regular file (.scr or any other file that is usually present in .PAK mods) and NOT a .PAK file, will make the game ignore the same files that are present in any of the .PAK mods inside \"source\\data\\EGameTools\\UserModFiles\". I recommend using .PAK for most mods. If you run into issues, try extracting the files inside the PAK into the folder directly.");
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
             ImGui::TextCenteredColored("FOR MOD DEVELOPERS", IM_COL32(200, 0, 0, 255));
-            ImGui::TextCentered("If you want to make mods for EGameTools to load, please try to use as few folders as you possibly can. For example, your mod should only have one folder, something like \"EGameTools\\UserModFiles\\2019 Weather Mod\".");
+            ImGui::TextCentered("If you want to make mods for EGameTools to load, please try to use as few folders as you possibly can. For example, your mod should only have one folder, something like \"source\\data\\EGameTools\\UserModFiles\\2019 Weather Mod\".");
             ImGui::TextCentered("The reason is, my mod continuously checks for new files in the directory, and many folders can slow down the process, and therefore slow down game loading times. So just keep this in mind!");
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
             ImGui::TextCentered("If you want to officially include one of your mods as part of EGameTools, please contact me on NexusMods or on Discord (@EricPlayZ).");
 
             ImGui::SeparatorTextSection("Game Variables Reloading");
-            ImGui::TextCentered("You can also reload Player Variables from a file specified by you, or reload Jump Parameters from \"EGameTools\\UserModFiles\".");
+            ImGui::TextCentered("You can also reload Player Variables from a file specified by you, or reload Jump Parameters from \"source\\data\\EGameTools\\UserModFiles\".");
 
             ImGui::SeparatorTextSection("Hotkeys");
             ImGui::TextCentered("Most mod menu options are toggleable by a hotkey that you can change by clicking the hotkey button for the respective option and then pressing a key on your keyboard.");
             ImGui::TextCentered("To change those hotkeys through the config file, visit the \"Virtual-Key Codes\" page from Microsoft which contains a list of all virtual key codes. Simply write the name of the keycode you want to use for each hotkey and save the config file.");
 
             ImGui::SeparatorTextSection("Config");
-            ImGui::TextCentered("A config file \"EGameTools.ini\" is stored in the same folder as the game executable (exe) or in the same folder as the mod file.");
-            ImGui::TextCentered("The config file stores the mod menu's options and hotkeys.");
+            ImGui::TextCentered("Settings now use \"EGameTools\\settings.toml\" and teleport lists use \"EGameTools\\teleport_locations.toml\" in the runtime folder next to the game executable.");
+            ImGui::TextCentered("The runtime folder stores mod menu options, hotkeys, and runtime data, while custom mod files stay in \"source\\data\\EGameTools\\UserModFiles\".");
 
             ImGui::Spacing(ImVec2(0.0f, 5.0f));
 

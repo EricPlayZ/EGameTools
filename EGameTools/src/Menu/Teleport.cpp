@@ -7,6 +7,7 @@
 #include <EGSDK\GamePH\FreeCamera.h>
 #include <EGSDK\GamePH\PlayerDI_PH.h>
 #include <EGSDK\GamePH\LevelDI.h>
+#include <EGT\GamePH\Teleport\TeleportRuntime.h>
 #include <EGT\Menu\Camera.h>
 #include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Player.h>
@@ -18,17 +19,17 @@ namespace EGT::Menu {
 		std::vector<TeleportLocation> savedTeleportLocations{};
 		static std::vector<std::string> savedTeleportLocationNames{};
 		static std::vector<const char*> savedTeleportLocationNamesPtrs{};
-		static int selectedTPLocation = -1;
+		int selectedTPLocation = -1;
 		static char newLocationName[125]{};
 
 		vec3 waypointCoords{};
 		bool* waypointIsSet = nullptr;
 		bool justTeleportedToWaypoint = false;
-		static vec3 teleportCoords{};
+		vec3 teleportCoords{};
 
-		ImGui::KeyBindOption teleportToSelectedLocation{ false, VK_F9 };
-		ImGui::KeyBindOption teleportToCoords{ false, VK_NONE };
-		ImGui::KeyBindOption teleportToWaypoint{ false, VK_F10 };
+		ImGui::KeyBindOption teleportToSelectedLocation{ false, VK_F9, ImGui::ConfigBindingInfo{ "Teleport:Hotkeys", "TeleportToSelectedLocationHotkey", ImGui::KeyBindBehavior::Action }, false };
+		ImGui::KeyBindOption teleportToCoords{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Teleport:Hotkeys", "TeleportToCoordsHotkey", ImGui::KeyBindBehavior::Action }, ImGui::ConfigBindingInfo{ "Teleport:Misc", "TeleportToCoords" } };
+		ImGui::KeyBindOption teleportToWaypoint{ false, VK_F10, ImGui::ConfigBindingInfo{ "Teleport:Hotkeys", "TeleportToWaypointHotkey", ImGui::KeyBindBehavior::Action }, ImGui::ConfigBindingInfo{ "Teleport:Misc", "TeleportToWaypoint" } };
 
 		void UpdateTeleportLocationVisualNames() {
 			savedTeleportLocationNames.clear();
@@ -98,106 +99,18 @@ namespace EGT::Menu {
 			return ss.str();
 		}
 		static std::string GetFormattedPosition(const vec3* position) {
-			if (!position || position->isDefault())
-				return "X: 0.00, Y: 0.00, Z: 0.00";
-			static std::string formattedStr{};
-			formattedStr = std::format("X: {:.2f}, Y: {:.2f}, Z: {:.2f}", position->X, position->Y, position->Z);
-			return formattedStr;
+			return GamePH::Teleport::GetFormattedPosition(position);
 		}
 
 		static bool isTeleportationDisabled() {
-			auto iLevel = EGSDK::GamePH::LevelDI::Get();
-			if (!iLevel || !iLevel->IsLoaded())
-				return true;
-			if (!Camera::freeCam.GetValue() && !EGSDK::Engine::CBulletPhysicsCharacter::Get())
-				return true;
-			else if (Camera::freeCam.GetValue() && !EGSDK::GamePH::FreeCamera::Get())
-				return true;
-
-			return false;
+			return GamePH::Teleport::IsTeleportationDisabled();
 		}
 
 		static void SyncPlayerCoordsToTPCoords() {
-			if (isTeleportationDisabled())
-				return;
-
-			if (Camera::freeCam.GetValue()) {
-				auto freeCam = EGSDK::GamePH::FreeCamera::Get();
-				if (freeCam)
-					freeCam->GetPosition(&teleportCoords);
-			} else {
-				auto playerCharacter = EGSDK::Engine::CBulletPhysicsCharacter::Get();
-				if (playerCharacter)
-					teleportCoords = playerCharacter->playerPos;
-			}
+			GamePH::Teleport::SyncPlayerCoordsToTPCoords();
 		}
 		static bool TeleportPlayerTo(const vec3& pos, const vec2& orientation = {}) {
-			if (isTeleportationDisabled() || pos.isDefault()) {
-				if (pos.isDefault())
-					SPDLOG_ERROR("Teleport position was default, couldn't teleport player");
-				return false;
-			}
-
-			if (Camera::freeCam.GetValue()) {
-				auto freeCam = EGSDK::GamePH::FreeCamera::Get();
-				if (!freeCam)
-					return false;
-				freeCam->SetPosition(&pos);
-			} else {
-				auto playerCharacter = EGSDK::Engine::CBulletPhysicsCharacter::Get();
-				if (!playerCharacter)
-					return false;
-				auto playerDI_PH = EGSDK::GamePH::PlayerDI_PH::Get();
-				if (!playerDI_PH && !orientation.isDefault())
-					SPDLOG_ERROR("PlayerDI_PH was null, won't be able to set player teleport orientation");
-
-				if (Player::freezePlayer.GetValue())
-					playerCharacter->posBeforeFreeze = pos;
-
-				playerCharacter->MoveCharacter(pos);
-				if (playerDI_PH && !orientation.isDefault())
-					playerDI_PH->nextPlayerOrientation->X = orientation.X;
-			}
-			
-			return true;
-		}
-
-		static void UpdateTeleportPos() {
-			if (isTeleportationDisabled()) {
-				if (!teleportCoords.isDefault())
-					teleportCoords = {};
-				return;
-			}
-			if (!teleportCoords.isDefault())
-				return;
-
-			if (Camera::freeCam.GetValue()) {
-				auto freeCam = EGSDK::GamePH::FreeCamera::Get();
-				if (freeCam)
-					freeCam->GetPosition(&teleportCoords);
-			} else {
-				auto playerCharacter = EGSDK::Engine::CBulletPhysicsCharacter::Get();
-				if (playerCharacter)
-					teleportCoords = playerCharacter->playerPos;
-			}
-		}
-		static void HotkeysUpdate() {
-			teleportToSelectedLocation.SetChangesAreDisabled(selectedTPLocation < 0 || selectedTPLocation >= savedTeleportLocations.size());
-			teleportToWaypoint.SetChangesAreDisabled(isTeleportationDisabled() || !waypointIsSet || !*waypointIsSet);
-			teleportToCoords.SetChangesAreDisabled(isTeleportationDisabled());
-
-			if (teleportToSelectedLocation.HasChanged()) {
-				TeleportPlayerTo(savedTeleportLocations[selectedTPLocation].pos, savedTeleportLocations[selectedTPLocation].orientation);
-				teleportToSelectedLocation.SetPrevValue(teleportToSelectedLocation.GetValue());
-			}
-			if (teleportToWaypoint.HasChanged()) {
-				justTeleportedToWaypoint = TeleportPlayerTo(waypointCoords);
-				teleportToWaypoint.SetPrevValue(teleportToWaypoint.GetValue());
-			}
-			if (teleportToCoords.HasChanged()) {
-				TeleportPlayerTo(teleportCoords);
-				teleportToCoords.SetPrevValue(teleportToCoords.GetValue());
-			}
+			return GamePH::Teleport::TeleportPlayerTo(pos, orientation);
 		}
 
 		static bool SaveTeleportLocation(const char* locationName, bool overwrite = false) {
@@ -339,8 +252,7 @@ namespace EGT::Menu {
 		Tab Tab::instance{};
 		void Tab::Init() {}
 		void Tab::Update() {
-			UpdateTeleportPos();
-			HotkeysUpdate();
+			GamePH::Teleport::UpdateRuntimeState();
 		}
 		void Tab::Render() {
 			ImGui::SeparatorTextSection("Saved Locations##Teleport", false);

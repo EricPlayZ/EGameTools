@@ -18,6 +18,8 @@ namespace EGT::Menu {
 		extern vec3 waypointCoords;
 		extern bool* waypointIsSet;
 		extern bool justTeleportedToWaypoint;
+		extern vec3 teleportCoords;
+		extern int selectedTPLocation;
 
 		extern ImGui::KeyBindOption teleportToSelectedLocation;
 		extern ImGui::KeyBindOption teleportToCoords;

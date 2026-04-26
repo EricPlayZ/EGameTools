@@ -1,0 +1,10 @@
+{
+    "editor.minimap.enabled": false,
+    "editor.semanticHighlighting.enabled": true,
+    "C_Cpp.enhancedColorization": "enabled",
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.default.browse.path": ["${workspaceFolder}/EGameSDK", "${workspaceFolder}/EGameTools"],
+    "files.exclude": {
+        "**/.vs": true
+    }
+}

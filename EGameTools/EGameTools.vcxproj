@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -24,10 +24,44 @@
     <ClCompile Include="deps\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="deps\ImGui\misc\freetype\imgui_freetype.cpp" />
     <ClCompile Include="src\Config\Config.cpp" />
+    <ClCompile Include="src\Config\ConfigPaths.cpp" />
+    <ClCompile Include="src\Config\SettingsStore.cpp" />
+    <ClCompile Include="src\Config\TomlDocument.cpp" />
+    <ClCompile Include="src\Config\TeleportStore.cpp" />
     <ClCompile Include="src\Core\Core.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\Engine\Engine_Hooks.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraFOV.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraFOVState.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraBaseFOVRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraGoProFOVRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraZoomFOVRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraFOVSyncRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraFreeCamRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraDollyRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraOptionStateRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraPlayerVarsRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Camera\CameraTPPModelRuntime.cpp" />
     <ClCompile Include="src\GamePH\GamePH_Hooks.cpp" />
+    <ClCompile Include="src\GamePH\Misc\MiscCVarsRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Misc\MiscHudRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Misc\MiscRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Player\PlayerPositionRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Player\PlayerRestrictionsRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Player\PlayerRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Player\PlayerStatsRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Player\PlayerVarsRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Teleport\TeleportHotkeysRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Teleport\TeleportRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Weapon\WeaponDurabilityRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Weapon\WeaponRuntime.cpp" />
+    <ClCompile Include="src\GamePH\Weapon\WeaponVarsRuntime.cpp" />
+    <ClCompile Include="src\GamePH\World\WorldRuntime.cpp" />
+    <ClCompile Include="src\GamePH\World\WorldSnowRuntime.cpp" />
+    <ClCompile Include="src\GamePH\World\WorldTimeRuntime.cpp" />
+    <ClCompile Include="src\GamePH\World\WorldWeatherRuntime.cpp" />
+    <ClCompile Include="src\GamePH\World\PrefabSpawnRuntime.cpp" />
     <ClCompile Include="src\ImGui_impl\D3D11_impl.cpp" />
     <ClCompile Include="src\ImGui_impl\D3D12_impl.cpp" />
     <ClCompile Include="src\ImGui_impl\D3D12_MicaBlur.cpp" />
@@ -37,6 +71,8 @@
     <ClCompile Include="src\Menu\Camera.cpp" />
     <ClCompile Include="src\Menu\Debug.cpp" />
     <ClCompile Include="src\Menu\Init.cpp" />
+    <ClCompile Include="src\Menu\Menu\SettingsPanel.cpp" />
+    <ClCompile Include="src\Menu\Menu\TabRegistry.cpp" />
     <ClCompile Include="src\Menu\Menu.cpp" />
     <ClCompile Include="src\Menu\Misc.cpp" />
     <ClCompile Include="src\Menu\Player.cpp" />
@@ -52,9 +88,28 @@
     <ClInclude Include="deps\ImGui\imgui_hotkey.h" />
     <ClInclude Include="include\EGT\Changelog.h" />
     <ClInclude Include="include\EGT\Config\Config.h" />
+    <ClInclude Include="include\EGT\Config\ConfigPaths.h" />
+    <ClInclude Include="include\EGT\Config\SettingsStore.h" />
+    <ClInclude Include="include\EGT\Config\TomlDocument.h" />
+    <ClInclude Include="include\EGT\Config\TeleportStore.h" />
     <ClInclude Include="include\EGT\Core\Core.h" />
     <ClInclude Include="include\EGT\Engine\Engine_Hooks.h" />
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraFOV.h" />
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraDollyRuntime.h" />
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraRuntime_Internal.h" />
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraRuntime.h" />
     <ClInclude Include="include\EGT\GamePH\GamePH_Hooks.h" />
+    <ClInclude Include="include\EGT\GamePH\Misc\MiscRuntime_Internal.h" />
+    <ClInclude Include="include\EGT\GamePH\Misc\MiscRuntime.h" />
+    <ClInclude Include="include\EGT\GamePH\Player\PlayerRuntime_Internal.h" />
+    <ClInclude Include="include\EGT\GamePH\Player\PlayerRuntime.h" />
+    <ClInclude Include="include\EGT\GamePH\Teleport\TeleportRuntime_Internal.h" />
+    <ClInclude Include="include\EGT\GamePH\Teleport\TeleportRuntime.h" />
+    <ClInclude Include="include\EGT\GamePH\Weapon\WeaponRuntime_Internal.h" />
+    <ClInclude Include="include\EGT\GamePH\Weapon\WeaponRuntime.h" />
+    <ClInclude Include="include\EGT\GamePH\World\PrefabSpawnRuntime.h" />
+    <ClInclude Include="include\EGT\GamePH\World\WorldRuntime_Internal.h" />
+    <ClInclude Include="include\EGT\GamePH\World\WorldRuntime.h" />
     <ClInclude Include="include\EGT\ImGui_impl\D3D11_impl.h" />
     <ClInclude Include="include\EGT\ImGui_impl\D3D12_impl.h" />
     <ClInclude Include="include\EGT\ImGui_impl\DeferredActions.h" />
@@ -65,6 +120,7 @@
     <ClInclude Include="include\EGT\Menu\Init.h" />
     <ClInclude Include="include\EGT\Menu\Menu.h" />
     <ClInclude Include="include\EGT\Menu\MenuIcons.h" />
+    <ClInclude Include="include\EGT\Menu\MenuView.h" />
     <ClInclude Include="include\EGT\Menu\Misc.h" />
     <ClInclude Include="include\EGT\Menu\Player.h" />
     <ClInclude Include="include\EGT\Menu\Teleport.h" />
@@ -166,8 +222,8 @@
       </FixedBaseAddress>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(ProjectDir)_ExtraFiles\DefaultConfig\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
-      <Message>Copying the default config file to the debug build directory</Message>
+      <Command>if not exist "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools" mkdir "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools" &amp;&amp; copy /Y "$(ProjectDir)_ExtraFiles\DefaultConfig\settings.toml" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools\settings.toml" &amp;&amp; copy /Y "$(ProjectDir)_ExtraFiles\DefaultConfig\teleport_locations.toml" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools\teleport_locations.toml"</Command>
+      <Message>Copying default runtime config data files to the debug build directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -201,10 +257,10 @@
       <AssemblyDebug>true</AssemblyDebug>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(ProjectDir)_ExtraFiles\DefaultConfig\EGameTools.ini" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools.ini"</Command>
+      <Command>if not exist "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools" mkdir "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools" &amp;&amp; copy /Y "$(ProjectDir)_ExtraFiles\DefaultConfig\settings.toml" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools\settings.toml" &amp;&amp; copy /Y "$(ProjectDir)_ExtraFiles\DefaultConfig\teleport_locations.toml" "$(SolutionDir)$(PlatformShortName)\$(Configuration)\EGameTools\teleport_locations.toml"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying the default config file to the release build directory</Message>
+      <Message>Copying default runtime config data files to the release build directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

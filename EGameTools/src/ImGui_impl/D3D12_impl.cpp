@@ -12,6 +12,7 @@
 #include <EGT\ImGui_impl\Win32_impl.h>
 #include <EGT\ImGui_impl\DeferredActions.h>
 #include <EGT\ImGui_impl\NextFrameTask.h>
+#include <EGT\Menu\Camera.h>
 #include <EGT\Menu\Menu.h>
 #include <EGT\Menu\Init.h>
 #include <EGT\ImGui_impl\D3D12_MicaBlur.h>
@@ -139,6 +140,8 @@ namespace EGT::ImGui_impl {
 			if (!d3d12CommandQueue || !frameContext[0].main_render_target_resource)
 				return;
 
+			ImGui_ImplDX12_SetFontUploadCommandQueue(d3d12CommandQueue);
+
 			Menu::SyncMenuFontsBeforeImGuiNewFrame();
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
@@ -146,6 +149,7 @@ namespace EGT::ImGui_impl {
 			ImGui::NewFrame();
 
 			Menu::FirstTimeRunning();
+			Menu::Camera::RenderDollyPathOverlay();
 			if (Menu::MenuAnimNeedsFrame())
 				Menu::Render();
 
@@ -236,6 +240,7 @@ namespace EGT::ImGui_impl {
 
 		static EGSDK::Utils::Hook::MHook<void*, void(*)(ID3D12CommandQueue*, UINT, ID3D12CommandList* const*), ID3D12CommandQueue*, UINT, ID3D12CommandList* const*> DX12ExecuteCommandListsHook{ "DX12ExecuteCommandLists", &EGSDK::OffsetManager::Get_DX12ExecuteCommandLists, [](ID3D12CommandQueue* queue, UINT NumCommandLists, ID3D12CommandList* const* ppCommandLists) -> void {
 			d3d12CommandQueue = queue;
+			ImGui_ImplDX12_SetFontUploadCommandQueue(queue);
 			DX12ExecuteCommandListsHook.ExecuteOriginal(queue, NumCommandLists, ppCommandLists);
 		}, false };
 

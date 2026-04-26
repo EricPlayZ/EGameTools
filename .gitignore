@@ -1,6 +1,7 @@
 ﻿# Full Font Awesome TTF (optional local download for regenerating subset; embed is in repo)
 EGameTools/deps/fonts/fa-solid-900.ttf
 
+_CODE_HELPERS/
 _IDAScripts/.env
 _IDAScripts/generated/*.json
 

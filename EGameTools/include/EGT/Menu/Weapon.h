@@ -4,6 +4,7 @@
 
 namespace EGT::Menu {
 	namespace Weapon {
+		extern float currentWeaponDurability;
 		extern ImGui::KeyBindOption unlimitedDurability;
 		extern ImGui::KeyBindOption unlimitedAmmo;
 		extern ImGui::KeyBindOption noSpread;

@@ -18,7 +18,9 @@
 #include <EGT\ImGui_impl\DeferredActions.h>
 #include <EGT\FileEmbeds\player_variables.scr.embed>
 #include <EGT\GamePH\GamePH_Hooks.h>
+#include <EGT\GamePH\Player\PlayerRuntime.h>
 #include <EGT\Config\Config.h>
+#include <EGT\Config\ConfigPaths.h>
 #include <EGT\Menu\Camera.h>
 #include <EGT\Menu\Player.h>
 #include <EGT\Menu\VarList.h>
@@ -30,22 +32,22 @@ namespace EGT::Menu {
 		float playerImmunity = 80.0f;
 		float playerMaxImmunity = 80.0f;
 		int oldWorldMoney = 0;
-		ImGui::KeyBindOption godMode{ false, VK_F6 };
-		ImGui::KeyBindOption freezePlayer{ false, VK_NONE };
-		ImGui::KeyBindOption unlimitedImmunity{ false, VK_NONE };
-		ImGui::KeyBindOption unlimitedStamina{ false, VK_NONE };
-		ImGui::KeyBindOption unlimitedItems{ false, VK_NONE };
-		ImGui::KeyBindOption oneHitKill{ false, VK_NONE, true, { 11200 } };
-		ImGui::KeyBindOption invisibleToEnemies{ false, VK_NONE };
-		ImGui::KeyBindOption disableOutOfBoundsTimer{ false, VK_NONE };
-		ImGui::KeyBindOption nightrunnerMode{ false, VK_F7 };
-		ImGui::KeyBindOption oneHandedMode{ false, VK_NONE };
-		ImGui::KeyBindOption disableSafezoneRestrictions{ false, VK_NONE };
-		ImGui::KeyBindOption disableAirControl{ false, VK_NONE };
-		ImGui::Option playerVariables{ false };
+		ImGui::KeyBindOption godMode{ false, VK_F6, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "GodModeToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "GodMode" } };
+		ImGui::KeyBindOption freezePlayer{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "FreezePlayerToggleKey" } };
+		ImGui::KeyBindOption unlimitedImmunity{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "UnlimitedImmunityToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "UnlimitedImmunity" } };
+		ImGui::KeyBindOption unlimitedStamina{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "UnlimitedStaminaToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "UnlimitedStamina" } };
+		ImGui::KeyBindOption unlimitedItems{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "UnlimitedItemsToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "UnlimitedItems" } };
+		ImGui::KeyBindOption oneHitKill{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "OneHitKillToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "OneHitKill" }, true, { 11200 } };
+		ImGui::KeyBindOption invisibleToEnemies{ false, VK_NONE, ImGui::ConfigBindingInfo{}, ImGui::ConfigBindingInfo{ "Player:Misc", "InvisibleToEnemies" } };
+		ImGui::KeyBindOption disableOutOfBoundsTimer{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "DisableOutOfBoundsTimerToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "DisableOutOfBoundsTimer" } };
+		ImGui::KeyBindOption nightrunnerMode{ false, VK_F7, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "NightrunnerModeToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "NightrunnerMode" } };
+		ImGui::KeyBindOption oneHandedMode{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "OneHandedModeToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "OneHandedMode" } };
+		ImGui::KeyBindOption disableSafezoneRestrictions{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "DisableSafezoneRestrictionsToggleKey" }, ImGui::ConfigBindingInfo{ "Player:Misc", "DisableSafezoneRestrictions" } };
+		ImGui::KeyBindOption disableAirControl{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "DisableAirControlToggleKey" }, ImGui::ConfigBindingInfo{ "Player:PlayerJumpParameters", "DisableAirControl" } };
+		ImGui::Option playerVariables{ false, ImGui::ConfigBindingInfo{ "Player:PlayerVariables", "Enabled" } };
 
-		std::string saveSCRPath{};
-		std::string loadSCRFilePath{};
+		Config::ConfigString saveSCRPath{ "Player:PlayerVariables", "LastSaveSCRPath", "" };
+		Config::ConfigString loadSCRFilePath{ "Player:PlayerVariables", "LastLoadSCRFilePath", "" };
 
 		static bool debugEnabled = false;
 		static VarList<EGSDK::GamePH::PlayerVariables> playerVarList{ "Player Variables List" };
@@ -105,8 +107,8 @@ namespace EGT::Menu {
 						if (!customVarValue)
 							return;
 						auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(customPlayerVar->GetName());
-						if (!playerVar)
-							playerVar->SetValue(*customVarValue);
+						if (playerVar)
+							playerVar->SetValueFromList(*customVarValue);
 						break;
 					}
 					case EGSDK::Engine::VarType::Bool:
@@ -115,8 +117,8 @@ namespace EGT::Menu {
 						if (!customVarValue)
 							return;
 						auto playerVar = EGSDK::GamePH::PlayerVariables::GetVarRef(customPlayerVar->GetName());
-						if (!playerVar)
-							playerVar->SetValue(*customVarValue);
+						if (playerVar)
+							playerVar->SetValueFromList(*customVarValue);
 						break;
 					}
 					default:
@@ -140,7 +142,7 @@ namespace EGT::Menu {
 		}
 
 		static void SaveVariablesToSCR() {
-			if (!std::filesystem::exists(saveSCRPath)) {
+			if (!std::filesystem::exists(saveSCRPath.GetValue())) {
 				ImGui::OpenPopup("Failed saving player variables.");
 				return;
 			}
@@ -166,7 +168,7 @@ namespace EGT::Menu {
 					{
 						auto varValue = playerVar->GetValue<float>();
 						if (!varValue)
-							return;
+							continue;
 						replaceParamValue(line, std::to_string(*varValue));
 						break;
 					}
@@ -174,7 +176,7 @@ namespace EGT::Menu {
 					{
 						auto varValue = playerVar->GetValue<bool>();
 						if (!varValue)
-							return;
+							continue;
 						replaceParamValue(line, *varValue ? "true" : "false");
 						break;
 					}
@@ -184,7 +186,7 @@ namespace EGT::Menu {
 				EGSDK::Utils::Values::str_replace(tempvarsSCR, origLine, line);
 			}
 
-			std::ofstream outFile(saveSCRPath + "\\player_variables.scr", std::ios::binary);
+			std::ofstream outFile(saveSCRPath.GetValue() + "\\player_variables.scr", std::ios::binary);
 			if (!outFile.is_open()) {
 				ImGui::OpenPopup("Failed saving player variables.");
 				return;
@@ -194,12 +196,12 @@ namespace EGT::Menu {
 			ImGui::OpenPopup("Saved player variables!");
 		}
 		static void LoadPlayerVariablesSCR() {
-			if (!std::filesystem::exists(loadSCRFilePath)) {
+			if (!std::filesystem::exists(loadSCRFilePath.GetValue())) {
 				ImGui::OpenPopup("Failed loading player variables.");
 				return;
 			}
 
-			std::ifstream file(loadSCRFilePath);
+			std::ifstream file(loadSCRFilePath.GetValue());
 			if (!file.is_open()) {
 				ImGui::OpenPopup("Failed loading player variables.");
 				return;
@@ -254,14 +256,14 @@ namespace EGT::Menu {
 		static void HandlePlayerVariablesDialogs() {
 			if (ImGuiFileDialog::Instance()->Display("ChooseSCRPath", ImGuiWindowFlags_NoCollapse, ImVec2(600.0f, 400.0f))) {
 				if (ImGuiFileDialog::Instance()->IsOk()) {
-					saveSCRPath = ImGuiFileDialog::Instance()->GetCurrentPath();
+					saveSCRPath.GetValue() = ImGuiFileDialog::Instance()->GetCurrentPath();
 					SaveVariablesToSCR();
 				}
 				ImGuiFileDialog::Instance()->Close();
 			}
 			if (ImGuiFileDialog::Instance()->Display("ChooseSCRLoadPath", ImGuiWindowFlags_NoCollapse, ImVec2(600.0f, 400.0f))) {
 				if (ImGuiFileDialog::Instance()->IsOk()) {
-					loadSCRFilePath = ImGuiFileDialog::Instance()->GetFilePathName();
+					loadSCRFilePath.GetValue() = ImGuiFileDialog::Instance()->GetFilePathName();
 					LoadPlayerVariablesSCR();
 				}
 				ImGuiFileDialog::Instance()->Close();
@@ -412,17 +414,7 @@ namespace EGT::Menu {
 		Tab Tab::instance{};
 		void Tab::Init() {}
 		void Tab::Update() {
-			UpdateDisabledOptions();
-
-			PlayerPositionUpdate();
-			PlayerHealthUpdate();
-			PlayerImmunityUpdate();
-			PlayerRestrictionsUpdate();
-
-			ManagePlayerVars();
-			PlayerVarListValuesUpdate();
-
-			HandleToggles();
+			GamePH::Player::UpdateRuntimeState();
 		}
 		void Tab::Render() {
 			ImGui::SeparatorTextSection("Misc", false);
@@ -484,8 +476,8 @@ namespace EGT::Menu {
 
 			ImGui::SeparatorTextSection("Player Jump Parameters");
 			ImGui::CheckboxHotkey("Disable Air Control", &disableAirControl, "Disables the ability to change the player's direction of momentum while jumping (in-air)");
-			if (ImGui::Button("Reload Jump Params", "Reloads jump_parameters.scr from any mod located inside EGameTools\\UserModFiles")) {
-				if (EGSDK::Utils::Files::FileExistsInDir("jump_parameters.scr", "EGameTools\\UserModFiles")) {
+			if (ImGui::Button("Reload Jump Params", "Reloads jump_parameters.scr from any mod located inside source\\data\\EGameTools\\UserModFiles")) {
+				if (std::filesystem::exists(Config::Paths::GetUserModFilesDir() / "jump_parameters.scr")) {
 					EGSDK::GamePH::ReloadJumps();
 					ImGui::OpenPopup("Reloaded player jump parameters!");
 				} else

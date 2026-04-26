@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="include">
@@ -61,11 +61,50 @@
     <Filter Include="src\Menu">
       <UniqueIdentifier>{6e739624-b26c-4f4e-b911-ab5a9c6ee1fc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Menu\Menu">
+      <UniqueIdentifier>{d08e62ef-b6f0-4bab-9fc8-f9cec6fcde99}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Utils">
       <UniqueIdentifier>{7170f228-254a-4cb7-8784-59baf69789d8}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\GamePH">
       <UniqueIdentifier>{f334e27a-fb9d-4bf0-b3fa-692a6a8dfb39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\GamePH\Camera">
+      <UniqueIdentifier>{0cce6f18-8551-47d4-8cd2-d736f24365e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\GamePH\Misc">
+      <UniqueIdentifier>{6945c8c3-c8e1-493b-a45c-aa5525e6e97d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\GamePH\Player">
+      <UniqueIdentifier>{40ac6cb3-4a64-41ce-bf39-e7111acb7138}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\GamePH\Teleport">
+      <UniqueIdentifier>{01242413-ed13-44e1-ad95-3bd5c2a2808c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\GamePH\Weapon">
+      <UniqueIdentifier>{0d512bf1-3c93-4a66-8619-8f1338f2e117}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\GamePH\World">
+      <UniqueIdentifier>{5db9a39c-4d9c-45d8-b14b-e4f798dd77be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GamePH\Camera">
+      <UniqueIdentifier>{d4c7bb90-0ba5-4f05-a1a2-8758bc6ea440}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GamePH\Misc">
+      <UniqueIdentifier>{a3b22b0d-70a3-4d76-9ae2-d5f2c77ca5a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GamePH\Player">
+      <UniqueIdentifier>{95123f94-f5d6-4bbd-ad4c-5864ec8ca5ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GamePH\Teleport">
+      <UniqueIdentifier>{86db3148-5a61-4854-8db8-28d8f453d4f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GamePH\Weapon">
+      <UniqueIdentifier>{61bb09ab-ee65-44f7-8206-a8a04453f2ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GamePH\World">
+      <UniqueIdentifier>{9b1d6f27-76a8-4248-bec3-4eafc0347ccd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -105,6 +144,18 @@
     <ClCompile Include="src\Config\Config.cpp">
       <Filter>src\Config</Filter>
     </ClCompile>
+    <ClCompile Include="src\Config\ConfigPaths.cpp">
+      <Filter>src\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Config\SettingsStore.cpp">
+      <Filter>src\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Config\TomlDocument.cpp">
+      <Filter>src\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Config\TeleportStore.cpp">
+      <Filter>src\Config</Filter>
+    </ClCompile>
     <ClCompile Include="src\Core\Core.cpp">
       <Filter>src\Core</Filter>
     </ClCompile>
@@ -113,6 +164,96 @@
     </ClCompile>
     <ClCompile Include="src\GamePH\GamePH_Hooks.cpp">
       <Filter>src\GamePH</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraFOV.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraFOVState.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraBaseFOVRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraGoProFOVRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraZoomFOVRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraFOVSyncRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraFreeCamRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraDollyRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraOptionStateRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraPlayerVarsRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Camera\CameraTPPModelRuntime.cpp">
+      <Filter>src\GamePH\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Misc\MiscRuntime.cpp">
+      <Filter>src\GamePH\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Misc\MiscCVarsRuntime.cpp">
+      <Filter>src\GamePH\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Misc\MiscHudRuntime.cpp">
+      <Filter>src\GamePH\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Player\PlayerRuntime.cpp">
+      <Filter>src\GamePH\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Player\PlayerPositionRuntime.cpp">
+      <Filter>src\GamePH\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Player\PlayerRestrictionsRuntime.cpp">
+      <Filter>src\GamePH\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Player\PlayerStatsRuntime.cpp">
+      <Filter>src\GamePH\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Player\PlayerVarsRuntime.cpp">
+      <Filter>src\GamePH\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Teleport\TeleportRuntime.cpp">
+      <Filter>src\GamePH\Teleport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Teleport\TeleportHotkeysRuntime.cpp">
+      <Filter>src\GamePH\Teleport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Weapon\WeaponRuntime.cpp">
+      <Filter>src\GamePH\Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Weapon\WeaponDurabilityRuntime.cpp">
+      <Filter>src\GamePH\Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\Weapon\WeaponVarsRuntime.cpp">
+      <Filter>src\GamePH\Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\World\WorldRuntime.cpp">
+      <Filter>src\GamePH\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\World\WorldSnowRuntime.cpp">
+      <Filter>src\GamePH\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\World\WorldTimeRuntime.cpp">
+      <Filter>src\GamePH\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\World\WorldWeatherRuntime.cpp">
+      <Filter>src\GamePH\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamePH\World\PrefabSpawnRuntime.cpp">
+      <Filter>src\GamePH\World</Filter>
     </ClCompile>
     <ClCompile Include="src\ImGui_impl\D3D11_impl.cpp">
       <Filter>src\ImGui_impl</Filter>
@@ -132,6 +273,12 @@
     <ClCompile Include="src\Menu\Menu.cpp">
       <Filter>src\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="src\Menu\Menu\SettingsPanel.cpp">
+      <Filter>src\Menu\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Menu\Menu\TabRegistry.cpp">
+      <Filter>src\Menu\Menu</Filter>
+    </ClCompile>
     <ClCompile Include="src\Menu\Misc.cpp">
       <Filter>src\Menu</Filter>
     </ClCompile>
@@ -142,12 +289,6 @@
       <Filter>src\Menu</Filter>
     </ClCompile>
     <ClCompile Include="src\Menu\Weapon.cpp">
-      <Filter>src\Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Menu\World.cpp">
-      <Filter>src\Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Menu\Camera.cpp">
       <Filter>src\Menu</Filter>
     </ClCompile>
     <ClCompile Include="src\Menu\Debug.cpp">
@@ -171,9 +312,27 @@
     <ClCompile Include="src\Menu\VarList.cpp">
       <Filter>src\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="src\Menu\Camera.cpp">
+      <Filter>src\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Menu\World.cpp">
+      <Filter>src\Menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\EGT\Config\Config.h">
+      <Filter>include\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\Config\ConfigPaths.h">
+      <Filter>include\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\Config\SettingsStore.h">
+      <Filter>include\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\Config\TomlDocument.h">
+      <Filter>include\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\Config\TeleportStore.h">
       <Filter>include\Config</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\Engine\Engine_Hooks.h">
@@ -183,9 +342,6 @@
       <Filter>include\ImGui_impl</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\ImGui_impl\D3D12_impl.h">
-      <Filter>include\ImGui_impl</Filter>
-    </ClInclude>
-    <ClInclude Include="include\EGT\ImGui_impl\D3D12_MicaBlur.h">
       <Filter>include\ImGui_impl</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\ImGui_impl\Win32_impl.h">
@@ -201,6 +357,9 @@
       <Filter>include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\Menu\MenuIcons.h">
+      <Filter>include\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\Menu\MenuView.h">
       <Filter>include\Menu</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\Menu\Misc.h">
@@ -244,6 +403,51 @@
     </ClInclude>
     <ClInclude Include="include\EGT\GamePH\GamePH_Hooks.h">
       <Filter>include\GamePH</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraFOV.h">
+      <Filter>include\GamePH\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraDollyRuntime.h">
+      <Filter>include\GamePH\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraRuntime_Internal.h">
+      <Filter>include\GamePH\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Camera\CameraRuntime.h">
+      <Filter>include\GamePH\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Misc\MiscRuntime.h">
+      <Filter>include\GamePH\Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Misc\MiscRuntime_Internal.h">
+      <Filter>include\GamePH\Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Player\PlayerRuntime.h">
+      <Filter>include\GamePH\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Player\PlayerRuntime_Internal.h">
+      <Filter>include\GamePH\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Teleport\TeleportRuntime.h">
+      <Filter>include\GamePH\Teleport</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Teleport\TeleportRuntime_Internal.h">
+      <Filter>include\GamePH\Teleport</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Weapon\WeaponRuntime.h">
+      <Filter>include\GamePH\Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\Weapon\WeaponRuntime_Internal.h">
+      <Filter>include\GamePH\Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\World\PrefabSpawnRuntime.h">
+      <Filter>include\GamePH\World</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\World\WorldRuntime.h">
+      <Filter>include\GamePH\World</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EGT\GamePH\World\WorldRuntime_Internal.h">
+      <Filter>include\GamePH\World</Filter>
     </ClInclude>
     <ClInclude Include="include\EGT\ImGui_impl\NextFrameTask.h">
       <Filter>include\ImGui_impl</Filter>

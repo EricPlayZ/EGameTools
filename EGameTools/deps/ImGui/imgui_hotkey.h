@@ -1,6 +1,7 @@
 #pragma once
 #include <ImGui\imgui.h>
 #include <set>
+#include <string>
 #include <EGSDK\Utils\Time.h>
 
 #ifndef VK_NONE
@@ -13,6 +14,21 @@
 namespace ImGui {
     extern bool isAnyHotkeyBtnClicked;
     extern EGSDK::Utils::Time::Timer timeSinceHotkeyBtnPressed;
+
+    enum class KeyBindBehavior {
+        ToggleOption,
+        Action
+    };
+
+    struct ConfigBindingInfo {
+        std::string_view section{};
+        std::string_view key{};
+        KeyBindBehavior keyBindBehavior{ KeyBindBehavior::ToggleOption };
+
+        [[nodiscard]] bool IsValid() const {
+            return !section.empty() && !key.empty();
+        }
+    };
 
     struct Key {
         Key(std::string_view name, int code, ImGuiKey imGuiCode);
@@ -34,6 +50,8 @@ namespace ImGui {
 
         Option(bool value);
         Option(bool value, std::initializer_list<uint32_t> unsupportedGameVers);
+        Option(bool value, const ConfigBindingInfo& configBinding);
+        Option(bool value, const ConfigBindingInfo& configBinding, std::initializer_list<uint32_t> unsupportedGameVers);
         ~Option();
         static std::set<Option*>* GetInstances();
 
@@ -49,12 +67,18 @@ namespace ImGui {
         bool GetPrevValue() const;
         bool HasChanged() const;
         bool HasChangedTo(bool toValue) const;
+        void SetConfigBinding(const ConfigBindingInfo& configBinding);
+        [[nodiscard]] bool HasConfigBinding() const;
+        [[nodiscard]] std::string_view GetConfigSection() const;
+        [[nodiscard]] std::string_view GetConfigKey() const;
 
         uint32_t IsUnsupportedGameVer() const;
     private:
         bool changesAreDisabled = false;
         bool previousValue = false;
         std::set<uint32_t> unsupportedGameVers{};
+        std::string configSection{};
+        std::string configKey{};
     };
     class KeyBindOption : public Option {
     public:
@@ -63,6 +87,8 @@ namespace ImGui {
         static bool scrolledMouseWheelDown;
 
         KeyBindOption(bool value, int keyCode, bool isToggleableOption = true, std::initializer_list<uint32_t> unsupportedGameVers = {});
+        KeyBindOption(bool value, int keyCode, const ConfigBindingInfo& configBinding, bool isToggleableOption = true, std::initializer_list<uint32_t> unsupportedGameVers = {});
+        KeyBindOption(bool value, int keyCode, const ConfigBindingInfo& keyConfigBinding, const ConfigBindingInfo& optionConfigBinding, bool isToggleableOption = true, std::initializer_list<uint32_t> unsupportedGameVers = {});
         ~KeyBindOption();
         static std::set<KeyBindOption*>* GetInstances();
 
@@ -77,6 +103,11 @@ namespace ImGui {
 
         bool SetToPressedKey();
         bool IsToggleableOption() const;
+        [[nodiscard]] KeyBindBehavior GetKeyBindBehavior() const;
+        void SetKeyBindConfigBinding(const ConfigBindingInfo& configBinding);
+        [[nodiscard]] bool HasKeyBindConfigBinding() const;
+        [[nodiscard]] std::string_view GetKeyBindConfigSection() const;
+        [[nodiscard]] std::string_view GetKeyBindConfigKey() const;
 
         void SetIsKeyDown(bool newValue);
         void SetIsKeyPressed(bool newValue);
@@ -90,6 +121,9 @@ namespace ImGui {
         bool isKeyDown = false;
         bool isKeyPressed = false;
         bool isKeyReleased = false;
+        KeyBindBehavior keyBindBehavior = KeyBindBehavior::ToggleOption;
+        std::string keyBindConfigSection{};
+        std::string keyBindConfigKey{};
 
         static const std::array<Key, 103> keyMap;
         static const std::array<VKey, 135> virtualKeyMap;

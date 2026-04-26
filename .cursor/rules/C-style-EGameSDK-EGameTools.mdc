@@ -1,0 +1,19 @@
+---
+description: 
+alwaysApply: true
+---
+
+- Language: C++17 or as project already uses; prefer `std::optional`, `string_view`, `auto`, `constexpr`, braced init.
+- Headers: `#pragma once`. Include project headers with angle brackets and backslashes, e.g. `<EGSDK\GamePH\LevelDI.h>`, `<EGT\Menu\Menu.h>`.
+- Namespaces: `EGSDK::…` for SDK; `EGT::…` for tools. Nested feature areas as `EGT::Menu::<Feature>` with nested `namespace` blocks when matching existing files.
+- Naming: PascalCase for classes/types and public methods (`GetX`, `IsY`, `SetZ`). camelCase for member variables, file-scope statics, and most globals. Use a leading `p` for pointer parameters only when matching surrounding code (e.g. COM-style `pSwapChain`).
+- Bracing: K&R (`{` on same line). Prefer early `return` guard clauses over deep nesting.
+- SDK public classes: annotate with `EGameSDK_API` where existing types do.
+- Comments: use `///` sparingly for public API / non-obvious behavior; avoid large comment blocks.
+- Do not introduce new naming schemes (snake_case types, different include path style) unless the file already uses them consistently (e.g. matching ImGui parameter names in wrappers).
+- Match indentation of the file being edited (tabs vs spaces) until the repo is normalized.
+- Always use installed skills where possible, especially the cpp-coding-standards skill.
+- When building to test for errors, use Debug build - not Release.
+- Do NOT add "k", "s", "g", and that type of labeling before parameters - only the pointer rule we have earlier.
+- Keep variable names meaningful, meaning no 1 letter variables and similar. They shouldn't be full length either, so try to keep them shortened, but meaningful and readable by absolutely anyone.
+- No anonymous namespaces unless absolutely required.

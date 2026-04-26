@@ -52,6 +52,12 @@ namespace EGSDK::Engine {
             ptr->SetValue(std::move(value));
         }
         template <AllowedVarTypes T>
+        void SetValueDirect(T value) {
+            SetValue(std::move(value));
+            if (name)
+                VarMgrBase::customVars.Erase(name);
+        }
+        template <AllowedVarTypes T>
         void SetValueFromList(T value) {
             VarMgrBase::template _SetValueFromList<T>(this, value);
         }

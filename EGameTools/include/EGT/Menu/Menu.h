@@ -4,6 +4,7 @@
 #include <ImGui\imgui.h>
 #include <ImGui\imgui_hotkey.h>
 #include <EGT\Core\core.h>
+#include <EGT\Config\ConfigValue.h>
 
 namespace EGT::Menu {
     /// Sentinel index for the sidebar "Settings" panel (not a registered MenuTab).
@@ -29,18 +30,18 @@ namespace EGT::Menu {
 
 	extern ImGui::KeyBindOption menuToggle;
 	/// Panel / ImGui translucency (0–100%).
-	extern float opacity;
+	extern Config::ConfigFloat opacity;
 	/// Child / inset panels (ImGuiCol_ChildBg alpha × 100; 50 ≈ default glass).
-	extern float childPanelAlpha;
+	extern Config::ConfigFloat childPanelAlpha;
 	/// Sliders, inputs, combo chrome (ImGuiCol_FrameBg* alpha × 100).
-	extern float frameAlpha;
+	extern Config::ConfigFloat frameAlpha;
 	/// Popups / tooltips root (ImGuiCol_PopupBg alpha × 100).
-	extern float popupAlpha;
+	extern Config::ConfigFloat popupAlpha;
 	/// Strength of the decorative Mica gradient wash drawn under ImGui (0–100%).
-	extern float micaWashStrength;
+	extern Config::ConfigFloat micaWashStrength;
 	/// DX12 backdrop blur strength (0–100%). Independent from `opacity`.
-	extern float micaBlurStrength;
-	extern float scale;
+	extern Config::ConfigFloat micaBlurStrength;
+	extern Config::ConfigFloat scale;
 
     extern ImGui::Option firstTimeRunning;
     extern ImGui::Option hasSeenChangelog;

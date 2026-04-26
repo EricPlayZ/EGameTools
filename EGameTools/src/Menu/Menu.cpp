@@ -6,12 +6,12 @@
 #include <ImGui\imgui_hotkey.h>
 #include <ImGui\imgui_internal.h>
 #include <ImGui\imguiex.h>
-#include <EGSDK\Core\Core.h>
-#include <EGSDK\GamePH\GamePH_Misc.h>
 #include <EGSDK\GamePH\GamePH_Hooks.h>
 #include <EGT\Menu\Init.h>
 #include <EGT\Menu\Menu.h>
+#include <EGT\Menu\Menu.h>
 #include <EGT\Menu\MenuIcons.h>
+#include <EGT\Menu\MenuView.h>
 #include <EGT\Core\Core.h>
 
 namespace EGT::Menu {
@@ -30,14 +30,14 @@ namespace EGT::Menu {
     static constexpr ImVec2 defDefaultWndSize = ImVec2(820.0f, 720.0f);
     static constexpr float defSidebarWidth = 220.0f;
 
-    ImGui::KeyBindOption menuToggle{ false, VK_F5 };
-    float opacity = 86.0f;
-    float childPanelAlpha = 72.0f;
-    float frameAlpha = 90.0f;
-    float popupAlpha = 88.0f;
-    float micaWashStrength = 55.0f;
-    float micaBlurStrength = 90.0f;
-    float scale = 1.0f;
+    ImGui::KeyBindOption menuToggle{ false, VK_F5, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "MenuToggleKey" } };
+    Config::ConfigFloat opacity{ "Menu", "Opacity", 86.0f };
+    Config::ConfigFloat childPanelAlpha{ "Menu", "ChildPanelAlpha", 72.0f };
+    Config::ConfigFloat frameAlpha{ "Menu", "FrameAlpha", 90.0f };
+    Config::ConfigFloat popupAlpha{ "Menu", "PopupAlpha", 88.0f };
+    Config::ConfigFloat micaWashStrength{ "Menu", "MicaWashStrength", 55.0f };
+    Config::ConfigFloat micaBlurStrength{ "Menu", "MicaBlurStrength", 90.0f };
+    Config::ConfigFloat scale{ "Menu", "Scale", 1.0f };
 
     static float lastScaleForMainWindow = -1.0f;
     /// Draft for the menu scale slider; `scale` commits on release so fonts/layout do not thrash each frame while dragging.
@@ -46,8 +46,8 @@ namespace EGT::Menu {
     static bool menuScaleSliderDragThisFrame = false;
     static bool menuScaleSliderDragLastFrame = false;
 
-    ImGui::Option firstTimeRunning{ true };
-    ImGui::Option hasSeenChangelog{ false };
+    ImGui::Option firstTimeRunning{ true, ImGui::ConfigBindingInfo{ "Menu", "FirstTimeRunning" } };
+    ImGui::Option hasSeenChangelog{ false, ImGui::ConfigBindingInfo{ "Menu", "HasSeenChangelog" } };
 
     int currentTabIndex = 0;
 
@@ -411,100 +411,12 @@ namespace EGT::Menu {
         return clicked;
     }
 
-    static MenuTab* FindTabByIndex(int idx) {
-        for (const auto& tab : *MenuTab::GetInstances()) {
-            if (tab.first == idx)
-                return tab.second;
-        }
-        return nullptr;
-    }
-
-    static void EnsureValidTabIndex() {
-        if (currentTabIndex == settingsPanelTabIndex)
-            return;
-        const auto* tabs = MenuTab::GetInstances();
-        if (tabs->empty())
-            return;
-        if (FindTabByIndex(currentTabIndex))
-            return;
-        currentTabIndex = tabs->begin()->first;
-    }
-
-    static const char* SectionIconUtf8(int tabIndex) {
-        switch (tabIndex) {
-        case 0: return EGT::MenuIcons::iconUser;
-        case 1: return EGT::MenuIcons::iconGun;
-        case 2: return EGT::MenuIcons::iconCamera;
-        case 3: return EGT::MenuIcons::iconLocationArrow;
-        case 4: return EGT::MenuIcons::iconEllipsis;
-        case 5: return EGT::MenuIcons::iconGlobe;
-        case 6: return EGT::MenuIcons::iconBug;
-        default: return EGT::MenuIcons::iconEllipsis;
-        }
-    }
-
-    static void RenderSettingsPanel() {
-        ImGui::SeparatorTextSection("Menu", false);
-        ImGui::Hotkey("Menu Toggle Key", &menuToggle);
-        ImGui::SeparatorTextSection("Appearance");
-        ImGui::SliderFloatStacked("Main window opacity", &opacity, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("Opacity of the root menu window background.");
-        if (EGSDK::Core::rendererAPI == 12) {
-            ImGui::SliderFloatStacked("Backdrop blur", &micaBlurStrength, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("GPU frosted-glass blur behind the menu (DirectX 12 only). Independent from panel opacity.");
-        } else {
-            ImGui::BeginDisabled();
-            ImGui::SliderFloatStacked("Backdrop blur", &micaBlurStrength, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
-            ImGui::EndDisabled();
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("Backdrop blur is only available when the game uses DirectX 12.");
-            ImGui::TextDisabled("This session is not DirectX 12 — the slider has no effect; only window opacity tints the game behind the menu.");
-        }
-        ImGui::SliderFloatStacked("Inset / child alpha", &childPanelAlpha, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("Opacity of sidebar and tab panel fills. 50% matches the default glass look.");
-        ImGui::SliderFloatStacked("Input / frame alpha", &frameAlpha, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("Opacity of sliders, combos, and text fields. 70% matches the default theme.");
-        ImGui::SliderFloatStacked("Popup alpha", &popupAlpha, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("Opacity of popup and tooltip backgrounds.");
-        ImGui::SliderFloatStacked("Mica wash strength", &micaWashStrength, 0.0f, 100.0f, "%.0f%%", ImGuiSliderFlags_AlwaysClamp, nullptr);
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("Strength of the decorative gradient wash drawn behind the UI (not the GPU blur).");
-
-        ImGui::SeparatorTextSection("Layout");
-        ImGui::PushID("##EGTMenuScale");
-        ImGui::SliderFloatStacked("Menu scale", &menuScaleDraft, 1.0f, 2.5f, "%.2fx", ImGuiSliderFlags_AlwaysClamp, nullptr);
-        if (ImGui::IsItemDeactivatedAfterEdit())
-            scale = menuScaleDraft;
-        if (!ImGui::IsItemActive())
-            menuScaleDraft = scale;
-        if (ImGui::IsItemActive())
-            menuScaleSliderDragThisFrame = true;
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            ImGui::SetTooltip("Release the slider to apply scale (rebuilds fonts and default window size). Prevents layout glitches while dragging.");
-        ImGui::PopID();
-
-        ImGui::SeparatorTextSection("Game");
-        if (EGSDK::Core::IsGameVerCompatible()) {
-            ImGui::TextDisabled("Your game version is supported by this build.");
-        } else {
-            ImGui::TextColored(ImVec4(0.95f, 0.28f, 0.28f, 1.0f), "Incompatible game version (v%s) detected!",
-                EGSDK::GamePH::GameVerToStr(EGSDK::Core::gameVer).c_str());
-            ImGui::TextColored(ImVec4(0.95f, 0.28f, 0.28f, 1.0f), "Supported versions: %s",
-                EGSDK::Core::GetSupportedGameVersionsStr().c_str());
-        }
-    }
-
     static void RenderTabPanelByIndex(int tabIndex) {
         if (tabIndex == settingsPanelTabIndex) {
-            RenderSettingsPanel();
+            MenuView::RenderSettingsPanel(menuScaleDraft, menuScaleSliderDragThisFrame);
             return;
         }
-        MenuTab* active = FindTabByIndex(tabIndex);
+        MenuTab* active = MenuView::FindTabByIndex(tabIndex);
         ImGui::BeginDisabled(!EGSDK::GamePH::Hooks::didOnPostUpdateHookExecute);
         if (active)
             active->Render();
@@ -615,7 +527,7 @@ namespace EGT::Menu {
         ImGui::TextDisabled("SECTIONS");
         for (const auto& tab : *MenuTab::GetInstances()) {
             const std::string label(tab.second->tabName);
-            if (NavRowSelectable(tab.first, SectionIconUtf8(tab.first), label.c_str(), currentTabIndex == tab.first, navRowHeight, deltaSeconds, style))
+            if (NavRowSelectable(tab.first, MenuView::SectionIconUtf8(tab.first), label.c_str(), currentTabIndex == tab.first, navRowHeight, deltaSeconds, style))
                 currentTabIndex = tab.first;
         }
         const float settingsBlockHeight = navRowHeight + style.ItemSpacing.y * 3.0f + style.SeparatorTextBorderSize;
@@ -641,7 +553,7 @@ namespace EGT::Menu {
         const float deltaSeconds = std::fmin(ImGui::GetIO().DeltaTime, 0.08f);
         const float menuGutter = menuStyle.ItemSpacing.x; // horizontal gap between nav column and tab panel
 
-        EnsureValidTabIndex();
+        MenuView::EnsureValidTabIndex();
 
         const bool wantFrame = menuToggle.value || menuOpenLinear > 0.0001f;
         if (!wantFrame) {
@@ -693,7 +605,7 @@ namespace EGT::Menu {
             }
             for (const auto& tab : *MenuTab::GetInstances()) {
                 const std::string label(tab.second->tabName);
-                const std::string row = std::string(SectionIconUtf8(tab.first)) + "  " + label;
+                const std::string row = std::string(MenuView::SectionIconUtf8(tab.first)) + "  " + label;
                 maxNavLabelW = std::fmax(maxNavLabelW, ImGui::CalcTextSize(row.c_str()).x);
             }
             // Match NavRowSelectable: pill inset from rail + padding inside pill for icon/label.

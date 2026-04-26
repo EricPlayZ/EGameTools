@@ -1,0 +1,14 @@
+[meta]
+schemaVersion=1
+lastMigratedFrom="none"
+
+[Menu]
+Opacity=1
+ChildPanelAlpha=0.5
+FrameAlpha=1
+PopupAlpha=1
+MicaWashStrength=0.5
+MicaBlurStrength=0.5
+Scale=1
+FirstTimeRunning=true
+HasSeenChangelog=false

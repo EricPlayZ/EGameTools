@@ -1,6 +1,7 @@
 #pragma once
 #include <EGT\Core\Core.h>
 #include <EGT\Menu\Menu.h>
+#include <EGT\Config\ConfigValue.h>
 
 namespace EGT::Menu {
 	namespace Player {
@@ -23,8 +24,8 @@ namespace EGT::Menu {
 		extern ImGui::KeyBindOption disableAirControl;
 		extern ImGui::Option playerVariables;
 
-		extern std::string saveSCRPath;
-		extern std::string loadSCRFilePath;
+		extern Config::ConfigString saveSCRPath;
+		extern Config::ConfigString loadSCRFilePath;
 
 		class Tab : MenuTab {
 		public:

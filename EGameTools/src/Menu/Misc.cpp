@@ -1,67 +1,34 @@
 #include <ImGui\imgui_hotkey.h>
 #include <ImGui\imguiex.h>
-#include <EGSDK\Utils\Hook.h>
 #include <EGSDK\Engine\CVars.h>
-#include <EGSDK\GamePH\GameDI_PH.h>
-#include <EGSDK\GamePH\LevelDI.h>
-#include <EGT\ImGui_impl\DeferredActions.h>
 #include <EGT\GamePH\GamePH_Hooks.h>
+#include <EGT\GamePH\Misc\MiscRuntime.h>
 #include <EGT\Menu\Misc.h>
 #include <EGT\Menu\VarList.h>
 
 namespace EGT::Menu {
 	namespace Misc {
-		ImGui::KeyBindOption disableGamePauseWhileAFK{ false, VK_NONE };
-		ImGui::KeyBindOption disableHUD{ false, VK_F8 };
-		ImGui::KeyBindOption disableTAA{ false, VK_NONE };
-		ImGui::Option disableSavegameCRCCheck{ false };
-		ImGui::Option disableDataPAKsCRCCheck{ false };
-		ImGui::Option increaseDataPAKsLimit{ false };
+		ImGui::KeyBindOption disableGamePauseWhileAFK{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "DisableGamePauseWhileAFKToggleKey" }, ImGui::ConfigBindingInfo{ "Misc:Misc", "DisableGamePauseWhileAFK" } };
+		ImGui::KeyBindOption disableHUD{ false, VK_F8, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "DisableHUDToggleKey" } };
+		ImGui::KeyBindOption disableTAA{ false, VK_NONE, ImGui::ConfigBindingInfo{ "Menu:Keybinds", "DisableTAAToggleKey" }, ImGui::ConfigBindingInfo{ "Misc:Misc", "DisableTAA" } };
+		ImGui::Option disableSavegameCRCCheck{ false, ImGui::ConfigBindingInfo{ "Misc:GameChecks", "DisableSavegameCRCCheck" } };
+		ImGui::Option disableDataPAKsCRCCheck{ false, ImGui::ConfigBindingInfo{ "Misc:GameChecks", "DisableDataPAKsCRCCheck" } };
+		ImGui::Option increaseDataPAKsLimit{ false, ImGui::ConfigBindingInfo{ "Misc:GameChecks", "IncreaseDataPAKsLimit" } };
 
 		static VarList<EGSDK::Engine::CVars> cVarsList{ "Renderer CVars List" };
-
-		static void RendererCVarsUpdate() {
-			EGSDK::Engine::CVars::ManageVarByBool("i_pp_taa_on", 0, 1, disableTAA.GetValue());
-			EGSDK::Engine::CVars::ManageVarByBool("i_pp_jitter_on", 0, 1, disableTAA.GetValue());
-		}
-
-		static void UpdateDisabledOptions() {
-			auto iLevel = EGSDK::GamePH::LevelDI::Get();
-			disableHUD.SetChangesAreDisabled(!iLevel || !iLevel->IsLoaded());
-		}
 
 		Tab Tab::instance{};
 		void Tab::Init() {}
 		void Tab::Update() {
-			UpdateDisabledOptions();
-
-			RendererCVarsUpdate();
-
-			auto iLevel = EGSDK::GamePH::LevelDI::Get();
-			if (!iLevel)
-				return;
-
-			if (!iLevel->IsLoaded() && disableHUD.GetValue()) {
-				disableHUD.SetBothValues(false);
-				iLevel->ShowUIManager(true);
-				return;
-			}
-			if (disableHUD.HasChanged()) {
-				disableHUD.SetPrevValue(disableHUD.GetValue());
-				iLevel->ShowUIManager(!disableHUD.GetValue());
-			}
-
-			auto gameDI_PH = EGSDK::GamePH::GameDI_PH::Get();
-			if (gameDI_PH)
-				gameDI_PH->blockPauseGameOnPlayerAfk = disableGamePauseWhileAFK.GetValue();
+			GamePH::Misc::UpdateRuntimeState();
 		}
+
 		void Tab::Render() {
 			ImGui::SeparatorTextSection("Misc##Misc", false);
 			ImGui::CheckboxHotkey("Disable Game Pause While AFK", &disableGamePauseWhileAFK, "Prevents the game from pausing while you're afk");
 			ImGui::BeginDisabled(disableHUD.GetChangesAreDisabled());
 			ImGui::CheckboxHotkey("Disable HUD", &disableHUD, "Disables the entire HUD, including any sort of menus like the pause menu");
 			ImGui::EndDisabled();
-
 			ImGui::CheckboxHotkey("Disable TAA", &disableTAA, "Disables the TAA/anti-aliasing (only works if you have upscaling disabled)");
 
 			ImGui::SeparatorTextSection("Scripting##Misc");

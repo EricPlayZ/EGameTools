@@ -1,0 +1,100 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Solution (Debug|x64)",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/.vscode/build-msbuild.ps1",
+                "-Target",
+                "Build",
+                "-Configuration",
+                "Debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Build Solution (Release|x64)",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/.vscode/build-msbuild.ps1",
+                "-Target",
+                "Build",
+                "-Configuration",
+                "Release"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Rebuild Solution (Debug|x64)",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/.vscode/build-msbuild.ps1",
+                "-Target",
+                "Rebuild",
+                "-Configuration",
+                "Debug"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Rebuild Solution (Release|x64)",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/.vscode/build-msbuild.ps1",
+                "-Target",
+                "Rebuild",
+                "-Configuration",
+                "Release"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        }
+    ]
+}

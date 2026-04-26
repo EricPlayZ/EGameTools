@@ -9,6 +9,7 @@
 #include <EGT\ImGui_impl\Win32_impl.h>
 #include <EGT\ImGui_impl\DeferredActions.h>
 #include <EGT\ImGui_impl\NextFrameTask.h>
+#include <EGT\Menu\Camera.h>
 #include <EGT\Menu\Init.h>
 #include <EGT\Menu\Menu.h>
 
@@ -89,6 +90,7 @@ namespace EGT::ImGui_impl {
 			ImGui::NewFrame();
 
 			Menu::FirstTimeRunning();
+			Menu::Camera::RenderDollyPathOverlay();
 			if (Menu::MenuAnimNeedsFrame())
 				Menu::Render();
 

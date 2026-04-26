@@ -21,6 +21,12 @@ namespace ImGui {
     Option::Option(bool value, std::initializer_list<uint32_t> unsupportedGameVers) : value(value), previousValue(value), unsupportedGameVers(unsupportedGameVers) {
         GetInstances()->insert(this);
     };
+    Option::Option(bool value, const ConfigBindingInfo& configBinding) : Option(value) {
+        SetConfigBinding(configBinding);
+    }
+    Option::Option(bool value, const ConfigBindingInfo& configBinding, std::initializer_list<uint32_t> unsupportedGameVers) : Option(value, unsupportedGameVers) {
+        SetConfigBinding(configBinding);
+    }
     Option::~Option() {
         GetInstances()->erase(this);
     }
@@ -66,6 +72,25 @@ namespace ImGui {
     bool Option::HasChangedTo(bool toValue) const {
         return previousValue != value && value == toValue;
     }
+    void Option::SetConfigBinding(const ConfigBindingInfo& configBinding) {
+        if (!configBinding.IsValid()) {
+            configSection.clear();
+            configKey.clear();
+            return;
+        }
+
+        configSection = configBinding.section;
+        configKey = configBinding.key;
+    }
+    bool Option::HasConfigBinding() const {
+        return !configSection.empty() && !configKey.empty();
+    }
+    std::string_view Option::GetConfigSection() const {
+        return configSection;
+    }
+    std::string_view Option::GetConfigKey() const {
+        return configKey;
+    }
 
     uint32_t Option::IsUnsupportedGameVer() const {
         auto it = unsupportedGameVers.find(EGSDK::Core::gameVer);
@@ -79,6 +104,19 @@ namespace ImGui {
     bool KeyBindOption::scrolledMouseWheelDown = false;
 
     KeyBindOption::KeyBindOption(bool value, int keyCode, bool isToggleableOption, std::initializer_list<uint32_t> unsupportedGameVers) : keyCode(keyCode), isToggleableOption(isToggleableOption), Option(value, unsupportedGameVers) {
+        keyBindBehavior = isToggleableOption ? KeyBindBehavior::ToggleOption : KeyBindBehavior::Action;
+        GetInstances()->insert(this);
+    };
+    KeyBindOption::KeyBindOption(bool value, int keyCode, const ConfigBindingInfo& configBinding, bool isToggleableOption, std::initializer_list<uint32_t> unsupportedGameVers)
+        : keyCode(keyCode), isToggleableOption(isToggleableOption), Option(value, unsupportedGameVers) {
+        SetKeyBindConfigBinding(configBinding);
+        keyBindBehavior = configBinding.keyBindBehavior;
+        GetInstances()->insert(this);
+    };
+    KeyBindOption::KeyBindOption(bool value, int keyCode, const ConfigBindingInfo& keyConfigBinding, const ConfigBindingInfo& optionConfigBinding, bool isToggleableOption, std::initializer_list<uint32_t> unsupportedGameVers)
+        : keyCode(keyCode), isToggleableOption(isToggleableOption), Option(value, optionConfigBinding, unsupportedGameVers) {
+        SetKeyBindConfigBinding(keyConfigBinding);
+        keyBindBehavior = keyConfigBinding.keyBindBehavior;
         GetInstances()->insert(this);
     };
     KeyBindOption::~KeyBindOption() {
@@ -173,6 +211,28 @@ namespace ImGui {
     }
     bool KeyBindOption::IsToggleableOption() const {
         return isToggleableOption;
+    }
+    KeyBindBehavior KeyBindOption::GetKeyBindBehavior() const {
+        return keyBindBehavior;
+    }
+    void KeyBindOption::SetKeyBindConfigBinding(const ConfigBindingInfo& configBinding) {
+        if (!configBinding.IsValid()) {
+            keyBindConfigSection.clear();
+            keyBindConfigKey.clear();
+            return;
+        }
+
+        keyBindConfigSection = configBinding.section;
+        keyBindConfigKey = configBinding.key;
+    }
+    bool KeyBindOption::HasKeyBindConfigBinding() const {
+        return !keyBindConfigSection.empty() && !keyBindConfigKey.empty();
+    }
+    std::string_view KeyBindOption::GetKeyBindConfigSection() const {
+        return keyBindConfigSection;
+    }
+    std::string_view KeyBindOption::GetKeyBindConfigKey() const {
+        return keyBindConfigKey;
     }
 
     void KeyBindOption::SetIsKeyDown(bool newValue) {
